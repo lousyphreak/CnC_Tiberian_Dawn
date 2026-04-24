@@ -202,3 +202,50 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
     1. rename or rescope the old `index` loop variables and similar overloaded-name collisions in the gameplay code the compiler now reaches first;
     2. trim or wrap the remaining DirectDraw/Win32-only surface area still referenced from UI/support files;
     3. keep documenting any subsystem that is being preserved as a non-Windows stub rather than reimplemented.
+- Modern compiler cleanup continued and the build moved past the old file/mix/direct-draw/savecode wall (2026-04-24):
+  - completed in this checkpoint:
+    - extended `SDL3_COMPAT/wrappers/win32_compat.h` with the Win32 file-handle constants that TD still uses through the imported wrapper layer:
+      - `GENERIC_READ`
+      - `GENERIC_WRITE`
+      - `FILE_SHARE_READ`
+      - `FILE_SHARE_WRITE`
+      - `CREATE_ALWAYS`
+      - `OPEN_EXISTING`
+      - `OPEN_ALWAYS`
+      - `FILE_ATTRIBUTE_NORMAL`
+      - `INVALID_HANDLE_VALUE`
+    - fixed more 32-bit-sensitive file and mixfile code:
+      - `CODE/CONQUER.CPP` now passes `DWORD`-sized fields to `GetVolumeInformation(...)` instead of Linux-sized `unsigned long*`;
+      - `CODE/CCFILE.CPP` now bridges the old `MixFileClass::Offset(..., long*, long*)` API through local `long` temporaries before storing the results back into TD's explicit `int32_t` members.
+    - removed another wave of strict modern-C++ failures caused by loop-scope leakage and template deduction mismatches:
+      - `CODE/CELL.CPP`
+      - `CODE/EXPAND.CPP`
+      - `CODE/HOUSE.CPP`
+      - `CODE/ENDING.CPP`
+      - `CODE/INTRO.CPP`
+    - replaced missing DirectDraw-only viewport helpers with SDL/software-safe equivalents:
+      - `CODE/CONQUER.CPP` now falls back to a tiled software fill for `CC_Texture_Fill(...)` instead of calling the missing `Texture_Fill_Rect(...)`;
+      - `CODE/DISPLAY.CPP`
+      - `CODE/RADAR.CPP`
+      - `CODE/GSCREEN.CPP`
+      - `CODE/INTERPAL.CPP`
+      now use `Get_IsVideoSurface()` in the same places that the Red Alert SDL port no longer uses `Get_IsDirectDraw()`.
+    - removed another stale Win32/audio-era symbol check in `CODE/GAMEDLG.CPP` by following the Red Alert path and opening the sound-controls dialog unconditionally.
+    - fixed the first 64-bit save/load decode hazards in `CODE/IOOBJ.CPP` by decoding saved pointer-sized enum IDs through `reinterpret_cast<uintptr_t>(...)` before converting them back to TD enum values.
+  - current build result:
+    - the support libraries still build cleanly;
+    - the game build now gets past the previous `CONQUER`, `CCFILE`, `CELL`, `ENDING`, `EXPAND`, `GAMEDLG`, `HOUSE`, `INTRO`, and first `IOOBJ` decode failures;
+    - the current compile frontier is now in later UI/gameplay files such as `CODE/JSHELL.CPP` and `CODE/LAYER.CPP`.
+  - current blocker groups exposed by the latest rebuild:
+    1. some remaining imported-support mismatches are still surfacing in later UI code:
+       - `CODE/JSHELL.CPP` is indexing into imported icon metadata with stale assumptions about the support structure layout;
+       - more imported UI helpers may still need TD-side alignment as those files compile.
+    2. classic old-C++ identifier/scope issues still remain deeper in the gameplay code:
+       - `CODE/LAYER.CPP` is now the next visible `index` collision site;
+       - more files in that family are likely still waiting behind it.
+    3. save/load modernization is not finished yet:
+       - the first `IOOBJ.CPP` pointer-to-enum decode fixes are in, but more serialization code should be reviewed with the same 32-bit/64-bit care as the build keeps moving.
+  - next concrete porting work:
+    1. fix `CODE/JSHELL.CPP` against the imported support-layer icon structure used by the SDL/Win32LIB path;
+    2. continue the local `index`/scope cleanup in `CODE/LAYER.CPP` and whichever gameplay files appear next;
+    3. keep checking save/load decode code for pointer-sized assumptions as more of `IOOBJ.CPP` and adjacent serialization files come into view.

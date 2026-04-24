@@ -619,7 +619,8 @@ AnimClass::~AnimClass(void)
 			**	this animation is attached to. If there are no others, then inform the
 			**	attached object of this fact.
 			*/
-			for (int index = 0; index < Anims.Count(); index++) {
+			int index;
+			for (index = 0; index < Anims.Count(); index++) {
 				if (Anims.Ptr(index)->Object == to) break;
 			}
 

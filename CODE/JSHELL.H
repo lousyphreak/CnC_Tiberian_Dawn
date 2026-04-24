@@ -123,6 +123,7 @@ inline ShapeFlags_Type operator ~(ShapeFlags_Type);
 
 
 void Set_Bit(void * array, int bit, int value);
+#ifdef __WATCOMC__
 #pragma aux Set_Bit parm [esi] [ecx] [eax] \
 	modify [esi ebx] = 			\
 	"mov	ebx,ecx"					\
@@ -133,8 +134,10 @@ void Set_Bit(void * array, int bit, int value);
 	"jz	ok"						\
 	"bts	[esi+ebx*4],ecx"		\
 	"ok:"
+#endif
 
 int Get_Bit(void const * array, int bit);
+#ifdef __WATCOMC__
 #pragma aux Get_Bit parm [esi] [eax] \
 	modify [esi ebx] \
 	value [eax]		= 				\
@@ -143,8 +146,10 @@ int Get_Bit(void const * array, int bit);
 	"and	eax,01Fh"				\
 	"bt	[esi+ebx*4],eax"		\
 	"setc	al"
+#endif
 
 int First_True_Bit(void const * array);
+#ifdef __WATCOMC__
 #pragma aux First_True_Bit parm [esi] \
 	modify [esi ebx] \
 	value [eax]		= 				\
@@ -156,8 +161,10 @@ int First_True_Bit(void const * array);
 	"bsf	ebx,ebx"					\
 	"jz	again"					\
 	"add	eax,ebx"
+#endif
 
 int First_False_Bit(void const * array);
+#ifdef __WATCOMC__
 #pragma aux First_False_Bit parm [esi] \
 	modify [esi ebx] \
 	value [eax]		= 				\
@@ -170,8 +177,10 @@ int First_False_Bit(void const * array);
 	"bsf	ebx,ebx"					\
 	"jz	again"					\
 	"add	eax,ebx"
+#endif
 
 extern int Bound(int original, int min, int max);
+#ifdef __WATCOMC__
 #pragma aux Bound parm [eax] [ebx] [ecx] \
 	modify [eax] \
 	value [eax]		= 				\
@@ -185,6 +194,7 @@ extern int Bound(int original, int min, int max);
 	"jl	okmax"					\
 	"mov	eax,ecx"					\
 	"okmax:"
+#endif
 
 #ifdef NEVER
 extern unsigned Bound(unsigned original, unsigned min, unsigned max);
@@ -205,6 +215,7 @@ extern unsigned Bound(unsigned original, unsigned min, unsigned max);
 
 
 unsigned Fixed_To_Cardinal(unsigned base, unsigned fixed);
+#ifdef __WATCOMC__
 #pragma aux Fixed_To_Cardinal parm [eax] [edx] \
 	modify [edx] \
 	value [eax]		= 				\
@@ -215,9 +226,11 @@ unsigned Fixed_To_Cardinal(unsigned base, unsigned fixed);
 	"mov	eax,000FFFFFFh"		\
 	"ok:"								\
 	"shr	eax,8"
+#endif
 
 
 unsigned Cardinal_To_Fixed(unsigned base, unsigned cardinal);
+#ifdef __WATCOMC__
 #pragma aux Cardinal_To_Fixed parm [ebx] [eax] \
 	modify [edx] \
 	value [eax]		= 				\
@@ -227,5 +240,6 @@ unsigned Cardinal_To_Fixed(unsigned base, unsigned cardinal);
 	"xor	edx,edx"					\
 	"div	ebx"						\
 	"fini:"
+#endif
 
 #endif

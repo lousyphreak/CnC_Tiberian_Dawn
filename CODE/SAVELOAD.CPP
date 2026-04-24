@@ -532,7 +532,8 @@ bool Save_Misc_Values(FileClass &file)
 	/*
 	**	Player's House.
 	*/
-	if (file.Write(&PlayerPtr, sizeof(PlayerPtr)) != sizeof(PlayerPtr)) {
+	int32_t player_house = PlayerPtr ? static_cast<int32_t>(PlayerPtr->Class->House) : static_cast<int32_t>(HOUSE_NONE);
+	if (file.Write(&player_house, sizeof(player_house)) != sizeof(player_house)) {
 		return(false);
 	}
 
@@ -625,9 +626,11 @@ bool Load_Misc_Values(FileClass &file)
 	/*
 	**	Player's House.
 	*/
-	if (file.Read(&PlayerPtr, sizeof(PlayerPtr)) != sizeof(PlayerPtr)) {
+	int32_t player_house = static_cast<int32_t>(HOUSE_NONE);
+	if (file.Read(&player_house, sizeof(player_house)) != sizeof(player_house)) {
 		return(false);
 	}
+	PlayerPtr = reinterpret_cast<HouseClass*>(static_cast<intptr_t>(player_house));
 
 	/*
 	**	Read this scenario number.
@@ -757,7 +760,7 @@ void Code_All_Pointers(void)
 	/*
 	**	PlayerPtr.
 	*/
-	PlayerPtr = (HouseClass *)(PlayerPtr->Class->House);
+	PlayerPtr = reinterpret_cast<HouseClass*>(static_cast<intptr_t>(PlayerPtr->Class->House));
 
 	/*
 	**	Currently-selected objects.
@@ -841,7 +844,7 @@ void Decode_All_Pointers(void)
 	/*
 	**	PlayerPtr.
 	*/
-	PlayerPtr = HouseClass::As_Pointer((HousesType)PlayerPtr);
+	PlayerPtr = HouseClass::As_Pointer(static_cast<HousesType>(reinterpret_cast<intptr_t>(PlayerPtr)));
 	Whom = PlayerPtr->Class->House;
 	switch (PlayerPtr->Class->House) {
 		case HOUSE_GOOD:
@@ -1389,4 +1392,3 @@ void Dump(void)
 	fclose(fp);
 }
 #endif
-

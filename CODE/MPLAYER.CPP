@@ -153,7 +153,7 @@ GameType Select_MPlayer_Game (void)
 	//
 	// If neither IPX or winsock are active then do only the modem serial dialog
 	//
-	if (Ipx.Is_IPX){
+	if (Ipx.Is_IPX()){
 		ipx_avail = TRUE;
 	}
 

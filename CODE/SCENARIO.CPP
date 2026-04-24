@@ -510,11 +510,11 @@ void Do_Win(void)
 		/*
 		**	Remove the building from the prebuild list.
 		*/
-		for (index = 0; index < Base.Nodes.Count(); index++) {
-			BaseNodeClass * node = Base.Get_Node(index);
+		for (int node_index = 0; node_index < Base.Nodes.Count(); node_index++) {
+			BaseNodeClass * node = Base.Get_Node(node_index);
 
 			if (node && node->Type == SabotagedType) {
-				Base.Nodes.Delete(index);
+				Base.Nodes.Delete(node_index);
 				break;
 			}
 		}

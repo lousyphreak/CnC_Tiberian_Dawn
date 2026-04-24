@@ -935,9 +935,9 @@ GraphicBufferClass		ModeXBuff;
 GraphicViewPortClass	HidPage(&HiddenPage, 0,0,640,480);
 GraphicBufferClass		SysMemPage(DEFAULT_SCREEN_WIDTH, 200, (void*)NULL);
 int 						SoundOn;
-CountDownTimerClass	FrameTimer(BT_SYSTEM, 0L);
-CountDownTimerClass	DebugTimer(BT_SYSTEM, 0L);
-CountDownTimerClass	CountDownTimer(BT_SYSTEM, 0L);
+CountDownTimerClass	FrameTimer(BT_SYSTEM, 0, FALSE);
+CountDownTimerClass	DebugTimer(BT_SYSTEM, 0, FALSE);
+CountDownTimerClass	CountDownTimer(BT_SYSTEM, 0, FALSE);
 
 NewConfigType NewConfig;
 

@@ -171,8 +171,8 @@ void Special_Dialog(void)
 			Dialog_Box(OPTION_X, OPTION_Y, OPTION_WIDTH, OPTION_HEIGHT);
 			Draw_Caption(TXT_SPECIAL_OPTIONS, OPTION_X, OPTION_Y, OPTION_WIDTH);
 
-			for (index = 0; index < sizeof(_options)/sizeof(_options[0]); index++) {
-				Fancy_Text_Print(_options[index].Description, _options[index].Button->X+10, _options[index].Button->Y, CC_GREEN, TBLACK, TPF_6PT_GRAD|TPF_USE_GRAD_PAL|TPF_NOSHADOW);
+			for (int option_index = 0; option_index < (int)(sizeof(_options)/sizeof(_options[0])); option_index++) {
+				Fancy_Text_Print(_options[option_index].Description, _options[option_index].Button->X+10, _options[option_index].Button->Y, CC_GREEN, TBLACK, TPF_6PT_GRAD|TPF_USE_GRAD_PAL|TPF_NOSHADOW);
 			}
 			buttons->Draw_All();
 			Show_Mouse();
@@ -183,58 +183,58 @@ void Special_Dialog(void)
 			case KN_ESC:
 			case 200|KN_BUTTON:
 				process = false;
-				for (index = 0; index < sizeof(_options)/sizeof(_options[0]); index++) {
-					switch (_options[index].Description) {
+				for (int option_index = 0; option_index < (int)(sizeof(_options)/sizeof(_options[0])); option_index++) {
+					switch (_options[option_index].Description) {
 						case TXT_SEPARATE_HELIPAD:
-							oldspecial.IsSeparate = _options[index].Setting;
+							oldspecial.IsSeparate = _options[option_index].Setting;
 							break;
 
 						case TXT_SHOW_NAMES:
-							oldspecial.IsNamed = _options[index].Setting;
+							oldspecial.IsNamed = _options[option_index].Setting;
 							break;
 
 						case TXT_DEFENDER_ADVANTAGE:
-							oldspecial.IsDefenderAdvantage = _options[index].Setting;
+							oldspecial.IsDefenderAdvantage = _options[option_index].Setting;
 							break;
 
 						case TXT_VISIBLE_TARGET:
-							oldspecial.IsVisibleTarget = _options[index].Setting;
+							oldspecial.IsVisibleTarget = _options[option_index].Setting;
 							break;
 
 						case TXT_TREE_TARGET:
-							oldspecial.IsTreeTarget = _options[index].Setting;
+							oldspecial.IsTreeTarget = _options[option_index].Setting;
 							break;
 
 						case TXT_MCV_DEPLOY:
-							oldspecial.IsMCVDeploy = _options[index].Setting;
+							oldspecial.IsMCVDeploy = _options[option_index].Setting;
 							break;
 
 						case TXT_SMART_DEFENCE:
-							oldspecial.IsSmartDefense = _options[index].Setting;
+							oldspecial.IsSmartDefense = _options[option_index].Setting;
 							break;
 
 						case TXT_THREE_POINT:
-							oldspecial.IsThreePoint = _options[index].Setting;
+							oldspecial.IsThreePoint = _options[option_index].Setting;
 							break;
 
 						case TXT_TIBERIUM_GROWTH:
-							oldspecial.IsTGrowth = _options[index].Setting;
+							oldspecial.IsTGrowth = _options[option_index].Setting;
 							break;
 
 						case TXT_TIBERIUM_SPREAD:
-							oldspecial.IsTSpread = _options[index].Setting;
+							oldspecial.IsTSpread = _options[option_index].Setting;
 							break;
 
 						case TXT_TIBERIUM_FAST:
-							oldspecial.IsTFast = _options[index].Setting;
+							oldspecial.IsTFast = _options[option_index].Setting;
 							break;
 
 						case TXT_ROAD_PIECES:
-							oldspecial.IsRoad = _options[index].Setting;
+							oldspecial.IsRoad = _options[option_index].Setting;
 							break;
 
 						case TXT_SCATTER:
-							oldspecial.IsScatter = _options[index].Setting;
+							oldspecial.IsScatter = _options[option_index].Setting;
 							break;
 					}
 				}
@@ -249,13 +249,13 @@ void Special_Dialog(void)
 				break;
 
 			default:
-				index = (input & ~KN_BUTTON) - 100;
-				if ((unsigned)index < sizeof(_options)/sizeof(_options[0])) {
-					_options[index].Setting = (_options[index].Setting == false);
-					if (_options[index].Setting) {
-						_options[index].Button->Turn_On();
+				int option_index = (input & ~KN_BUTTON) - 100;
+				if ((unsigned)option_index < sizeof(_options)/sizeof(_options[0])) {
+					_options[option_index].Setting = (_options[option_index].Setting == false);
+					if (_options[option_index].Setting) {
+						_options[option_index].Button->Turn_On();
 					} else {
-						_options[index].Button->Turn_Off();
+						_options[option_index].Button->Turn_Off();
 					}
 				}
 				break;
@@ -267,7 +267,6 @@ void Special_Dialog(void)
 	Map.Flag_To_Redraw(true);
 	Map.Render();
 }
-
 
 
 

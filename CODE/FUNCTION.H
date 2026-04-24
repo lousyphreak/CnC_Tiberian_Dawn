@@ -243,6 +243,7 @@ inline CELL Coord_YCell(COORDINATE coord) {return (CELL)(*(((unsigned char*)&coo
 CELL Coord_Cell(COORDINATE coord);
 int32_t Desired_Facing8(int32_t x1, int32_t y1, int32_t x2, int32_t y2);
 int32_t Desired_Facing256(int32_t x1, int32_t y1, int32_t x2, int32_t y2);
+#ifdef __WATCOMC__
 #pragma aux Coord_Cell parm [eax] \
 	modify [ebx] \
 	value [ax]		= 				\
@@ -251,6 +252,7 @@ int32_t Desired_Facing256(int32_t x1, int32_t y1, int32_t x2, int32_t y2);
 	"xor	al,al"					\
 	"shr	eax,2"					\
 	"or	al,bh"
+#endif
 
 
 #include  "UTRACKER.H"
@@ -782,7 +784,7 @@ inline COORDINATE XYP_Coord(int x,int y) {return XY_Coord(Pixel_To_Lepton(x), Pi
 inline char const * Text_String(int string) {return(Extract_String(SystemStrings, string));};
 
 
-template<class T> inline T Random_Picky(T a, T b, char *sfile, int line)
+template<class T> inline T Random_Picky(T a, T b, char const *sfile, int line)
 {
 	sfile = sfile;
 	line = line;
@@ -867,6 +869,7 @@ extern int Load_Interpolated_Palettes(char const *filename, BOOL add=FALSE);
  *   05/27/1994 JLB : Created.                                                                 *
  *=============================================================================================*/
 int Distance_Coord(COORDINATE coord1, COORDINATE coord2);
+#ifdef __WATCOMC__
 #pragma aux Distance_Coord parm [eax] [ebx] \
 	modify [edx ebx] \
 	value [eax]		= 				\
@@ -887,6 +890,7 @@ int Distance_Coord(COORDINATE coord1, COORDINATE coord2);
 	"ok:"						\
 	"shr	dx,1"				\
 	"add	ax,dx"
+#endif
 
 inline int Distance(COORDINATE coord1, COORDINATE coord2)
 {

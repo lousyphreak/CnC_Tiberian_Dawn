@@ -401,14 +401,7 @@ void GameControlsClass::Process(void)
 					break;
 
 				case (BUTTON_SOUND):
-					if (!SoundType) {
-						CCMessageBox().Process(Text_String(TXT_NO_SOUND_CARD));
-						process = true;
-						display = true;
-						refresh = true;
-					} else {
-						SoundControlsClass().Process();
-					}
+					SoundControlsClass().Process();
 					break;
 
 				case (BUTTON_OK):
@@ -419,4 +412,3 @@ void GameControlsClass::Process(void)
 		}
 	}
 }
-

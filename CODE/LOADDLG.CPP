@@ -561,7 +561,7 @@ void LoadOptionsClass::Clear_List(ListClass *list)
 	/*
 	** Clear the array of game numbers
 	*/
-	for (i = 0; i < Files.Count(); i++) {
+	for (int i = 0; i < Files.Count(); i++) {
 		delete Files[i];
 	}
 	Files.Clear();
@@ -590,7 +590,6 @@ void LoadOptionsClass::Fill_List(ListClass *list)
 	char descr[DESCRIP_MAX];
 	unsigned scenario;			// scenario #
 	HousesType house;				// house
-	struct find_t ff;		// for _dos_findfirst
 	int id;
 
 	/*
@@ -611,13 +610,14 @@ void LoadOptionsClass::Fill_List(ListClass *list)
 	/*
 	** Find all savegame files
 	*/
-	int rc = _dos_findfirst("SAVEGAME.*", _A_NORMAL, &ff);
+	int save_count = 0;
+	char** save_files = WWFS_GlobDirectory(".", "SAVEGAME.*", SDL_GLOB_CASEINSENSITIVE, &save_count);
 
-	while (!rc) {
+	for (int si = 0; si < save_count; si++) {
 		/*
 		** Extract the game ID from the filename
 		*/
-		id = Num_From_Ext(ff.name);
+		id = Num_From_Ext(save_files[si]);
 
 		/*
 		** get the game's info; if success, add it to the list
@@ -633,13 +633,12 @@ void LoadOptionsClass::Fill_List(ListClass *list)
 		fdata->Scenario = scenario;
 		fdata->House = house;
 		fdata->Num = id;
-		fdata->DateTime = (((unsigned long)ff.wr_date) << 16) | (unsigned long)ff.wr_time;
+		fdata->DateTime = 0;
 		Files.Add(fdata);
+	}
 
-		/*
-		** Find the next file
-		*/
-		rc = _dos_findnext(&ff);
+	if (save_files) {
+		SDL_free(save_files);
 	}
 
 	/*
@@ -652,10 +651,11 @@ void LoadOptionsClass::Fill_List(ListClass *list)
 		** in the list; if any number isn't found, use that number; otherwise,
 		** use 'N + 1'.
 		*/
-		for (int i = 0; i < Files.Count(); i++) {		// i = the # we're searching for
+		int next_id;
+		for (next_id = 0; next_id < Files.Count(); next_id++) {
 			id = -1;											// mark as 'not found'
 			for (int j = 0; j < Files.Count(); j++) {	// loop through all game ID's
-				if (Files[j]->Num==i) {					// if found, mark as found
+				if (Files[j]->Num==next_id) {				// if found, mark as found
 					id = j;
 					break;
 				}
@@ -663,13 +663,15 @@ void LoadOptionsClass::Fill_List(ListClass *list)
 			if (id == -1)	break;							// if ID not found, use this one
 		}
 
-		Files[0]->Num = i;								// set the empty slot's ID
+		Files[0]->Num = next_id;						// set the empty slot's ID
 	}
 
 	/*
 	** Now sort the list in order of Date/Time (newest first, oldest last)
 	*/
-	qsort((void *)(&Files[0]), Files.Count(), sizeof(class FileEntryClass *), LoadOptionsClass::Compare);
+	if (Files.Count() > 1) {
+		qsort((void *)(&Files[0]), Files.Count(), sizeof(class FileEntryClass *), LoadOptionsClass::Compare);
+	}
 
 	/*
 	** Now add every file's name to the list box

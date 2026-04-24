@@ -797,7 +797,8 @@ void MapClass::Logic(void)
 	**	Tiberium cells that can grow or spread.
 	*/
 	int subcount = 30;
-	for (int index = TiberiumScan; index < MAP_CELL_TOTAL; index++) {
+	int index = TiberiumScan;
+	for (; index < MAP_CELL_TOTAL; index++) {
 		CELL cell = index;
 		if (!IsForwardScan) cell = (MAP_CELL_TOTAL-1) - index;
 		CellClass *ptr = &(*this)[cell];
@@ -1180,4 +1181,3 @@ ObjectClass * MapClass::Close_Object(COORDINATE coord) const
 	}
 	return(object);
 }
-

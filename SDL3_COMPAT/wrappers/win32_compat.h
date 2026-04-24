@@ -96,6 +96,28 @@ using DWORD_PTR = uintptr_t;
 
 constexpr UINT WM_USER = 0x0400U;
 
+constexpr DWORD GENERIC_READ = 0x80000000U;
+constexpr DWORD GENERIC_WRITE = 0x40000000U;
+constexpr DWORD FILE_SHARE_READ = 0x00000001U;
+constexpr DWORD FILE_SHARE_WRITE = 0x00000002U;
+constexpr DWORD CREATE_ALWAYS = 2U;
+constexpr DWORD OPEN_EXISTING = 3U;
+constexpr DWORD OPEN_ALWAYS = 4U;
+constexpr DWORD FILE_ATTRIBUTE_NORMAL = 0x00000080U;
+constexpr DWORD FILE_BEGIN = 0U;
+constexpr DWORD FILE_CURRENT = 1U;
+constexpr DWORD FILE_END = 2U;
+constexpr DWORD WAIT_OBJECT_0 = 0x00000000UL;
+constexpr DWORD WAIT_TIMEOUT = 0x00000102UL;
+constexpr DWORD WAIT_FAILED = 0xFFFFFFFFU;
+constexpr DWORD INFINITE = 0xFFFFFFFFU;
+constexpr UINT DRIVE_NO_ROOT_DIR = 1U;
+constexpr UINT DRIVE_FIXED = 3U;
+
+#ifndef INVALID_HANDLE_VALUE
+#define INVALID_HANDLE_VALUE reinterpret_cast<HANDLE>(static_cast<intptr_t>(-1))
+#endif
+
 struct POINT {
     LONG x;
     LONG y;

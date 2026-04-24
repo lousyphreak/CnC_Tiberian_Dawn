@@ -1027,8 +1027,8 @@ static void Message_Input(KeyNumType &input)
  *=============================================================================================*/
 bool Color_Cycle(void)
 {
-	static CountDownTimerClass _timer(BT_SYSTEM,0L);
-	static CountDownTimerClass _ftimer(BT_SYSTEM,0L);
+	static CountDownTimerClass _timer(BT_SYSTEM, 0, FALSE);
+	static CountDownTimerClass _ftimer(BT_SYSTEM, 0, FALSE);
 	static bool _up = false;
 	bool changed = false;
 
@@ -2610,9 +2610,7 @@ void const * Get_Radar_Icon(void const * shapefile, int shapenum, int frames, in
 void CC_Texture_Fill (void const *shapefile, int shapenum, int xpos, int ypos, int width, int height)
 {
 	unsigned char	*shape_pointer;
-	//unsigned char	*shape_save;
 	unsigned	long	shape_size;
-	//int x,y;
 
 	if (shapefile && shapenum != -1) {
 
@@ -2631,24 +2629,16 @@ void CC_Texture_Fill (void const *shapefile, int shapenum, int xpos, int ypos, i
 			int source_height = Get_Build_Frame_Height (shapefile);
 
 
-			LogicPage->Texture_Fill_Rect (xpos, ypos, width, height, shape_pointer, source_width, source_height);
-#if (0)
-			if (LogicPage->Lock()){
-
-				for (y = ypos ; y < ypos + MIN(source_height, height) ; y++ ){
-
-					shape_save = shape_pointer;
-
-					for (x = xpos ; x < xpos + MIN(source_width, width) ; x++ ){
-						LogicPage->Put_Pixel (x, y, *shape_pointer++);
+			if (source_width > 0 && source_height > 0 && LogicPage->Lock()) {
+				for (int y = 0; y < height; ++y) {
+					unsigned char* row = shape_pointer + ((y % source_height) * source_width);
+					for (int x = 0; x < width; ++x) {
+						LogicPage->Put_Pixel(xpos + x, ypos + y, row[x % source_width]);
 					}
-
-					shape_pointer = shape_save + source_width;
 				}
 
 				LogicPage->Unlock();
 			}
-#endif
 		}
 	}
 }
@@ -3498,14 +3488,13 @@ void Error_In_Heap_Pointers( char *string )
 int Get_CD_Index (int cd_drive, int timeout)
 {
 	char		volume_name[128];
-	unsigned	filename_length;
-	unsigned	misc_dword;
-	unsigned	error_code;
+	DWORD		filename_length;
+	DWORD		misc_dword;
 	int		count = 0;
 
 	CountDownTimerClass timer;
 
-	static char * _volid[] = {
+	static char const * const _volid[] = {
 		"GDI95",
 		"NOD95",
 		"COVERT"
@@ -3526,12 +3515,12 @@ int Get_CD_Index (int cd_drive, int timeout)
 
 		if (GetVolumeInformation ((char const *)buffer,
 											&volume_name[0] ,
-											(unsigned long)128 ,
-											(unsigned long *)NULL ,
-											(unsigned long *)&filename_length,
-											(unsigned long *)&misc_dword ,
-											(char *)NULL ,
-											(unsigned long)0)) {
+											static_cast<DWORD>(sizeof(volume_name)) ,
+											NULL ,
+											&filename_length,
+											&misc_dword ,
+											NULL ,
+											0)) {
 
 			/*
 			** Try opening 'movies.mix' to verify that the CD is really there and is what

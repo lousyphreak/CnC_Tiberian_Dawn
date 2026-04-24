@@ -38,6 +38,7 @@
 #ifndef WATCOM_H
 #define WATCOM_H
 
+#ifdef __WATCOMC__
 // Turn all warnings into errors.
 #pragma warning * 0
 
@@ -73,5 +74,6 @@
 
 // Turns off "expression with side effect in sizeof()". This is needed if memchecker is used.
 #pragma warning 472 9
+#endif
 
 #endif

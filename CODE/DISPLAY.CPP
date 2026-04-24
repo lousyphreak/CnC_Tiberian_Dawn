@@ -1787,24 +1787,24 @@ ObjectClass * DisplayClass::Cell_Object(CELL cell, int x, int y)
 			for (CELL cell = Coord_Cell(TacticalCoord); cell < Coord_Cell(TacticalCoord) + Lepton_To_Cell(TacLeptonWidth)+1; cell++) {
 				(*this)[cell].Redraw_Objects();
 			}
-			for (cell = Coord_Cell(TacticalCoord) + MAP_CELL_W;
+			for (CELL cell = Coord_Cell(TacticalCoord) + MAP_CELL_W;
 				cell < Coord_Cell(TacticalCoord) + MAP_CELL_W + Lepton_To_Cell(TacLeptonWidth)+1; cell++) {
 				(*this)[cell].Redraw_Objects();
 			}
 			if (num > 1) {
-				for (cell = Coord_Cell(TacticalCoord) + MAP_CELL_W*2;
+				for (CELL cell = Coord_Cell(TacticalCoord) + MAP_CELL_W*2;
 					cell < Coord_Cell(TacticalCoord) + MAP_CELL_W*2 + Lepton_To_Cell(TacLeptonWidth)+1; cell++) {
 					(*this)[cell].Redraw_Objects();
 				}
 			}
 			if (num > 3) {
-				for (cell = Coord_Cell(TacticalCoord) + MAP_CELL_W*3;
+				for (CELL cell = Coord_Cell(TacticalCoord) + MAP_CELL_W*3;
 					cell < Coord_Cell(TacticalCoord) + MAP_CELL_W*3 + Lepton_To_Cell(TacLeptonWidth)+1; cell++) {
 					(*this)[cell].Redraw_Objects();
 				}
 			}
 			if (num > 4) {
-				for (cell = Coord_Cell(TacticalCoord) + MAP_CELL_W*4;
+				for (CELL cell = Coord_Cell(TacticalCoord) + MAP_CELL_W*4;
 					cell < Coord_Cell(TacticalCoord) + MAP_CELL_W*4 + Lepton_To_Cell(TacLeptonWidth)+1; cell++) {
 					(*this)[cell].Redraw_Objects();
 				}
@@ -1851,7 +1851,7 @@ ObjectClass * DisplayClass::Cell_Object(CELL cell, int x, int y)
 				** If hid page is in video memory then we may nned to blit from the seen page to
 				**  avoid blitting an overlapped region.
 				*/
-				if (HidPage.Get_IsDirectDraw() && !OverlappedVideoBlits){
+				if (HidPage.Get_IsVideoSurface() && !OverlappedVideoBlits){
 					Hide_Mouse();
 							SeenBuff.Blit(HidPage,
 									((oldx < 0) ? -oldx : 0) +TacPixelX,
@@ -3495,7 +3495,7 @@ void DisplayClass::Compute_Start_Pos(void)
 		}
 	}
 
-	for (i = 0; i < Units.Count(); i++) {
+	for (int i = 0; i < Units.Count(); i++) {
 		UnitClass * unitp = Units.Ptr(i);
 		if (!unitp->IsInLimbo && unitp->House == PlayerPtr) {
 			x += (long)Coord_XCell (unitp->Coord);
@@ -3504,7 +3504,7 @@ void DisplayClass::Compute_Start_Pos(void)
 		}
 	}
 
-	for (i = 0; i < Buildings.Count(); i++) {
+	for (int i = 0; i < Buildings.Count(); i++) {
 		BuildingClass * bldgp = Buildings.Ptr(i);
 		if (!bldgp->IsInLimbo && bldgp->House == PlayerPtr) {
 			x += (((long)Coord_XCell (bldgp->Coord)) << 4);

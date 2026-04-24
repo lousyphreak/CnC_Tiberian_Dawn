@@ -279,7 +279,7 @@ char * WWGetPrivateProfileString(char const *section, char const *entry, char co
 		**	If this is the section name & the character before is a newline,
 		**	process this section
 		*/
-		if (memicmp(workptr, sec, len) == 0 && (c == '\n')) {
+		if (SDL_strncasecmp(workptr, sec, len) == 0 && (c == '\n')) {
 
 			/*
 			**	Skip work pointer to start of first valid entry.
@@ -366,7 +366,7 @@ char * WWGetPrivateProfileString(char const *section, char const *entry, char co
 					/*
 					**	Entry found; extract it
 					*/
-					if (memicmp(workptr, entry, entrylen) == 0 && (c == '\n') &&
+					if (SDL_strncasecmp(workptr, entry, entrylen) == 0 && (c == '\n') &&
 						(c2 == '=' || isspace(c2))) {
 						retval = workptr;
 						workptr += entrylen;							// skip entry name

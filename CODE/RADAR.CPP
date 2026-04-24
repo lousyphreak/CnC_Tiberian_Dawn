@@ -1620,7 +1620,7 @@ void RadarClass::Set_Radar_Position(CELL cell)
 				/*
 				** Blit the section that is actually overlapping.
 				*/
-				if (OverlappedVideoBlits || !HidPage.Get_IsDirectDraw()){
+				if (OverlappedVideoBlits || !HidPage.Get_IsVideoSurface()){
 			  		HidPage.Blit(HidPage,
 								(((radx < 0) ? -radx : 0) * ZoomFactor) + RadX + RadOffX + BaseX,
 								(((rady < 0) ? -rady : 0) * ZoomFactor) + RadY + RadOffY + BaseY,

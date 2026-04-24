@@ -52,14 +52,13 @@
  *   RawFileClass::Write -- Writes the specified data to the buffer specified.                 *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "FUNCTION.H"
-
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <string>
 
 #include "RAWFILE.H"
+#include "FUNCTION.H"
 #include "sdl_fs.h"
 
 namespace {

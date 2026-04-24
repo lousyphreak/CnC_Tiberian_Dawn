@@ -433,7 +433,11 @@ int CCFileClass::Open(int rights)
 	**	into RAM.
 	*/
 	MixFileClass *mixfile = 0;
-	if (MixFileClass::Offset(File_Name(), &Pointer, &mixfile, &Start, &Length)) {
+	long mix_start = 0;
+	long mix_length = 0;
+	if (MixFileClass::Offset(File_Name(), &Pointer, &mixfile, &mix_start, &mix_length)) {
+		Start = static_cast<int32_t>(mix_start);
+		Length = static_cast<int32_t>(mix_length);
 
 		/*
 		**	If the mixfile is located on disk, then fake out the file system to read from

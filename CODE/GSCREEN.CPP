@@ -495,7 +495,7 @@ void GScreenClass::Blit_Display(void)
 {
 	if (SeenBuff.Get_Width()!=320){
 #if (0)
-		if (HidPage.Get_IsDirectDraw() && (Options.GameSpeed >1 || Options.ScrollRate==6 && CanVblankSync) ){
+		if (HidPage.Get_IsVideoSurface() && (Options.GameSpeed >1 || Options.ScrollRate==6 && CanVblankSync) ){
 			WWMouse->Draw_Mouse(&HidPage);
 			SeenBuff.Get_Graphic_Buffer()->Get_DD_Surface()->Flip(NULL , DDFLIP_WAIT);
 			SeenBuff.Blit (HidPage , 0 , 0 , 0 , 0 , SeenBuff.Get_Width() , SeenBuff.Get_Height() , (BOOL) FALSE );
@@ -522,7 +522,6 @@ void GScreenClass::Blit_Display(void)
 	}
 
 }
-
 
 
 

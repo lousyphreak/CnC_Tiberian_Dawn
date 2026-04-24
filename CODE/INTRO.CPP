@@ -110,9 +110,12 @@ void Choose_Side(void)
 
 	Call_Back();
 
-	staticaud = Load_Alloc_Data(CCFileClass("STRUGGLE.AUD"));
-	speechg = Load_Alloc_Data(CCFileClass("GDI_SLCT.AUD"));
-	speechn = Load_Alloc_Data(CCFileClass("NOD_SLCT.AUD"));
+	CCFileClass struggle_aud("STRUGGLE.AUD");
+	CCFileClass gdi_select_aud("GDI_SLCT.AUD");
+	CCFileClass nod_select_aud("NOD_SLCT.AUD");
+	staticaud = Load_Alloc_Data(struggle_aud);
+	speechg = Load_Alloc_Data(gdi_select_aud);
+	speechn = Load_Alloc_Data(nod_select_aud);
 
 //	staticaud = MixFileClass::Retrieve("STRUGGLE.AUD");
 //	speechg = MixFileClass::Retrieve("GDI_SLCT.AUD");

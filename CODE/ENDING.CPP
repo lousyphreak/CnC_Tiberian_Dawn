@@ -134,8 +134,10 @@ void Nod_Ending(void)
 	HidPage.Clear();
 	PseudoSeenBuff->Clear();
 
-	void * localpal = Load_Alloc_Data(CCFileClass("SATSEL.PAL"));
-	Load_Uncompress(CCFileClass("SATSEL.CPS"), SysMemPage, SysMemPage);
+	CCFileClass satsel_palette("SATSEL.PAL");
+	CCFileClass satsel_image("SATSEL.CPS");
+	void * localpal = Load_Alloc_Data(satsel_palette);
+	Load_Uncompress(satsel_image, SysMemPage, SysMemPage);
 #ifdef NOT_FOR_WIN95
 	memcpy(satpic, HidPage.Get_Buffer(), 64000);
 #else
@@ -170,7 +172,7 @@ void Nod_Ending(void)
 	bool printedtext = false;
 	while (!done) {
 		if (!printedtext && !Is_Sample_Playing(kanefinl)) {
-			printedtext++;
+			printedtext = true;
 			Alloc_Object(new ScorePrintClass(Text_String(TXT_SEL_TARGET), 0, 180,_tanpal));
 			mouseshown = true;
 			Show_Mouse();
@@ -187,7 +189,7 @@ void Nod_Ending(void)
 					int mousex = _Kbd->MouseQX;
 					int mousey = _Kbd->MouseQY;
 					if (mousey >= 22*2 && mousey <= 177*2) {
-						done++;
+						done = true;
 						if (mousex <  160*2 && mousey <  100*2) selection = 2;
 						if (mousex <  160*2 && mousey >= 100*2) selection = 3;
 						if (mousex >= 160*2 && mousey >= 100*2) selection = 4;
