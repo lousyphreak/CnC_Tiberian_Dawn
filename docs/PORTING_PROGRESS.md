@@ -133,6 +133,41 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
        - it now gets far enough to expose TD-specific symbol collisions and stale globals instead of only DOS API failures;
        - it still needs to be aligned fully with the imported `RawFileClass`/SDL I/O model.
   - next concrete porting work:
-    1. triage the TCP/IP layer against the Red Alert reference and decide whether to add a Linux socket compatibility layer or stub/exclude multiplayer for the first playable build;
-    2. fix the newly exposed modern-C++ correctness errors that are independent of networking and safe to modernize without changing gameplay;
-    3. finish the `RAWFILE` port once the network/header churn stops dominating the build.
+     1. triage the TCP/IP layer against the Red Alert reference and decide whether to add a Linux socket compatibility layer or stub/exclude multiplayer for the first playable build;
+     2. fix the newly exposed modern-C++ correctness errors that are independent of networking and safe to modernize without changing gameplay;
+     3. finish the `RAWFILE` port once the network/header churn stops dominating the build.
+- Support-API cleanup continued and the build moved past the previous `INIT`/timer wall (2026-04-24):
+  - completed in this checkpoint:
+    - aligned the long-lived scenario-initialization flag with the Red Alert reference by restoring `ScenarioInit` to an `int` counter instead of a `bool`, which removes a large class of illegal `++` / `--` uses without changing the nested-init semantics;
+    - added SDL/support-backed compatibility shims for more legacy assumptions:
+      - `LoadLibrary` / `FreeLibrary`
+      - `SetForegroundWindow`
+      - `ShowWindow`
+      - `_splitpath`
+      - `randomize` declaration exposure
+      - lightweight audio-state helpers (`Get_Digi_Handle`, `Get_Sample_Type`, `SampleType` compatibility macro)
+    - fixed another batch of strict-modern-C++ issues in `CODE/INIT.CPP`:
+      - removed temporary `CCFileClass` / `RawFileClass` rvalue bindings passed to `Load_Alloc_Data(...)`;
+      - replaced `strrev` with `SDL_strrev`;
+      - switched the cursor hide path to the SDL input layer;
+      - updated VQA audio hookup from the old DirectSound field names/types to the imported SDL audio backend fields (`AudioObject`, `PrimaryBuffer`);
+    - restored the missing global timer declaration/definition with the current support-layer `TimerClass`, so `TickCount` users compile again.
+  - current build result:
+    - the build now gets beyond the earlier `INIT.CPP`, `MENUS.CPP`, and `CONNECT.CPP` failures that came from missing `TickCount`, `SampleType`, `LoadLibrary`, `_splitpath`, and stale DirectSound/VQA names;
+    - the next dominant failures are now the still-unported communications/networking area plus a fresh set of stricter C++ issues in unrelated gameplay/support files.
+  - current blocker groups exposed by the latest rebuild:
+    1. communications/networking code is still the main portability wall:
+       - `TCPIP.H` is still the old WinSock header surface;
+       - `COMQUEUE.CPP` now fails as a major downstream consumer;
+       - `IPX95.H` still uses old Win32 calling-convention assumptions;
+    2. some imported SDL/input support still needs TD-side alignment:
+       - `CODE/SDLINPUT.CPP` currently conflicts with TD globals such as `GameInFocus`;
+       - newer support-side options helpers do not yet line up with TD's `GameOptionsClass`;
+    3. modern compiler strictness continues to expose old code patterns elsewhere:
+       - unresolved overloaded-name collisions (`SPECIAL.CPP`, `THEME.CPP`, `LOADDLG.CPP`);
+       - invalid legacy casts in `IOOBJ.CPP`;
+       - stale symbol names such as `_Kbd`, `Get_Key_Num`, and `SoundType`.
+  - next concrete porting work:
+    1. port `TCPIP.H/.CPP` and related communications code toward the Red Alert `SOCKETS.H` model;
+    2. reconcile the imported SDL input layer with TD globals/options naming;
+    3. continue the modern-C++ cleanup where the build now points next (`COMQUEUE`, `IOOBJ`, `SPECIAL`, `LOADDLG`, `THEME`).

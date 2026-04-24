@@ -38,6 +38,8 @@
 #ifndef EXTERNS_H
 #define EXTERNS_H
 
+#include "FTIMER.H"
+
 #include	"CELL.H"
 
 #ifdef SCENARIO_EDITOR
@@ -181,6 +183,7 @@ extern char const *	SystemStrings;
 **	Miscellaneous globals.
 */
 extern HousesType				Whom;
+extern TimerClass				TickCount;
 extern _VQAConfig				AnimControl;
 extern long						SpareTicks;
 extern int						MonoPage;
@@ -188,7 +191,7 @@ extern unsigned char *		OriginalPalette;
 extern int						EndCountDown;
 extern bool						GameActive;
 extern bool						SpecialFlag;
-extern bool						ScenarioInit;
+extern int						ScenarioInit;
 extern long						TutorFlags[2];
 extern HouseClass *			PlayerPtr;
 extern unsigned char *		BlackPalette;

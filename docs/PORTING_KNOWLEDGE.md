@@ -40,3 +40,11 @@ _Last updated: 2026-04-24_
   - modern-C++ correctness failures like `++` / `--` on `bool` and overloaded-name collisions (`index`) in older game code;
   - the still-unported WinSock-style multiplayer layer in `TCPIP.H` / `TCPIP.CPP`.
 - The current RAWFILE failures suggest the remaining work there is not just missing wrappers. TD's source now conflicts with the imported declarations and globals, so the next pass should compare directly against the Red Alert `RAWFILE` port and convert TD to that structure instead of continuing piecemeal fixes.
+- A few more compatibility decisions are now established and should be reused instead of reintroducing old globals/types:
+  - `ScenarioInit` must stay an `int` counter, not a `bool`; TD still uses it with nested increment/decrement semantics, and Red Alert already matches that shape.
+  - legacy audio-availability checks can be mapped onto the imported SDL audio backend through a tiny compatibility layer (`Get_Digi_Handle`, `Get_Sample_Type`, and a `SampleType` compatibility macro) instead of reviving old sound-driver globals.
+  - old Win32 loader/window helpers that are still referenced from TD startup code fit naturally in `SDL3_COMPAT/wrappers/win32_compat.*`, while `_splitpath` belongs in `SDL3_COMPAT/wrappers/sdl_fs.*`.
+- After that support-API cleanup, the build is no longer primarily blocked in `INIT.CPP`. The current next-frontier failures are:
+  - `COMQUEUE.CPP` and the old communications stack that still sit behind `TCPIP.H`;
+  - `IPX95.H` calling-convention compatibility;
+  - imported SDL input integration mismatches (`GameInFocus`, mouse-acceleration options) and the next wave of strict-modern-C++ cleanup (`IOOBJ.CPP`, `SPECIAL.CPP`, `LOADDLG.CPP`, `THEME.CPP`).

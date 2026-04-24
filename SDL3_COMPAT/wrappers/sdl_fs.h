@@ -35,6 +35,7 @@ unsigned WWFS_GetCurrentDriveNumber();
 unsigned WWFS_GetDriveCount();
 void WWFS_ChangeToDrive(unsigned drive);
 void WWFS_MakePath(char* path, const char* drive, const char* dir, const char* fname, const char* ext);
+void _splitpath(const char* path, char* drive, char* dir, char* fname, char* ext);
 int _dos_findfirst(const char* filespec, unsigned attributes, struct find_t* result);
 int _dos_findnext(struct find_t* result);
 int _dos_getdrive(unsigned* drive);

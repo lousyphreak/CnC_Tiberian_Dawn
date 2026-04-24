@@ -461,6 +461,41 @@ BOOL GetVolumeInformation(LPCSTR root_path_name, LPSTR volume_name_buffer, DWORD
     return 1;
 }
 
+HANDLE LoadLibrary(LPCSTR file_name)
+{
+    return SDL_LoadObject(file_name);
+}
+
+BOOL FreeLibrary(HANDLE module)
+{
+    if (module == nullptr) {
+        return 0;
+    }
+
+    SDL_UnloadObject(module);
+    return 1;
+}
+
+BOOL SetForegroundWindow(HWND window)
+{
+    if (window == nullptr || window->sdl_window == nullptr) {
+        return 0;
+    }
+
+    SDL_RaiseWindow(window->sdl_window);
+    return 1;
+}
+
+BOOL ShowWindow(HWND window, INT)
+{
+    if (window == nullptr || window->sdl_window == nullptr) {
+        return 0;
+    }
+
+    SDL_ShowWindow(window->sdl_window);
+    return 1;
+}
+
 void GlobalMemoryStatus(MEMORYSTATUS* memory_status)
 {
     if (!memory_status) {

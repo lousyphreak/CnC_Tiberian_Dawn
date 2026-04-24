@@ -40,6 +40,48 @@
 
 #include	"RAWFILE.H"
 
+class GetCDClass
+{
+	public:
+		GetCDClass(void) : CurrentDrive(0) {}
+
+		int Get_Number_Of_Drives(void) const
+		{
+			const unsigned drive_count = WWFS_GetDriveCount();
+			return drive_count > 0 ? (int)drive_count : 1;
+		}
+
+		int Get_First_CD_Drive(void)
+		{
+			CurrentDrive = (int)WWFS_GetCurrentDriveNumber();
+			if (CurrentDrive <= 0) {
+				CurrentDrive = 1;
+			}
+			return CurrentDrive;
+		}
+
+		int Get_Next_CD_Drive(void)
+		{
+			const unsigned drive_count = WWFS_GetDriveCount();
+			if (drive_count == 0) {
+				return Get_First_CD_Drive();
+			}
+
+			if (CurrentDrive <= 0) {
+				return Get_First_CD_Drive();
+			}
+
+			++CurrentDrive;
+			if ((unsigned)CurrentDrive > drive_count) {
+				CurrentDrive = 1;
+			}
+			return CurrentDrive;
+		}
+
+	private:
+		int CurrentDrive;
+};
+
 /*
 **	This class is derived from the raw file class. This class adds the functionality of searching
 **	across multiple directories or drives. It is designed for the typical case of a CD-ROM game

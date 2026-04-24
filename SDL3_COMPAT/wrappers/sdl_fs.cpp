@@ -2162,6 +2162,51 @@ void WWFS_MakePath(char* path, const char* drive, const char* dir, const char* f
     }
 }
 
+void _splitpath(const char* path, char* drive, char* dir, char* fname, char* ext)
+{
+    if (drive != nullptr) {
+        drive[0] = '\0';
+    }
+
+    if (path == nullptr) {
+        if (dir != nullptr) {
+            dir[0] = '\0';
+        }
+        if (fname != nullptr) {
+            fname[0] = '\0';
+        }
+        if (ext != nullptr) {
+            ext[0] = '\0';
+        }
+        return;
+    }
+
+    std::filesystem::path source(path);
+    const std::string parent = source.parent_path().generic_string();
+    const std::string stem = source.stem().string();
+    const std::string extension = source.extension().string();
+
+    if (dir != nullptr) {
+        if (!parent.empty()) {
+            SDL_strlcpy(dir, parent.c_str(), _MAX_DIR);
+            const size_t dir_length = SDL_strlen(dir);
+            if (dir_length > 0 && dir[dir_length - 1] != '/' && dir[dir_length - 1] != '\\') {
+                SDL_strlcat(dir, "/", _MAX_DIR);
+            }
+        } else {
+            dir[0] = '\0';
+        }
+    }
+
+    if (fname != nullptr) {
+        SDL_strlcpy(fname, stem.c_str(), _MAX_FNAME);
+    }
+
+    if (ext != nullptr) {
+        SDL_strlcpy(ext, extension.c_str(), _MAX_EXT);
+    }
+}
+
 std::string WWFS_NormalizePath(const char* windows_path)
 {
     std::string normalized = windows_path ? windows_path : "";

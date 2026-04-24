@@ -190,6 +190,10 @@ DWORD SetFilePointer(HANDLE handle, LONG distance_to_move, LONG* distance_to_mov
 UINT GetDriveType(LPCSTR root_path_name);
 BOOL GetVolumeInformation(LPCSTR root_path_name, LPSTR volume_name_buffer, DWORD volume_name_size, DWORD* volume_serial_number,
     DWORD* maximum_component_length, DWORD* file_system_flags, LPSTR file_system_name_buffer, DWORD file_system_name_size);
+HANDLE LoadLibrary(LPCSTR file_name);
+BOOL FreeLibrary(HANDLE module);
+BOOL SetForegroundWindow(HWND window);
+BOOL ShowWindow(HWND window, INT command_show);
 void GlobalMemoryStatus(MEMORYSTATUS* memory_status);
 int stricmp(const char* lhs, const char* rhs);
 int strcmpi(const char* lhs, const char* rhs);

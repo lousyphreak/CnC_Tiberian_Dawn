@@ -33,1055 +33,502 @@
  *                                                                                             *
  *---------------------------------------------------------------------------------------------*
  * Functions:                                                                                  *
+ *   RawFileClass::Bias -- Bias a file with a specific starting position and length.           *
  *   RawFileClass::Close -- Perform a closure of the file.                                     *
  *   RawFileClass::Create -- Creates an empty file.                                            *
  *   RawFileClass::Delete -- Deletes the file object from the disk.                            *
  *   RawFileClass::Error -- Handles displaying a file error message.                           *
+ *   RawFileClass::Get_Date_Time -- Gets the date and time the file was last modified.         *
  *   RawFileClass::Is_Available -- Checks to see if the specified file is available to open.   *
  *   RawFileClass::Open -- Assigns name and opens file in one operation.                       *
  *   RawFileClass::Open -- Opens the file object with the rights specified.                    *
  *   RawFileClass::RawFileClass -- Simple constructor for a file object.                       *
+ *   RawFileClass::Raw_Seek -- Performs a seek on the unbiased file.                           *
  *   RawFileClass::Read -- Reads the specified number of bytes into a memory buffer.           *
  *   RawFileClass::Seek -- Reposition the file pointer as indicated.                           *
+ *   RawFileClass::Set_Date_Time -- Sets the date and time the file was last modified.         *
  *   RawFileClass::Set_Name -- Manually sets the name for a file object.                       *
  *   RawFileClass::Size -- Determines size of file (in bytes).                                 *
  *   RawFileClass::Write -- Writes the specified data to the buffer specified.                 *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#include "FUNCTION.H"
 
-#include	"FUNCTION.H"
-#include	<stdlib.h>
-#include	<stdio.h>
-#include	<string.h>
-#include	<stddef.h>
-#include	<errno.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <string>
 
-#include	"win32_compat.h"
+#include "RAWFILE.H"
 #include "sdl_fs.h"
 
-#include	"RAWFILE.H"
+namespace {
 
-extern GraphicBufferClass	SeenBuff;
-extern GraphicBufferClass	HidPage;
-
-/***********************************************************************************************
- * RawFileClass::Error -- Handles displaying a file error message.                             *
- *                                                                                             *
- *    Display an error message as indicated. If it is allowed to retry, then pressing a key    *
- *    will return from this function. Otherwise, it will exit the program with "exit()".       *
- *                                                                                             *
- * INPUT:   error    -- The error number (same as the DOSERR.H error numbers).                 *
- *                                                                                             *
- *          canretry -- Can this routine exit normally so that retrying can occur? If this is  *
- *                      false, then the program WILL exit in this routine.                     *
- *                                                                                             *
- *          filename -- Optional filename to report with this error. If no filename is         *
- *                      supplied, then no filename is listed in the error message.             *
- *                                                                                             *
- * OUTPUT:  none, but this routine might not return at all if the "canretry" parameter is      *
- *          false or the player pressed ESC.                                                   *
- *                                                                                             *
- * WARNINGS:   This routine may not return at all. It handles being in text mode as well as    *
- *             if in a graphic mode.                                                           *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   10/17/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
-void RawFileClass::Error(int error, int canretry, char const * filename)
+uint16_t Pack_DOS_Date(const SDL_DateTime& date_time)
 {
-	char	message[256];				// Staging buffer for error message string.
+	return static_cast<uint16_t>(((date_time.year - 1980) << 9) | (date_time.month << 5) | date_time.day);
+}
 
-	/*
-	**	Build the complete text of the error message. This text is used in either the graphic
-	**	mode or the text mode version.
-	*/
+uint16_t Pack_DOS_Time(const SDL_DateTime& date_time)
+{
+	return static_cast<uint16_t>((date_time.hour << 11) | (date_time.minute << 5) | (date_time.second / 2));
+}
+
+void Build_File_Error_Message(char* message, size_t message_size, int error, char const* filename, int canretry)
+{
+	if (!message || message_size == 0) {
+		return;
+	}
+
 #ifdef GERMAN
-	strcpy(message, "DATEIFEHLER");
+	std::snprintf(message, message_size, "DATEIFEHLER");
 #else
 #ifdef FRENCH
-	strcpy(message, "ERREUR DE FICHIER");
+	std::snprintf(message, message_size, "ERREUR DE FICHIER");
 #else
-	strcpy(message, "FILE ERROR");
+	std::snprintf(message, message_size, "FILE ERROR");
 #endif
 #endif
-	if (filename) {
-		strcat(message, "(");
-		strcat(message, filename);
-		strcat(message, ")");
-	}
-	strcat(message, ": ");
-//BG: Borland only	strcat(message, _sys_errlist[error]);
-	strcat(message, strerror(error) );
-	strcat(message, ". ");
 
-	/*
-	**	If it can't properly handle displaying the error message in the
-	**	current graphic mode, then this forces the error to become non
-	**	recoverable. Go into text mode and proceed.
-	*/
-	if (!FontPtr && GraphicMode != TXT_MODE) {
-		Set_Video_Mode(RESET_MODE);
-		canretry = false;
-		GraphicMode = TXT_MODE;
+	if (filename && filename[0] != '\0') {
+		std::strncat(message, " (", message_size - std::strlen(message) - 1);
+		std::strncat(message, filename, message_size - std::strlen(message) - 1);
+		std::strncat(message, ")", message_size - std::strlen(message) - 1);
 	}
 
-	/*
-	**	Add the text explaining the valid actions to take.
-	*/
+	std::strncat(message, ": ", message_size - std::strlen(message) - 1);
+	std::strncat(message, std::strerror(error), message_size - std::strlen(message) - 1);
+
 	if (canretry) {
-		if (GraphicMode == TXT_MODE) strcat(message, "\n");
-#ifdef GERMAN
-		strcat(message, " Beliebige Taste dr�cken f�r erneuten Versuch.");
-		if (GraphicMode == TXT_MODE) strcat(message, "\n");
-		strcat(message, " <ESC> dr�cken, um das Programm zu verlassen.");
-#else
-#ifdef FRENCH
-		strcat(message, " Appuyez sur une touche pour recommencer.");
-		if (GraphicMode == TXT_MODE) strcat(message, "\n");
-		strcat(message, " Appuyez sur Echap pour quitter le programme.");
-#else
-		strcat(message, " Press any key to retry.");
-		if (GraphicMode == TXT_MODE) strcat(message, "\n");
-		strcat(message, " Press <ESC> to exit program.");
-#endif
-#endif
-		if (GraphicMode == TXT_MODE) strcat(message, "\n");
-	} else {
-		if (GraphicMode == TXT_MODE) strcat(message, "\n");
-#ifdef GERMAN
-		strcat(message, " Beliebige Taste dr�cken, um das Programm zu verlassen.");
-#else
-#ifdef FRENCH
-		strcat(message, " Appuyez sur une touche pour quitter le programme.");
-#else
-		strcat(message, " Press any key to exit program.");
-#endif
-#endif
-		if (GraphicMode == TXT_MODE) strcat(message, "\n");
-	}
-
-	/*
-	**	In text mode, the error handler is very simple. It just prints the error message
-	**	to the screen and waits for a response.
-	*/
-	if (GraphicMode == TXT_MODE) {
-		int	input;
-
-		/*
-		**	Display the error message and wait for a response.
-		*/
-		printf(message);
-		Keyboard::Clear();
-		input = Keyboard::Get();
-
-		/*
-		**	Check for input. If the ESC key was pressed or if retrying is not allowed,
-		**	then exit the program. Otherwise, return from this routine for a retry
-		**	attempt.
-		*/
-		if (input == KN_ESC || !canretry) {
-			Prog_End();
-			exit(EXIT_FAILURE);
-		}
-
-	} else {
-
-		/*
-		**	The graphic mode version of the error handler will display a simple message
-		**	box on the screen. If the palette is black at this point, then the error will
-		**	be invisible. For more thorough and pleasing results, you should replace this
-		**	virtual function with one of your own, that is more aware of the environment
-		**	in which is exists.
-		*/
-		void			*background;		// Pointer to background saving buffer.
-		GraphicBufferClass * 	oldpage;				// Copy of old logic page.
-		int			oldwindow;			// Copy of old window number.
-		void const	*oldfont;			// Copy of old font pointer.
-		int			oldspacing;			// Old font X spacing.
-
-		/*
-		**	Setup display in preparation for printing the error message.
-		*/
-		oldpage = Set_Logic_Page(SeenBuff);
-		oldwindow = Change_Window(ErrorWindow);
-		oldfont = Set_Font(FontPtr);
-		oldspacing = FontXSpacing; FontXSpacing = 0;
-		Hide_Mouse();
-
-		/*
-		**	Try to allocate a storage buffer for the background to the
-		**	error window.
-		*/
-		background = new char [Size_Of_Region(WinW<<3, WinH)];
-
-		/*
-		**	If there is memory for the background storage, then save the
-		**	screen image area to that buffer.
-		*/
-		if (background) {
-			SeenBuff.To_Buffer(WinX<<3, WinY, WinW<<3, WinH, background, Size_Of_Region(WinW<<3, WinH));
-		}
-
-		/*
-		**	Draw a rudimentary box.
-		*/
-		New_Window();
-		LogicPage->Draw_Rect(WinX<<3, WinY, (WinX+WinW)<<3, WinY+WinH, WinC);
-
-		/*
-		** shrinks window down one byte in all directions.
-		*/
-		WindowList[Window][WINDOWX] += 1;
-		WindowList[Window][WINDOWY] += 1<<3;
-		WindowList[Window][WINDOWWIDTH] -= 1<<1;
-		WindowList[Window][WINDOWHEIGHT] -= 1<<4;
-		Change_Window(Window);
-		WinCx = WinCy = 0;
-
-		Window_Print(message);
-		Keyboard::Clear();
-
-		/*
-		**	Check for input. If the ESC key was pressed or if retrying is not allowed,
-		**	then exit the program. Otherwise, return from this routine for a retry
-		**	attempt.
-		*/
-		int input = Keyboard::Get();
-		if (input == KN_ESC || !canretry) {
-			Prog_End();
-			exit(EXIT_FAILURE);
-		}
-
-		/*
-		**	Restore the window back to its original size.
-		*/
-		WindowList[Window][WINDOWX] -= 1;
-		WindowList[Window][WINDOWY] -= 1<<3;
-		WindowList[Window][WINDOWWIDTH] += 1<<1;
-		WindowList[Window][WINDOWHEIGHT] += 1<<4;
-		Change_Window(Window);
-		WinCx = WinCy = 0;
-
-		/*
-		**	If the background was saved off, then restore it.
-		*/
-		if (background) {
-			Buffer_To_Page(WinX<<3, WinY, WinW<<3, WinH, background, SeenBuff);
-			delete [] background;
-		}
-
-		/*
-		**	Restore the system global settings to original values.
-		*/
-		Show_Mouse();
-		Change_Window(oldwindow);
-		Set_Font(oldfont);
-		Set_Logic_Page(oldpage);
-		FontXSpacing = oldspacing;
+		std::strncat(message, ". Retry requested.", message_size - std::strlen(message) - 1);
 	}
 }
 
+} // namespace
 
-/***********************************************************************************************
- * RawFileClass::RawFileClass -- Simple constructor for a file object.                         *
- *                                                                                             *
- *    This constructor is called when a file object is created with a supplied filename, but   *
- *    not opened at the same time. In this case, an assumption is made that the supplied       *
- *    filename is a constant string. A duplicate of the filename string is not created since   *
- *    it would be wasteful in that case.                                                       *
- *                                                                                             *
- * INPUT:   filename -- The filename to assign to this file object.                            *
- *                                                                                             *
- * OUTPUT:  none                                                                               *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   10/17/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
-RawFileClass::RawFileClass(char const *filename) : 
-	Handle(-1), 
-	Filename(filename), 
-	Allocated(false)
+RawFileClass::RawFileClass(char const* filename)
+	: Rights(READ)
+	, BiasStart(0)
+	, BiasLength(-1)
+	, Handle(nullptr)
+	, Filename(filename)
+	, Date(0)
+	, Time(0)
+	, Allocated(false)
 {
 }
 
+RawFileClass::RawFileClass(RawFileClass const& file)
+	: Rights(file.Rights)
+	, BiasStart(file.BiasStart)
+	, BiasLength(file.BiasLength)
+	, Handle(nullptr)
+	, Filename(NULL)
+	, Date(file.Date)
+	, Time(file.Time)
+	, Allocated(false)
+{
+	if (file.Filename) {
+		Set_Name(file.Filename);
+	}
+}
 
-RawFileClass::~RawFileClass(void) 
+RawFileClass& RawFileClass::operator=(RawFileClass const& file)
+{
+	if (this == &file) {
+		return *this;
+	}
+
+	Close();
+	if (Allocated && Filename) {
+		free((void*)Filename);
+	}
+
+	Filename = NULL;
+	Allocated = false;
+	Rights = file.Rights;
+	BiasStart = file.BiasStart;
+	BiasLength = file.BiasLength;
+	Date = file.Date;
+	Time = file.Time;
+	Handle = nullptr;
+
+	if (file.Filename) {
+		Set_Name(file.Filename);
+	}
+
+	return *this;
+}
+
+void RawFileClass::Error(int error, int canretry, char const* filename)
+{
+	char message[512] = {0};
+	Build_File_Error_Message(message, sizeof(message), error, filename ? filename : Filename, canretry);
+	if (message[0] != '\0') {
+		std::fprintf(stderr, "%s\n", message);
+		SDL_Log("%s", message);
+	}
+
+	if (!canretry) {
+		Prog_End();
+		std::exit(EXIT_FAILURE);
+	}
+}
+
+char const* RawFileClass::Set_Name(char const* filename)
 {
 	if (Allocated && Filename) {
-		free((char *)Filename); 
-	}
-	Allocated = false; 
-	Filename = 0;
-}
-
-
-/***********************************************************************************************
- * RawFileClass::Set_Name -- Manually sets the name for a file object.                         *
- *                                                                                             *
- *    This routine will set the name for the file object to the name specified. This name is   *
- *    duplicated in free store. This allows the supplied name to be a temporarily constructed  *
- *    text string. Setting the name in this fashion doesn't affect the closed or opened state  *
- *    of the file.                                                                             *
- *                                                                                             *
- * INPUT:   filename -- The filename to assign to this file object.                            *
- *                                                                                             *
- * OUTPUT:  Returns with a pointer to the allocated copy of this filename. This pointer is     *
- *          guaranteed to remain valid for the duration of this file object or until the name  *
- *          is changed -- whichever is sooner.                                                 *
- *                                                                                             *
- * WARNINGS:   Because of the allocation this routine must perform, memory could become        *
- *             fragmented.                                                                     *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   10/17/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
-char const * RawFileClass::Set_Name(char const *filename)
-{
-	if (Filename && Allocated) {
-		free((char*)Filename);
-		Filename = 0;
+		free((void*)Filename);
+		Filename = NULL;
 		Allocated = false;
 	}
 
-	if (!filename) return(NULL);
+	if (filename == NULL) {
+		return NULL;
+	}
+
+	Bias(0);
 
 	Filename = strdup(filename);
-	if (!Filename) {
+	if (Filename == NULL) {
 		Error(ENOMEM, false, filename);
 	}
+
 	Allocated = true;
-	return(Filename);
+	return Filename;
 }
 
-
-/***********************************************************************************************
- * RawFileClass::Open -- Assigns name and opens file in one operation.                         *
- *                                                                                             *
- *    This routine will assign the specified filename to the file object and open it at the    *
- *    same time. If the file object was already open, then it will be closed first. If the     *
- *    file object was previously assigned a filename, then it will be replaced with the new    *
- *    name. Typically, this routine is used when an anonymous file object has been crated and  *
- *    now it needs to be assigned a name and opened.                                           *
- *                                                                                             *
- * INPUT:   filename -- The filename to assign to this file object.                            *
- *                                                                                             *
- *          rights   -- The open file access rights to use.                                    *
- *                                                                                             *
- * OUTPUT:  bool; Was the file opened? The return value of this is moot, since the open file   *
- *          is designed to never return unless it succeeded.                                   *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   10/17/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
-int RawFileClass::Open(char const *filename, int rights)
+int RawFileClass::Open(char const* filename, int rights)
 {
 	Set_Name(filename);
-	return(Open(rights));
+	return Open(rights);
 }
 
-
-/***********************************************************************************************
- * RawFileClass::Open -- Opens the file object with the rights specified.                      *
- *                                                                                             *
- *    This routine is used to open the specified file object with the access rights indicated. *
- *    This only works if the file has already been assigned a filename. It is guaranteed, by   *
- *    the error handler, that this routine will always return with success.                    *
- *                                                                                             *
- * INPUT:   rights   -- The file access rights to use when opening this file. This is a        *
- *                      combination of READ and/or WRITE bit flags.                            *
- *                                                                                             *
- * OUTPUT:  bool; Was the file opened successfully? This will always return true by reason of  *
- *          the error handler.                                                                 *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   10/17/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
 int RawFileClass::Open(int rights)
 {
 	Close();
 
-	/*
-	**	Verify that there is a filename associated with this file object. If not, then this is a
-	**	big error condition.
-	*/
-	if (!Filename) {
+	if (Filename == NULL) {
 		Error(ENOENT, false);
 	}
 
-	/*
-	**	Record the access rights used for this open call. These rights will be used if the
-	**	file object is duplicated.
-	*/
 	Rights = rights;
 
-	/*
-	**	Repetatively try to open the file. Abort if a fatal error condition occurs.
-	*/
-	for (;;) {
+	int open_flags = WWFS_OPEN_BINARY;
+	switch (rights) {
+		default:
+			errno = EINVAL;
+			Error(EINVAL, false, Filename);
+			return false;
 
-		/*
-		**	Try to open the file according to the access rights specified.
-		*/
-		Hard_Error_Occured = 0;
-		switch (rights) {
+		case READ:
+			open_flags |= WWFS_OPEN_READ_ONLY;
+			break;
 
-			/*
-			**	If the access rights are not recognized, then report this as
-			**	an invalid access code.
-			*/
-			default:
-				errno = EINVAL;
-				break;
+		case WRITE:
+			open_flags |= WWFS_OPEN_WRITE_ONLY | WWFS_OPEN_CREATE | WWFS_OPEN_TRUNCATE;
+			break;
 
-			case READ:
-				_dos_open(Filename, O_RDONLY|SH_DENYNO, &Handle);
-				break;
-
-			case WRITE:
-				_dos_creat(Filename, 0, &Handle);
-				break;
-
-			case READ|WRITE:
-				_dos_open(Filename, O_RDWR|O_CREAT|SH_DENYWR, &Handle);
-				break;
-		}
-
-		/*
-		**	If the handle indicates the file is not open, then this is an error condition.
-		**	For the case of the file cannot be found, then allow a retry. All other cases
-		**	are fatal.
-		*/
-		if (Handle < 0) {
-
-			/*
-			**	If this flag is set, then some hard error occurred. Just assume that the error
-			**	is probably a removed CD-ROM and allow a retry.
-			*/
-			if (Hard_Error_Occured) {
-				Error(Hard_Error_Occured, true, Filename);
-			} else {
-				if (errno == ENOENT) {
-					Error(ENOENT, true, Filename);
-				} else {
-					Error(errno, false, Filename);
-				}
-			}
-			continue;
-		}
-		break;
+		case READ | WRITE:
+			open_flags |= WWFS_OPEN_READ_WRITE | WWFS_OPEN_CREATE;
+			break;
 	}
-	return(true);
+
+	Handle = WWFS_OpenWithFlags(Filename, open_flags);
+	if (Handle == nullptr) {
+		Error(errno ? errno : ENOENT, false, Filename);
+	}
+
+	if (Handle != nullptr && (BiasStart != 0 || BiasLength != -1)) {
+		Seek(0, SEEK_SET);
+	}
+
+	return true;
 }
 
-
-/***********************************************************************************************
- * RawFileClass::Is_Available -- Checks to see if the specified file is available to open.     *
- *                                                                                             *
- *    This routine will examine the disk system to see if the specified file can be opened     *
- *    or not. Use this routine before opening a file in order to make sure that is available   *
- *    or to perform other necessary actions.                                                   *
- *                                                                                             *
- * INPUT:   force -- Should this routine keep retrying until the file becomes available? If    *
- *                   in this case it doesn't become available, then the program will abort.    *
- *                                                                                             *
- * OUTPUT:  bool; Is the file available to be opened?                                          *
- *                                                                                             *
- * WARNINGS:   Depending on the parameter passed in, this routine may never return.            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   10/18/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
 int RawFileClass::Is_Available(int forced)
 {
-	int	file;		// Working file handle.
-	int	open_failed;
-
-	/*
-	**	If the file is already open, then is must have already passed the availability check.
-	**	Return true in this case.
-	*/
-	if (Is_Open()) {
-		return(true);
+	if (Filename == NULL) {
+		return false;
 	}
 
-	/*
-	**	If this is a forced check, then go through the normal open channels, since those
-	**	channels ensure that the file must exist.
-	*/
+	if (Is_Open()) {
+		return true;
+	}
+
 	if (forced) {
 		RawFileClass::Open(READ);
 		RawFileClass::Close();
-		return(true);
+		return true;
 	}
 
-	/*
-	**	Perform a raw open of the file. If this open fails for ANY REASON, including a missing
-	**	CD-ROM, this routine will return a failure condition. In all but the missing file
-	**	condition, go through the normal error recover channels.
-	*/
-	for (;;) {
-
-		Hard_Error_Occured = 0;
-		open_failed = _dos_open(Filename, O_RDONLY|SH_DENYNO, &file);
-
-		/*
-		**	If DOS reports that everything is just fine except that the file is not present,
-		**	then return with this fact. Any other case will fall through to the error handler
-		**	routine.
-		*/
-		if (open_failed && errno == ENOENT) {
-			return(false);
-		}
-
-		/*
-		** If we got an access error it could be because there is no cd in
-		** the drive.  Call the error handler but allow a continue if it
-		** returns.
-		*/
-		if (open_failed && errno == EACCES) {
-//			Error(errno, true, Filename);
-//			continue;
-			return(false);
-		}
-
-		/*
-		**	If the file could not be found, then return with this information. If a more
-		**	serious error occurred, then display the error message and abort.
-		*/
-		if (Hard_Error_Occured) {
-			return(false);
-//			Error(Hard_Error_Occured, true, Filename);
-//			continue;
-		} else {
-			if (open_failed) {
-				/*
-				**	An unhandled error condition is fatal. Display the error message and then
-				**	abort.
-				*/
-//				Error(errno, false, Filename);
-				return(false);
-			}
-		}
-		break;
-	}
-
-	/*
-	**	Since the file could be opened, then close it and return that the file exists.
-	*/
-	if (_dos_close(file)) {
-		Error(errno, false, Filename);
-	}
-	return(true);
+	std::string normalized = WWFS_NormalizePath(Filename);
+	SDL_PathInfo info{};
+	return WWFS_GetPathInfo(normalized.c_str(), &info) ? true : false;
 }
 
-
-/***********************************************************************************************
- * RawFileClass::Close -- Perform a closure of the file.                                       *
- *                                                                                             *
- *    Close the file object. In the rare case of an error, handle it as appropriate.           *
- *                                                                                             *
- * INPUT:   none                                                                               *
- *                                                                                             *
- * OUTPUT:  none                                                                               *
- *                                                                                             *
- * WARNINGS:   Some rare error conditions may cause this routine to abort the program.         *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   10/18/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
 void RawFileClass::Close(void)
 {
+	if (!Is_Open()) {
+		return;
+	}
 
-	/*
-	**	If the file is open, then close it. If the file is already closed, then just return. This
-	**	isn't considered an error condition.
-	*/
-	if (Is_Open()) {
+	if (!SDL_CloseIO(Handle)) {
+		Error(EIO, false, Filename);
+	}
 
-		for (;;) {
-			/*
-			**	Close the file. If there was an error in the close operation -- abort.
-			*/
-			Hard_Error_Occured = 0;
-			if (_dos_close(Handle)) {
+	Handle = nullptr;
+}
 
-				/*
-				**	By definition, this error can only be a bad file handle. This a fatal condition
-				**	of course, so abort with an error message.
-				*/
-				Error(errno, false, Filename);
-			}
+int32_t RawFileClass::Read(void* buffer, int32_t size)
+{
+	int32_t bytesread = 0;
+	int opened = false;
 
-			/*
-			**	In the condition (if it is even possible) of a hard error occurring, then
-			**	assume it is the case of missing media. Display an error message and try
-			**	again if indicated.
-			*/
-			if (Hard_Error_Occured) {
-				Error(Hard_Error_Occured, true, Filename);
+	if (buffer == NULL || size <= 0) {
+		return 0;
+	}
+
+	if (!Is_Open()) {
+		if (!Open(READ)) {
+			return 0;
+		}
+		opened = true;
+	}
+
+	if (BiasLength != -1) {
+		const int32_t remainder = BiasLength - Seek(0);
+		size = size < remainder ? size : remainder;
+	}
+
+	int32_t total = 0;
+	char* read_buffer = static_cast<char*>(buffer);
+	while (size > 0) {
+		const size_t actual = SDL_ReadIO(Handle, read_buffer, static_cast<size_t>(size));
+		if (actual == 0) {
+			if (SDL_GetIOStatus(Handle) == SDL_IO_STATUS_ERROR) {
+				Error(EIO, true, Filename);
 				continue;
 			}
 			break;
 		}
 
-		/*
-		**	At this point the file must have been closed. Mark the file as empty and return.
-		*/
-		Handle = -1;
+		read_buffer += actual;
+		size -= static_cast<int32_t>(actual);
+		total += static_cast<int32_t>(actual);
 	}
+	bytesread = total;
+
+	if (opened) {
+		Close();
+	}
+	return bytesread;
 }
 
-
-/***********************************************************************************************
- * RawFileClass::Read -- Reads the specified number of bytes into a memory buffer.             *
- *                                                                                             *
- *    This routine will read the specified number of bytes and place the data into the buffer  *
- *    indicated. It is legal to call this routine with a request for more bytes than are in    *
- *    the file. This condition can result in fewer bytes being read than requested. Determine  *
- *    this by examining the return value.                                                      *
- *                                                                                             *
- * INPUT:   buffer   -- Pointer to the buffer to read data into. If NULL is passed, no read    *
- *                      is performed.                                                          *
- *                                                                                             *
- *          size     -- The number of bytes to read. If NULL is passed, then no read is        *
- *                      performed.                                                             *
- *                                                                                             *
- * OUTPUT:  Returns with the number of bytes read into the buffer. If this number is less      *
- *          than requested, it indicates that the file has been exhausted.                     *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   10/18/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
-long RawFileClass::Read(void *buffer, long size)
+int32_t RawFileClass::Write(void const* buffer, int32_t size)
 {
-	long	bytesread = 0;			// Running count of the number of bytes read into the buffer.
-	int	opened = false;		// Was the file opened by this routine?
-	int	readresult;
+	int32_t byteswritten = 0;
+	int opened = false;
 
-	/*
-	**	If the file isn't opened, open it. This serves as a convenience
-	**	for the programmer.
-	*/
-	if (!Is_Open()) {
-
-		/*
-		**	The error check here is moot. Open will never return unless it succeeded.
-		*/
-		if (!Open(READ)) {
-			return(0);
-		}
-		opened = true;
+	if (buffer == NULL || size <= 0) {
+		return 0;
 	}
 
-	/*
-	**	Read the file in convenient chunk sizes. When the actual number
-	**	of bytes read does not match the desired, then assume that the file
-	**	is exhausted and bail. This loop was adjusted to take into
-	**	consideration the fact that "read" returns a SIGNED value whereas
-	**	it takes an UNSIGNED value as the byte count.
-	*/
-	while (size) {
-		unsigned	desired;		// Bytes desired to be read this pass.
-		unsigned actual;		// Actual number of bytes read.
-
-		/*
-		**	Break the read request into chunks no bigger than the low level DOS read
-		**	can handle.
-		*/
-		desired = size;
-
-		Hard_Error_Occured = 0;
-		readresult = _dos_read(Handle, buffer, desired, &actual);
-
-		/*
-		**	If a hard error occurred, then assume that it is the case of the CD-ROM or
-		**	floppy media having been removed. Display the error and retry as directed.
-		*/
-		if (Hard_Error_Occured) {
-			Error(Hard_Error_Occured, true, Filename);
-			continue;			// Not technically needed, but to be consistent...
-		} else {
-
-			/*
-			**	If negative one is returned from the read operation, then this indicates
-			**	either a bad file number or invalid access. These are fatal conditions, so
-			**	display the error and then abort.
-			*/
-			if (readresult != 0) {
-				Error(errno, false, Filename);
-			} else {
-
-				/*
-				**	No error occurred during the read. Adjust the pointers and size counters and
-				**	loop again if more data is needed to be read.
-				*/
-				buffer = Add_Long_To_Pointer(buffer, actual);
-				bytesread += actual;
-				size -= actual;
-				if (actual != desired) break;		// No more data?
-			}
-		}
-	}
-
-	/*
-	**	Close the file if it was opened by this routine and return
-	**	the actual number of bytes read into the buffer.
-	*/
-	if (opened) Close();
-	return(bytesread);
-}
-
-
-/***********************************************************************************************
- * RawFileClass::Write -- Writes the specified data to the buffer specified.                   *
- *                                                                                             *
- *    This routine will write the data specified to the file.                                  *
- *                                                                                             *
- * INPUT:   buffer   -- The buffer that holds the data to write.                               *
- *                                                                                             *
- *          size     -- The number of bytes to write to the file.                              *
- *                                                                                             *
- * OUTPUT:  Returns with the number of bytes written to the file. This routine catches the     *
- *          case of a disk full condition, so this routine will always return with the number  *
- *          matching the size request.                                                         *
- *                                                                                             *
- * WARNINGS:   A fatal file condition could cause this routine to never return.                *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   10/18/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
-long RawFileClass::Write(void const *buffer, long size)
-{
-	long	bytesread = 0;
-	int	opened = false;		// Was the file manually opened?
-	int	writeresult;
-
-	/*
-	**	Check to open status of the file. If the file is open, then merely write to
-	**	it. Otherwise, open the file for writing and then close the file when the
-	**	output is finished.
-	*/
 	if (!Is_Open()) {
 		if (!Open(WRITE)) {
-			return(0);
+			return 0;
 		}
 		opened = true;
 	}
 
-	/*
-	**	Write the data to the file in chunks no bigger than what the low level DOS write
-	**	can handle.
-	*/
-	while (size) {
-		unsigned	desired;		// Bytes desired to be write this pass.
-		unsigned actual;		// Actual number of bytes written.
+	const size_t actual = SDL_WriteIO(Handle, buffer, static_cast<size_t>(size));
+	if (actual < static_cast<size_t>(size)) {
+		Error(ENOSPC, false, Filename);
+	}
+	byteswritten = static_cast<int32_t>(actual);
 
-		Hard_Error_Occured = 0;
-//		desired = (unsigned)MIN(size, Transfer_Block_Size());
-		desired = size;
-		writeresult = _dos_write(Handle, buffer, desired, &actual);
-
-		/*
-		**	If a hard error occurred, then assume it is the case of the media being
-		**	removed. Print the error message an retry as directed.
-		*/
-		if (Hard_Error_Occured) {
-			Error(Hard_Error_Occured, true, Filename);
-			continue;			// Not technically needed, but to be consistent...
-		} else {
-
-			/*
-			**	If negative one is returned by the DOS read, then this indicates a bad file
-			**	handle or invalid access. Either condition is fatal -- display error condition
-			**	and abort.
-			*/
-			if (writeresult != 0) {
-				Error(errno, false, Filename);
-			} else {
-
-				/*
-				**	A successful write occurred. Update pointers and byte counter as appropriate.
-				*/
-				buffer = Add_Long_To_Pointer((void *)buffer, actual);
-				bytesread += actual;
-				size -= actual;
-
-				/*
-				**	If the actual bytes written is less than requested, assume this is a case of
-				**	the disk being full. Consider this a fatal error condition.
-				*/
-				if (actual != desired) {
-					Error(ENOSPC, false, Filename);
-				}
-			}
-		}
+	if (BiasLength != -1 && Raw_Seek(0) > BiasStart + BiasLength) {
+		BiasLength = Raw_Seek(0) - BiasStart;
 	}
 
-	/*
-	**	If this routine had to open the file, then close it before returning.
-	*/
 	if (opened) {
 		Close();
 	}
 
-	/*
-	**	Return with the number of bytes written. This will always be the number of bytes
-	**	requested, since the case of the disk being full is caught by this routine.
-	*/
-	return(bytesread);
+	return byteswritten;
 }
 
-
-/***********************************************************************************************
- * RawFileClass::Seek -- Reposition the file pointer as indicated.                             *
- *                                                                                             *
- *    Use this routine to move the filepointer to the position indicated. It can move either   *
- *    relative to current position or absolute from the beginning or ending of the file. This  *
- *    routine will only return if it successfully performed the seek.                          *
- *                                                                                             *
- * INPUT:   pos   -- The position to seek to. This is interpreted as relative to the position  *
- *                   indicated by the "dir" parameter.                                         *
- *                                                                                             *
- *          dir   -- The relative position to relate the seek to. This can be either SEEK_SET  *
- *                   for the beginning of the file, SEEK_CUR for the current position, or      *
- *                   SEEK_END for the end of the file.                                         *
- *                                                                                             *
- * OUTPUT:  This routine returns the position that the seek ended up at.                       *
- *                                                                                             *
- * WARNINGS:   If there was a file error, then this routine might never return.                *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   10/18/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
-long RawFileClass::Seek(long pos, int dir)
+int32_t RawFileClass::Seek(int32_t pos, int dir)
 {
-	/*
-	**	If the file isn't opened, then this is a fatal error condition.
-	*/
-	if (!Is_Open()) {
-		Error(EBADF, false, Filename);
-	}
-
-	/*
-	**	Keep trying to seek until a non-retry condition occurs.
-	*/
-	for (;;) {
-
-		/*
-		**	Perform the low level seek on the file.
-		*/
-		Hard_Error_Occured = 0;
-		pos = lseek(Handle, pos, dir);
-
-		/*
-		**	If a hard error occurred, then assume that it is the case of removed media. Display
-		**	error message and retry.
-		*/
-		if (Hard_Error_Occured) {
-			Error(Hard_Error_Occured, true, Filename);
-			continue;
-		} else {
-
-			/*
-			**	A negative one indicates a fatal error with the seek operation. Display error
-			**	condition and then abort.
-			*/
-			if (pos == -1) {
-				Error(errno, false, Filename);
-			}
-		}
-		break;
-	}
-
-	/*
-	**	Return with the new position of the file. This will range between zero and the number of
-	**	bytes the file contains.
-	*/
-	return(pos);
-}
-
-
-/***********************************************************************************************
- * RawFileClass::Size -- Determines size of file (in bytes).                                   *
- *                                                                                             *
- *    Use this routine to determine the size of the file. The file must exist or this is an    *
- *    error condition.                                                                         *
- *                                                                                             *
- * INPUT:   none                                                                               *
- *                                                                                             *
- * OUTPUT:  Returns with the number of bytes in the file.                                      *
- *                                                                                             *
- * WARNINGS:   This routine handles error conditions and will not return unless the file       *
- *             exists and can successfully be queried for file length.                         *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   10/18/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
-long RawFileClass::Size(void)
-{
-	long	size = 0;
-
-	/*
-	**	If the file is open, then proceed normally.
-	*/
-	if (Is_Open()) {
-
-		/*
-		**	Repetitively try to determine the file size until a fatal error condition or success
-		**	is achieved.
-		*/
-		for (;;) {
-			Hard_Error_Occured = 0;
-			size = filelength(Handle);
-
-			/*
-			**	If a hard error occurred, then assume it is the case of removed media. Display an
-			**	error condition and allow retry.
-			*/
-			if (Hard_Error_Occured) {
-				Error(Hard_Error_Occured, true, Filename);
-				continue;
-			} else {
-				if (size == -1) {
-					Error(errno, false, Filename);
+	if (BiasLength != -1) {
+		switch (dir) {
+			case SEEK_SET:
+				if (pos > BiasLength) {
+					pos = BiasLength;
 				}
-			}
-			break;
-		}
-	} else {
+				pos += BiasStart;
+				break;
 
-		/*
-		**	If the file wasn't open, then open the file and call this routine again. Count on
-		**	the fact that the open function must succeed.
-		*/
-		if (Open()) {
-			size = Size();
+			case SEEK_CUR:
+				break;
 
-			/*
-			**	Since we needed to open the file we must remember to close the file when the
-			**	size has been determined.
-			*/
-			Close();
+			case SEEK_END:
+				dir = SEEK_SET;
+				pos += BiasStart + BiasLength;
+				break;
 		}
+
+		int32_t newpos = Raw_Seek(pos, dir) - BiasStart;
+		if (newpos < 0) {
+			newpos = Raw_Seek(BiasStart, SEEK_SET) - BiasStart;
+		}
+		if (newpos > BiasLength) {
+			newpos = Raw_Seek(BiasStart + BiasLength, SEEK_SET) - BiasStart;
+		}
+		return newpos;
 	}
-	return(size);
+
+	return Raw_Seek(pos, dir);
 }
 
+int32_t RawFileClass::Size(void)
+{
+	if (BiasLength != -1) {
+		return BiasLength;
+	}
 
-/***********************************************************************************************
- * RawFileClass::Create -- Creates an empty file.                                              *
- *                                                                                             *
- *    This routine will create an empty file from the file object. The file object's filename  *
- *    must already have been assigned before this routine will function.                       *
- *                                                                                             *
- * INPUT:   none                                                                               *
- *                                                                                             *
- * OUTPUT:  bool; Was the file successfully created? This routine will always return true.     *
- *                                                                                             *
- * WARNINGS:   A fatal error condition could occur with this routine. Especially if the disk   *
- *             is full or a read-only media was selected.                                      *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   10/18/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
+	int32_t size = 0;
+	if (Is_Open()) {
+		const Sint64 io_size = SDL_GetIOSize(Handle);
+		if (io_size < 0) {
+			Error(EIO, false, Filename);
+		}
+		if (io_size > INT32_MAX) {
+			Error(EOVERFLOW, false, Filename);
+		}
+		size = static_cast<int32_t>(io_size);
+	} else if (Open()) {
+		size = Size();
+		Close();
+	}
+
+	BiasLength = size - BiasStart;
+	if (BiasLength < 0) {
+		BiasLength = 0;
+	}
+	return BiasLength;
+}
+
 int RawFileClass::Create(void)
 {
 	Close();
 	if (Open(WRITE)) {
+		if (BiasLength != -1) {
+			Seek(0, SEEK_SET);
+		}
 		Close();
-		return(true);
+		return true;
 	}
-	return(false);
+
+	return false;
 }
 
-
-/***********************************************************************************************
- * RawFileClass::Delete -- Deletes the file object from the disk.                              *
- *                                                                                             *
- *    This routine will delete the file object from the disk. If the file object doesn't       *
- *    exist, then this routine will return as if it had succeeded (since the effect is the     *
- *    same).                                                                                   *
- *                                                                                             *
- * INPUT:   none                                                                               *
- *                                                                                             *
- * OUTPUT:  bool; Was the file deleted? If the file was already missing, the this value will   *
- *                be false.                                                                    *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   10/18/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
 int RawFileClass::Delete(void)
 {
-	/*
-	**	If the file was open, then it must be closed first.
-	*/
 	Close();
 
-	/*
-	**	If there is no filename associated with this object, then this indicates a fatal error
-	**	condition. Report this and abort.
-	*/
 	if (!Filename) {
 		Error(ENOENT, false);
 	}
 
-	/*
-	**	Repetitively try to delete the file if possible. Either return with success, or
-	**	abort the program with an error.
-	*/
-	for (;;) {
-
-		/*
-		**	If the file is already missing, then return with this fact. No action is necessary.
-		**	This can occur as this section loops if the file exists on a floppy and the floppy
-		**	was removed, the file deleted on another machine, and then the floppy was
-		**	reinserted. Admittedly, this is a rare case, but is handled here.
-		*/
-		if (!Is_Available()) {
-			return(false);
-		}
-
-		Hard_Error_Occured = 0;
-		if (remove(Filename) == -1) {
-
-			/*
-			**	If a hard error occurred, then assume that the media has been removed. Display
-			**	error message and retry as directed.
-			*/
-			if (Hard_Error_Occured) {
-				Error(Hard_Error_Occured, true, Filename);
-				continue;
-			}
-
-			/*
-			**	If at this point, DOS says the file doesn't exist, then just exit with this
-			**	fact. It should have been caught earlier, but in any case, this is a legal
-			**	condition.
-			*/
-			if (errno == ENOENT) break;
-
-			/*
-			**	The only way it can reach this point is if DOS indicates that access is denied
-			**	on the file. This occurs when trying to delete a file on a read-only media such
-			**	as a CD-ROM. Report this as a fatal error and then abort.
-			*/
-			Error(errno, false, Filename);
-		}
-		break;
+	if (!Is_Available()) {
+		return false;
 	}
 
-	/*
-	**	DOS reports that the file was successfully deleted. Return with this fact.
-	*/
-	return(true);
+	std::string normalized = WWFS_NormalizePath(Filename);
+	if (!WWFS_RemovePath(normalized.c_str())) {
+		Error(EACCES, false, Filename);
+		return false;
+	}
+
+	return true;
+}
+
+uint32_t RawFileClass::Get_Date_Time(void)
+{
+	if (Filename == NULL) {
+		return 0;
+	}
+
+	std::string normalized = WWFS_NormalizePath(Filename);
+	SDL_PathInfo info{};
+	if (!WWFS_GetPathInfo(normalized.c_str(), &info) || info.modify_time <= 0) {
+		return 0;
+	}
+
+	SDL_DateTime date_time{};
+	if (!SDL_TimeToDateTime(info.modify_time, &date_time, true)) {
+		return 0;
+	}
+
+	Date = Pack_DOS_Date(date_time);
+	Time = Pack_DOS_Time(date_time);
+	return (static_cast<uint32_t>(Date) << 16) | Time;
+}
+
+bool RawFileClass::Set_Date_Time(uint32_t)
+{
+	return false;
+}
+
+void RawFileClass::Bias(int32_t start, int32_t length)
+{
+	if (start == 0) {
+		BiasStart = 0;
+		BiasLength = -1;
+		return;
+	}
+
+	BiasLength = RawFileClass::Size();
+	BiasStart += start;
+	if (length != -1 && BiasLength > length) {
+		BiasLength = length;
+	}
+	BiasLength = BiasLength > 0 ? BiasLength : 0;
+
+	if (Is_Open()) {
+		RawFileClass::Seek(0, SEEK_SET);
+	}
+}
+
+int32_t RawFileClass::Raw_Seek(int32_t pos, int dir)
+{
+	if (!Is_Open()) {
+		Error(EBADF, false, Filename);
+	}
+
+	SDL_IOWhence whence = SDL_IO_SEEK_SET;
+	switch (dir) {
+		case SEEK_SET:
+			whence = SDL_IO_SEEK_SET;
+			break;
+
+		case SEEK_CUR:
+			whence = SDL_IO_SEEK_CUR;
+			break;
+
+		case SEEK_END:
+			whence = SDL_IO_SEEK_END;
+			break;
+	}
+
+	const Sint64 newpos = SDL_SeekIO(Handle, static_cast<Sint64>(pos), whence);
+	if (newpos < 0) {
+		Error(EIO, false, Filename);
+	}
+	if (newpos > INT32_MAX) {
+		Error(EOVERFLOW, false, Filename);
+	}
+
+	return static_cast<int32_t>(newpos);
 }

@@ -38,13 +38,13 @@
 #ifndef WWFILE_H
 #define WWFILE_H
 
-#include	<stdio.h>
+#include <cstdint>
 
 #ifndef READ
-#define	READ	_READ
+#define	READ	1
 #endif
 #ifndef WRITE
-#define	WRITE	_WRITE
+#define	WRITE	2
 #endif
 
 class FileClass

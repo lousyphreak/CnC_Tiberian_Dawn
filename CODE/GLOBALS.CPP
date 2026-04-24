@@ -320,7 +320,7 @@ char ScenarioName[_MAX_FNAME+_MAX_EXT];	// name of scenario
 int CarryOverMoney;						// Carry over money from last scenario.
 int CarryOverPercent;					// Carry over money percentage control.
 int CarryOverCap;							// Maxmimum carry over money allowed.
-bool ScenarioInit;
+int ScenarioInit = 0;
 bool SpecialFlag = false;
 
 
@@ -1027,9 +1027,9 @@ HANDLE hInstance;
 int AllDone;
 BOOL				InMovie = FALSE;	//Are we currently playing a VQ movie?
 bool				MMXAvailable = false;	//Does this CPU support MMX extensions?
+TimerClass		TickCount(BT_SYSTEM);
 GetCDClass		CDList;
 bool				GameStatisticsPacketSent;
 bool				ConnectionLost;
 
 TheaterType		LastTheater = THEATER_NONE;
-

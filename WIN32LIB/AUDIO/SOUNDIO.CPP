@@ -128,6 +128,16 @@ int32_t							Misc;
 int32_t							ReverseChannels = FALSE;
 AudioBackendDevice *			SoundObject = NULL;
 AudioBackendBuffer *	PrimaryBufferPtr = NULL;
+
+int32_t Get_Digi_Handle(void)
+{
+	return LockedData.DigiHandle;
+}
+
+int32_t Get_Sample_Type(void)
+{
+	return (LockedData.DigiHandle == -1) ? 0 : 1;
+}
 AudioBufferFormat				DsBuffFormat;
 AudioBufferFormat				PrimaryBuffFormat;
 void						*FileStreamBuffer = NULL;	//Buffer for streaming audio from CD

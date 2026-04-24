@@ -44,7 +44,9 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include	"FUNCTION.H"
+#include	"KEYBOARD.H"
 #include	"LOADDLG.H"
+#include	"SDLINPUT.H"
 #include	"TCPIP.H"
 #include  "CCDDE.H"
 
@@ -54,12 +56,19 @@ static HANDLE			hCCLibrary;
 **	Function prototypes for this module **
 *****************************************/
 static void Play_Intro(bool for_real = false);
+static void* Load_Alloc_Data_From_Name(char const* filename);
 
 extern "C" {
 extern long RandNumb;
 }
 
 extern int SimRandIndex;
+
+static void* Load_Alloc_Data_From_Name(char const* filename)
+{
+	CCFileClass file(filename);
+	return Load_Alloc_Data(file);
+}
 
 #define ATTRACT_MODE_TIMEOUT	3600		// timeout for attract mode
 #if(0)
@@ -198,21 +207,21 @@ bool Init_Game(int , char *[])
 
 #endif
 	CCDebugString ("C&C95 - About to load fonts\n");
-	Green12FontPtr = Load_Alloc_Data(CCFileClass("12GREEN.FNT"));
-	Green12GradFontPtr = Load_Alloc_Data(CCFileClass("12GRNGRD.FNT"));
-	MapFontPtr = Load_Alloc_Data(CCFileClass("8FAT.FNT"));
+	Green12FontPtr = Load_Alloc_Data_From_Name("12GREEN.FNT");
+	Green12GradFontPtr = Load_Alloc_Data_From_Name("12GRNGRD.FNT");
+	MapFontPtr = Load_Alloc_Data_From_Name("8FAT.FNT");
 	Font8Ptr = MixFileClass::Retrieve(FONT8);
 	FontPtr = (char *)Font8Ptr;
 	Set_Font(FontPtr);
 	Font3Ptr = MixFileClass::Retrieve(FONT3);
 //	Font6Ptr = MixFileClass::Retrieve(FONT6);
-   	 Font6Ptr = Load_Alloc_Data(CCFileClass("6POINT.FNT"));
+    	 Font6Ptr = Load_Alloc_Data_From_Name("6POINT.FNT");
 	//ScoreFontPtr = MixFileClass::Retrieve("12GRNGRD.FNT");	//GRAD12FN");	//("SCOREFNT.FNT");
-	ScoreFontPtr = Load_Alloc_Data(CCFileClass("12GRNGRD.FNT"));
+	ScoreFontPtr = Load_Alloc_Data_From_Name("12GRNGRD.FNT");
 	FontLEDPtr = MixFileClass::Retrieve("LED.FNT");
 	VCRFontPtr = MixFileClass::Retrieve("VCR.FNT");
 //	GradFont6Ptr = MixFileClass::Retrieve("GRAD6FNT.FNT");
-	GradFont6Ptr = Load_Alloc_Data(CCFileClass("GRAD6FNT.FNT"));
+	GradFont6Ptr = Load_Alloc_Data_From_Name("GRAD6FNT.FNT");
 	BlackPalette = new(MEM_CLEAR|MEM_REAL) unsigned char[768];
 	GamePalette = new(MEM_CLEAR|MEM_REAL) unsigned char[768];
 	OriginalPalette = new(MEM_CLEAR|MEM_REAL) unsigned char[768];
@@ -236,7 +245,7 @@ bool Init_Game(int , char *[])
 	** Since there is no mouse shape currently available we need'
 	** to set one of our own.
 	*/
-	ShowCursor (FALSE);
+	SDL_GameInput_ShowCursor(false);
 	if (MouseInstalled) {
 		temp_mouse_shapes = MixFileClass::Retrieve("MOUSE.SHP");
 		if (temp_mouse_shapes) {
@@ -262,8 +271,9 @@ bool Init_Game(int , char *[])
 	**	Fetch the language text from the hard drive first. If it cannot be
 	**	found on the hard drive, then look for it in the mixfile.
 	*/
-	if (RawFileClass(Language_Name("CONQUER")).Is_Available()) {
-		SystemStrings = (char const *)Load_Alloc_Data(RawFileClass(Language_Name("CONQUER")));
+	RawFileClass language_file(Language_Name("CONQUER"));
+	if (language_file.Is_Available()) {
+		SystemStrings = (char const *)Load_Alloc_Data(language_file);
 	} else {
 		SystemStrings = (char const *)MixFileClass::Retrieve(Language_Name("CONQUER"));
 	}
@@ -1852,8 +1862,8 @@ static void Play_Intro(bool for_real)
  * HISTORY:                                                                                    *
  *   12/20/1994 JLB : Created.                                                                 *
  *=============================================================================================*/
-extern LPDIRECTSOUND			SoundObject;
-extern	LPDIRECTSOUNDBUFFER  PrimaryBufferPtr;
+extern AudioBackendDevice*		SoundObject;
+extern AudioBackendBuffer*	PrimaryBufferPtr;
 void Anim_Init(void)
 {
 	/* Configure player with INI file */
@@ -1893,8 +1903,8 @@ void Anim_Init(void)
 	//AnimControl.Volume = 0x00FF;
 	//AnimControl.AudioRate = 22050;
 //	if (NewConfig.Speed) AnimControl.AudioRate = 11025;
-	AnimControl.SoundObject = SoundObject;	//Get_Sound_Object();
-	AnimControl.PrimaryBufferPtr = PrimaryBufferPtr;	//Get_Primart_Buffer();
+	AnimControl.AudioObject = SoundObject;	//Get_Sound_Object();
+	AnimControl.PrimaryBuffer = PrimaryBufferPtr;	//Get_Primart_Buffer();
 	//if (!Debug_Quiet && Get_Digi_Handle() != -1) {
 		//AnimControl.OptionFlags |= VQAOPTF_AUDIO;
 	//}
@@ -2810,6 +2820,7 @@ long Obfuscate(char const * string)
 	strncpy(buffer, string, sizeof(buffer));
 	buffer[sizeof(buffer)-1] = '\0';
 	int length = strlen(buffer);
+	int index = 0;
 
 	/*
 	**	Only upper case letters are significant.
@@ -2849,19 +2860,19 @@ long Obfuscate(char const * string)
 	**	Transform the buffer into a number. This transformation is character
 	**	order dependant.
 	*/
-	long code = Calculate_CRC(buffer, length);
+	int32_t code = Calculate_CRC(buffer, length);
 
 	/*
 	**	Record a copy of this initial transformation to be used in a later
 	**	self referential transformation.
 	*/
-	long copy = code;
+	int32_t copy = code;
 
 	/*
 	**	Reverse the character string and combine with the previous transformation.
 	**	This doubles the workload of trying to reverse engineer the CRC calculation.
 	*/
-	strrev(buffer);
+	SDL_strrev(buffer);
 	code ^= Calculate_CRC(buffer, length);
 
 	/*
@@ -2876,13 +2887,13 @@ long Obfuscate(char const * string)
 	**	process, it gives the sophisticated hacker false hope since the strong
 	**	cypher process occurs later.
 	*/
-	strrev(buffer);		// Restore original string order.
+	SDL_strrev(buffer);		// Restore original string order.
 	for (index = 0; index < length; index++) {
 		code ^= (unsigned char)buffer[index];
-		unsigned char temp = (unsigned char)code;
+		uint8_t temp = (uint8_t)code;
 		buffer[index] ^= temp;
 		code >>= 8;
-		code |= (((long)temp)<<24);
+		code |= (((int32_t)temp)<<24);
 	}
 
 	/*

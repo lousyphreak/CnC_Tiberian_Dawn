@@ -207,7 +207,7 @@ extern int16_t   Processor(void);
 extern int16_t  Operating_System(void);
 extern uint32_t Random_Mod(uint32_t mod);
 #define random(mod) Random_Mod(mod)
-//extern void  randomize ( void ) ;
+extern void randomize(void);
 
 extern int32_t  Clip_Rect ( int32_t * x , int32_t * y , int32_t * dw , int32_t * dh ,
 	       	   			 int32_t width , int32_t height ) ;

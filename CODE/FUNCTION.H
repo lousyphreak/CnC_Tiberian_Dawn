@@ -231,6 +231,12 @@ extern long LParam;
 
 
 extern long Frame;
+int32_t Get_Digi_Handle(void);
+int32_t Get_Sample_Type(void);
+#ifndef SAMPLE_NONE
+#define SAMPLE_NONE 0
+#endif
+#define SampleType (Get_Sample_Type())
 inline CELL Coord_XCell(COORDINATE coord) {return (CELL)(*(((unsigned char*)&coord)+1));}
 inline CELL Coord_YCell(COORDINATE coord) {return (CELL)(*(((unsigned char*)&coord)+3));}
 //inline CELL Coord_Cell(COORD coord){return (CELL)(((*(((unsigned short *)&coord)+1) & 0xFF00) >> 2) | *(((unsigned char *)&coord)+1));}
