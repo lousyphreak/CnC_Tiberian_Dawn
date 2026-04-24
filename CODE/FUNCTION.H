@@ -317,6 +317,7 @@ int32_t Desired_Facing256(int32_t x1, int32_t y1, int32_t x2, int32_t y2);
 #include "IPXMGR.H"
 #include	"COMBUF.H"
 #include	"CONNECT.H"
+#include "CCDDE.H"
 #include	"CONNMGR.H"
 #include	"NOSEQCON.H"
 #include "MSGLIST.H"

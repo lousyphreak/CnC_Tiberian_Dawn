@@ -66,6 +66,10 @@ using DWORD_PTR = uintptr_t;
 #define __cdecl
 #endif
 
+#ifndef __stdcall
+#define __stdcall
+#endif
+
 #ifndef WINAPI
 #define WINAPI
 #endif

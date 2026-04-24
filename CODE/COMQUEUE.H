@@ -75,7 +75,7 @@ typedef struct {
 	unsigned long SendCount;		// # of times this packet has been sent
 	int BufLen;							// size of the packet stored in this entry
 	char *Buffer;						// the data packet
-} SendQueueType;
+} CommQueueSendType;
 
 /*---------------------------------------------------------------------------
 This is one input queue entry
@@ -86,7 +86,7 @@ typedef struct {
 	unsigned int IsACK		: 1;	// 1 = ACK sent for this packet
 	int BufLen;							// size of the packet stored in this entry
 	char *Buffer;						// the data packet
-} ReceiveQueueType;
+} CommQueueReceiveType;
 
 /*
 ***************************** Class Declaration *****************************
@@ -109,10 +109,10 @@ class CommQueueClass
 		*/
 		int Queue_Send(void *buf, int buflen);			// add to Send queue
 		int UnQueue_Send(void *buf, int *buflen);		// remove from Send queue
-		SendQueueType * Next_Send(void);					// ptr to next avail entry
+		CommQueueSendType * Next_Send(void);				// ptr to next avail entry
 		int Num_Send(void) {return (SendCount);}		// # entries in queue
 		int Max_Send(void) { return (MaxSend);}		// max # send queue entries
-		SendQueueType * Get_Send(int index);			// random access to queue
+		CommQueueSendType * Get_Send(int index);		// random access to queue
 		unsigned long Send_Total(void) {return (SendTotal);}
 
 		/*
@@ -120,10 +120,10 @@ class CommQueueClass
 		*/
 		int Queue_Receive(void *buf, int buflen);		// add to Receive queue
 		int UnQueue_Receive(void *buf, int *buflen);	// remove from Receive queue
-		ReceiveQueueType * Next_Receive(void);			// ptr to next avail entry
+		CommQueueReceiveType * Next_Receive(void);		// ptr to next avail entry
 		int Num_Receive(void) {return (ReceiveCount);}	// # entries in queue
 		int Max_Receive(void) { return (MaxReceive); }	// max # recv queue entries
-		ReceiveQueueType * Get_Receive(int index);	// random access to queue
+		CommQueueReceiveType * Get_Receive(int index);	// random access to queue
 		unsigned long Receive_Total(void) {return (ReceiveTotal);}
 
 		/*
@@ -163,7 +163,7 @@ class CommQueueClass
 		/*
 		........................ Send Queue variables .........................
 		*/
-		SendQueueType * SendQueue;			// incoming packets
+		CommQueueSendType * SendQueue;		// incoming packets
 		int SendCount; 						// # packets in the queue
 		int SendNext;							// next entry read from queue
 		int SendEmpty;							// next empty spot in queue
@@ -172,7 +172,7 @@ class CommQueueClass
 		/*
 		....................... Receive Queue variables .......................
 		*/
-		ReceiveQueueType * ReceiveQueue;		// outgoing packets
+		CommQueueReceiveType * ReceiveQueue;	// outgoing packets
 		int ReceiveCount;							// # packets in the queue
 		int ReceiveNext;							// next entry read from queue
 		int ReceiveEmpty;							// next empty spot in queue
@@ -190,4 +190,3 @@ class CommQueueClass
 #endif
 
 /*************************** end of comqueue.h *****************************/
-

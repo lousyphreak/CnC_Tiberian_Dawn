@@ -671,6 +671,15 @@ struct KeyboardClass : public WWKeyboardClass
 #endif
 
 
-//extern WWKeyboardClass *_Kbd;
+extern WWKeyboardClass *_Kbd;
+
+int32_t Check_Key(void);
+int32_t Check_Key_Num(void);
+int32_t Get_Key_Num(void);
+int32_t Get_Key(void);
+int32_t KN_To_KA(int32_t key);
+void Clear_KeyBuffer(void);
+int32_t Key_Down(int32_t key);
+int32_t KN_To_VK(int32_t key);
 
 #endif

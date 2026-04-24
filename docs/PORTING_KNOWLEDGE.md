@@ -48,3 +48,10 @@ _Last updated: 2026-04-24_
   - `COMQUEUE.CPP` and the old communications stack that still sit behind `TCPIP.H`;
   - `IPX95.H` calling-convention compatibility;
   - imported SDL input integration mismatches (`GameInFocus`, mouse-acceleration options) and the next wave of strict-modern-C++ cleanup (`IOOBJ.CPP`, `SPECIAL.CPP`, `LOADDLG.CPP`, `THEME.CPP`).
+- The first safe Linux answer for the old DDE/WChat integration is visibility plus stubbing, not reimplementation:
+  - `CODE/CCDDE.H` now needs to expose `DDEServerClass` and `Send_Data_To_DDE_Server(...)` on non-Windows too, otherwise gameplay/UI code will not compile;
+  - on non-Windows, those should stay as no-op compatibility stubs for now rather than trying to resurrect the old Windows DDE transport.
+- The old Planet Westwood / WChat registry-launch path in `CODE/INTERNET.CPP` is a large Win32-only compile trap. For Linux bring-up, it is safe to stub `Is_User_WChat_Registered(...)`, `Spawn_WChat(...)`, and `Spawn_Registration_App(...)` to return failure/no-op and keep the rest of the internet menu logic compiling.
+- `CODE/KEY.H` shadows the imported support-layer keyboard header because they share the same include guard shape. When TD sources still need `_Kbd`, `Check_Key`, `Get_Key_Num`, `Clear_KeyBuffer`, `KN_To_VK`, and similar helpers, those declarations must be restored directly in `CODE/KEY.H`.
+- `COMQUEUE.H` and `COMBUF.H` both define `SendQueueType` / `ReceiveQueueType`; modernizing `COMQUEUE.CPP` to include its own header exposes that collision immediately. The queue entry typedefs in `COMQUEUE` must use distinct names instead of relying on older include-order accidents.
+- The null-modem stack is still not a buildable subsystem on Linux, but adding a tiny `commlib.h` forward declaration shim is enough to make `NULLMGR.H` parsable again while the real serial/null-modem sources remain excluded. This is useful for compile-time type completeness without committing to a full null-modem port yet.

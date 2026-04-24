@@ -228,7 +228,7 @@ extern GetCDClass				CDList;
 /*
 ** Modem globals
 */
-class NullModemClass;
+#include "NULLMGR.H"
 extern bool 											ModemService;
 extern NullModemClass 								NullModem;
 extern DynamicVectorClass<PhoneEntryClass *>	PhoneBook;

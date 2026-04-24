@@ -61,7 +61,7 @@
 char PlanetWestwoodHandle[] = {"Handle"};				//Planet WW user name
 char PlanetWestwoodPassword[] = {"Password"};       //Planet WW password
 char PlanetWestwoodIPAddress[IP_ADDRESS_MAX] = {"206.154.108.87"};	//IP of server or other player
-long PlanetWestwoodPortNumber = 1234;					//Port number to send to
+uint16_t PlanetWestwoodPortNumber = 1234;				//Port number to send to
 bool PlanetWestwoodIsHost = false;                  //Flag true if player has control of game options
 unsigned long PlanetWestwoodGameID;                 //Game ID
 unsigned long PlanetWestwoodStartTime;              //Time that game was started
@@ -174,7 +174,7 @@ void Check_From_WChat(char *wchat_name)
 			return;
 		}
 
-		PlanetWestwoodPortNumber = atol(key_string);
+		PlanetWestwoodPortNumber = (uint16_t)strtoul(key_string, NULL, 10);
 
 
 		/*
@@ -286,7 +286,11 @@ int Read_Game_Options(char *name)
 	Special.IsCaptureTheFlag = WWGetPrivateProfileInt("Options", "CaptureTheFlag", 0, buffer);
 	PlanetWestwoodGameID = WWGetPrivateProfileInt("Internet", "GameID", 0, buffer);
 	PlanetWestwoodStartTime = WWGetPrivateProfileInt ("Internet", "StartTime", 0, buffer);
+#ifdef WIN32
 	WChatHWND = (HWND) WWGetPrivateProfileInt("Internet", "HWND", (int)FindWindow("OWL_Window", "Westwood Chat"), buffer);
+#else
+	WChatHWND = (HWND)WWGetPrivateProfileInt("Internet", "HWND", 0, buffer);
+#endif
 
 	InternetMaxPlayers = WWGetPrivateProfileInt("Internet", "MaxPlayers", 2, buffer);
 
@@ -333,7 +337,9 @@ int Read_Game_Options(char *name)
  *    1/12/96 2:11PM ST : Created                                                              *
  *=============================================================================================*/
 
+#ifdef WIN32
 extern HKEY Get_Registry_Sub_Key (HKEY base_key, char *search_key, BOOL close);
+#endif
 
 
 
@@ -366,6 +372,7 @@ void Just_Path(char *path, char *destpath)
  * HISTORY:                                                                                    *
  *    1/12/96 2:13PM ST : Created                                                              *
  *=============================================================================================*/
+#ifdef WIN32
 bool Is_User_WChat_Registered(char *buffer, int buffer_len)
 {
 	HKEY	key;
@@ -442,6 +449,15 @@ bool Is_User_WChat_Registered(char *buffer, int buffer_len)
 		return (FALSE);
 	}
 }
+#else
+bool Is_User_WChat_Registered(char *buffer, int)
+{
+	if (buffer) {
+		buffer[0] = '\0';
+	}
+	return false;
+}
+#endif
 
 
 
@@ -460,6 +476,7 @@ bool Is_User_WChat_Registered(char *buffer, int buffer_len)
  *    6/8/96 12:33PM ST : Created                                                              *
  *=============================================================================================*/
 bool Poke_WChat(void);
+#ifdef WIN32
 bool Spawn_WChat(bool can_launch)
 {
 	CCDebugString ("C&C95 - In Spawn_WChat.\n");
@@ -581,6 +598,12 @@ bool Spawn_WChat(bool can_launch)
 		return (false);
 	}
 }
+#else
+bool Spawn_WChat(bool)
+{
+	return false;
+}
+#endif
 
 
 
@@ -599,6 +622,7 @@ bool Spawn_WChat(bool can_launch)
  * HISTORY:                                                                                    *
  *    6/8/96 12:33PM ST : Created                                                              *
  *=============================================================================================*/
+#ifdef WIN32
 bool Spawn_Registration_App(void)
 {
 
@@ -642,6 +666,12 @@ bool Spawn_Registration_App(void)
 	return (success);
 
 }
+#else
+bool Spawn_Registration_App(void)
+{
+	return false;
+}
+#endif
 
 
 
@@ -866,8 +896,6 @@ bool Do_The_Internet_Menu_Thang(void)
 
 
 }
-
-
 
 
 

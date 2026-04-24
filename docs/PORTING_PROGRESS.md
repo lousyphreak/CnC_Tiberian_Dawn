@@ -168,6 +168,37 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
        - invalid legacy casts in `IOOBJ.CPP`;
        - stale symbol names such as `_Kbd`, `Get_Key_Num`, and `SoundType`.
   - next concrete porting work:
-    1. port `TCPIP.H/.CPP` and related communications code toward the Red Alert `SOCKETS.H` model;
-    2. reconcile the imported SDL input layer with TD globals/options naming;
-    3. continue the modern-C++ cleanup where the build now points next (`COMQUEUE`, `IOOBJ`, `SPECIAL`, `LOADDLG`, `THEME`).
+     1. port `TCPIP.H/.CPP` and related communications code toward the Red Alert `SOCKETS.H` model;
+     2. reconcile the imported SDL input layer with TD globals/options naming;
+     3. continue the modern-C++ cleanup where the build now points next (`COMQUEUE`, `IOOBJ`, `SPECIAL`, `LOADDLG`, `THEME`).
+- Communications support cleanup continued and the build moved past the old WChat/registry wall on Linux (2026-04-24):
+  - completed in this checkpoint:
+    - exposed the legacy keyboard globals/helpers that TD gameplay code still expects by restoring the declarations in `CODE/KEY.H` (`_Kbd`, `Check_Key`, `Get_Key`, `Get_Key_Num`, `Check_Key_Num`, `Clear_KeyBuffer`, `KN_To_VK`, `Key_Down`);
+    - added a non-Windows compatibility path for `CODE/CCDDE.H`, so DDE/WChat symbols are visible on Linux even though the old Windows DDE transport itself remains disabled there;
+    - resolved the `COMQUEUE.H` / `COMBUF.H` typedef collision by renaming the queue entry types inside `COMQUEUE` to unique names and fixing the stale `MaxPacketLen` reference while touching that code;
+    - added a tiny `CODE/commlib.h` forward declaration shim so the legacy null-modem header can be parsed again while the full serial/null-modem implementation stays out of the current Linux build;
+    - stubbed the old registry/launcher-dependent WChat helpers in `CODE/INTERNET.CPP` for non-Windows builds:
+      - `Is_User_WChat_Registered(...)`
+      - `Spawn_WChat(...)`
+      - `Spawn_Registration_App(...)`
+      - the INI fallback `HWND` lookup no longer tries to call `FindWindow(...)` on Linux.
+    - aligned one imported SDL input declaration with TD globals by switching the local `SDLINPUT.CPP` `GameInFocus` declaration back to `bool`.
+  - current build result:
+    - the build no longer dies in the DDE/registry/WChat compatibility area;
+    - the next hard failures are now mostly strict modern-C++ correctness issues plus a smaller remaining set of legacy Win32 surface gaps outside the internet stack.
+  - current blocker groups exposed by the latest rebuild:
+    1. old C-era identifier collisions and loop-scope assumptions are now the most visible compiler failures:
+       - `index` collisions in `EXPAND.CPP`, `CELL.CPP`, `SPECIAL.CPP`, `SCENARIO.CPP`, and related sources;
+       - loop variables escaping scope in `INI.CPP`, `LOADDLG.CPP`, `DISPLAY.CPP`, `MAPSEL.CPP`, and similar files;
+       - a few remaining bool/constructor strictness issues (`ENDING.CPP`, countdown timer overload selection, etc.).
+    2. a smaller batch of support/API mismatches still remains:
+       - DirectDraw-only checks or helpers still referenced from `RADAR.CPP`, `INTERPAL.CPP`, `DISPLAY.CPP`, and `CONQUER.CPP`;
+       - missing Win32 constants/messages in `WINSTUB.CPP`, `NETDLG.CPP`, and file-open code in `CONQUER.CPP`;
+       - a few TD/import mismatches such as `SoundType`, `memicmp`, and some `JSHELL.CPP` type issues.
+    3. some platform-obsolete subsystems are now intentionally compiled only as compatibility shells on Linux:
+       - DDE/WChat launch/registration helpers;
+       - legacy null-modem serial support.
+  - next concrete porting work:
+    1. rename or rescope the old `index` loop variables and similar overloaded-name collisions in the gameplay code the compiler now reaches first;
+    2. trim or wrap the remaining DirectDraw/Win32-only surface area still referenced from UI/support files;
+    3. keep documenting any subsystem that is being preserved as a non-Windows stub rather than reimplemented.

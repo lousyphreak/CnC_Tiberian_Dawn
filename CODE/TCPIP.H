@@ -16,73 +16,29 @@
 **	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/* $Header: /CounterStrike/TCPIP.H 1     3/03/97 10:25a Joe_bostic $ */
 
-/***************************************************************************
- **   C O N F I D E N T I A L --- W E S T W O O D    S T U D I O S        **
- ***************************************************************************
- *                                                                         *
- *                 Project Name : Command & Conquer                        *
- *                                                                         *
- *                    File Name : TCPIP.CPP                                *
- *                                                                         *
- *                   Programmer : Steve Tall                               *
- *                                                                         *
- *                   Start Date : March 11th, 1996                         *
- *                                                                         *
- *                  Last Update : March 11th, 1996 [ST]                    *
- *                                                                         *
- *-------------------------------------------------------------------------*
- *                                                                         *
- *                                                                         *
- *                                                                         *
- *-------------------------------------------------------------------------*
- * Functions:                                                              *
- *                                                                         *
- *                                                                         *
- *                                                                         *
- *                                                                         *
- *                                                                         *
- * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+#ifndef TCPIP_H
+#define TCPIP_H
+
+#include "SOCKETS.H"
+
+#include <cstdint>
+#include <vector>
 
 extern bool Server;
 
-#define FORCE_WINSOCK				1
-
-#define WINSOCK_MINOR_VER		1
-#define WINSOCK_MAJOR_VER		1
 #define PORTNUM						0x1000
 #define UDP_PORT					0x1001
 #define WS_INTERNET_BUFFER_LEN  1024
-#define WS_NUM_TX_BUFFERS		16		//Must be a power of 2
-#define WS_NUM_RX_BUFFERS		16		//MUst be a power of 2
+#define WS_NUM_TX_BUFFERS		16
+#define WS_NUM_RX_BUFFERS		16
 #define WS_RECEIVE_BUFFER_LEN	1024
-//#define WS_IN_BUFFER_LEN			8192
-//#define WS_OUT_BUFFER_LEN		8192
 
 #define PLANET_WESTWOOD_HANDLE_MAX 20
 #define PLANET_WESTWOOD_PASSWORD_MAX 20
 #define IP_ADDRESS_MAX 40
 #define PORT_NUMBER_MAX 6
-
-//...........................................................................
-// Custom messages: WM_USER + 1 to WM_USER + 100
-// These will be sent to the dialog procedure, for display only.
-//...........................................................................
-#define	WM_UPDATE_STATUS		(WM_USER + 1)	// update status text
-#define	WM_UPDATE_CLIENTS		(WM_USER + 2)	// update client list box
-#define	WM_UPDATE_MESSAGE		(WM_USER + 3)	// update received message list
-
-//...........................................................................
-// Messages for Async processing.
-//...........................................................................
-#define	WM_ACCEPT				(WM_USER + 101)	// client wants to connect
-#define	WM_HOSTBYADDRESS		(WM_USER + 102)	// async get host by address
-#define	WM_HOSTBYNAME			(WM_USER + 103)	// async get host by name
-#define	WM_ASYNCEVENT			(WM_USER + 104)	// other Async event
-#define	WM_UDPASYNCEVENT		(WM_USER + 105)	// UDP socket Async event
-
-
-#define	VSS_ID					-1			// ID of the VSS connection.
 
 class TcpipManagerClass {
 
@@ -91,21 +47,22 @@ class TcpipManagerClass {
 		TcpipManagerClass(void);
 		~TcpipManagerClass(void);
 
-		BOOL Init(void);
+		int32_t Init(void);
+		void Service(void);
 		void Start_Server(void);
 		void Start_Client(void);
-		void Close_Socket(SOCKET s);
+		void Close_Socket(SocketHandle s);
 	 	void Message_Handler(HWND window, UINT message, UINT wParam, LONG lParam);
-		void Copy_To_In_Buffer(int bytes);
-		int  Read(void *buffer, int buffer_len);
-		void Write(void *buffer, int buffer_len);
-		BOOL Add_Client(void);
+		void Copy_To_In_Buffer(void const* data, int bytes);
+		int Read(void* buffer, int buffer_len);
+		void Write(void* buffer, int buffer_len);
+		int32_t Add_Client(void);
 		void Close(void);
-		void Set_Host_Address(char *address);
-		void Set_Protocol_UDP(BOOL state);
-		void Clear_Socket_Error(SOCKET socket);
+		void Set_Host_Address(char const* address);
+		void Set_Protocol_UDP(int32_t state);
+		void Clear_Socket_Error(SocketHandle socket);
 
-		inline BOOL Get_Connected(void) {return (Connected);}
+		inline int32_t Get_Connected(void) { return Connected; }
 
 		typedef enum ConnectStatusEnum {
 			CONNECTED_OK = 0,
@@ -120,70 +77,60 @@ class TcpipManagerClass {
 			CONNECTION_LOST
 		} ConnectStatusEnum;
 
-		inline ConnectStatusEnum Get_Connection_Status(void) {return (ConnectStatus);}
+		inline ConnectStatusEnum Get_Connection_Status(void) { return ConnectStatus; }
 
 	private:
 
-		//...........................................................................
-		// This structure defines all the info we need about a host
-		//...........................................................................
 		typedef struct {
-			struct in_addr Addr;					// address
-			char DotAddr[16];						// decimal-dot address string
-			char Name[255];						// character-string name
+			uint32_t Address;
+			char DotAddr[SOCKET_MAX_DOT_ADDRESS];
+			char Name[255];
 		} HostType;
 
 		typedef struct {
-			char	Buffer[WS_INTERNET_BUFFER_LEN];
-			int	DataLength;
-			bool	InUse:1;
+			char Buffer[WS_INTERNET_BUFFER_LEN];
+			int DataLength;
+			bool InUse : 1;
 		} InternetBufferType;
 
-
-		BOOL 					WinsockInitialised;
-		WSADATA				WinsockInfo;
-		SOCKET				ListenSocket;
-		SOCKET				ConnectSocket;
-		SOCKET				UDPSocket;
-		IN_ADDR				ClientIPAddress;
-		HANDLE				Async;
-		char					HostBuff[MAXGETHOSTSTRUCT];
-		char					ClientName[128];
-		char					ReceiveBuffer[WS_RECEIVE_BUFFER_LEN];
-		//char					InBuffer[WS_IN_BUFFER_LEN];
-		//int					InBufferHead;
-		//int					InBufferTail;
-		//char					OutBuffer[WS_OUT_BUFFER_LEN];
-		//int					OutBufferHead;
-		//int					OutBufferTail;
-		BOOL					IsServer;
-		BOOL					Connected;
-		HostType				Server;
-		char					HostAddress[IP_ADDRESS_MAX];
+		int32_t WinsockInitialised;
+		SocketHandle ListenSocket;
+		SocketHandle ConnectSocket;
+		SocketHandle UDPSocket;
+		uint32_t ClientIPAddress;
+		char ClientName[128];
+		char ReceiveBuffer[WS_RECEIVE_BUFFER_LEN];
+		int32_t IsServer;
+		int32_t Connected;
+		HostType Server;
+		char HostAddress[IP_ADDRESS_MAX];
 		ConnectStatusEnum ConnectStatus;
-		BOOL					UseUDP;
-		IN_ADDR				UDPIPAddress;
-		int					SocketReceiveBuffer;
-		int					SocketSendBuffer;
-		InternetBufferType ReceiveBuffers[WS_NUM_TX_BUFFERS];
-		InternetBufferType TransmitBuffers[WS_NUM_RX_BUFFERS];
-		int					TXBufferHead;
-		int					TXBufferTail;
-		int					RXBufferHead;
-		int					RXBufferTail;
-
+		int32_t UseUDP;
+		uint32_t UDPIPAddress;
+		int SocketReceiveBuffer;
+		int SocketSendBuffer;
+		InternetBufferType ReceiveBuffers[WS_NUM_RX_BUFFERS];
+		InternetBufferType TransmitBuffers[WS_NUM_TX_BUFFERS];
+		int TXBufferHead;
+		int TXBufferTail;
+		int RXBufferHead;
+		int RXBufferTail;
+		int32_t ConnectInProgress;
+		std::vector<uint8_t> StreamReceiveBuffer;
+		uint8_t StreamSendBuffer[WS_INTERNET_BUFFER_LEN + sizeof(uint32_t)];
+		int StreamSendLength;
+		int StreamSendOffset;
+		int32_t StreamSendActive;
 };
-
 
 extern TcpipManagerClass Winsock;
 
 extern char PlanetWestwoodIPAddress[IP_ADDRESS_MAX];
-extern long PlanetWestwoodPortNumber;
+extern uint16_t PlanetWestwoodPortNumber;
 extern bool PlanetWestwoodIsHost;
-extern int  Read_Game_Options(char *);
+extern int Read_Game_Options(char*);
 extern bool UseVirtualSubnetServer;
-extern int  InternetMaxPlayers;
-
+extern int InternetMaxPlayers;
 
 #define TXT_WINSOCK_CONNECTING							4567+13
 #define TXT_WINSOCK_NOT_CONNECTING					4567+14
@@ -195,31 +142,4 @@ extern int  InternetMaxPlayers;
 #define TXT_WINSOCK_CONNECTION_LOST					4567+20
 #define TXT_WINSOCK_RESOLVING_HOST_ADDRESS			4567+21
 
-
-#if (0)
-
-
-struct tag tGameStatisticsStruct{
-	char	WinnersName[20];
-	char	LosersName[20];
-	int	WinnersTeam;
-	int	LosersTeam;
-	int	WinnersCredits;
-	int	LosersCredits;
-	int	WinnersKills;
-	int	LosersKills;
-	int	ScenarioPlayed;
-	int	GameTimeElapsed;
-	int	VersionNumber;
-	char	TimeDateStamp[12];
-} GameStatisticsStruct;
-
-
-
-
-
-extern GameStatisticsStruct GameStatistics;
-
-#endif	//(0)
-
-
+#endif

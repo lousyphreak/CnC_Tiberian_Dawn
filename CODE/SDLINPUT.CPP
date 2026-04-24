@@ -23,7 +23,7 @@ extern RAWindow* MainWindow;
 extern void Main_Window_Handle_Focus_Change(bool focused);
 extern void Main_Window_Handle_Close_Request(void);
 extern int AllDone;
-extern int32_t GameInFocus;
+extern bool GameInFocus;
 extern int32_t BootstrapFocusSeen;
 extern bool Debug_Map;
 extern bool GameActive;

@@ -39,6 +39,9 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#ifndef CCDDE_H
+#define CCDDE_H
+
 #ifdef WIN32
 
 #include "DDE.H"
@@ -86,3 +89,37 @@ extern BOOL Send_Data_To_DDE_Server (char *data, int length, int packet_type);
 
 
 #endif	//WIN32
+
+#ifndef WIN32
+class DDEServerClass {
+
+	public:
+		DDEServerClass(void) {}
+		~DDEServerClass(void) {}
+
+		char* Get_MPlayer_Game_Info(void) { return NULL; }
+		int Get_MPlayer_Game_Info_Length(void) { return 0; }
+		BOOL Callback(unsigned char*, long) { return FALSE; }
+		void Delete_MPlayer_Game_Info(void) {}
+		void Enable(void) {}
+		void Disable(void) {}
+		int Time_Since_Heartbeat(void) { return 0; }
+
+		enum {
+			DDE_PACKET_START_MPLAYER_GAME,
+			DDE_PACKET_GAME_RESULTS,
+			DDE_PACKET_HEART_BEAT,
+			DDE_TICKLE,
+			DDE_CONNECTION_FAILED
+		};
+};
+
+inline DDEServerClass DDEServer;
+
+inline BOOL Send_Data_To_DDE_Server(char*, int, int)
+{
+	return FALSE;
+}
+#endif
+
+#endif
