@@ -59,8 +59,8 @@
  *   OptionsClass::Set_Tint -- Sets the tint setting.                                          *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include	"options.h"
+#include	"FUNCTION.H"
+#include	"OPTIONS.H"
 
 
 /***********************************************************************************************

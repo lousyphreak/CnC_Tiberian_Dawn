@@ -48,7 +48,7 @@
 /*
 ********************************* Includes **********************************
 */
-#include "noseqcon.h"
+#include "NOSEQCON.H"
 #include "commlib.h"
 
 /*

@@ -37,7 +37,7 @@
  *   FlyClass::Fly_Speed -- Sets the flying object to the speed specified.                     *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 /***********************************************************************************************

@@ -44,7 +44,7 @@
  *   Fixed_To_Cardinal -- Converts a fixed point number into a cardinal number.                *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 /***********************************************************************************************

@@ -37,9 +37,9 @@
  *   CCMessageBox::Process -- Displays message box.                                              *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include	"msgbox.h"
-#include "gadget.h"
+#include	"FUNCTION.H"
+#include	"MSGBOX.H"
+#include "GADGET.H"
 
 #ifdef JAPANESE
 CCMessageBox::CCMessageBox(int caption, bool pict) : Caption(caption), IsPicture(pict)

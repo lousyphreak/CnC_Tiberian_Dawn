@@ -42,7 +42,7 @@
  *   MouseClass::Revert_Mouse_Shape -- Reverts the mouse shape to the non overridden shape.    *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 /*

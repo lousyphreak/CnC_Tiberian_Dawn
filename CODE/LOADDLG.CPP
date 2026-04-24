@@ -42,7 +42,7 @@
  *   LoadOptionsClass::~LoadOptionsClass -- class destructor                                   *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "function.h"
+#include "FUNCTION.H"
 #include <io.h>				// for unlink
 
 

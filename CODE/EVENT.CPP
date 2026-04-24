@@ -46,8 +46,8 @@
  *   EventClass::Execute -- Execute a queued command.                                          *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "function.h"
-#include "ccdde.h"
+#include "FUNCTION.H"
+#include "CCDDE.H"
 
 /***************************************************************************
 ** Table of what data is really used in the EventClass struct for different

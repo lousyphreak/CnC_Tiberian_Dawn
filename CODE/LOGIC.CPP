@@ -37,8 +37,8 @@
  *   LogicClass::Debug_Dump -- Displays logic class status to the mono screen.                 *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include	"logic.h"
+#include	"FUNCTION.H"
+#include	"LOGIC.H"
 
 static unsigned FramesPerSecond=0;
 

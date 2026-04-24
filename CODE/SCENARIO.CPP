@@ -46,7 +46,7 @@
  *   Start_Scenario -- Starts the scenario.                                                    *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 extern int PreserveVQAScreen;
 
 

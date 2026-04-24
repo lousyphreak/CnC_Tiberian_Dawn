@@ -41,7 +41,7 @@
  *   Stop_Speaking -- Forces the EVA voice to stop talking.                                    *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 /***************************************************************************

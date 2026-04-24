@@ -36,8 +36,8 @@
  *   SoundControlsClass::Process -- Handles all the options graphic interface.                 *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include	"sounddlg.h"
+#include	"FUNCTION.H"
+#include	"SOUNDDLG.H"
 
 class MusicListClass : public ListClass
 {

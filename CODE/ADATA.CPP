@@ -37,7 +37,7 @@
  *   AnimTypeClass::AnimTypeClass -- Constructor for animation types.                          *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 // Dinosaur death animations
 static AnimTypeClass const TricDie(

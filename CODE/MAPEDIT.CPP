@@ -59,7 +59,7 @@
  *   MapEditClass::Fatal -- exits with error message                       *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 #ifdef SCENARIO_EDITOR
 
@@ -1921,4 +1921,4 @@ void MapEditClass::Detach(ObjectClass * object)
 
 #endif
 
-#include	"mapedsel.cpp"
+#include	"MAPEDSEL.CPP"

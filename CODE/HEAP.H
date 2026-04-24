@@ -38,7 +38,7 @@
 #ifndef HEAP_H
 #define HEAP_H
 
-#include "vector.h"
+#include "VECTOR.H"
 
 /**************************************************************************
 **	This is a block memory managment handler. It is used when memory is to

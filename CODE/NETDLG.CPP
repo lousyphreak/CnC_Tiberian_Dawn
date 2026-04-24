@@ -103,10 +103,10 @@
  *   Net_Reconnect_Dialog -- Draws/updates the network reconnect dialog                        *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "function.h"
+#include "FUNCTION.H"
 #include <time.h>
-#include "tcpip.h"
-#include "ccdde.h"
+#include "TCPIP.H"
+#include "CCDDE.H"
 #define SHOW_MONO		0
 
 

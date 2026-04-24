@@ -39,7 +39,7 @@
 #define RADIO_H
 
 //#include "object.h"
-#include	"mission.h"
+#include	"MISSION.H"
 //#include	"flasher.h"
 
 class ObjectClass;

@@ -38,8 +38,8 @@
  *   LayerClass::Sorted_Add -- Adds object in sorted order to layer.                           * 
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include	"layer.h"
+#include	"FUNCTION.H"
+#include	"LAYER.H"
 
 
 /***********************************************************************************************

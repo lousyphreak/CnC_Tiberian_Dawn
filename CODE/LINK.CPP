@@ -48,8 +48,8 @@
  *   LinkClass::Remove -- Removes the specified object from the list.                          * 
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "function.h"
-#include "link.h"
+#include "FUNCTION.H"
+#include "LINK.H"
 
 
 /*********************************************************************************************** 

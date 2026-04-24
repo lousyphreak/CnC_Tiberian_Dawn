@@ -38,7 +38,7 @@
 #ifndef MAP_H
 #define MAP_H
 
-#include	"gscreen.h"
+#include	"GSCREEN.H"
 
 #define	BIGMAP	0
 

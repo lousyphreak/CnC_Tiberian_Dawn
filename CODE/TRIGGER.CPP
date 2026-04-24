@@ -58,7 +58,7 @@
  *   TriggerClass::~TriggerClass -- Destructor for trigger objects.                            *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "function.h"
+#include "FUNCTION.H"
 
 static void Do_All_To_Hunt(void);
 

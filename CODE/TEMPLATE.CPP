@@ -47,8 +47,8 @@
  *   TemplateClass::Validate -- validates template pointer												  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include	"template.h"
+#include	"FUNCTION.H"
+#include	"TEMPLATE.H"
 
 
 /*

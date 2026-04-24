@@ -45,8 +45,8 @@
  *   SmudgeTypeClass::One_Time -- Performs one-time initialization                             *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include	"type.h"
+#include	"FUNCTION.H"
+#include	"TYPE.H"
 
 
 static SmudgeTypeClass const Crater1 (

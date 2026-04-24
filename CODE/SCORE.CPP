@@ -47,8 +47,8 @@
  *   ScoreClass::Pulse_Bar_Graph -- Pulses the bargraph color.                                 *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include  "textblit.h"
+#include	"FUNCTION.H"
+#include  "TEXTBLIT.H"
 #define SCORETEXT_X		184
 #define SCORETEXT_Y		8
 #define CASUALTY_Y		88

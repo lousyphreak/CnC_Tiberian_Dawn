@@ -38,7 +38,7 @@
  *   Do_Reinforcements -- Create and place a reinforcement team.                               * 
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 /*********************************************************************************************** 

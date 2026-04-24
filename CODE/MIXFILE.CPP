@@ -47,14 +47,14 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 
-#include	"function.h"
+#include	"FUNCTION.H"
 #include	<direct.h>
 #include	<fcntl.h>
 #include	<io.h>
 #include	<dos.h>
 #include	<errno.h>
 #include	<share.h>
-#include	"mixfile.h"
+#include	"MIXFILE.H"
 
 
 template<class T> int Compare(T const *obj1, T const *obj2) {

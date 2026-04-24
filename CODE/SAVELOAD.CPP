@@ -47,7 +47,7 @@
  *   Write_Object -- reads an object from disk, in a safe way                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 /*
 ********************************** Defines **********************************

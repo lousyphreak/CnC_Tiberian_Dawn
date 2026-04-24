@@ -46,7 +46,7 @@
  *   MissionClass::Set_Mission -- Sets the mission to the specified value.                     * 
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 /*********************************************************************************************** 

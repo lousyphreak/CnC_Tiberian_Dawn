@@ -38,7 +38,7 @@
  *   ScrollClass::Set_Autoscroll -- Turns autoscrolling on or off.                             *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 #define	SCROLL_DELAY	1

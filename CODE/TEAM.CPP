@@ -54,8 +54,8 @@
  *   TeamClass::Validate -- validates team pointer															  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "function.h"
-#include "mission.h"
+#include "FUNCTION.H"
+#include "MISSION.H"
 
 /*
 **	This array records the number of teams in existance of each type.

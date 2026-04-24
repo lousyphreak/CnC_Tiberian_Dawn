@@ -49,11 +49,11 @@
 ********************************* Includes **********************************
 */
 #ifdef SEQ_NET
-#include "seqconn.h"
+#include "SEQCONN.H"
 #else
-#include "noseqcon.h"
+#include "NOSEQCON.H"
 #endif
-#include "ipxaddr.h"
+#include "IPXADDR.H"
 
 
 /*

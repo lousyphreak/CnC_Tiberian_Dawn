@@ -37,8 +37,8 @@
  *   ShapeButtonClass::Draw_Me -- Renders the shape button's imagery.                          *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include "shapebtn.h"
+#include	"FUNCTION.H"
+#include "SHAPEBTN.H"
 
 
 /***********************************************************************************************

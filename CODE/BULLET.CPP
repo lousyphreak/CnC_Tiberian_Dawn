@@ -48,7 +48,7 @@
  *   BulletClass::Validate -- validates bullet pointer													  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 #define	GRAVITY	3
 

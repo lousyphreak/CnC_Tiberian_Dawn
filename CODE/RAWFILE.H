@@ -41,10 +41,10 @@
 #ifndef RAWFILE_H
 #define RAWFILE_H
 
-#include	<wwlib32.h>
+#include	<WWLIB32.H>
 #include	<limits.h>
 #include	<errno.h>
-#include	<wwfile.h>
+#include	<WWFILE.H>
 
 #ifdef NEVER
 	/*

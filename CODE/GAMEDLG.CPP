@@ -36,10 +36,10 @@
  *   OptionsClass::Process -- Handles all the options graphic interface.                       *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include	"gamedlg.h"
-#include "sounddlg.h"
-#include "visudlg.h"
+#include	"FUNCTION.H"
+#include	"GAMEDLG.H"
+#include "SOUNDDLG.H"
+#include "VISUDLG.H"
 
 
 /***********************************************************************************************

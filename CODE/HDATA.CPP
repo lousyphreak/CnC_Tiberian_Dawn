@@ -37,7 +37,7 @@
  *   HouseTypeClass::As_Reference -- Fetches a reference to the house specified.               * 
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 /*
 **	These are the colors used to identify the various owners.

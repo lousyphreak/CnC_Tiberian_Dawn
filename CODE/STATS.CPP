@@ -40,10 +40,10 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include "tcpip.h"
-#include "packet.h"
-#include "ccdde.h"
+#include	"FUNCTION.H"
+#include "TCPIP.H"
+#include "PACKET.H"
+#include "CCDDE.H"
 
 #define FIELD_PACKET_TYPE					"TYPE"
 #define FIELD_GAME_ID							"IDNO"

@@ -47,8 +47,8 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 //#pragma inline
-#include	"function.h"
-#include	"monoc.h"
+#include	"FUNCTION.H"
+#include	"MONOC.H"
 
 #include	<stdlib.h>
 #include	<stdio.h>

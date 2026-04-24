@@ -48,10 +48,10 @@
  *   Phone_Compare -- for qsort															*
  *   Edit_Phone_Dialog -- lets user edit a phone book entry                *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-#include "function.h"
+#include "FUNCTION.H"
 #include "wincomm.h"
 #include "modemreg.h"
-#include "tcpip.h"
+#include "TCPIP.H"
 
 ModemRegistryEntryClass *ModemRegistry = NULL;		//Ptr to modem registry data
 

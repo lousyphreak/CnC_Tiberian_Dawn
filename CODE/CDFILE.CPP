@@ -40,7 +40,7 @@
  *   CDFileClass::Set_Search_Drives -- Sets a list of search paths for file access.            *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 //#include	"cdfile.h"
 
 /*

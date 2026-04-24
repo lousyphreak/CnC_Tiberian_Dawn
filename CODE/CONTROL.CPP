@@ -40,7 +40,7 @@
  *   ControlClass::Make_Peer -- Assigns a peer gadget to this gadget.                          *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 /***********************************************************************************************

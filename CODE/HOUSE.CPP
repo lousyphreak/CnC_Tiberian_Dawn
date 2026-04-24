@@ -99,7 +99,7 @@
  *   HouseClass::~HouseClass -- Default destructor for a house object.                         *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 /***********************************************************************************************

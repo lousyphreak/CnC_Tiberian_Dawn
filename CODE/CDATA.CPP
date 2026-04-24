@@ -44,7 +44,7 @@
  *   TemplateTypeClass::TemplateTypeClass -- Constructor for template type objects.            *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 static char const _slope00000001[] = {7,-1};

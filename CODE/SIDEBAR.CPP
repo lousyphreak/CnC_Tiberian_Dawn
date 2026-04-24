@@ -76,7 +76,7 @@
  *   sortfunc -- Utility routine that handles 'qsort' the strip buttons.                       *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 /*
 **	Define "_RETRIEVE" if the palette morphing tables are part of the loaded data. If this

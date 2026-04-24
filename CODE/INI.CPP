@@ -48,7 +48,7 @@
  *   Write_Scenario_Ini -- Write the scenario INI file.                                        *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 /************************************* Prototypes *********************************************/
 static void Assign_Houses(void);

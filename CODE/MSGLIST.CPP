@@ -44,7 +44,7 @@
  *   MessageListClass::Set_Width -- sets allowable width of messages       *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "function.h"
+#include "FUNCTION.H"
 
 
 char MessageListClass::MessageBuffers[MAX_NUM_MESSAGES][MAX_MESSAGE_LENGTH + 30];

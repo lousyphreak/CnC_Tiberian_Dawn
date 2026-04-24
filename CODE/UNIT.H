@@ -38,11 +38,11 @@
 #ifndef UNIT_H
 #define UNIT_H
 
-#include "tarcom.h"
-#include "radio.h"
-#include "cargo.h"
-#include "mission.h"
-#include	"target.h"
+#include "TARCOM.H"
+#include "RADIO.H"
+#include "CARGO.H"
+#include "MISSION.H"
+#include	"TARGET.H"
 
 
 /****************************************************************************

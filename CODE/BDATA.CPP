@@ -56,7 +56,7 @@
  *   BuildingTypeClass::Width -- Determines width of bulding in icons.                         *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 #define	MCW	MAP_CELL_W
 

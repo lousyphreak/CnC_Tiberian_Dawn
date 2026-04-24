@@ -42,7 +42,7 @@
 enum {false=0,true=1};
 typedef int bool;
 
-#include "packet.h"
+#include "PACKET.H"
 
 
 /**************************************************************************

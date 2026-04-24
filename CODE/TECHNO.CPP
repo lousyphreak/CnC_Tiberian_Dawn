@@ -114,7 +114,7 @@
  *   TechnoClass::Refund_Amount -- Returns with the money to refund if this object is sold.    *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 /***************************************************************************

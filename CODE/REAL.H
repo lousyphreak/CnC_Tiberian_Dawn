@@ -134,12 +134,12 @@ typedef int bool;
 */
 #define NOMEMCHECK
 
-#include	"watcom.h"
+#include	"WATCOM.H"
 #define FILE_H
 #define WWMEM_H
-#include "compat.h"
-#include <wwlib32.h>
-#include	"jshell.h"
+#include "COMPAT.H"
+#include <WWLIB32.H>
+#include	"JSHELL.H"
 
 #ifdef
 #undef
@@ -184,20 +184,20 @@ typedef struct {
 /*
 **	VQ player specific includes.
 */
-#include <vqa32\vqaplay.h>
-#include <vqa32\vqafile.h>
+#include <VQA32/VQAPLAY.H>
+#include <VQA32/VQAFILE.H>
 
 extern bool GameActive;
 extern long LParam;
 
-#include	"vector.h"
-#include	"heap.h"
-#include	"ccfile.h"
-#include	"monoc.h"
-#include	"conquer.h"
+#include	"VECTOR.H"
+#include	"HEAP.H"
+#include	"CCFILE.H"
+#include	"MONOC.H"
+#include	"CONQUER.H"
 //#include	"debug.h"
-#include "special.h"
-#include	"defines.h"
+#include "SPECIAL.H"
+#include	"DEFINES.H"
 
 
 /*
@@ -222,77 +222,77 @@ CELL Coord_Cell(COORDINATE coord);
 	"or	al,bh"
 
 
-#include	"facing.h"
-#include	"ftimer.h"
-#include	"theme.h"
-#include	"link.h"
-#include	"gadget.h"
-#include	"control.h"
-#include	"toggle.h"
-#include	"checkbox.h"
-#include	"shapebtn.h"
-#include	"textbtn.h"
-#include	"slider.h"
-#include "list.h"
-#include "cheklist.h"
-#include "colrlist.h"
-#include	"edit.h"
-#include	"gauge.h"
-#include	"msgbox.h"
-#include	"dial8.h"
-#include	"txtlabel.h"
-#include	"super.h"
-#include	"house.h"
-#include	"gscreen.h"
-#include	"map.h"
-#include	"display.h"
-#include	"radar.h"
-#include	"power.h"
-#include	"sidebar.h"
-#include	"tab.h"
-#include	"help.h"
-#include	"mouse.h"
+#include	"FACING.H"
+#include	"FTIMER.H"
+#include	"THEME.H"
+#include	"LINK.H"
+#include	"GADGET.H"
+#include	"CONTROL.H"
+#include	"TOGGLE.H"
+#include	"CHECKBOX.H"
+#include	"SHAPEBTN.H"
+#include	"TEXTBTN.H"
+#include	"SLIDER.H"
+#include "LIST.H"
+#include "CHEKLIST.H"
+#include "COLRLIST.H"
+#include	"EDIT.H"
+#include	"GAUGE.H"
+#include	"MSGBOX.H"
+#include	"DIAL8.H"
+#include	"TXTLABEL.H"
+#include	"SUPER.H"
+#include	"HOUSE.H"
+#include	"GSCREEN.H"
+#include	"MAP.H"
+#include	"DISPLAY.H"
+#include	"RADAR.H"
+#include	"POWER.H"
+#include	"SIDEBAR.H"
+#include	"TAB.H"
+#include	"HELP.H"
+#include	"MOUSE.H"
 //#include	"mapedit.h"
-#include	"help.h"
-#include	"target.h"
-#include	"theme.h"
-#include	"team.h"				// Team objects.
-#include	"teamtype.h"		// Team type objects.
-#include	"trigger.h"			// Trigger event objects.
-#include	"mapedit.h"			// ???
-#include	"abstract.h"
-#include "object.h"
-#include "mission.h"
-#include	"door.h"
-#include	"bullet.h"			// Bullet objects.
-#include	"terrain.h"			// Terrain objects.
-#include	"anim.h"				// Animation objects.
-#include	"template.h"		// Icon template objects.
-#include	"overlay.h"			// Overlay objects.
-#include	"smudge.h"			// Stains on the terrain objects.
-#include	"aircraft.h"		// Aircraft objects.
-#include	"unit.h"				// Ground unit objects.
-#include	"infantry.h"		// Infantry objects.
-#include	"credits.h"			// Credit counter class.
-#include	"score.h"			// Scoring system class.
-#include	"factory.h"			// Production manager class.
-#include "intro.h"
-#include "ending.h"
-#include	"logic.h"
-#include	"queue.h"
-#include	"event.h"
-#include "base.h"				// defines the AI's pre-built base
-#include "ipxmgr.h"
-#include	"combuf.h"
-#include	"connect.h"
-#include	"connmgr.h"
-#include	"noseqcon.h"
-#include "msglist.h"
-#include	"nullconn.h"
-#include	"nullmgr.h"
-#include "phone.h"
-#include "loaddlg.h"
-#include	"ipxaddr.h"
+#include	"HELP.H"
+#include	"TARGET.H"
+#include	"THEME.H"
+#include	"TEAM.H"				// Team objects.
+#include	"TEAMTYPE.H"		// Team type objects.
+#include	"TRIGGER.H"			// Trigger event objects.
+#include	"MAPEDIT.H"			// ???
+#include	"ABSTRACT.H"
+#include "OBJECT.H"
+#include "MISSION.H"
+#include	"DOOR.H"
+#include	"BULLET.H"			// Bullet objects.
+#include	"TERRAIN.H"			// Terrain objects.
+#include	"ANIM.H"				// Animation objects.
+#include	"TEMPLATE.H"		// Icon template objects.
+#include	"OVERLAY.H"			// Overlay objects.
+#include	"SMUDGE.H"			// Stains on the terrain objects.
+#include	"AIRCRAFT.H"		// Aircraft objects.
+#include	"UNIT.H"				// Ground unit objects.
+#include	"INFANTRY.H"		// Infantry objects.
+#include	"CREDITS.H"			// Credit counter class.
+#include	"SCORE.H"			// Scoring system class.
+#include	"FACTORY.H"			// Production manager class.
+#include "INTRO.H"
+#include "ENDING.H"
+#include	"LOGIC.H"
+#include	"QUEUE.H"
+#include	"EVENT.H"
+#include "BASE.H"				// defines the AI's pre-built base
+#include "IPXMGR.H"
+#include	"COMBUF.H"
+#include	"CONNECT.H"
+#include	"CONNMGR.H"
+#include	"NOSEQCON.H"
+#include "MSGLIST.H"
+#include	"NULLCONN.H"
+#include	"NULLMGR.H"
+#include "PHONE.H"
+#include "LOADDLG.H"
+#include	"IPXADDR.H"
 
 /****************************************************************************
 **	This is a "node", used for the lists of available games & players.  The
@@ -315,7 +315,7 @@ typedef struct NodeNameTag {
 } NodeNameType;
 
 
-#include	"externs.h"
+#include	"EXTERNS.H"
 
 
 extern int Get_CD_Drive(void);
@@ -924,7 +924,7 @@ inline CELL CellClass::Cell_Number(void) const
 
 #ifndef NOMEMCHECK
 #define NO_INTERCEPT
-#include	"memcheck.h"
+#include	"MEMCHECK.H"
 #endif
 
 

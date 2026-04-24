@@ -49,7 +49,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 
-#include	"function.h"
+#include	"FUNCTION.H"
 #include	<stdlib.h>
 #include	<stdio.h>
 #include	<string.h>
@@ -59,9 +59,9 @@
 #include	<dos.h>
 #include	<share.h>
 
-#include "wwlib32.h"
-#include	"compat.h"
-#include	"rawfile.h"
+#include "WWLIB32.H"
+#include	"COMPAT.H"
+#include	"RAWFILE.H"
 
 extern GraphicBufferClass	SeenBuff;
 extern GraphicBufferClass	HidPage;

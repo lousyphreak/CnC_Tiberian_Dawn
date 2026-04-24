@@ -55,7 +55,7 @@
  *   DriveClass::Mark_Track -- Marks the midpoint of the track as occupied.                    *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 DriveClass::DriveClass(void) : Class(0) {};

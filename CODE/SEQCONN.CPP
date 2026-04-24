@@ -43,7 +43,7 @@
  *   SequencedConnClass::Service_Receive_Queue -- services recieve queue	*
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "function.h"
+#include "FUNCTION.H"
 
 
 /***************************************************************************

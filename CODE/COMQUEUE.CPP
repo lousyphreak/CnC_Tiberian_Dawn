@@ -53,7 +53,7 @@
  *   CommQueueClass::Mono_Debug_Print2 -- Debug output; alternate format   *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "function.h"
+#include "FUNCTION.H"
 
 #ifndef DEMO
 

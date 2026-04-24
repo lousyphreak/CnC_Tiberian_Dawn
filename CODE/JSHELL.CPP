@@ -43,8 +43,8 @@
  *   Small_Icon -- Create a small icon from a big one.                                         * 
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include	"wwfile.h"
+#include	"FUNCTION.H"
+#include	"WWFILE.H"
 
 
 /*********************************************************************************************** 

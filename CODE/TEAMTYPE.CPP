@@ -49,7 +49,7 @@
  *   TeamTypeClass::Validate -- validates teamtype pointer						*
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "function.h"
+#include "FUNCTION.H"
 
 
 /*

@@ -36,8 +36,8 @@
  *   Main_Menu -- Menu processing                                                              *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "function.h"
-#include "ccdde.h"
+#include "FUNCTION.H"
+#include "CCDDE.H"
 
 /*****************************
 **	Function prototypes

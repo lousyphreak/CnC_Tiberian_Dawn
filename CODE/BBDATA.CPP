@@ -38,7 +38,7 @@
  *   BulletTypeClass::One_Time -- Performs the one time processing for bullets.                *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 /***************************************************************************
 **	Detailed information about each class of bullet (projectile) in the game.

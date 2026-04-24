@@ -42,9 +42,9 @@
  *   TerrainTypeClass::TerrainTypeClass -- The general constructor for the terrain type objects*
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include	"terrain.h"
-#include	"type.h"
+#include	"FUNCTION.H"
+#include	"TERRAIN.H"
+#include	"TYPE.H"
 
 
 #define	TREE_NORMAL		600

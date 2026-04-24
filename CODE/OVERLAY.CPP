@@ -43,8 +43,8 @@
  *   OverlayClass::Validate -- validates overlay															  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include	"overlay.h"
+#include	"FUNCTION.H"
+#include	"OVERLAY.H"
 
 /*
 ** This contains the value of the Virtual Function Table Pointer

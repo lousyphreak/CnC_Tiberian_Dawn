@@ -39,7 +39,7 @@
  *   CargoClass::Debug_Dump -- Displays the cargo value to the monochrome screen.              *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 #ifdef CHEAT_KEYS

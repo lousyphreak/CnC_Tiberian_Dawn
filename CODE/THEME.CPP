@@ -49,9 +49,9 @@
  *   ThemeClass::Track_Length -- Caclulates the length of the song (in seconds).               *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
-#include	"theme.h"
+#include	"THEME.H"
 
 
 /*

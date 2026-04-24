@@ -46,8 +46,8 @@
  *   InfantryTypeClass::Who_Can_Build_Me -- Determines what can build the infantry object.     *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include	"type.h"
+#include	"FUNCTION.H"
+#include	"TYPE.H"
 
 
 

@@ -78,7 +78,7 @@
  *   ObjectClass::Target_Coord -- Fetches the coordinate if this object is a target.           *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "function.h"
+#include "FUNCTION.H"
 
 
 /*

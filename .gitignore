@@ -1,0 +1,7 @@
+GameData/
+build/
+build*/
+k8s/
+dbuild.sh
+*/.zig-cache/*
+*/zig-out/*

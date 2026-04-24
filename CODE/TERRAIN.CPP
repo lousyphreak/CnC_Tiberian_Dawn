@@ -59,8 +59,8 @@
  *   TerrainClass::Validate -- validates terrain pointer													  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include	"terrain.h"
+#include	"FUNCTION.H"
+#include	"TERRAIN.H"
 
 #define	BARNACLE_STAGE			22
 #define	FIRST_SPORE_STAGE		30

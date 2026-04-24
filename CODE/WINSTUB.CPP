@@ -39,8 +39,8 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include "tcpip.h"
+#include	"FUNCTION.H"
+#include "TCPIP.H"
 
 void output(short,short)
 {}
@@ -787,7 +787,7 @@ void Load_Title_Screen(char *name, GraphicViewPortClass *video_page, unsigned ch
 
 
 
-#include "filepcx.h"
+#include "FILEPCX.H"
 
 /***************************************************************************
  * READ_PCX_FILE -- read a pcx file into a Graphic Buffer                  *

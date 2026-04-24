@@ -38,9 +38,9 @@
 #ifndef TEAM_H
 #define TEAM_H
 
-#include	<wwfile.h>
-#include	"teamtype.h"
-#include	"abstract.h"
+#include	<WWFILE.H>
+#include	"TEAMTYPE.H"
+#include	"ABSTRACT.H"
 
 /*
 ** Units are only allowed to stray a certain distance away from their

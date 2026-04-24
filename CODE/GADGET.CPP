@@ -55,8 +55,8 @@
  *   GadgetClass::Is_List_To_Redraw -- tells if any gadget in the list needs redrawing         *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "function.h"
-#include <filepcx.h>
+#include "FUNCTION.H"
+#include <FILEPCX.H>
 #include <io.h>
 
 /*

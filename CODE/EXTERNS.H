@@ -38,19 +38,19 @@
 #ifndef EXTERNS_H
 #define EXTERNS_H
 
-#include	"cell.h"
+#include	"CELL.H"
 
 #ifdef SCENARIO_EDITOR
-#include	"mapedit.h"
+#include	"MAPEDIT.H"
 #endif
-#include	"techno.h"
-#include	"type.h"
-#include	"building.h"
-#include	"unit.h"
-#include	"credits.h"
-#include	"goptions.h"
-#include	"options.h"
-#include	"infantry.H"
+#include	"TECHNO.H"
+#include	"TYPE.H"
+#include	"BUILDING.H"
+#include	"UNIT.H"
+#include	"CREDITS.H"
+#include	"GOPTIONS.H"
+#include	"OPTIONS.H"
+#include	"INFANTRY.H"
 
 #ifdef JAPANESE
 extern bool ForceEnglish;

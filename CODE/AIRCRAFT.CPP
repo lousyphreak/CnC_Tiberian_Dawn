@@ -90,7 +90,7 @@
  *   AircraftClass::Validate -- validates aircraft pointer												  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 /*

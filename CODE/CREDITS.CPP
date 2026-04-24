@@ -38,7 +38,7 @@
  *   CreditClass::CreditClass -- Default constructor for the credit class object.              *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 /***********************************************************************************************

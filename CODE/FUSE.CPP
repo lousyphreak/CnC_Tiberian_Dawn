@@ -39,7 +39,7 @@
  *   FuseClass::Fuse_Read -- Reads the fuse class data from the save game file.                *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 /***********************************************************************************************

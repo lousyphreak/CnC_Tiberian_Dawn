@@ -38,8 +38,8 @@
  *   Print_Statistics -- Prints statistics on country selected                                 *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include	"textblit.h"
+#include	"FUNCTION.H"
+#include	"TEXTBLIT.H"
 
 #ifndef DEMO
 

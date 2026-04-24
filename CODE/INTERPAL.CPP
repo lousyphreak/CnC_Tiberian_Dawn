@@ -41,7 +41,7 @@
  *                                                                                             *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "function.h"
+#include "FUNCTION.H"
 
 BOOL	InterpolationPaletteChanged = FALSE;
 extern "C" {

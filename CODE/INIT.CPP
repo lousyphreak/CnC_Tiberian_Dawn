@@ -43,12 +43,12 @@
  *   Version_Number -- Determines the version number.                                          *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include	"loaddlg.h"
-#include	"tcpip.h"
+#include	"FUNCTION.H"
+#include	"LOADDLG.H"
+#include	"TCPIP.H"
 #include	<conio.h>
 #include	<dos.h>
-#include  "ccdde.h"
+#include  "CCDDE.H"
 
 static HANDLE			hCCLibrary;
 

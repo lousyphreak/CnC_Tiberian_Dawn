@@ -44,8 +44,8 @@
  *   SliderClass::Draw_Thumb -- Draws the "thumb" for this slider.                             *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include "slider.h"
+#include	"FUNCTION.H"
+#include "SLIDER.H"
 
 
 /***********************************************************************************************

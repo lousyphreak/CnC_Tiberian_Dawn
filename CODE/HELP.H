@@ -38,7 +38,7 @@
 #ifndef HELP_H
 #define HELP_H
 
-#include	"tab.h"
+#include	"TAB.H"
 
 class HelpClass: public TabClass
 {

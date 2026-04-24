@@ -49,7 +49,7 @@
  *   AircraftTypeClass::Who_Can_Build_Me -- Determines which object can build the aircraft obje*
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 void const * AircraftTypeClass::LRotorData = NULL;

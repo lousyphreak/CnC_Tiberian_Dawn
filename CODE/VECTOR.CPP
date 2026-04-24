@@ -44,8 +44,8 @@
  *   BooleanVectorClass::operator == -- Comparison operator for boolean vector.                *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include "vector.h"
+#include	"FUNCTION.H"
+#include "VECTOR.H"
 #include	<mem.h>
 #include	<stdio.h>
 

@@ -43,7 +43,7 @@
  *   Power_Height -- Given a value figure where it falls on bar                                *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 /*

@@ -35,8 +35,8 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include	"textblit.h"
+#include	"FUNCTION.H"
+#include	"TEXTBLIT.H"
 
 void GDI_Ending(void)
 {

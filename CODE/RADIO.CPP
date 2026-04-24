@@ -39,7 +39,7 @@
  *   RadioClass::Limbo -- When limboing a unit will always break radio contact.                * 
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 /*

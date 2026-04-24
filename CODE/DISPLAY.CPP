@@ -78,7 +78,7 @@
  *   DisplayClass::Center_Map -- Centers the map about the currently selected objects          *
  *   DisplayClass::Prev_Object -- Searches for the previous object on the map.                 *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-#include	"function.h"
+#include	"FUNCTION.H"
 
 /*
 **	These layer control elements are used to group the displayable objects

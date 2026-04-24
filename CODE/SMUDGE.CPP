@@ -44,8 +44,8 @@
  *   SmudgeClass::Validate -- validates smudge pointer													  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include	"smudge.h"
+#include	"FUNCTION.H"
+#include	"SMUDGE.H"
 
 
 /*

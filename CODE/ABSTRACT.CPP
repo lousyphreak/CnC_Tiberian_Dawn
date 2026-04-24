@@ -37,7 +37,7 @@
  *   AbstractTypeClass::AbstractTypeClass -- Constructor for abstract type objects.            *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 /***********************************************************************************************

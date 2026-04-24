@@ -46,9 +46,9 @@
  *   IPXConnClass::Broadcast -- broadcasts the given packet						*
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "function.h"
-#include "ipx95.h"
-#include "tcpip.h"
+#include "FUNCTION.H"
+#include "IPX95.H"
+#include "TCPIP.H"
 
 /*
 ********************************* Globals ***********************************

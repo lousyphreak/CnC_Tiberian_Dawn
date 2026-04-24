@@ -61,8 +61,8 @@
  *   Validate_Error -- prints an error message when an object fails validation                 *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include  "tcpip.h"
+#include	"FUNCTION.H"
+#include  "TCPIP.H"
 #include	<stdlib.h>
 #include	<stdio.h>
 #include	<string.h>
@@ -72,7 +72,7 @@
 #include	<dos.h>
 #include	<share.h>
 #include <malloc.h>
-#include  "ccdde.h"
+#include  "CCDDE.H"
 
 #define SHAPE_TRANS		0x40
 

@@ -56,8 +56,8 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 
-#include "function.h"
-#include "tcpip.h"
+#include "FUNCTION.H"
+#include "TCPIP.H"
 
 #ifdef FORCE_WINSOCK
 

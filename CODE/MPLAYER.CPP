@@ -43,8 +43,8 @@
  *   Surrender_Dialog -- Prompts user for surrendering                                         *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "function.h"
-#include "tcpip.h"
+#include "FUNCTION.H"
+#include "TCPIP.H"
 
 static void Garble_Message(char *buf);
 

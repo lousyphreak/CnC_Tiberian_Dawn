@@ -59,8 +59,8 @@
  *   Let_IPX_Breath -- gives IPX some CPU time                             *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "function.h"
-#include "ipx95.h"
+#include "FUNCTION.H"
+#include "IPX95.H"
 
 
 /***************************************************************************

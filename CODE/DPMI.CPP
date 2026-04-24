@@ -39,8 +39,8 @@
 #pragma inline
 #endif
 
-#include	"function.h"
-#include "dpmi.h"
+#include	"FUNCTION.H"
+#include "DPMI.H"
 
 #ifndef __FLAT__
 

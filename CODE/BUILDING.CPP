@@ -97,7 +97,7 @@
  *   BuildingClass::Validate -- validates building pointer												  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 enum SAMState {

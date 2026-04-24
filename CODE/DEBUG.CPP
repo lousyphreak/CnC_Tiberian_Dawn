@@ -37,9 +37,9 @@
  *   Debug_Key -- Debug mode keyboard processing.                                              *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "function.h"
+#include "FUNCTION.H"
 #include	<stdarg.h>
-#include <filepcx.h>
+#include <FILEPCX.H>
 #include <io.h>
 #ifdef CHEAT_KEYS
 

@@ -37,16 +37,16 @@
  *   Draw_Caption -- Draws a caption on a dialog box.                                          *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "function.h"
+#include "FUNCTION.H"
 
-#include "goptions.h"
-#include "loaddlg.h"
-#include "sounddlg.h"
-#include "visudlg.h"
-#include "gamedlg.h"
-#include "textbtn.h"
-#include "confdlg.h"
-#include "descdlg.h"
+#include "GOPTIONS.H"
+#include "LOADDLG.H"
+#include "SOUNDDLG.H"
+#include "VISUDLG.H"
+#include "GAMEDLG.H"
+#include "TEXTBTN.H"
+#include "CONFDLG.H"
+#include "DESCDLG.H"
 
 void GameOptionsClass::Adjust_Variables_For_Resolution(void)
 {

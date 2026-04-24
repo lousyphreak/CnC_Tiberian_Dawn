@@ -54,7 +54,7 @@
  *   MapClass::Write_Binary -- writes the map's binary image file                              *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "function.h"
+#include "FUNCTION.H"
 
 #define	MCW	MAP_CELL_W
 int const MapClass::RadiusOffset[] = {

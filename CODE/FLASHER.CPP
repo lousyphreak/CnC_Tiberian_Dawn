@@ -37,7 +37,7 @@
  *   FlasherClass::Debug_Dump -- Displays current status to the monochrome screen.             *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 #ifdef CHEAT_KEYS

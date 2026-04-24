@@ -47,8 +47,8 @@
  *   OverlayTypeClass::Radar_Icon -- Gets a pointer to the radar icons                         *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include	"type.h"
+#include	"FUNCTION.H"
+#include	"TYPE.H"
 
 
 static OverlayTypeClass const Road(

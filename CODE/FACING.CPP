@@ -39,8 +39,8 @@
  *   FacingClass::FacingClass -- Default constructor for the facing class.                     * 
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
-#include	"facing.h"
+#include	"FUNCTION.H"
+#include	"FACING.H"
 
 
 /*********************************************************************************************** 

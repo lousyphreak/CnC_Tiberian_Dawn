@@ -41,7 +41,7 @@
  *   GaugeClass::Set_Maximum -- Sets the maximum value for the gauge.                          *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include	"function.h"
+#include	"FUNCTION.H"
 
 
 /***************************************************************************

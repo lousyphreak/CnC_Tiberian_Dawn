@@ -66,9 +66,9 @@
  *   IPXManagerClass::Free_RealMode_Mem -- frees real-mode memory				*
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "function.h"
-#include "ipx95.h"
-#include "tcpip.h"
+#include "FUNCTION.H"
+#include "IPX95.H"
+#include "TCPIP.H"
 
 /***************************************************************************
  * IPXManagerClass::IPXManagerClass -- class constructor                   *

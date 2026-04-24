@@ -75,8 +75,8 @@
  *   Update_Queue_Mono -- updates mono display                             *
  *   Print_Framesync_Values -- displays frame-sync variables               *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-#include	"function.h"
-#include 	"tcpip.h"
+#include	"FUNCTION.H"
+#include 	"TCPIP.H"
 
 /********************************** Defines *********************************/
 #define SHOW_MONO	1
