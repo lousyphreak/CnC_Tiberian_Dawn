@@ -37,8 +37,7 @@
 #ifndef __FIELD_H
 #define __FIELD_H
 
-#include <windows.h>
-#include <winsock.h>
+#include "win32_compat.h"
 
 #define FIELD_HEADER_SIZE	(sizeof(FieldClass) - (sizeof(void *) * 2))
 

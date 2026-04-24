@@ -38,6 +38,8 @@
 #ifndef JSHELL_H
 #define JSHELL_H
 
+extern KeyboardClass *Keyboard;
+
 /*
 **	Interface class to the keyboard. This insulates the game from library vagaries. Most
 **	notable being the return values are declared as "int" in the library whereas C&C
@@ -46,14 +48,14 @@
 class Keyboard 
 {
 	public:
-		static KeyNumType Get(void) {return (KeyNumType)Get_Key_Num();};
-		static KeyNumType Check(void) {return (KeyNumType)Check_Key_Num();};
-		static KeyASCIIType To_ASCII(KeyNumType key) {return (KeyASCIIType)KN_To_KA(key);};
-		static void Clear(void) {Clear_KeyBuffer();};
+		static KeyNumType Get(void) {return (::Keyboard != 0) ? ::Keyboard->Get() : (KeyNumType)0;};
+		static KeyNumType Check(void) {return (::Keyboard != 0) ? ::Keyboard->Check() : (KeyNumType)0;};
+		static KeyASCIIType To_ASCII(KeyNumType key) {return (::Keyboard != 0) ? ::Keyboard->To_ASCII(key) : (KeyASCIIType)0;};
+		static void Clear(void) {if (::Keyboard != 0) ::Keyboard->Clear();};
 		static void Stuff(KeyNumType key) {Stuff_Key_Num(key);};
-		static int Down(KeyNumType key) {return Key_Down(key);};
-		static int Mouse_X(void) {return Get_Mouse_X();};
-		static int Mouse_Y(void) {return Get_Mouse_Y();};
+		static int Down(KeyNumType key) {return (::Keyboard != 0) ? ::Keyboard->Down(key) : 0;};
+		static int Mouse_X(void) {return (::Keyboard != 0) ? ::Keyboard->Mouse_X() : 0;};
+		static int Mouse_Y(void) {return (::Keyboard != 0) ? ::Keyboard->Mouse_Y() : 0;};
 };
 
 

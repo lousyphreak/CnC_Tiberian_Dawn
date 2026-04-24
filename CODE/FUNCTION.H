@@ -42,74 +42,74 @@
 Map (screen) class heirarchy.
 
  MapeditClass (most derived class) -- scenario editor
-        ³
+        ï¿½
    MouseClass -- handles mouse animation and display control
-        ³
+        ï¿½
   ScrollClass -- map scroll handler
-        ³
+        ï¿½
     HelpClass -- pop-up help text handler
-        ³
+        ï¿½
      TabClass -- file folder tab screen mode control dispatcher
-        ³
+        ï¿½
  SidebarClass -- displays and controls construction list sidebar
-        ³
+        ï¿½
    PowerClass -- display power production/consumption bargraph
-        ³
+        ï¿½
    RadarClass -- displays and controls radar map
-        ³
+        ï¿½
  DisplayClass -- general tactical map display handler
-        ³
+        ï¿½
      MapClass -- general tactical map data handler
-        ³
+        ï¿½
  GScreenClass (pure virtual base class) -- generic screen control
 
                           AbstractClass
-                                  ³
-                                  ³
-                                  ³
-                                  ³
+                                  ï¿½
+                                  ï¿½
+                                  ï¿½
+                                  ï¿½
                             ObjectClass
-                                  ³
-       ÚÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄ¿
-   AnimClass  ³  TemplateClass    ³        ÃÄ FuseClass     ³    TerrainClass
-              ³                   ³        ÃÄ FlyClass      ³
-              ³                   ³  BulletClass            ³
+                                  ï¿½
+       ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿
+   AnimClass  ï¿½  TemplateClass    ï¿½        ï¿½ï¿½ FuseClass     ï¿½    TerrainClass
+              ï¿½                   ï¿½        ï¿½ï¿½ FlyClass      ï¿½
+              ï¿½                   ï¿½  BulletClass            ï¿½
        OverlayClass        MissionClass               SmudgeClass
-                                  ³
+                                  ï¿½
                              RadioClass
-                                  ³
-                                  ÃÄ CrewClass
-                                  ÃÄ FlasherClass
-                                  ÃÄ StageClass
-                                  ÃÄ CargoClass
+                                  ï¿½
+                                  ï¿½ï¿½ CrewClass
+                                  ï¿½ï¿½ FlasherClass
+                                  ï¿½ï¿½ StageClass
+                                  ï¿½ï¿½ CargoClass
                             TechnoClass
-                                  ³
-         ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+                                  ï¿½
+         ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿
      FootClass                                         BuildingClass
-         ³
-         ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-    DriveClass  InfantryClass         ÃÄ FlyClass
-         ³                      AircraftClass
+         ï¿½
+         ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿
+    DriveClass  InfantryClass         ï¿½ï¿½ FlyClass
+         ï¿½                      AircraftClass
    TurretClass
-         ³
+         ï¿½
    TarComClass
-         ³
+         ï¿½
      UnitClass
 
 
                             AbstractTypeClass
-                                    ³
+                                    ï¿½
                               ObjectTypeClass
-                                    ³
-             ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-             ³                      ³            ³                 ³
-       TechnoTypeClass              ³            ³                 ³
-             ³                BulletTypeClass    ³                 ³
-             ³                           TemplateTypeClass         ³
-    ÚÄÄÄÄÄÄÄÄÁÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿             TerrainTypeClass
-    ³              ³           ³              ³
-UnitTypeClass      ³   BuildingTypeClass      ³
-                   ³                  InfantryTypeClass
+                                    ï¿½
+             ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿
+             ï¿½                      ï¿½            ï¿½                 ï¿½
+       TechnoTypeClass              ï¿½            ï¿½                 ï¿½
+             ï¿½                BulletTypeClass    ï¿½                 ï¿½
+             ï¿½                           TemplateTypeClass         ï¿½
+    ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿             TerrainTypeClass
+    ï¿½              ï¿½           ï¿½              ï¿½
+UnitTypeClass      ï¿½   BuildingTypeClass      ï¿½
+                   ï¿½                  InfantryTypeClass
            AircraftTypeClass
 #endif
 
@@ -119,15 +119,44 @@ UnitTypeClass      ³   BuildingTypeClass      ³
 **	definition.
 */
 #ifndef TRUE_FALSE_DEFINED
+#ifndef __cplusplus
 enum {false=0,true=1};
 typedef int bool;
+#endif
 #define TRUE_FALSE_DEFINED
 #endif	//TRUE_FALSE_DEFINED
 
 
-#define _WIN32
-#define WIN32 =1	//_LEAN_AND_MEAN
-#include <windows.h>
+#include <stdint.h>
+#include <SDL3/SDL_timer.h>
+
+#include "sdl_config.h"
+
+#ifndef BITMAPCLASS
+#define BITMAPCLASS
+class BitmapClass
+{
+	public:
+		BitmapClass(int w, int h, uint8_t * data) :
+			Width(w), Height(h), Data(data) {};
+
+		int Width;
+		int Height;
+		uint8_t * Data;
+};
+
+class TPoint2D
+{
+	public:
+		TPoint2D(int xx, int yy) : x(xx), y(yy) {};
+		TPoint2D(void) : x(0), y(0) {};
+
+		int x;
+		int y;
+};
+#endif
+
+#include "win32_compat.h"
 
 
 /**********************************************************************
@@ -140,8 +169,21 @@ typedef int bool;
 #define FILE_H
 #define WWMEM_H
 #include "COMPAT.H"
+#include "KEY.H"
 #include <WWLIB32.H>
 #include	"JSHELL.H"
+
+#define	_MAX_NAME	_MAX_FNAME
+
+#ifdef _pascal
+#undef	_pascal
+#endif
+#ifdef pascal
+#undef	pascal
+#endif
+
+#define pascal
+#define _pascal
 
 
 
@@ -156,17 +198,18 @@ typedef struct {
 
 // Don't complain if these headers aren't referenced.
 #include	<string.h>
+#include	<stdint.h>
 #include	<stdlib.h>
 #include	<stdio.h>
 #include	<stddef.h>
-#include	<mem.h>
-#include	<dos.h>
-#include	<direct.h>
+#include	"sdl_fs.h"
 #include	<stdarg.h>
 #include	<ctype.h>
 #include	<assert.h>
-#include	<process.h>
-#include	<new.h>
+#include	<algorithm>
+
+using std::max;
+using std::min;
 
 /*
 **	VQ player specific includes.
@@ -187,18 +230,13 @@ extern long LParam;
 #include	"DEFINES.H"
 
 
-/*
-**	Greenleaf specific includes.
-*/
-#include <modem.h>
-#include <fast.h>
-
-
 extern long Frame;
 inline CELL Coord_XCell(COORDINATE coord) {return (CELL)(*(((unsigned char*)&coord)+1));}
 inline CELL Coord_YCell(COORDINATE coord) {return (CELL)(*(((unsigned char*)&coord)+3));}
 //inline CELL Coord_Cell(COORD coord){return (CELL)(((*(((unsigned short *)&coord)+1) & 0xFF00) >> 2) | *(((unsigned char *)&coord)+1));}
 CELL Coord_Cell(COORDINATE coord);
+int32_t Desired_Facing8(int32_t x1, int32_t y1, int32_t x2, int32_t y2);
+int32_t Desired_Facing256(int32_t x1, int32_t y1, int32_t x2, int32_t y2);
 #pragma aux Coord_Cell parm [eax] \
 	modify [ebx] \
 	value [ax]		= 				\
@@ -276,8 +314,6 @@ CELL Coord_Cell(COORDINATE coord);
 #include	"CONNMGR.H"
 #include	"NOSEQCON.H"
 #include "MSGLIST.H"
-#include	"NULLCONN.H"
-#include	"NULLMGR.H"
 #include "PHONE.H"
 #include "LOADDLG.H"
 #include	"IPXADDR.H"

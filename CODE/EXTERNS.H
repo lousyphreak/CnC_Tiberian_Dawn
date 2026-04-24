@@ -219,11 +219,13 @@ extern int						SuperRecord;
 extern int						PlaybackGame;
 extern int						AllowAttract;
 
+class GetCDClass;
 extern GetCDClass				CDList;
 
 /*
 ** Modem globals
 */
+class NullModemClass;
 extern bool 											ModemService;
 extern NullModemClass 								NullModem;
 extern DynamicVectorClass<PhoneEntryClass *>	PhoneBook;

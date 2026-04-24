@@ -38,19 +38,15 @@
 #ifndef COMPAT_H
 #define COMPAT_H
 
+#include <stdint.h>
 
-#include "i86.h"
-
-#define  KeyNumType	int
-#define  KeyASCIIType	int
-
-
+#include "win32_compat.h"
 
 #define	BuffType		BufferClass
 #define movmem(a,b,c) memmove(b,a,c)
 #define ShapeBufferSize	_ShapeBufferSize
 extern "C" {
-	extern	long ShapeBufferSize;
+	extern	int32_t ShapeBufferSize;
 	extern	char *ShapeBuffer;
 }
 

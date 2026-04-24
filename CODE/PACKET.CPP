@@ -36,11 +36,12 @@
  *   PacketClass::Add_Field -- Adds a FieldClass entry to head of packet li*
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 #include <stdlib.h>
-#include <mem.h>
 #include <string.h>
 
+#ifndef __cplusplus
 enum {false=0,true=1};
 typedef int bool;
+#endif
 
 #include "PACKET.H"
 

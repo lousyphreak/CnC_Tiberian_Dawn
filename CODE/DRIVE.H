@@ -131,8 +131,6 @@ class DriveClass : public FootClass
 			OUT_OF_WEAPON_FACTORY			// Track to leave weapons factory.
 		};
 
-	private:
-
 		/****************************************************************************
 		**	Smooth turning tracks are controlled by this structure and these
 		**	processing bits.
@@ -145,6 +143,8 @@ class DriveClass : public FootClass
 			F_D=0x08		// Two cell consumption?
 		} TrackControlType;
 		//#define	F_S	0x10	// Is this a 90 degree turn?
+
+	private:
 
 		typedef struct {
 			char					Track;		// Which track to use.
