@@ -39,8 +39,6 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include	"FUNCTION.H"
-#include	<conio.h>
-#include	<io.h>
 #include  "CCDDE.H"
 
 bool Read_Private_Config_Struct(char *profile, NewConfigType *config);
@@ -160,10 +158,10 @@ int PASCAL WinMain ( HINSTANCE instance , HINSTANCE , char * command_line , int 
 
 	if (Ram_Free(MEM_NORMAL) < 5000000) {
 #ifdef GERMAN
-		printf("Zuwenig Hauptspeicher verfgbar.\n");
+		printf("Zuwenig Hauptspeicher verfï¿½gbar.\n");
 #else
 #ifdef FRENCH
-		printf("M‚moire vive (RAM) insuffisante.\n");
+		printf("Mï¿½moire vive (RAM) insuffisante.\n");
 #else
 		printf("Insufficient RAM available.\n");
 #endif
@@ -273,10 +271,10 @@ int PASCAL WinMain ( HINSTANCE instance , HINSTANCE , char * command_line , int 
 		Sleep (1000);
 		if (WindowsTimer->Get_System_Tick_Count() == time_test){
 #ifdef FRENCH
-			MessageBox(0, "Error - L'horloge systŠme n'a pas pu s'initialiser en raison de l'instabilit‚ du sytŠme. Vous devez red‚marrer Windows.",  "Command & Conquer" , MB_OK|MB_ICONSTOP);
+			MessageBox(0, "Error - L'horloge systï¿½me n'a pas pu s'initialiser en raison de l'instabilitï¿½ du sytï¿½me. Vous devez redï¿½marrer Windows.",  "Command & Conquer" , MB_OK|MB_ICONSTOP);
 #else
 #ifdef	GERMAN
-			MessageBox(0, "Fehler - das Timer-System konnte aufgrund einer Instabilit„t des Systems nicht initialisiert werden. Bitte starten Sie Windows neu.", "Command & Conquer", MB_OK|MB_ICONSTOP);
+			MessageBox(0, "Fehler - das Timer-System konnte aufgrund einer Instabilitï¿½t des Systems nicht initialisiert werden. Bitte starten Sie Windows neu.", "Command & Conquer", MB_OK|MB_ICONSTOP);
 #else
 			MessageBox(0, "Error - Timer system failed to start due to system instability. You need to restart Windows.", "Command & Conquer", MB_OK|MB_ICONSTOP);
 #endif	//GERMAN
@@ -310,7 +308,7 @@ int PASCAL WinMain ( HINSTANCE instance , HINSTANCE , char * command_line , int 
 		if (Disk_Space_Available() < INIT_FREE_DISK_SPACE) {
 #ifdef GERMAN
 			char	disk_space_message [512];
-			sprintf (disk_space_message, "Nicht genug Festplattenplatz fr Command & Conquer.\nSie brauchen %d MByte freien Platz auf der Festplatte.", (INIT_FREE_DISK_SPACE) / (1024 * 1024));
+			sprintf (disk_space_message, "Nicht genug Festplattenplatz fï¿½r Command & Conquer.\nSie brauchen %d MByte freien Platz auf der Festplatte.", (INIT_FREE_DISK_SPACE) / (1024 * 1024));
 			MessageBox(NULL, disk_space_message, "Command & Conquer", MB_ICONEXCLAMATION|MB_OK);
 			if ( WindowsTimer )
 				delete WindowsTimer;

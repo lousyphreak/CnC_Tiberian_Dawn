@@ -5,6 +5,8 @@
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <new>
@@ -34,6 +36,24 @@ int& WWFS_MainMixOverride()
 {
     static int index = 0;
     return index;
+}
+
+struct WWDOSFindContext {
+    std::string directory;
+    std::vector<std::string> matches;
+    size_t index = 0;
+};
+
+std::mutex& WWDOSFindMutex()
+{
+    static std::mutex mutex;
+    return mutex;
+}
+
+std::unordered_map<find_t*, WWDOSFindContext>& WWDOSFindContexts()
+{
+    static std::unordered_map<find_t*, WWDOSFindContext> contexts;
+    return contexts;
 }
 
 std::string WWFS_DefaultBaseDirectory()
@@ -154,6 +174,94 @@ std::string WWFS_AppendPathComponent(const std::string& base, const std::string&
     }
 
     return base + "/" + component;
+}
+
+uint16_t WWDOS_EncodeDate(const SDL_DateTime& date_time)
+{
+    const int year = std::clamp(date_time.year - 1980, 0, 127);
+    const int month = std::clamp(date_time.month, 1, 12);
+    const int day = std::clamp(date_time.day, 1, 31);
+    return static_cast<uint16_t>((year << 9) | (month << 5) | day);
+}
+
+uint16_t WWDOS_EncodeTime(const SDL_DateTime& date_time)
+{
+    const int hour = std::clamp(date_time.hour, 0, 23);
+    const int minute = std::clamp(date_time.minute, 0, 59);
+    const int second = std::clamp(date_time.second / 2, 0, 29);
+    return static_cast<uint16_t>((hour << 11) | (minute << 5) | second);
+}
+
+std::string WWDOS_SearchDirectoryFromSpec(const char* filespec, std::string* pattern)
+{
+    char drive[_MAX_DRIVE] = {0};
+    char dir[_MAX_DIR] = {0};
+    char fname[_MAX_FNAME] = {0};
+    char ext[_MAX_EXT] = {0};
+    WWFS_SplitPath(filespec, drive, dir, fname, ext);
+
+    std::string resolved_pattern = fname;
+    resolved_pattern += ext;
+    if (resolved_pattern.empty()) {
+        resolved_pattern = "*";
+    }
+    if (pattern) {
+        *pattern = resolved_pattern;
+    }
+
+    char directory_path[_MAX_PATH] = {0};
+    WWFS_MakePath(directory_path, drive, dir, nullptr, nullptr);
+    if (directory_path[0] == '\0') {
+        return WWFS_CurrentDirectoryPath();
+    }
+
+    const std::string normalized_directory = WWFS_NormalizePath(directory_path);
+    SDL_PathInfo info{};
+    if (WWFS_GetPathInfo(normalized_directory.c_str(), &info) && info.type == SDL_PATHTYPE_DIRECTORY) {
+        return normalized_directory;
+    }
+
+    return WWFS_CurrentDirectoryPath();
+}
+
+const char* WWDOS_FindEntryName(const std::string& entry)
+{
+    const size_t separator = entry.find_last_of("/\\");
+    return (separator == std::string::npos) ? entry.c_str() : entry.c_str() + separator + 1;
+}
+
+bool WWDOS_AssignFindResult(find_t* result, WWDOSFindContext* context)
+{
+    if (!result || !context) {
+        return false;
+    }
+
+    while (context->index < context->matches.size()) {
+        const std::string& entry = context->matches[context->index++];
+        const std::string full_path = WWFS_AppendPathComponent(context->directory, entry);
+
+        SDL_PathInfo info{};
+        if (!WWFS_GetPathInfo(full_path.c_str(), &info)) {
+            continue;
+        }
+
+        result->attrib = (info.type == SDL_PATHTYPE_DIRECTORY) ? _A_SUBDIR : _A_NORMAL;
+        result->size = static_cast<uint32_t>(std::min<Uint64>(info.size, std::numeric_limits<uint32_t>::max()));
+        result->wr_date = 0;
+        result->wr_time = 0;
+
+        SDL_DateTime date_time{};
+        if (info.modify_time > 0 && SDL_TimeToDateTime(info.modify_time, &date_time, true)) {
+            result->wr_date = WWDOS_EncodeDate(date_time);
+            result->wr_time = WWDOS_EncodeTime(date_time);
+        }
+
+        const char* entry_name = WWDOS_FindEntryName(entry);
+        SDL_strlcpy(result->name, entry_name ? entry_name : "", SDL_arraysize(result->name));
+        return true;
+    }
+
+    return false;
 }
 
 std::string WWFS_CollapseDotSegments(const std::string& path)
@@ -2252,4 +2360,111 @@ SDL_Storage* WWFS_OpenFileStorage(const char* path)
 
     const std::string normalized = WWFS_NormalizePath(path);
     return SDL_OpenFileStorage(normalized.c_str());
+}
+
+int _dos_findfirst(const char* filespec, unsigned attributes, find_t* result)
+{
+    if (!filespec || !result) {
+        return -1;
+    }
+
+    std::string pattern;
+    const std::string directory = WWDOS_SearchDirectoryFromSpec(filespec, &pattern);
+    int count = 0;
+    char** matches = WWFS_GlobDirectory(directory.c_str(), pattern.c_str(), SDL_GLOB_CASEINSENSITIVE, &count);
+
+    WWDOSFindContext context;
+    context.directory = directory;
+    if (matches) {
+        for (int index = 0; index < count; ++index) {
+            if (!matches[index] || matches[index][0] == '\0') {
+                continue;
+            }
+
+            const std::string full_path = WWFS_AppendPathComponent(directory, matches[index]);
+            SDL_PathInfo info{};
+            if (!WWFS_GetPathInfo(full_path.c_str(), &info)) {
+                continue;
+            }
+
+            const bool is_directory = info.type == SDL_PATHTYPE_DIRECTORY;
+            if (is_directory && !(attributes & _A_SUBDIR)) {
+                continue;
+            }
+            if (!is_directory && attributes == _A_SUBDIR) {
+                continue;
+            }
+
+            context.matches.emplace_back(matches[index]);
+        }
+        SDL_free(matches);
+    }
+
+    std::scoped_lock lock(WWDOSFindMutex());
+    WWDOSFindContexts().erase(result);
+    if (context.matches.empty()) {
+        SDL_zero(*result);
+        return -1;
+    }
+
+    WWDOSFindContext& stored_context = WWDOSFindContexts()[result];
+    stored_context = std::move(context);
+    result->reserved = reinterpret_cast<intptr_t>(result);
+    if (!WWDOS_AssignFindResult(result, &stored_context)) {
+        WWDOSFindContexts().erase(result);
+        SDL_zero(*result);
+        return -1;
+    }
+
+    return 0;
+}
+
+int _dos_findnext(find_t* result)
+{
+    if (!result) {
+        return -1;
+    }
+
+    std::scoped_lock lock(WWDOSFindMutex());
+    auto it = WWDOSFindContexts().find(result);
+    if (it == WWDOSFindContexts().end() || !WWDOS_AssignFindResult(result, &it->second)) {
+        if (it != WWDOSFindContexts().end()) {
+            WWDOSFindContexts().erase(it);
+        }
+        return -1;
+    }
+
+    return 0;
+}
+
+int _dos_getdrive(unsigned* drive)
+{
+    if (!drive) {
+        return -1;
+    }
+
+    *drive = WWFS_GetCurrentDriveNumber();
+    return 0;
+}
+
+int _dos_getdiskfree(unsigned, diskfree_t* diskspace)
+{
+    if (!diskspace) {
+        return -1;
+    }
+
+    SDL_zero(*diskspace);
+    std::error_code error_code;
+    const std::filesystem::space_info info = std::filesystem::space(std::filesystem::path(WWFS_CurrentDirectoryPath()), error_code);
+    if (error_code) {
+        return -1;
+    }
+
+    diskspace->bytes_per_sector = 512U;
+    diskspace->sectors_per_cluster = 1U;
+    diskspace->total_clusters =
+        static_cast<uint32_t>(std::min<uintmax_t>(info.capacity / diskspace->bytes_per_sector, std::numeric_limits<uint32_t>::max()));
+    diskspace->avail_clusters =
+        static_cast<uint32_t>(std::min<uintmax_t>(info.available / diskspace->bytes_per_sector, std::numeric_limits<uint32_t>::max()));
+    return 0;
 }

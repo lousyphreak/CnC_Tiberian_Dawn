@@ -35,6 +35,10 @@ unsigned WWFS_GetCurrentDriveNumber();
 unsigned WWFS_GetDriveCount();
 void WWFS_ChangeToDrive(unsigned drive);
 void WWFS_MakePath(char* path, const char* drive, const char* dir, const char* fname, const char* ext);
+int _dos_findfirst(const char* filespec, unsigned attributes, struct find_t* result);
+int _dos_findnext(struct find_t* result);
+int _dos_getdrive(unsigned* drive);
+int _dos_getdiskfree(unsigned drive, struct diskfree_t* diskspace);
 
 #ifndef _MAX_FNAME
 #define _MAX_FNAME 256
@@ -51,6 +55,34 @@ void WWFS_MakePath(char* path, const char* drive, const char* dir, const char* f
 #ifndef _MAX_EXT
 #define _MAX_EXT 256
 #endif
+
+#ifndef _MAX_PATH
+#define _MAX_PATH 260
+#endif
+
+#ifndef _A_NORMAL
+#define _A_NORMAL 0x00
+#endif
+
+#ifndef _A_SUBDIR
+#define _A_SUBDIR 0x10
+#endif
+
+struct find_t {
+    unsigned attrib;
+    uint32_t size;
+    uint16_t wr_date;
+    uint16_t wr_time;
+    char name[_MAX_PATH];
+    intptr_t reserved;
+};
+
+struct diskfree_t {
+    uint32_t total_clusters;
+    uint32_t avail_clusters;
+    uint32_t sectors_per_cluster;
+    uint32_t bytes_per_sector;
+};
 
 constexpr int WWFS_OPEN_ACCESS_MASK = 0x0003;
 constexpr int WWFS_OPEN_READ_ONLY = 0x0000;
@@ -282,6 +314,11 @@ inline int WWFS_ChangeDirectory(const char* path)
 inline int WWFS_MakeDirectory(const char* path)
 {
     return WWFS_CreateDirectory(path) ? 0 : -1;
+}
+
+inline void _makepath(char* path, const char* drive, const char* dir, const char* fname, const char* ext)
+{
+    WWFS_MakePath(path, drive, dir, fname, ext);
 }
 
 inline SDL_IOStream* WWFS_FOpen(const char* path, const char* mode)

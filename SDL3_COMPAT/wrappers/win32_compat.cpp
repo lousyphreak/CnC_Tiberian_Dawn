@@ -13,6 +13,7 @@
 #include <condition_variable>
 #include <cmath>
 #include <ctime>
+#include <filesystem>
 #include <mutex>
 #include <string>
 #include <unordered_map>
@@ -109,6 +110,11 @@ void set_last_error(DWORD value)
 {
     std::scoped_lock lock(g_last_error_mutex);
     g_last_error = value;
+}
+
+DWORD truncate_to_dword(uint64_t value)
+{
+    return static_cast<DWORD>(std::min<uint64_t>(value, 0xFFFFFFFFULL));
 }
 
 std::string create_file_mode(DWORD desired_access, DWORD creation_disposition)
@@ -453,4 +459,90 @@ BOOL GetVolumeInformation(LPCSTR root_path_name, LPSTR volume_name_buffer, DWORD
     }
 
     return 1;
+}
+
+void GlobalMemoryStatus(MEMORYSTATUS* memory_status)
+{
+    if (!memory_status) {
+        return;
+    }
+
+    SDL_zero(*memory_status);
+    memory_status->dwLength = sizeof(*memory_status);
+
+    const std::string base_directory = WWFS_GetBaseDirectoryPath().empty() ? std::string(".") : WWFS_GetBaseDirectoryPath();
+    std::error_code error_code;
+    const std::filesystem::space_info info = std::filesystem::space(std::filesystem::path(base_directory), error_code);
+    if (!error_code) {
+        memory_status->dwTotalPageFile = truncate_to_dword(info.capacity);
+        memory_status->dwAvailPageFile = truncate_to_dword(info.available);
+        memory_status->dwTotalVirtual = truncate_to_dword(info.capacity);
+        memory_status->dwAvailVirtual = truncate_to_dword(info.available);
+    }
+
+    const uint64_t total_ram = SDL_GetSystemRAM() > 0 ? static_cast<uint64_t>(SDL_GetSystemRAM()) * 1024ULL * 1024ULL : 0ULL;
+    memory_status->dwTotalPhys = truncate_to_dword(total_ram);
+    memory_status->dwAvailPhys = memory_status->dwTotalPhys;
+    memory_status->dwMemoryLoad = 0;
+}
+
+int stricmp(const char* lhs, const char* rhs)
+{
+    return SDL_strcasecmp(lhs ? lhs : "", rhs ? rhs : "");
+}
+
+int strcmpi(const char* lhs, const char* rhs)
+{
+    return stricmp(lhs, rhs);
+}
+
+int strnicmp(const char* lhs, const char* rhs, size_t length)
+{
+    return SDL_strncasecmp(lhs ? lhs : "", rhs ? rhs : "", length);
+}
+
+char* strupr(char* text)
+{
+    if (!text) {
+        return nullptr;
+    }
+
+    for (char* cursor = text; *cursor != '\0'; ++cursor) {
+        *cursor = static_cast<char>(SDL_toupper(static_cast<unsigned char>(*cursor)));
+    }
+
+    return text;
+}
+
+char* strlwr(char* text)
+{
+    if (!text) {
+        return nullptr;
+    }
+
+    for (char* cursor = text; *cursor != '\0'; ++cursor) {
+        *cursor = static_cast<char>(SDL_tolower(static_cast<unsigned char>(*cursor)));
+    }
+
+    return text;
+}
+
+uint16_t htons(uint16_t value)
+{
+    return SDL_Swap16BE(value);
+}
+
+uint16_t ntohs(uint16_t value)
+{
+    return SDL_Swap16BE(value);
+}
+
+uint32_t htonl(uint32_t value)
+{
+    return SDL_Swap32BE(value);
+}
+
+uint32_t ntohl(uint32_t value)
+{
+    return SDL_Swap32BE(value);
 }

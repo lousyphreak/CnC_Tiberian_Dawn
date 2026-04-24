@@ -46,7 +46,6 @@
 
 #include	"FUNCTION.H"
 #include "VECTOR.H"
-#include	<mem.h>
 #include	<stdio.h>
 
 /*
@@ -894,5 +893,4 @@ void BooleanVectorClass::Fixup(int index) const
 		((int &)LastIndex) = index;
 	}
 }
-
 

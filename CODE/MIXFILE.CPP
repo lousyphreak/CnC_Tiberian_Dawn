@@ -48,12 +48,8 @@
 
 
 #include	"FUNCTION.H"
-#include	<direct.h>
 #include	<fcntl.h>
-#include	<io.h>
-#include	<dos.h>
 #include	<errno.h>
-#include	<share.h>
 #include	"MIXFILE.H"
 
 
@@ -513,4 +509,3 @@ bool MixFileClass::Offset(char const *filename, void ** realptr, MixFileClass **
 	*/
 	return(false);
 }
-

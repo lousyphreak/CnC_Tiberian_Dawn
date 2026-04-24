@@ -40,7 +40,6 @@
 #include "FUNCTION.H"
 #include	<stdarg.h>
 #include <FILEPCX.H>
-#include <io.h>
 #ifdef CHEAT_KEYS
 
 extern bool ScreenRecording;

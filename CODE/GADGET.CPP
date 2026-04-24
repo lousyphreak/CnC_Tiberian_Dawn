@@ -57,7 +57,6 @@
 
 #include "FUNCTION.H"
 #include <FILEPCX.H>
-#include <io.h>
 
 /*
 **	This records the current gadget the the gadget system is "stuck on". Such a
@@ -800,5 +799,4 @@ int GadgetClass::Is_List_To_Redraw(void)
 	}
 	return (false);
 }
-
 

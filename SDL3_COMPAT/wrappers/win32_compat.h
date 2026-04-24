@@ -4,6 +4,12 @@
 #include <SDL3/SDL.h>
 #pragma pack(pop)
 
+#if defined(_WIN32)
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
+
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
@@ -84,6 +90,8 @@ using DWORD_PTR = uintptr_t;
 #define _export
 #endif
 
+constexpr UINT WM_USER = 0x0400U;
+
 struct POINT {
     LONG x;
     LONG y;
@@ -99,6 +107,17 @@ struct RECT {
 struct FILETIME {
     DWORD dwLowDateTime;
     DWORD dwHighDateTime;
+};
+
+struct MEMORYSTATUS {
+    DWORD dwLength;
+    DWORD dwMemoryLoad;
+    DWORD dwTotalPhys;
+    DWORD dwAvailPhys;
+    DWORD dwTotalPageFile;
+    DWORD dwAvailPageFile;
+    DWORD dwTotalVirtual;
+    DWORD dwAvailVirtual;
 };
 
 #pragma pack(push, 1)
@@ -171,3 +190,13 @@ DWORD SetFilePointer(HANDLE handle, LONG distance_to_move, LONG* distance_to_mov
 UINT GetDriveType(LPCSTR root_path_name);
 BOOL GetVolumeInformation(LPCSTR root_path_name, LPSTR volume_name_buffer, DWORD volume_name_size, DWORD* volume_serial_number,
     DWORD* maximum_component_length, DWORD* file_system_flags, LPSTR file_system_name_buffer, DWORD file_system_name_size);
+void GlobalMemoryStatus(MEMORYSTATUS* memory_status);
+int stricmp(const char* lhs, const char* rhs);
+int strcmpi(const char* lhs, const char* rhs);
+int strnicmp(const char* lhs, const char* rhs, size_t length);
+char* strupr(char* text);
+char* strlwr(char* text);
+uint16_t htons(uint16_t value);
+uint16_t ntohs(uint16_t value);
+uint32_t htonl(uint32_t value);
+uint32_t ntohl(uint32_t value);

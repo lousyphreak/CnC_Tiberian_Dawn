@@ -32,3 +32,11 @@ _Last updated: 2026-04-24_
   - `CODE/RAWFILE.CPP` is still using the old DOS handle model and no longer matches the imported `RawFileClass` declaration surface;
   - `TCPIP.H` / `TCPIP.CPP` still assume WinSock/Win32 async APIs and are the main remaining multiplayer bring-up blocker on Linux.
 - `CODE/TEMP.CPP` is not part of the preserved `CODE/MAKEFILE` object list and is malformed in-tree, so it should stay out of the modern build unless/until its provenance is understood.
+- The compatibility wrapper split is now established and should stay consistent:
+  - `SDL3_COMPAT/wrappers/sdl_fs.*` is the right home for DOS-style path, glob, drive, and disk helpers (`_makepath`, `_dos_findfirst`, `_dos_getdiskfree`, `find_t`, `diskfree_t`);
+  - `SDL3_COMPAT/wrappers/win32_compat.*` is the right home for Win32-ish system/string helpers (`MEMORYSTATUS`, `GlobalMemoryStatus`, `stricmp`, `strupr`, byte-order helpers, `WM_USER`).
+- After adding those wrappers, the build moved past the earlier non-network DOS helper failures. The next dominant blockers are:
+  - `CODE/RAWFILE.CPP`, which still needs a full SDL/`RawFileClass` alignment and still references old DOS open/create flags and TD-local globals;
+  - modern-C++ correctness failures like `++` / `--` on `bool` and overloaded-name collisions (`index`) in older game code;
+  - the still-unported WinSock-style multiplayer layer in `TCPIP.H` / `TCPIP.CPP`.
+- The current RAWFILE failures suggest the remaining work there is not just missing wrappers. TD's source now conflicts with the imported declarations and globals, so the next pass should compare directly against the Red Alert `RAWFILE` port and convert TD to that structure instead of continuing piecemeal fixes.

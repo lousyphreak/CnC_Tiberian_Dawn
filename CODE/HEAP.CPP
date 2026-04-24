@@ -52,10 +52,8 @@
 
 #include	"FUNCTION.H"
 #include	"HEAP.H"
-#include	<mem.h>
 #include	<stdio.h>
 #include	<stddef.h>
-#include	<conio.h>
 #include	<string.h>
 
 

@@ -52,8 +52,6 @@
 
 #include	<stdlib.h>
 #include	<stdio.h>
-#include	<dos.h>
-#include	<mem.h>
 #include	<stdarg.h>
 #include	<string.h>
 
@@ -804,4 +802,3 @@ int Mono_Printf(int string, ...)
 	return((short)strlen(buffer));
 }
 #endif
-

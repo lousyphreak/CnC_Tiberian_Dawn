@@ -66,11 +66,7 @@
 #include	<stdlib.h>
 #include	<stdio.h>
 #include	<string.h>
-#include	<direct.h>
 #include	<fcntl.h>
-#include	<io.h>
-#include	<dos.h>
-#include	<share.h>
 #include <malloc.h>
 #include  "CCDDE.H"
 

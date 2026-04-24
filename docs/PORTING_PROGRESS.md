@@ -85,7 +85,54 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
     3. the TCP/IP / Internet multiplayer layer is still effectively unported on Linux:
        - `TCPIP.H` / `TCPIP.CPP` and related files still expect WinSock types and async APIs such as `SOCKET`, `WSADATA`, `WM_USER`, and `WSAAsync*`;
        - these errors now fan out into `COMQUEUE.CPP`, `SEQCONN.CPP`, `INTERNET.CPP`, `NETDLG.CPP`, and any core source that still includes `TCPIP.H`.
+   - next concrete porting work:
+     1. add proper compatibility wrappers for the remaining DOS-era file/path/system calls that are still used widely in TD code;
+     2. port `CODE/RAWFILE.CPP` to the imported wrapper/`int32_t` model instead of the old DOS-handle implementation;
+     3. decide whether the first playable bring-up should temporarily stub or exclude multiplayer/TCPIP code paths, or whether to add a first Linux socket-compat layer now.
+- DOS/Win32 wrapper pass completed and the build frontier moved again (2026-04-24):
+  - completed in this checkpoint:
+    - added the first shared DOS-style filesystem wrappers in `SDL3_COMPAT/wrappers/sdl_fs.*`:
+      - `_makepath`
+      - `_dos_findfirst` / `_dos_findnext`
+      - `_dos_getdrive`
+      - `_dos_getdiskfree`
+      - `find_t` / `diskfree_t`
+    - added the first missing Win32/compiler helper shims in `SDL3_COMPAT/wrappers/win32_compat.*`:
+      - `MEMORYSTATUS` / `GlobalMemoryStatus`
+      - `stricmp` / `strcmpi` / `strnicmp`
+      - `strupr` / `strlwr`
+      - `htons` / `ntohs`
+      - `htonl` / `ntohl`
+      - `WM_USER`
+    - removed another batch of raw DOS/Win32-era headers from TD sources now covered by the wrapper layer:
+      - `CODE/HEAP.CPP`
+      - `CODE/GADGET.CPP`
+      - `CODE/DEBUG.CPP`
+      - `CODE/LOADDLG.CPP`
+      - `CODE/MONOC.CPP`
+      - `CODE/VECTOR.CPP`
+      - `CODE/MIXFILE.CPP`
+      - `CODE/STARTUP.CPP`
+      - `CODE/INIT.CPP`
+      - `CODE/CONQUER.CPP`
+    - fixed one C++ namespace collision exposed by the newer headers in `CODE/PACKET.CPP` (`min` -> `std::min`).
+  - current build result:
+    - the support libraries still compile cleanly, and the game build now gets well past the old DOS helper failures;
+    - the current full build no longer stops on `_makepath`, `_dos_findfirst`, `_dos_getdiskfree`, `GlobalMemoryStatus`, `stricmp`, or byte-order helper errors in the non-network code path;
+    - the next hard failures are now dominated by the still-unported networking layer and stricter modern-C++ semantics elsewhere in the game sources.
+  - current blocker groups exposed by the latest rebuild:
+    1. the TCP/IP / Internet multiplayer layer is now the main portability wall:
+       - `TCPIP.H` / `TCPIP.CPP` still require WinSock-style types and APIs such as `SOCKET`, `WSADATA`, `sockaddr`, `FD_READ`, `FD_WRITE`, `WSAAsyncSelect`, and `WSAAsyncGetHostByName`;
+       - these errors propagate into `COMQUEUE.CPP` and any source that still includes `TCPIP.H`;
+       - `WM_USER` is now available, but the build still needs a deliberate socket compatibility story rather than more ad-hoc typedefs.
+    2. several modern-compiler correctness failures are now visible outside the networking code:
+       - legacy `++` / `--` on `bool` members in files such as `BUILDING.CPP`, `FACTORY.CPP`, `AIRCRAFT.CPP`, and `INI.CPP`;
+       - const-correctness and symbol-resolution problems such as `UNIT.CPP` writing through a `const` object and overloaded-name collisions in `ANIM.CPP` / `MAP.CPP`;
+       - missing or renamed support-library APIs in a few spots (`INTERPAL.CPP` direct-draw checks, `GAMEDLG.CPP`, `EVENT.CPP`).
+    3. `CODE/RAWFILE.CPP` is still not fully ported:
+       - it now gets far enough to expose TD-specific symbol collisions and stale globals instead of only DOS API failures;
+       - it still needs to be aligned fully with the imported `RawFileClass`/SDL I/O model.
   - next concrete porting work:
-    1. add proper compatibility wrappers for the remaining DOS-era file/path/system calls that are still used widely in TD code;
-    2. port `CODE/RAWFILE.CPP` to the imported wrapper/`int32_t` model instead of the old DOS-handle implementation;
-    3. decide whether the first playable bring-up should temporarily stub or exclude multiplayer/TCPIP code paths, or whether to add a first Linux socket-compat layer now.
+    1. triage the TCP/IP layer against the Red Alert reference and decide whether to add a Linux socket compatibility layer or stub/exclude multiplayer for the first playable build;
+    2. fix the newly exposed modern-C++ correctness errors that are independent of networking and safe to modernize without changing gameplay;
+    3. finish the `RAWFILE` port once the network/header churn stops dominating the build.
