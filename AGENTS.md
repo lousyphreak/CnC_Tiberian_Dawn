@@ -2,16 +2,6 @@
 
 current progress is in `docs/PORTING_PROGRESS.md`, use it as reference, and keep it updated as you go. Make sure to reference it regularly to know what to do next. Also keep it up to date with new findings and detailed progress notes.
 
-## Porting rules
-
-- fix include directives in all source files to match correct casing of file names, no symlinks, no "forwarding" headers, just direct includes with correct casing. this is important for case-sensitive filesystems and to avoid confusion later on.
-- use correct size types (e.g. `uint32_t` instead of `unsigned int`) and correct format specifiers (e.g. `%u` for `uint32_t`) in all source files. be aware that the original code is for 32
-- use SDL3 for all platform-specific functionality, including file reading, window management, input handling, audio, and rendering. do not use any platform-specific APIs directly.
-- do not use any third-party libraries other than SDL3, unless absolutely necessary and approved by the project maintainers.
-- the original code is VERY sensitive to the size of types, especially in loading and parsing of the original data. one of the main problems is the `long` type, which is 32-bit on Windows and 64-bit on Linux. make sure to use int32_t/uint32_t where needed.
-- do NOT create type aliases to work around old code using `long` or other types, just change the code to use the correct types directly. this will make it easier to keep track of where the issues are and avoid confusion later on.
-- remove code that is no longer required on modern systems, like CPU detection, old compiler workarounds, and legacy platform support. but do not remove any code that is still needed for the game to function correctly, even if it's not strictly necessary on modern systems.
-
 ## Technology used
 
 - SDL3

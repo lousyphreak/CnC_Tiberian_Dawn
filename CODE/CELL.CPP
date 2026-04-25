@@ -2310,7 +2310,7 @@ ObjectClass * CellClass::Cell_Occupier(void) const
 
 	while (ptr && !ptr->IsActive) {
 		ptr = ptr->Next;
-		((ObjectClass *&)OccupierPtr) = 0;
+		((ObjectClass *&)OccupierPtr) = ptr;
 	}
 
 	return(ptr);

@@ -156,14 +156,16 @@ void Explosion_Damage(COORDINATE coord, unsigned strength, TechnoClass * source,
 	**	the cell data directly.
 	*/
 	count = 0;
-	for (FacingType i = FACING_NONE; i < FACING_COUNT; i++) {
+	for (int i = -1; i < FACING_COUNT; i++) {
 		/*
 		**	Fetch a pointer to the cell to examine. This is either
 		**	an adjacent cell or the center cell. Damage never spills
 		**	further than one cell away.
 		*/
-		if (i != FACING_NONE) {
-			cellptr = &Map[cell].Adjacent_Cell(i);
+		if (i == -1) {
+			cellptr = &Map[cell];
+		} else {
+			cellptr = &Map[cell].Adjacent_Cell((FacingType)i);
 		}
 
 		/*
@@ -172,9 +174,9 @@ void Explosion_Damage(COORDINATE coord, unsigned strength, TechnoClass * source,
 		** full.  Do not include overlapping objects; selection state can affect
 		** the overlappers, and this causes multiplayer games to go out of sync.
 		*/
-		object = cellptr->Cell_Occupier();
-	const int object_capacity = static_cast<int>(sizeof(objects) / sizeof(objects[0]));
-	while (object) {
+			object = cellptr->Cell_Occupier();
+			const int object_capacity = static_cast<int>(sizeof(objects) / sizeof(objects[0]));
+			while (object) {
 			if (!object->IsToDamage && object != source) {
 				object->IsToDamage = true;
 				objects[count++] = object;
@@ -182,7 +184,7 @@ void Explosion_Damage(COORDINATE coord, unsigned strength, TechnoClass * source,
 			}
 			object = object->Next;
 		}
- 		if (count >= object_capacity) break;
+			if (count >= object_capacity) break;
 	}
 
 	/*
