@@ -66,8 +66,8 @@ class AbstractClass
 		/*-----------------------------------------------------------------------------------
 		**	Constructor & destructors.
 		*/
-		AbstractClass(void) {Coord = 0L;};
-		virtual ~AbstractClass(void) {};
+		AbstractClass(void) {Coord = 0L; IsActive = true;};
+		virtual ~AbstractClass(void) {IsActive = false;};
 
 		/*
 		**	Query functions.

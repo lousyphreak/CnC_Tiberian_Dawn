@@ -243,7 +243,7 @@ void TemplateClass::Init(void)
 	Templates.Free_All();
 
 	ptr = new TemplateClass();
-	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - 4))[0];
+	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - sizeof(void *)))[0];
 	delete ptr;
 }
 
@@ -354,11 +354,7 @@ bool TemplateClass::Mark(MarkType mark)
  *=============================================================================================*/
 void * TemplateClass::operator new(size_t )
 {
-	void * ptr = Templates.Allocate();
-	if (ptr) {
-		((TemplateClass *)ptr)->IsActive = true;
-	}
-	return(ptr);
+	return(Templates.Allocate());
 }
 
 
@@ -379,9 +375,6 @@ void * TemplateClass::operator new(size_t )
  *=============================================================================================*/
 void TemplateClass::operator delete(void *ptr)
 {
-	if (ptr) {
-		((TemplateClass *)ptr)->IsActive = false;
-	}
 	Templates.Free((TemplateClass *)ptr);
 }
 

@@ -163,7 +163,7 @@ class TeamClass : public AbstractClass
 		TCountDownTimerClass SuspendTimer;
 
 		//------------------------------------------------------------
-		TeamClass(void) : Class(0), House(0) {IsActive=false;Member=0;IsAltered=true;};
+		TeamClass(void) : Class(0), House(0) {Member=0;IsAltered=true;};
 		TeamClass(TeamTypeClass const * team, HouseClass * owner);
 		virtual ~TeamClass(void);
 		virtual RTTIType What_Am_I(void) const {return RTTI_TEAM;};

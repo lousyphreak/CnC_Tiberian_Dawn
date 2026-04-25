@@ -2059,6 +2059,8 @@ int32_t MixFileHandler(VQAHandle *vqa, int32_t action, void *buffer, int32_t nby
 					error = 1;
 				}
 			} else {
+				delete file;
+				file = 0;
 				error = 1;
 			}
 			break;

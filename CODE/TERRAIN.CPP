@@ -232,11 +232,7 @@ TARGET TerrainClass::As_Target(void) const
  *=============================================================================================*/
 void * TerrainClass::operator new(size_t)
 {
-	void * ptr = Terrains.Allocate();
-	if (ptr) {
-		((TerrainClass *)ptr)->IsActive = true;
-	}
-	return(ptr);
+	return(Terrains.Allocate());
 }
 
 
@@ -257,9 +253,6 @@ void * TerrainClass::operator new(size_t)
  *=============================================================================================*/
 void TerrainClass::operator delete(void *ptr)
 {
-	if (ptr) {
-		((TerrainClass *)ptr)->IsActive = false;
-	}
 	Terrains.Free((TerrainClass *)ptr);
 }
 
@@ -418,7 +411,7 @@ void TerrainClass::Init(void)
 	Terrains.Free_All();
 
 	ptr = new TerrainClass();
-	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - 4))[0];
+	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - sizeof(void *)))[0];
 	delete ptr;
 }
 

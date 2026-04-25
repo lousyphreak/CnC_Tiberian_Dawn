@@ -111,7 +111,7 @@ void OverlayClass::Init(void)
 	Overlays.Free_All();
 
 	ptr = new OverlayClass();
-	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - 4))[0];
+	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - sizeof(void *)))[0];
 	delete ptr;
 }
 
@@ -133,11 +133,7 @@ void OverlayClass::Init(void)
  *=============================================================================================*/
 void * OverlayClass::operator new(size_t )
 {
-	void * ptr = Overlays.Allocate();
-	if (ptr) {
-		((OverlayClass *)ptr)->IsActive = true;
-	}
-	return(ptr);
+	return(Overlays.Allocate());
 }
 
 
@@ -158,9 +154,6 @@ void * OverlayClass::operator new(size_t )
  *=============================================================================================*/
 void OverlayClass::operator delete(void *ptr)
 {
-	if (ptr) {
-		((OverlayClass *)ptr)->IsActive = false;
-	}
 	Overlays.Free((OverlayClass *)ptr);
 }
 

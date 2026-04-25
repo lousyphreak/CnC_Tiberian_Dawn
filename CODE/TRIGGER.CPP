@@ -282,6 +282,7 @@ bool TriggerClass::Action_Need_Team(TriggerClass::ActionType action)
  *=============================================================================================*/
 TriggerClass::TriggerClass(void)
 {
+	IsActive = true;
 	IsPersistant = VOLATILE;
 	AttachCount = 0;
 	Event = EVENT_NONE;
@@ -310,6 +311,7 @@ TriggerClass::TriggerClass(void)
  *=============================================================================================*/
 TriggerClass::~TriggerClass(void)
 {
+	IsActive = false;
 	if (GameActive && House != HOUSE_NONE && Action == ACTION_ALLOWWIN) {
 		if (Houses.Ptr(House)->Blockage) Houses.Ptr(House)->Blockage--;
 		Houses.Ptr(House)->BorrowedTime = TICKS_PER_SECOND*4;
@@ -1287,11 +1289,7 @@ TriggerClass * TriggerClass::As_Pointer(char const * name)
  *=============================================================================================*/
 void * TriggerClass::operator new(size_t )
 {
-	void * ptr = Triggers.Allocate();
-	if (ptr) {
-		((TriggerClass *)ptr)->IsActive = true;
-	}
-	return(ptr);
+	return(Triggers.Allocate());
 }
 
 
@@ -1312,9 +1310,6 @@ void * TriggerClass::operator new(size_t )
  *=============================================================================================*/
 void TriggerClass::operator delete(void *ptr)
 {
-	if (ptr) {
-		((TriggerClass *)ptr)->IsActive = false;
-	}
 	Triggers.Free((TriggerClass *)ptr);
 }
 

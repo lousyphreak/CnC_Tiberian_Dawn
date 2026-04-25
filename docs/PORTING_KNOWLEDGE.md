@@ -45,6 +45,19 @@ _Last updated: 2026-04-25_
 - The current ASan shutdown baseline after the legacy-cleanup pass is:
   - TD-owned `WWMouseClass` cursor/shadow buffers must all be released, including `EraseBuffer`;
   - after fixing that leak, the remaining timed-run LeakSanitizer output comes from the host graphics / DBus stack (`libnvidia-glcore`, `libdbus-1`) during shutdown rather than from TD-owned allocations.
+- Pooled TD gameplay classes cannot safely use typed member writes inside custom `operator new/delete` on modern C++:
+  - `FixedIHeapClass::Allocate()` returns zeroed raw storage, so touching members like `IsActive` before construction or after destruction trips UBSan invalid-vptr checks;
+  - the safe pattern in this port is to keep the pool `operator new/delete` as raw allocate/free wrappers and move any active-state bookkeeping into constructors/destructors (or a shared valid-lifetime base constructor/destructor when the hierarchy allows it).
+- The old save/load vtable restore helpers were still assuming a 4-byte primary vtable slot:
+  - any `base_size - 4` logic in `Read_Object(...)`, `Get_VTable(...)`, `Set_VTable(...)`, or per-class cached `VTable` capture sites is wrong on 64-bit builds;
+  - use pointer-width offsets (`sizeof(void*)`) consistently, or live objects can come back with corrupted primary-vtable state once runtime sanitizer work reaches those paths.
+- Unit AI on this codebase can invalidate `this` in lower layers before derived AI resumes:
+  - `DriveClass::AI()` already knows movement/per-cell code can deactivate an object and checks `IsActive` internally;
+  - callers above it (`TurretClass::AI()`, `TarComClass::AI()`, `UnitClass::AI()`) also need immediate `if (!IsActive) return;` guards after chaining to lower AI, or modern sanitizers will catch use-after-destruction when a unit dies/limbos during the same update.
+- The current gameplay sanitizer baseline after the 2026-04-25 cleanup pass is now:
+  - no TD-owned ASan/UBSan runtime reports during the required two-minute `build-asan/tiberian-dawn` probe;
+  - no remaining TD-owned shutdown leaks from `HouseClass` tracker ownership or failed VQA `MixFileHandler(...)` file opens;
+  - the remaining LeakSanitizer output is again external to TD and comes from the host graphics / DBus stack (`libnvidia-glcore`, `libdbus-1`).
 - After adding those wrappers, the build moved past the earlier non-network DOS helper failures. The next dominant blockers are:
   - `CODE/RAWFILE.CPP`, which still needs a full SDL/`RawFileClass` alignment and still references old DOS open/create flags and TD-local globals;
   - modern-C++ correctness failures like `++` / `--` on `bool` and overloaded-name collisions (`index`) in older game code;

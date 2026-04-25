@@ -456,7 +456,7 @@ void AnimClass::Init(void)
 	Anims.Free_All();
 
 	ptr = new AnimClass();
-	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - 4))[0];
+	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - sizeof(void *)))[0];
 	delete ptr;
 }
 
@@ -478,11 +478,7 @@ void AnimClass::Init(void)
  *=============================================================================================*/
 void *AnimClass::operator new(size_t)
 {
-	void * ptr = Anims.Allocate();
-	if (ptr) {
-		((AnimClass *)ptr)->IsActive = true;
-	}
-	return(ptr);
+	return(Anims.Allocate());
 }
 
 
@@ -503,9 +499,6 @@ void *AnimClass::operator new(size_t)
  *=============================================================================================*/
 void AnimClass::operator delete(void *ptr)
 {
-	if (ptr) {
-		((AnimClass *)ptr)->IsActive = false;
-	}
 	Anims.Free((AnimClass *)ptr);
 }
 

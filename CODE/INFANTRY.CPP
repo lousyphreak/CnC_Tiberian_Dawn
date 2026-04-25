@@ -319,11 +319,7 @@ InfantryClass::~InfantryClass(void)
  *=============================================================================================*/
 void * InfantryClass::operator new(size_t)
 {
-	void * ptr = Infantry.Allocate();
-	if (ptr) {
-		((InfantryClass *)ptr)->IsActive = true;
-	}
-	return(ptr);
+	return(Infantry.Allocate());
 }
 
 
@@ -343,9 +339,6 @@ void * InfantryClass::operator new(size_t)
  *=============================================================================================*/
 void InfantryClass::operator delete(void *ptr)
 {
-	if (ptr) {
-		((InfantryClass *)ptr)->IsActive = false;
-	}
 	Infantry.Free((InfantryClass *)ptr);
 }
 
@@ -825,7 +818,7 @@ void InfantryClass::Init(void)
 	Infantry.Free_All();
 
 	ptr = new InfantryClass();
-	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - 4))[0];
+	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - sizeof(void *)))[0];
 	delete ptr;
 }
 

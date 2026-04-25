@@ -977,7 +977,7 @@ bool Read_Object(void *ptr, int base_size, int class_size, FileClass & file, voi
 	**	Fill in VTable.
 	*/
 	if (vtable) {
-		((void **)(((char *)ptr) + base_size - 4))[0] = vtable;
+		((void **)(((char *)ptr) + base_size - static_cast<int>(sizeof(void *))))[0] = vtable;
 	}
 
 	return(true);
@@ -1208,7 +1208,7 @@ TechnoTypeClass const * Target_To_TechnoType(TARGET target)
  *=========================================================================*/
 void * Get_VTable(void *ptr, int base_size)
 {
-	return(((void **)(((char *)ptr) + base_size - 4))[0]);
+	return(((void **)(((char *)ptr) + base_size - static_cast<int>(sizeof(void *))))[0]);
 }
 
 
@@ -1231,7 +1231,7 @@ void * Get_VTable(void *ptr, int base_size)
  *=========================================================================*/
 void Set_VTable(void *ptr, int base_size, void *vtable)
 {
-	((void **)(((char *)ptr) + base_size - 4))[0] = vtable;
+	((void **)(((char *)ptr) + base_size - static_cast<int>(sizeof(void *))))[0] = vtable;
 }
 
 

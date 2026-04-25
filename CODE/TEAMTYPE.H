@@ -93,7 +93,7 @@ class TeamTypeClass : public AbstractTypeClass
 		**	Constructor/Destructor
 		*/
 		TeamTypeClass(void);
-		virtual ~TeamTypeClass(void) {};
+		virtual ~TeamTypeClass(void);
 
 		/*
 		**	Initialization: clears all team types in preparation for new scenario

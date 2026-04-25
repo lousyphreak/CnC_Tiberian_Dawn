@@ -8,6 +8,25 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
 
 ## Current status
 
+- Gameplay sanitizer cleanup removed the active in-game ASan/UBSan failures from the SDL3/Linux runtime path (2026-04-25):
+  - completed in this checkpoint:
+    - moved pooled object `IsActive` bookkeeping onto valid construction/destruction lifetime instead of writing typed members from raw heap slots in custom `operator new/delete`, which removed the invalid-vptr UBSan hits that were previously firing in `TEAMTYPE.CPP`, `TEAM.CPP`, and the same pooled-object pattern elsewhere;
+    - fixed `TechnoClass::Evaluate_Cell(...)` so occupier scans walk `ObjectClass*` links safely and only narrow to `TechnoClass*` after confirming `Is_Techno()`, which removed the `TerrainClass`-as-`TechnoClass` UBSan report in `TECHNO.CPP`;
+    - fixed the path overlap bitmap math in `FINDPATH.CPP` to use zero-based cell bits, removing the negative shift UB on cell values that land on 32-cell boundaries;
+    - fixed the remaining raw unit-AI invalid-vptr chain by:
+      - converting the cached/restored vtable-slot math from hard-coded `-4` offsets to pointer-width offsets across `SAVELOAD.CPP` and the pooled class `VTable` capture sites;
+      - returning early from `TurretClass::AI()`, `TarComClass::AI()`, and `UnitClass::AI()` when lower-level movement/AI code has already deactivated the object;
+    - removed the remaining TD-owned shutdown leaks that showed up after the runtime UB fixes:
+      - `HouseClass` cleanup now destroys active house objects before heap teardown/reinit so the owned `UnitTrackerClass` allocations are released;
+      - `MixFileHandler(...)` now deletes failed `CCFileClass` opens on the VQA I/O callback path.
+  - validation result:
+    - `cmake --build build --parallel 4` succeeds.
+    - `cmake --build build-asan --parallel 4` succeeds.
+    - `timeout --foreground 125s bash -lc './build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` now runs through the two-minute probe without any TD-owned ASan/UBSan runtime reports; the remaining shutdown leak output comes only from the host graphics / DBus stack (`libnvidia-glcore`, `libdbus-1`).
+  - remaining follow-up from this sweep:
+    - keep watching for any additional gameplay sanitizer findings that were previously masked by the old unit/object-lifetime crash chain;
+    - if automated ASan gating needs a clean exit status, the remaining host-driver LeakSanitizer noise will need an environment-side suppression or a non-LSan runtime probe path, since the game-side leaks from this checkpoint are now gone.
+
 - Warning cleanup is now complete for the active SDL3/CMake build surface (2026-04-25):
   - completed in this checkpoint:
     - finished the remaining GCC/Linux warning cleanup without suppressing diagnostics, covering the last portability/correctness tails across gameplay, UI, save/load, movie/runtime, queue/network, and shared container code;

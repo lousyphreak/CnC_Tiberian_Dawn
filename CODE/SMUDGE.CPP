@@ -106,11 +106,7 @@ int SmudgeClass::Validate(void) const
  *=============================================================================================*/
 void * SmudgeClass::operator new(size_t )
 {
-	void * ptr = Smudges.Allocate();
-	if (ptr) {
-		((SmudgeClass *)ptr)->IsActive = true;
-	}
-	return(ptr);
+	return(Smudges.Allocate());
 }
 
 
@@ -130,9 +126,6 @@ void * SmudgeClass::operator new(size_t )
  *=============================================================================================*/
 void SmudgeClass::operator delete(void *ptr)
 {
-	if (ptr) {
-		((SmudgeClass *)ptr)->IsActive = false;
-	}
 	Smudges.Free((SmudgeClass *)ptr);
 }
 
@@ -192,7 +185,7 @@ void SmudgeClass::Init(void)
 	Smudges.Free_All();
 
 	ptr = new SmudgeClass();
-	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - 4))[0];
+	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - sizeof(void *)))[0];
 	delete ptr;
 }
 

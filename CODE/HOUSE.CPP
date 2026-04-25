@@ -252,11 +252,7 @@ void HouseClass::Debug_Dump(MonoClass *) const
  *=============================================================================================*/
 void * HouseClass::operator new(size_t)
 {
-	void * ptr = Houses.Allocate();
-	if (ptr) {
-		((HouseClass *)ptr)->IsActive = true;
-	}
-	return(ptr);
+	return(Houses.Allocate());
 }
 
 
@@ -277,9 +273,6 @@ void * HouseClass::operator new(size_t)
  *=============================================================================================*/
 void HouseClass::operator delete(void *ptr)
 {
-	if (ptr) {
-		((HouseClass *)ptr)->IsActive = false;
-	}
 	Houses.Free((HouseClass *)ptr);
 }
 
@@ -740,6 +733,9 @@ bool HouseClass::Can_Build(AircraftType aircraft, HousesType house) const
  *=========================================================================*/
 void HouseClass::Init(void)
 {
+	while (Houses.Count()) {
+		delete Houses.Ptr(0);
+	}
 	Houses.Free_All();
 
 	for (HousesType index = HOUSE_FIRST; index < HOUSE_COUNT; index++) {

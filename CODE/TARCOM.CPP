@@ -99,6 +99,7 @@ void TarComClass::Debug_Dump(MonoClass *mono) const
 void TarComClass::AI(void)
 {
 	TurretClass::AI();
+	if (!IsActive) return;
 
 	if (Class->Primary != WEAPON_NONE) {
 
@@ -182,4 +183,3 @@ void TarComClass::AI(void)
 		}
 	}
 }
-

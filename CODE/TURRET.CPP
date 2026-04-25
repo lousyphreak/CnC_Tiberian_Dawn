@@ -190,6 +190,7 @@ bool TurretClass::Ok_To_Move(DirType dir)
 void TurretClass::AI(void)
 {
 	DriveClass::AI();
+	if (!IsActive) return;
 
 	/*
 	**	A unit with a constant rotating radar dish is handled here.

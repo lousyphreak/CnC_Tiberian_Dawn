@@ -1645,11 +1645,7 @@ void BuildingClass::Look(bool)
  *=============================================================================================*/
 void * BuildingClass::operator new(size_t )
 {
-	void * ptr = Buildings.Allocate();
-	if (ptr) {
-		((BuildingClass *)ptr)->IsActive = true;
-	}
-	return(ptr);
+	return(Buildings.Allocate());
 }
 
 
@@ -1671,9 +1667,6 @@ void * BuildingClass::operator new(size_t )
  *=============================================================================================*/
 void BuildingClass::operator delete(void *ptr)
 {
-	if (ptr) {
-		((BuildingClass *)ptr)->IsActive = false;
-	}
 	Buildings.Free((BuildingClass *)ptr);
 }
 
@@ -1992,7 +1985,7 @@ void BuildingClass::Init(void)
 	Buildings.Free_All();
 
 	ptr = new BuildingClass();
-	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - 4))[0];
+	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - sizeof(void *)))[0];
 	delete ptr;
 }
 

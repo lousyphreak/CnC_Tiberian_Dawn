@@ -138,11 +138,7 @@ BulletClass::BulletClass(void) :
  *=============================================================================================*/
 void * BulletClass::operator new(size_t )
 {
-	void * ptr = Bullets.Allocate();
-	if (ptr) {
-		((BulletClass *)ptr)->IsActive = true;
-	}
-	return(ptr);
+	return(Bullets.Allocate());
 }
 
 
@@ -163,9 +159,6 @@ void * BulletClass::operator new(size_t )
  *=============================================================================================*/
 void BulletClass::operator delete(void *ptr)
 {
-	if (ptr) {
-		((BulletClass *)ptr)->IsActive = false;
-	}
 	Bullets.Free((BulletClass *)ptr);
 }
 
@@ -574,7 +567,7 @@ void BulletClass::Init(void)
 	Bullets.Free_All();
 
 	ptr = new BulletClass();
-	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - 4))[0];
+	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - sizeof(void *)))[0];
 	delete ptr;
 }
 

@@ -388,6 +388,7 @@ void UnitClass::AI(void)
 	}
 
 	TarComClass::AI();
+	if (!IsActive) return;
 
 	/*
 	**	Delete this unit if it finds itself off the edge of the map and it is in
@@ -1029,11 +1030,7 @@ ResultType UnitClass::Take_Damage(int & damage, int distance, WarheadType warhea
  *=============================================================================================*/
 void * UnitClass::operator new(size_t)
 {
-	void * ptr = (UnitClass *)Units.Allocate();
-	if (ptr) {
-		((UnitClass *)ptr)->IsActive = true;
-	}
-	return(ptr);
+	return(Units.Allocate());
 }
 
 
@@ -1055,9 +1052,6 @@ void * UnitClass::operator new(size_t)
  *=============================================================================================*/
 void UnitClass::operator delete(void *ptr)
 {
-	if (ptr) {
-		((UnitClass *)ptr)->IsActive = false;
-	}
 	Units.Free((UnitClass *)ptr);
 }
 
@@ -3006,7 +3000,7 @@ void UnitClass::Init(void)
 	Units.Free_All();
 
 	ptr = new UnitClass();
-	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - 4))[0];
+	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - sizeof(void *)))[0];
 	delete ptr;
 }
 

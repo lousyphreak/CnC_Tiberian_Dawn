@@ -130,26 +130,19 @@ void TeamClass::Init(void)
 	memset(Success, 0, sizeof(Success));
 
 	ptr = new TeamClass();
-	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - 4))[0];
+	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - sizeof(void *)))[0];
 	delete ptr;
 }	
 
 
 void * TeamClass::operator new (size_t)
 {
-	void * ptr = Teams.Allocate();
-	if (ptr) {
-		((TeamClass *)ptr)->IsActive = true;
-	}
-	return(ptr);
+	return(Teams.Allocate());
 }	
 
 
 void TeamClass::operator delete(void * ptr)
 {
-	if (ptr) {
-		((TeamClass *)ptr)->IsActive = false;
-	}
 	Teams.Free((TeamClass *)ptr);
 }	
 

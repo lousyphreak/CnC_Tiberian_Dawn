@@ -172,11 +172,7 @@ TARGET AircraftClass::As_Target(void) const
  *=============================================================================================*/
 void * AircraftClass::operator new(size_t)
 {
-	void * ptr = Aircraft.Allocate();
-	if (ptr) {
-		((AircraftClass *)ptr)->IsActive = true;
-	}
-	return(ptr);
+	return(Aircraft.Allocate());
 }
 
 
@@ -196,9 +192,6 @@ void * AircraftClass::operator new(size_t)
  *=============================================================================================*/
 void AircraftClass::operator delete(void *ptr)
 {
-	if (ptr) {
-		((AircraftClass *)ptr)->IsActive = false;
-	}
 	Aircraft.Free((AircraftClass *)ptr);
 }
 
@@ -971,7 +964,7 @@ void AircraftClass::Init(void)
 	Aircraft.Free_All();
 
 	ptr = new AircraftClass();
-	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - 4))[0];
+	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - sizeof(void *)))[0];
 	delete ptr;
 }
 

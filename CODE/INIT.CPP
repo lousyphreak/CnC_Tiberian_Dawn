@@ -789,6 +789,9 @@ void Uninit_Game(void)
 	Triggers.Set_Heap(0);
 	TeamTypes.Set_Heap(0);
 	Teams.Set_Heap(0);
+	while (Houses.Count()) {
+		delete Houses.Ptr(0);
+	}
 	Houses.Set_Heap(0);
 
 	delete [] _ShapeBuffer;

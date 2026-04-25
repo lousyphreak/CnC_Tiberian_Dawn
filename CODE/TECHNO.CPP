@@ -1305,17 +1305,19 @@ bool TechnoClass::Evaluate_Cell(ThreatType method, int mask, CELL cell, int rang
 	**	techno object there, then bail.
 	*/
 	CellClass * cellptr = &Map[cell];
-	TechnoClass const * tentative = (TechnoClass const *)cellptr->Cell_Occupier();
-	while (tentative) {
-		if (tentative->Is_Techno() && !House->Is_Ally(tentative)) break;
-		tentative = (TechnoClass const *)tentative->Next;
+	ObjectClass const * candidate = cellptr->Cell_Occupier();
+	while (candidate) {
+		if (candidate->Is_Techno()) {
+			TechnoClass const * tentative = (TechnoClass const *)candidate;
+			if (!House->Is_Ally(tentative)) {
+				*object = tentative;
+				return(Evaluate_Object(method, mask, range, tentative, value));
+			}
+		}
+		candidate = candidate->Next;
 	}
 
-	if (!tentative) return(false);
-//	if (!tentative->Is_Techno()) return(false);
-	*object = tentative;
-
-	return(Evaluate_Object(method, mask, range, tentative, value));
+	return(false);
 }
 
 

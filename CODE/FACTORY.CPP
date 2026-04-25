@@ -107,6 +107,7 @@ int FactoryClass::Validate(void) const
  *=============================================================================================*/
 FactoryClass::FactoryClass(void)
 {
+	IsActive = true;
 	IsSuspended = false;
 	IsDifferent = false;
 	Balance		= 0;
@@ -135,6 +136,7 @@ FactoryClass::FactoryClass(void)
  *=============================================================================================*/
 FactoryClass::~FactoryClass(void)
 {
+	IsActive = false;
 	if (GameActive) {
 		Abandon();
 	}
@@ -180,11 +182,7 @@ void FactoryClass::Init(void)
  *=============================================================================================*/
 void * FactoryClass::operator new(size_t)
 {
-	void * ptr = Factories.Allocate();
-	if (ptr) {
-		((FactoryClass *)ptr)->IsActive = true;
-	}
-	return(ptr);
+	return(Factories.Allocate());
 }
 
 
@@ -205,9 +203,6 @@ void * FactoryClass::operator new(size_t)
  *=============================================================================================*/
 void FactoryClass::operator delete(void *ptr)
 {
-	if (ptr) {
-		((FactoryClass *)ptr)->IsActive = false;
-	}
 	Factories.Free((FactoryClass *)ptr);
 }
 
@@ -749,4 +744,3 @@ bool FactoryClass::Completed(void)
 	}
 	return(false);
 }
-

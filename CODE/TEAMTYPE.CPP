@@ -124,6 +124,7 @@ int TeamTypeClass::Validate(void) const
  *=========================================================================*/
 TeamTypeClass::TeamTypeClass(void)
 {
+	IsActive = true;
 	IsPrebuilt = true;
 	IsReinforcable = true;
 	IsRoundAbout = false;
@@ -147,6 +148,12 @@ TeamTypeClass::TeamTypeClass(void)
 }
 
 
+TeamTypeClass::~TeamTypeClass(void)
+{
+	IsActive = false;
+}
+
+
 /***************************************************************************
  * TeamTypeClass::Init -- pre-scenario initialization                      *
  *                                                                         *
@@ -166,7 +173,7 @@ void TeamTypeClass::Init(void)
 	TeamTypes.Free_All();
 
 	ptr = new TeamTypeClass();
-	VTable = ((void **)(((char *)ptr) + sizeof(AbstractTypeClass) - 4))[0];
+	VTable = ((void **)(((char *)ptr) + sizeof(AbstractTypeClass) - sizeof(void *)))[0];
 	delete ptr;
 }
 
@@ -841,11 +848,7 @@ char const * TeamTypeClass::Name_From_Mission(TeamMissionType order)
  *=========================================================================*/
 void * TeamTypeClass::operator new(size_t )
 {
-	void * ptr = TeamTypes.Allocate();
-	if (ptr) {
-		((TeamTypeClass *)ptr)->IsActive = true;
-	}
-	return(ptr);
+	return(TeamTypes.Allocate());
 }
 
 
@@ -866,9 +869,6 @@ void * TeamTypeClass::operator new(size_t )
  *=========================================================================*/
 void TeamTypeClass::operator delete(void *ptr)
 {
-	if (ptr) {
-		((TeamTypeClass *)ptr)->IsActive = false;
-	}
 	TeamTypes.Free((TeamTypeClass *)ptr);
 }
 
