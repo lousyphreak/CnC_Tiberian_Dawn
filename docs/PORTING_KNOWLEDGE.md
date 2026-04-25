@@ -82,3 +82,14 @@ _Last updated: 2026-04-25_
   - `Select_MPlayer_Game()` now returns distinct `GAME_UDP`, `GAME_INTERNET`, and `GAME_WOL` modes instead of routing every choice through one generic internet mode;
   - the active transport surface has been renamed from `IPX*` to `UDP*` (`Udp`, `UDPAddressClass`, `UDPManagerClass`, etc.), and gameplay code should use `Is_Network_Game(...)` / `Is_Online_Game(...)` helpers instead of hard-coding old IPX/internet checks;
   - the old serial/null-modem menu path is no longer part of the live startup flow, but some compatibility declarations/stubs still remain and should be removed only after the last active call sites are gone.
+- The TD WOL backend now has its own native transport layer under `CODE/WS*`:
+  - `WSClientClass` is a small `CODE/SOCKETS.H`-based `ws://` client with in-tree SHA-1/base64 handshake logic and binary-frame queuing;
+  - `WSManagerClass` mirrors TD `ConnManClass`/`UDPManagerClass` expectations with separate control, global, private, and pending-private queues, but it does not do ACK/retry because WebSocket/TCP is already ordered and reliable;
+  - remote WOL client IDs are packed little-endian into `UDPAddressClass::NodeAddress[0..3]` with zeroed network bytes so future `NETDLG` wiring can reuse TD's existing address comparisons and connection lookup conventions.
+- TD's live multiplayer runtime no longer depends on the old WChat/DDE launch flow:
+  - `-WCHAT`, `SpawnedFromWChat`, the DDE heartbeat timing penalty, and the return-to-WChat cleanup path have been removed from the active startup/menu/game loop;
+  - WOL timing now keys directly off `GAME_WOL` via the existing `WChatMaxAhead` / `WChatSendRate` INI values, so TD keeps its old timing knobs without preserving the legacy spawn-state behavior;
+  - some WChat/DDE helper implementations still exist in `CODE/INTERNET.CPP`, but they are no longer on the active TD runtime path.
+- The current LCW/bonus-dialog sanitizer fixes are now part of the runtime baseline:
+  - `LCW_Uncompress(...)` must honor the destination-length argument and reject out-of-range back-references/copy counts, otherwise TD will read past the end of 64000-byte CPS buffers under ASan;
+  - `ListClass::Current_Item()` must return `NULL` for empty/out-of-range selections, and callers like `Expansion_Dialog()` / `Bonus_Dialog()` must treat that as cancel/no-selection rather than dereferencing the result.

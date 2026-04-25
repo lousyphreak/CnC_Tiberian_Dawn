@@ -100,6 +100,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include	"FUNCTION.H"
+#include	"CONNMGR.H"
 
 
 /***********************************************************************************************
@@ -3914,10 +3915,11 @@ void HouseClass::MPlayer_Defeated(void)
 		end up waiting for frame sync packets from the other machines.
 		---------------------------------------------------------------------*/
 		if (Is_Network_Game(GameToPlay)) {
+			ConnManClass *net = Current_Network_Manager();
 			i = 0;
-			while (Udp.Num_Connections() && (i++ < 1000) ) {
-				id = Udp.Connection_ID(0);
-				Udp.Delete_Connection(id);
+			while (net->Num_Connections() && (i++ < 1000) ) {
+				id = net->Connection_ID(0);
+				net->Delete_Connection(id);
 			}
 			MPlayerCount = 0;
 		}

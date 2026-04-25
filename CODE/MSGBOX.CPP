@@ -88,7 +88,7 @@ int CCMessageBox::Process(const char *msg, const char *b1txt, const char *b2txt,
 	bool pressed;
 	int curbutton;
 	TextButtonClass *buttons[3];
-	void *back;
+	char *back;
 	BOOL display;									// display level
 	int  realval[5];
 

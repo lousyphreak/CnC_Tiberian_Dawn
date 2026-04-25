@@ -76,6 +76,7 @@
  *   Print_Framesync_Values -- displays frame-sync variables               *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 #include	"FUNCTION.H"
+#include	"CONNMGR.H"
 #include 	"TCPIP.H"
 
 /********************************** Defines *********************************/
@@ -564,7 +565,7 @@ static void Queue_AI_Multiplayer(void)
 	} else {
 		multi_packet_buf = MetaPacket;
 		multi_packet_max = MetaSize;
-		net = &Udp;
+		net = Current_Network_Manager();
 	}
 
 	//------------------------------------------------------------------------

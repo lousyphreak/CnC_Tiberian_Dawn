@@ -18,16 +18,20 @@
 
 #include <stdint.h>
 
-uint32_t LCW_Uncompress(void const* source, void* dest, uint32_t)
+uint32_t LCW_Uncompress(void const* source, void* dest, uint32_t length)
 {
 	uint8_t* source_ptr = (uint8_t*)source;
 	uint8_t* dest_ptr = (uint8_t*)dest;
+	uint8_t* dest_start = (uint8_t*)dest;
+	uint8_t* dest_end = dest_start + length;
 	uint8_t* copy_ptr;
 	uint8_t op_code;
 	uint8_t data;
 	uint32_t count;
-	uint32_t* word_dest_ptr;
-	uint32_t word_data;
+
+	if (source == nullptr || dest == nullptr || length == 0U) {
+		return 0;
+	}
 
 	while (true) {
 		op_code = *source_ptr++;
@@ -35,6 +39,12 @@ uint32_t LCW_Uncompress(void const* source, void* dest, uint32_t)
 		if (!(op_code & 0x80U)) {
 			count = (uint32_t)(op_code >> 4) + 3U;
 			copy_ptr = dest_ptr - ((uint32_t)(*source_ptr++) + (((uint32_t)op_code & 0x0FU) << 8));
+			if (copy_ptr < dest_start || copy_ptr >= dest_ptr) {
+				return (uint32_t)(dest_ptr - dest_start);
+			}
+			if (dest_ptr + count > dest_end) {
+				count = (uint32_t)(dest_end - dest_ptr);
+			}
 
 			while (count-- != 0U) {
 				*dest_ptr++ = *copy_ptr++;
@@ -45,38 +55,33 @@ uint32_t LCW_Uncompress(void const* source, void* dest, uint32_t)
 			}
 
 			count = (uint32_t)(op_code & 0x3FU);
+			if (dest_ptr + count > dest_end) {
+				count = (uint32_t)(dest_end - dest_ptr);
+			}
 			while (count-- != 0U) {
 				*dest_ptr++ = *source_ptr++;
 			}
 		} else if (op_code == 0xFEU) {
 			count = (uint32_t)source_ptr[0] + ((uint32_t)source_ptr[1] << 8);
-			word_data = data = source_ptr[2];
-			word_data = (word_data << 24) + (word_data << 16) + (word_data << 8) + word_data;
+			data = source_ptr[2];
 			source_ptr += 3;
-
-			copy_ptr = dest_ptr + 4 - (reinterpret_cast<uintptr_t>(dest_ptr) & 0x3U);
-			count -= (uint32_t)(copy_ptr - dest_ptr);
-			while (dest_ptr < copy_ptr) {
-				*dest_ptr++ = data;
+			if (dest_ptr + count > dest_end) {
+				count = (uint32_t)(dest_end - dest_ptr);
 			}
 
-			word_dest_ptr = (uint32_t*)dest_ptr;
-			dest_ptr += (count & 0xFFFFFFFCU);
-
-			while (word_dest_ptr < (uint32_t*)dest_ptr) {
-				*word_dest_ptr = word_data;
-				*(word_dest_ptr + 1) = word_data;
-				word_dest_ptr += 2;
-			}
-
-			copy_ptr = dest_ptr + (count & 0x3U);
-			while (dest_ptr < copy_ptr) {
+			while (count-- != 0U) {
 				*dest_ptr++ = data;
 			}
 		} else if (op_code == 0xFFU) {
 			count = (uint32_t)source_ptr[0] + ((uint32_t)source_ptr[1] << 8);
 			copy_ptr = (uint8_t*)dest + source_ptr[2] + ((uint32_t)source_ptr[3] << 8);
 			source_ptr += 4;
+			if (copy_ptr < dest_start || copy_ptr >= dest_ptr) {
+				return (uint32_t)(dest_ptr - dest_start);
+			}
+			if (dest_ptr + count > dest_end) {
+				count = (uint32_t)(dest_end - dest_ptr);
+			}
 
 			while (count-- != 0U) {
 				*dest_ptr++ = *copy_ptr++;
@@ -85,6 +90,12 @@ uint32_t LCW_Uncompress(void const* source, void* dest, uint32_t)
 			count = (uint32_t)(op_code & 0x3FU) + 3U;
 			copy_ptr = (uint8_t*)dest + source_ptr[0] + ((uint32_t)source_ptr[1] << 8);
 			source_ptr += 2;
+			if (copy_ptr < dest_start || copy_ptr >= dest_ptr) {
+				return (uint32_t)(dest_ptr - dest_start);
+			}
+			if (dest_ptr + count > dest_end) {
+				count = (uint32_t)(dest_end - dest_ptr);
+			}
 
 			while (count-- != 0U) {
 				*dest_ptr++ = *copy_ptr++;

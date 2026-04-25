@@ -59,8 +59,6 @@ extern bool ReadyToQuit;
 void Read_Setup_Options(char *config_data);
 
 bool VideoBackBufferAllowed = true;
-void Check_From_WChat(char *wchat_name);
-bool SpawnedFromWChat = false;
 
 extern "C"{
 	bool __cdecl Detect_MMX_Availability(void);
@@ -311,8 +309,6 @@ int main(int argc, char *argv[])
 	/*
 	** If we are already running then switch to the existing process and exit
 	*/
-	SpawnedFromWChat = false;
-
 	if (CC95AlreadyRunning) {	//Set in the DDEServer constructor
 		//MessageBox (NULL, "Error - attempt to restart C&C95 when already running.", "Command & Conquer", MB_ICONEXCLAMATION|MB_OK);
 
@@ -594,7 +590,7 @@ int main(int argc, char *argv[])
 			*/
 			char tempbuff[5];
 			WWGetPrivateProfileString("Intro", "PlayIntro", "Yes", tempbuff, 4, buffer);
-			if ((stricmp(tempbuff, "No") == 0) || SpawnedFromWChat) {
+			if (stricmp(tempbuff, "No") == 0) {
 				Special.IsFromInstall = false;
 			}else{
 				Special.IsFromInstall = true;

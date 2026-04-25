@@ -49,6 +49,7 @@
 #include	"SDLINPUT.H"
 #include	"TCPIP.H"
 #include  "CCDDE.H"
+#include	"WSMGR.H"
 
 static HANDLE			hCCLibrary;
 static bool				BootstrapCoreMixfilesRegistered = false;
@@ -162,7 +163,7 @@ long FAR PASCAL _export Start_Game_Proc(HWND hwnd, UINT message, UINT wParam, LO
 
 extern bool Server_Remote_Connect(void);
 extern bool Client_Remote_Connect(void);
-extern bool SpawnedFromWChat;
+extern bool Remote_Connect(void);
 
 
 /***********************************************************************************************
@@ -492,7 +493,7 @@ bool Init_Game(int , char *[])
 			ptr = strdup(ff.name);
 			new MixFileClass(ptr);
 			MixFileClass::Cache(ptr);
-//			free(ptr);
+			free(ptr);
 		} while(!_dos_findnext(&ff));
 	}
 	if (!_dos_findfirst("SS*.MIX", _A_NORMAL, &ff)) {
@@ -500,7 +501,7 @@ bool Init_Game(int , char *[])
 		do {
 			ptr = strdup(ff.name);
 			new MixFileClass(ptr);
-//			free(ptr);
+			free(ptr);
 		} while(!_dos_findnext(&ff));
 	}
 #endif	//DEMO
@@ -614,15 +615,11 @@ bool Init_Game(int , char *[])
 	CCDebugString ("C&C95 - About to initialise the animation system\n");
 	Anim_Init();
 
-	if (SpawnedFromWChat){
-		Special.IsFromWChat = true;
-	}
-
 	/*
 	**	Play the introduction movies.
 	*/
 	CCDebugString ("C&C95 - About to play the intro movie\n");
-	if (!Special.IsFromInstall && !Special.IsFromWChat) Play_Intro(true);
+	if (!Special.IsFromInstall) Play_Intro(true);
 
 	/*
 	**	Wait for a VSync; during the vertical blank, set the game palette & blit
@@ -814,7 +811,7 @@ void Uninit_Game(void)
 }
 #endif
 
-extern bool Do_The_Internet_Menu_Thang(void);
+extern GameType Do_The_Internet_Menu_Thang(void);
 extern int ShowCommand;
 
 /***********************************************************************************************
@@ -836,7 +833,6 @@ extern int Com_Fake_Scenario_Dialog(void);
 extern int Com_Show_Fake_Scenario_Dialog(void);
 extern int WChatMaxAhead;
 extern int WChatSendRate;
-void Check_From_WChat(char *wchat_name);
 
 bool Select_Game(bool fade)
 {
@@ -867,11 +863,6 @@ bool Select_Game(bool fade)
 	MEMORYSTATUS	mem_info;
 	mem_info.dwLength=sizeof(mem_info);
 	GlobalMemoryStatus(&mem_info);
-
-	/*
-	** Enable the DDE Server so we can get internet start game packets from WChat
-	*/
-	DDEServer.Enable();
 
 	if (Special.IsFromInstall) {
 		/*
@@ -914,9 +905,7 @@ bool Select_Game(bool fade)
 	**   be at least 2 * MPlayerMaxAhead
 	*/
 	CommProtocol = COMM_PROTOCOL_SINGLE_NO_COMP;
-	if (!Special.IsFromWChat){
-		FrameSendRate = 3;
-	}
+	FrameSendRate = 3;
 
 	ProcessTicks = 0;
 	ProcessFrames = 0;
@@ -974,18 +963,6 @@ bool Select_Game(bool fade)
 				PlaybackGame = false;
 		}
 
-
-		/*
-		** Handle case where we were spawned from Wchat
-		*/
-		if (SpawnedFromWChat){
-			Special.IsFromInstall = false;	//Dont play intro if we were spawned from wchat
-			selection = SEL_INTERNET;
-			Theme.Queue_Song(THEME_NONE);
-			GameToPlay = GAME_INTERNET;
-			display = false;
-			Set_Logic_Page(SeenBuff);
-		}
 
 
 		while (process) {
@@ -1054,9 +1031,9 @@ bool Select_Game(bool fade)
 #ifdef NEWMENU
 
 				case SEL_INTERNET:
-					if (Do_The_Internet_Menu_Thang()) {
+					GameToPlay = Do_The_Internet_Menu_Thang();
+					if (GameToPlay != GAME_NORMAL) {
 						display = false;
-						GameToPlay = GAME_INTERNET;
 						selection = SEL_MULTIPLAYER_GAME;
 					} else {
 						selection = SEL_NONE;
@@ -1224,8 +1201,24 @@ bool Select_Game(bool fade)
 							break;
 
 						case GAME_UDP:
+							if (!Init_Network()) {
+								GameToPlay = GAME_NORMAL;
+								selection = SEL_NONE;
+								display = true;
+								break;
+							}
+
+							if (Remote_Connect()) {
+								break;
+							}
+
+							Shutdown_Network();
+							GameToPlay = GAME_NORMAL;
+							selection = SEL_NONE;
+							display = true;
+							break;
+
 						case GAME_INTERNET:
-						case GAME_WOL:
 							if (!Winsock.Init()) {
 								GameToPlay = GAME_NORMAL;
 								selection = SEL_NONE;
@@ -1235,7 +1228,7 @@ bool Select_Game(bool fade)
 
 							Read_MultiPlayer_Settings();
 							Server = PlanetWestwoodIsHost;
-							Winsock.Set_Protocol_UDP(InternetTransport != INTERNET_TRANSPORT_TCP);
+							Winsock.Set_Protocol_UDP(GameToPlay != GAME_INTERNET);
 							Winsock.Set_Host_Address(PlanetWestwoodIPAddress);
 
 							if (Server) {
@@ -1264,6 +1257,41 @@ bool Select_Game(bool fade)
 							display = true;
 							break;
 
+						case GAME_WOL: {
+							char server_url[256];
+							char const *server_host = PlanetWestwoodIPAddress[0] ? PlanetWestwoodIPAddress : "127.0.0.1";
+							char const *nickname = MPlayerName[0] ? MPlayerName : "Noname";
+
+							Read_MultiPlayer_Settings();
+							server_host = PlanetWestwoodIPAddress[0] ? PlanetWestwoodIPAddress : "127.0.0.1";
+							nickname = MPlayerName[0] ? MPlayerName : "Noname";
+
+							if (SDL_strstr(server_host, "://") != NULL) {
+								SDL_strlcpy(server_url, server_host, sizeof(server_url));
+							} else {
+								SDL_snprintf(server_url, sizeof(server_url), "ws://%s:%u/ws", server_host, PlanetWestwoodPortNumber);
+							}
+
+							Wol.Configure(server_url, nickname);
+
+							if (!Init_Network()) {
+								GameToPlay = GAME_NORMAL;
+								selection = SEL_NONE;
+								display = true;
+								break;
+							}
+
+							if (Remote_Connect()) {
+								break;
+							}
+
+							Shutdown_Network();
+							GameToPlay = GAME_NORMAL;
+							selection = SEL_NONE;
+							display = true;
+							break;
+						}
+
 					}
 
 
@@ -1271,9 +1299,9 @@ bool Select_Game(bool fade)
 						/*
 						**	Modern direct-connect and WOL-style games
 						*/
-						case GAME_UDP:
 						case GAME_INTERNET:
 						case GAME_WOL:
+						case GAME_UDP:
 							Theme.Fade_Out();
 							ScenPlayer = SCEN_PLAYER_2PLAYER;
 							ScenDir = SCEN_DIR_EAST;
@@ -1431,9 +1459,7 @@ bool Select_Game(bool fade)
 #ifdef FORCE_WINSOCK
 	if (Is_Online_Game(GameToPlay)){
 		CommProtocol = COMM_PROTOCOL_MULTI_E_COMP;
-		if (!Special.IsFromWChat){
-			FrameSendRate = 5;	//3;
-		}
+		FrameSendRate = (GameToPlay == GAME_WOL) ? WChatSendRate : 5;
 	}
 #endif	//FORCE_WINSOCK
 	/*
@@ -1587,11 +1613,11 @@ bool Select_Game(bool fade)
 	*/
 #ifdef FORCE_WINSOCK
 	if (CommProtocol==COMM_PROTOCOL_MULTI_E_COMP && GameToPlay!=GAME_NORMAL) {
-		if (!Special.IsFromWChat){
-			MPlayerMaxAhead = FrameSendRate * 3;	//2;
-		}else{
+		if (GameToPlay == GAME_WOL) {
 			MPlayerMaxAhead = WChatMaxAhead;
 			FrameSendRate = WChatSendRate;
+		} else {
+			MPlayerMaxAhead = FrameSendRate * 3;	//2;
 		}
 	}
 #endif	//FORCE_WINSOCK
@@ -2196,13 +2222,6 @@ bool Parse_Command_Line(int argc, char *argv[])
 		if (strstr(string,"-480")){
 			ScreenHeight = 480;
 			continue;
-		}
-
-		/*
-		** Check for spawn from WChat
-		*/
-		if (strstr(string,"-WCHAT")){
-			SpawnedFromWChat = true;
 		}
 
 		/*

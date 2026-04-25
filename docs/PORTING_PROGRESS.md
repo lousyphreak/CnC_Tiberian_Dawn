@@ -200,10 +200,38 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
     - the live transport layer has been renamed over to `UDP*` and the active gameplay code now keys off `Udp` / `GAME_WOL` / `Is_Online_Game(...)` / `Is_Network_Game(...)` rather than the old IPX-facing names;
     - legacy modem/null-modem/IPX/WChat selection flows are no longer part of the active UI/runtime path;
     - some serial/null-modem declarations and dead helper code still exist in compatibility headers/stubs, and TD still does not have a full Red Alert-style `WSManagerClass` / `WSClientClass` WOL backend yet.
-  - next concrete porting work:
-    1. finish removing the remaining serial/null-modem declarations and dead helper code from `CONQUER`, `QUEUE`, globals, and public headers now that the live runtime no longer uses them;
-    2. port a real Red Alert-style WOL manager/backend (`WSManagerClass` + client layer) instead of today's mode split riding the direct-connect socket path;
-    3. continue scrubbing the leftover WChat/DDE-era symbols and comments that are no longer used by the active code path.
+   - next concrete porting work:
+     1. finish removing the remaining serial/null-modem declarations and dead helper code from `CONQUER`, `QUEUE`, globals, and public headers now that the live runtime no longer uses them;
+     2. port a real Red Alert-style WOL manager/backend (`WSManagerClass` + client layer) instead of today's mode split riding the direct-connect socket path;
+     3. continue scrubbing the leftover WChat/DDE-era symbols and comments that are no longer used by the active code path.
+- TD-side modern WOL backend groundwork landed without menu integration (2026-04-25):
+  - completed in this checkpoint:
+    - added the new backend files under `CODE/`:
+      - `WOL_PROTO.H`
+      - `WSCLIENT.H`
+      - `WSCLIENT.CPP`
+      - `WSMGR.H`
+      - `WSMGR.CPP`
+    - ported a native-only Tiberian Dawn `WSClientClass` over `CODE/SOCKETS.H` for Linux/Windows:
+      - non-blocking `ws://` connect flow
+      - in-tree WebSocket handshake generation/validation (SHA-1 + base64)
+      - binary-frame send queueing and receive queueing
+      - ping/close handling without adding any new third-party dependency
+    - added a TD-side WOL protocol header with the modern relay/control opcodes plus fixed-width encode/decode helpers shared by the backend;
+    - added a TD-adapted `WSManagerClass` that follows TD connection-manager conventions instead of copying Red Alert verbatim:
+      - derives from `ConnManClass`
+      - exposes `UDPManagerClass`-style global/private send+receive entry points
+      - maps remote WOL client IDs into `UDPAddressClass`
+      - keeps separate control, global, private, and pending-private queues so future `GAME_WOL` UI wiring can resolve peers after relay traffic already starts arriving.
+  - current build result:
+    - `cmake --build build --target tiberian-dawn --parallel 4` succeeds with the new backend files added.
+    - `cmake --build build-asan --target tiberian-dawn -- -j$(nproc)` also succeeds after adding the backend files.
+    - `timeout --foreground 125s bash -lc 'env SDL_RENDER_DRIVER=software ./build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` still runs for the full probe window and exits only from the timeout (`ASAN_STATUS=137`), with no ASan report emitted during the timed run.
+  - remaining integration requirements before `GAME_WOL` can use this backend live:
+    1. wire `GAME_WOL` startup away from the current direct-connect `Winsock` path and into `WSManagerClass::Configure(...)` / `Init(...)`;
+    2. teach the future `NETDLG` WOL flow to consume `Next_Control_Frame(...)` and create/delete `WSManagerClass` connections from the server's lobby/game membership frames;
+    3. swap the live WOL packet path from `Udp` to `Wol` for `Send_*` / `Get_*` calls once the menu flow chooses the backend explicitly;
+    4. decide the final TD server URL/nickname plumbing and whether the default lobby channel name should stay `td-lobby`.
 - Communications support cleanup continued and the build moved past the old WChat/registry wall on Linux (2026-04-24):
   - completed in this checkpoint:
     - exposed the legacy keyboard globals/helpers that TD gameplay code still expects by restoring the declarations in `CODE/KEY.H` (`_Kbd`, `Check_Key`, `Get_Key`, `Get_Key_Num`, `Check_Key_Num`, `Clear_KeyBuffer`, `KN_To_VK`, `Key_Down`);
@@ -513,3 +541,34 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
     - `cmake --build build -- -j$(nproc)` succeeds after the runtime/input/render fixes;
     - `cmake --build build-asan --target tiberian-dawn -j$(nproc)` succeeds after the same changes;
     - `timeout --foreground 45s bash -lc 'env SDL_RENDER_DRIVER=software ./build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` still reaches the timeout window; the process exits under LeakSanitizer with the pre-existing startup/runtime leak set instead of a new crash in the touched input/render code.
+- Networking parity and ASan bring-up advanced together in the modern multiplayer pass (2026-04-25):
+  - completed in this checkpoint:
+    - finished the active multiplayer split so TD now launches the three modernized paths distinctly:
+      - `GAME_UDP` uses the UDP manager path and the normal `Remote_Connect()` lobby flow;
+      - `GAME_INTERNET` remains the direct TCP host/join path;
+      - `GAME_WOL` now configures `WSManagerClass` from `PlanetWestwoodIPAddress` / `PlanetWestwoodPortNumber` and enters the network dialog flow through the shared manager surface instead of the old WChat-owned path.
+    - pushed the active-manager abstraction further through runtime code:
+      - `CODE/NETDLG.CPP`, `CODE/QUEUE.CPP`, `CODE/CONQUER.CPP`, and `CODE/HOUSE.CPP` now use `Current_Network_Manager()` so UDP and WOL share TD’s existing packet/dialog logic without hard-coding `Udp`;
+      - `CODE/INIT.CPP` now keys WOL timing setup off `GAME_WOL` directly, instead of the removed legacy WChat spawn state.
+    - removed the remaining live WChat/DDE runtime hooks from the TD multiplayer flow:
+      - startup no longer parses or reacts to `-WCHAT`;
+      - intro/menu/game-start logic no longer depends on `SpawnedFromWChat` / `Special.IsFromWChat`;
+      - in-game timing no longer uses DDE heartbeat penalties;
+      - post-game online cleanup no longer tries to hand control back to WChat;
+      - the dormant fake internet dialogs in `CODE/NETDLG.CPP` no longer call `Send_Data_To_DDE_Server(...)` or `Spawn_WChat(...)`;
+      - `CODE/STATS.CPP` no longer attempts legacy WChat/DDE stats upload and now discards the generated packet instead.
+    - cleared the startup/runtime sanitizer blockers that were preventing networking validation:
+      - `CODE/MSGBOX.CPP` now deletes the title-screen restore buffer through the correct `char*` type instead of `void*`;
+      - `CODE/LCWUNCMP.CPP` now honors the destination length and bounds back-references/copy counts instead of blindly trusting the compressed stream;
+      - `CODE/LIST.CPP` and `CODE/EXPAND.CPP` now treat empty bonus/expansion lists as cancel/no-selection rather than dereferencing a null current item;
+      - `CODE/INIT.CPP` once again frees the temporary duplicated mixfile names in the startup addon scan.
+    - cleaned the shared manager API fallout:
+      - `CODE/NULLMGR.H` now re-exposes `ConnManClass::Init` and `ConnManClass::Delete_Connection` to avoid the overload-hiding warnings introduced by the new shared manager surface.
+  - validation result:
+    - `cmake --build build -- -j$(nproc)` succeeds after the networking cleanup and sanitizer fixes;
+    - `cmake --build build-asan --target tiberian-dawn -- -j$(nproc)` succeeds after the same changes;
+    - `timeout --foreground 125s bash -lc 'env SDL_RENDER_DRIVER=software ASAN_OPTIONS=detect_leaks=0 ./build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` now runs for the full timeout window (`ASAN_STATUS=124`) without the earlier `MSGBOX`, `LCW_Uncompress`, or bonus-dialog crashes.
+  - current remaining follow-up:
+    - `CODE/INTERNET.CPP` still contains some now-unused WChat/DDE helper implementations that are no longer reachable from the active TD startup/menu/runtime path;
+    - the modern WOL backend still reuses TD’s classic global/private packet flow and does not yet consume explicit RA-style control frames such as create/join/leave/start room events;
+    - some unrelated compile warnings remain in `CODE/INIT.CPP` (`-Wswitch`, old callback signature mismatch, unused locals), but they are not blocking the cleaned multiplayer runtime path.

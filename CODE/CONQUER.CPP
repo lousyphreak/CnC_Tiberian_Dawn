@@ -62,6 +62,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include	"FUNCTION.H"
+#include	"CONNMGR.H"
 #include  "TCPIP.H"
 #include	<stdlib.h>
 #include	<stdio.h>
@@ -132,8 +133,6 @@ bool InMainLoop = false;
  *   10/01/1994 JLB : Created.                                                                 *
  *=============================================================================================*/
 extern int TotalLocks;
-extern bool Spawn_WChat(bool can_launch);
-extern bool SpawnedFromWChat;
 void Main_Game(int argc, char *argv[])
 {
 	bool fade = false;	// don't fade title screen the first time through
@@ -183,8 +182,6 @@ void Main_Game(int argc, char *argv[])
 			GameStatisticsPacketSent = false;
 			PacketLater = NULL;
 			ConnectionLost = false;
-		}else{
-			DDEServer.Disable();
 		}
 
 		InMainLoop = true;
@@ -351,26 +348,6 @@ void Main_Game(int argc, char *argv[])
 			GameToPlay = GAME_NORMAL;
 			PlaybackGame = 0;
 		}
-
-
-		/*
-		** If we were spawned from WChat then dont go back to the main menu - just quit
-		**
-		** New: If spawned from WChat then maximise WChat and go back to the main menu after all
-		*/
-#ifdef FORCE_WINSOCK
-		if (Special.IsFromWChat){
-			Shutdown_Network();		      // Clear up the pseudo IPX stuff
-			Winsock.Close();
-			Special.IsFromWChat = false;
-			SpawnedFromWChat = false;
-			DDEServer.Delete_MPlayer_Game_Info();	//Make sure we dont use the same start packet twice
-			GameToPlay = GAME_NORMAL;			//Have to do this or we will got straight to the multiplayer menu
-			Spawn_WChat(false);		//Will switch back to Wchat. It must be there because its been poking us
-			//break;
-		}
-#endif	//FORCE_WINSOCK
-
 #endif	//DEMO
 
 	}
@@ -764,6 +741,8 @@ static void Message_Input(KeyNumType &input)
 		memset (txt, 0, 40);
 
 		if (Is_Network_Game(GameToPlay)) {
+			ConnManClass *net = Current_Network_Manager();
+
 			if (input==(KN_F1 + MPlayerMax - 1) && Messages.Get_Edit_Buf()==NULL) {
 
 				MessageAddress = UDPAddressClass();		// set to broadcast
@@ -775,11 +754,11 @@ static void Message_Input(KeyNumType &input)
 				Map.Flag_To_Redraw(false);
 			} else {
 				if (Messages.Get_Edit_Buf()==NULL) {
-					if ((input - KN_F1) < Udp.Num_Connections() && !MPlayerObiWan) {
+					if ((input - KN_F1) < net->Num_Connections() && !MPlayerObiWan) {
 
-						id = Udp.Connection_ID(input - KN_F1);
-						MessageAddress = (*(Udp.Connection_Address (id)));
-						sprintf(txt,Text_String(TXT_TO),Udp.Connection_Name(id));
+						id = net->Connection_ID(input - KN_F1);
+						MessageAddress = (*(net->Connection_Address(id)));
+						sprintf(txt,Text_String(TXT_TO), net->Connection_Name(id));
 
 						Messages.Add_Edit(MPlayerTColors[MPlayerColorIdx],
 							TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_FULLSHADOW, txt, 180*factor);
@@ -886,10 +865,11 @@ static void Message_Input(KeyNumType &input)
 					**	the message to every player we have a connection with.
 					*/
 					if (MessageAddress.Is_Broadcast()) {
-						for (i = 0; i < Udp.Num_Connections(); i++) {
-							Udp.Send_Global_Message(&GPacket, sizeof(GlobalPacketType), 1,
-								Udp.Connection_Address(Udp.Connection_ID(i)));
-							Udp.Service();
+						ConnManClass *net = Current_Network_Manager();
+						for (i = 0; i < net->Num_Connections(); i++) {
+							net->Send_Global_Message(&GPacket, sizeof(GlobalPacketType), 1,
+								net->Connection_Address(net->Connection_ID(i)));
+							net->Service();
 						}
 					} else {
 
@@ -897,9 +877,9 @@ static void Message_Input(KeyNumType &input)
 						**	Otherwise, MessageAddress contains the exact address to send to.
 						**	Send to that address only.
 						*/
-						Udp.Send_Global_Message(&GPacket, sizeof(GlobalPacketType), 1,
+						Current_Network_Manager()->Send_Global_Message(&GPacket, sizeof(GlobalPacketType), 1,
 							&MessageAddress);
-						Udp.Service();
+						Current_Network_Manager()->Service();
 					}
 
 				magic_number++;
@@ -1046,15 +1026,16 @@ void Call_Back(void)
 	**	Network maintenance
 	*/
 	if (Is_Network_Game(GameToPlay)) {
+		ConnManClass *net = Current_Network_Manager();
 
-		Udp.Service();
+		net->Service();
 
 		/*
 		** Read packets only if the game is "closed", so we don't steal global
 		** messages from the connection dialogs.
 		*/
 		if (!NetOpen) {
-			if (Udp.Get_Global_Message (&GPacket, &GPacketlen, &GAddress, &GProductID)) {
+			if (net->Get_Global_Message (&GPacket, &GPacketlen, &GAddress, &GProductID)) {
 				if (GProductID == UDPGlobalConnClass::COMMAND_AND_CONQUER) {
 
 					/*
@@ -1063,12 +1044,12 @@ void Call_Back(void)
 					**	it over.
 					*/
 					if (GPacket.Command == NET_SIGN_OFF) {
-						for (i = 0; i < Udp.Num_Connections(); i++) {
+						for (i = 0; i < net->Num_Connections(); i++) {
 
-							id = Udp.Connection_ID(i);
+							id = net->Connection_ID(i);
 
-							if (!strcmp (GPacket.Name, Udp.Connection_Name(id) ) &&
-								GAddress == (*Udp.Connection_Address(id))) {
+							if (!strcmp (GPacket.Name, net->Connection_Name(id)) &&
+								GAddress == (*net->Connection_Address(id))) {
 
 								CCDebugString ("C&C95 = Destroying connection due to sign off\n");
 								Destroy_Connection (id,0);

@@ -156,6 +156,8 @@ class TPoint2D
 };
 #endif
 
+class ConnManClass;
+
 #include "win32_compat.h"
 
 
@@ -582,6 +584,7 @@ int Main_Menu(unsigned long timeout);
 GameType Select_MPlayer_Game (void);
 void Read_MultiPlayer_Settings (void);
 void Write_MultiPlayer_Settings (void);
+ConnManClass *Current_Network_Manager(void);
 void Read_Scenario_Descriptions (void);
 void Free_Scenario_Descriptions(void);
 void Computer_Message(void);

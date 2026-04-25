@@ -51,7 +51,7 @@ static void Garble_Message(char *buf);
 static bool Choose_Internet_Game(InternetTransportType& transport);
 static bool Get_Internet_Host_Or_Join(bool& host_game);
 static bool Get_IP_Address(char* address_buffer, bool required);
-static bool Configure_Internet_Game(void);
+static bool Configure_TCP_Direct_Game(void);
 
 static bool Choose_Internet_Game(InternetTransportType& transport)
 {
@@ -389,22 +389,17 @@ static bool Get_IP_Address(char* address_buffer, bool required)
 	}
 }
 
-static bool Configure_Internet_Game(void)
+static bool Configure_TCP_Direct_Game(void)
 {
 	bool host_game = true;
 	char address_buffer[IP_ADDRESS_MAX];
-
-	SDL_strlcpy(address_buffer, PlanetWestwoodIPAddress, sizeof(address_buffer));
-
-	if (!Choose_Internet_Game(InternetTransport)) {
-		return false;
-	}
 
 	if (!Get_Internet_Host_Or_Join(host_game)) {
 		return false;
 	}
 
-	if (!Get_IP_Address(address_buffer, !host_game || InternetTransport != INTERNET_TRANSPORT_TCP)) {
+	SDL_strlcpy(address_buffer, PlanetWestwoodIPAddress, sizeof(address_buffer));
+	if (!Get_IP_Address(address_buffer, !host_game)) {
 		return false;
 	}
 
@@ -413,7 +408,7 @@ static bool Configure_Internet_Game(void)
 	InternetMaxPlayers = 2;
 	UseVirtualSubnetServer = false;
 	ModemGameToPlay = host_game ? INTERNET_HOST : INTERNET_JOIN;
-	Winsock.Set_Protocol_UDP(InternetTransport != INTERNET_TRANSPORT_TCP);
+	Winsock.Set_Protocol_UDP(FALSE);
 
 	return true;
 }
@@ -435,7 +430,7 @@ static bool Configure_Internet_Game(void)
  *=============================================================================================*/
 GameType Select_MPlayer_Game (void)
 {
-	if (!Configure_Internet_Game()) {
+	if (!Choose_Internet_Game(InternetTransport)) {
 		return GAME_NORMAL;
 	}
 
@@ -444,7 +439,7 @@ GameType Select_MPlayer_Game (void)
 			return GAME_UDP;
 
 		case INTERNET_TRANSPORT_TCP:
-			return GAME_INTERNET;
+			return Configure_TCP_Direct_Game() ? GAME_INTERNET : GAME_NORMAL;
 
 		case INTERNET_TRANSPORT_WOL:
 			return GAME_WOL;
@@ -517,23 +512,19 @@ void Read_MultiPlayer_Settings (void)
 	}
 	file.Close();
 
-	if (!Special.IsFromWChat){
-		/*------------------------------------------------------------------------
-		Get the player's last-used Handle
-		------------------------------------------------------------------------*/
-		WWGetPrivateProfileString("MultiPlayer", "Handle", "Noname", MPlayerName,
-			sizeof(MPlayerName), buffer);
+	/*------------------------------------------------------------------------
+	Get the player's last-used Handle
+	------------------------------------------------------------------------*/
+	WWGetPrivateProfileString("MultiPlayer", "Handle", "Noname", MPlayerName,
+		sizeof(MPlayerName), buffer);
 
-		/*------------------------------------------------------------------------
-		Get the player's last-used Color
-		------------------------------------------------------------------------*/
-		MPlayerPrefColor = WWGetPrivateProfileInt("MultiPlayer", "Color", 0, buffer);
-		MPlayerHouse = (HousesType)WWGetPrivateProfileInt("MultiPlayer", "Side",
-			HOUSE_GOOD, buffer);
-		CurPhoneIdx = WWGetPrivateProfileInt("MultiPlayer", "PhoneIndex", -1, buffer);
-	}else{
-		CurPhoneIdx = -1;
-	}
+	/*------------------------------------------------------------------------
+	Get the player's last-used Color
+	------------------------------------------------------------------------*/
+	MPlayerPrefColor = WWGetPrivateProfileInt("MultiPlayer", "Color", 0, buffer);
+	MPlayerHouse = (HousesType)WWGetPrivateProfileInt("MultiPlayer", "Side",
+		HOUSE_GOOD, buffer);
+	CurPhoneIdx = WWGetPrivateProfileInt("MultiPlayer", "PhoneIndex", -1, buffer);
 
 #if 1
 	TrapCheckHeap = WWGetPrivateProfileInt( "MultiPlayer", "CheckHeap", 0, buffer);

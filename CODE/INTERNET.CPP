@@ -74,8 +74,6 @@ int WChatSendRate;
 
 int Read_Game_Options(void);
 
-extern bool SpawnedFromWChat;
-
 
 
 
@@ -202,8 +200,6 @@ void Check_From_WChat(char *wchat_name)
 		}
 
 		UseVirtualSubnetServer = WWGetPrivateProfileInt("Internet", "UseVSS", 0, ini_file);
-
-		Special.IsFromWChat = true;
 	}
 
 	if (wchat_name) delete ini_file;
@@ -691,17 +687,15 @@ bool Spawn_Registration_App(void)
  * HISTORY:                                                                                    *
  *    6/7/96 8:30PM ST : Created                                                               *
  *=============================================================================================*/
-bool Do_The_Internet_Menu_Thang(void)
+GameType Do_The_Internet_Menu_Thang(void)
 {
 #ifndef DEMO
-	return Select_MPlayer_Game() != GAME_NORMAL;
+	return Select_MPlayer_Game();
 
 #endif	//DEMO
 
-	return (false);
+	return GAME_NORMAL;
 
 
 }
-
-
 

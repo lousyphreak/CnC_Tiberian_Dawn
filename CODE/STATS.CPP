@@ -43,7 +43,6 @@
 #include	"FUNCTION.H"
 #include "TCPIP.H"
 #include "PACKET.H"
-#include "CCDDE.H"
 
 #define FIELD_PACKET_TYPE					"TYPE"
 #define FIELD_GAME_ID							"IDNO"
@@ -613,15 +612,7 @@ void Send_Statistics_Packet(void)
 	/*
 	** Send it.....
 	*/
-	int times = 100;		//100 times max
-	CountDownTimerClass	send_timer;
-
-	CCDebugString ("C&C95 - About to send stats packet to DDE server.\n");
-	while ( ! Send_Data_To_DDE_Server ((char*)packet, packet_size, DDEServerClass::DDE_PACKET_GAME_RESULTS)){
-		CCDebugString ("C&C95 - Stats packet send failed.\n");
-		send_timer.Set (60, true);
-		while (send_timer.Time()){};
-	}
+	CCDebugString ("C&C95 - Legacy WChat/DDE stats upload removed; discarding packet.\n");
 
 
 	/*

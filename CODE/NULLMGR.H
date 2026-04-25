@@ -95,6 +95,8 @@ class NullModemClass : public ConnManClass
 		/*
 		**	This is the main initialization routine.
 		*/
+		using ConnManClass::Delete_Connection;
+		using ConnManClass::Init;
 		int Init( int port, int irq, char *dev_name, int baud, char parity, int wordlength, int stopbits, int flowcontrol );
 		int Delete_Connection( void );
 		virtual int Num_Connections(void);

@@ -199,27 +199,41 @@ bool Expansion_Dialog(void)
 		switch (input) {
 			case KN_RETURN:
 			case 200|KN_BUTTON:
-				if (list.Current_Item()[sizeof(int)] == 'G') {
+			{
+				char const* current_item = list.Current_Item();
+				if (current_item == NULL) {
+					process = false;
+					okval = false;
+					break;
+				}
+
+				if (current_item[sizeof(int)] == 'G') {
 					ScenPlayer = SCEN_PLAYER_GDI;
 				} else {
 					ScenPlayer = SCEN_PLAYER_NOD;
 				}
 				ScenDir = SCEN_DIR_EAST;
 				Whom = HOUSE_GOOD;
-				Scenario = *(int *)list.Current_Item();
+				Scenario = *(int*)current_item;
 				process = false;
 				okval = true;
 				break;
+			}
 
 			case KN_ESC:
 			case 201|KN_BUTTON:
+			{
+				char const* current_item = list.Current_Item();
 				ScenPlayer = SCEN_PLAYER_GDI;
 				ScenDir = SCEN_DIR_EAST;
 				Whom = HOUSE_GOOD;
-				Scenario = *(int *)list.Current_Item();
+				if (current_item != NULL) {
+					Scenario = *(int*)current_item;
+				}
 				process = false;
 				okval = false;
 				break;
+			}
 
 			default:
 				break;
@@ -381,27 +395,41 @@ bool Bonus_Dialog(void)
 		switch (input) {
 			case KN_RETURN:
 			case 200|KN_BUTTON:
-				if (list.Current_Item()[sizeof(int)] == 'G') {
+			{
+				char const* current_item = list.Current_Item();
+				if (current_item == NULL) {
+					process = false;
+					okval = false;
+					break;
+				}
+
+				if (current_item[sizeof(int)] == 'G') {
 					ScenPlayer = SCEN_PLAYER_GDI;
 				} else {
 					ScenPlayer = SCEN_PLAYER_NOD;
 				}
 				ScenDir = SCEN_DIR_EAST;
 				Whom = HOUSE_GOOD;
-				Scenario = *(int *)list.Current_Item();
+				Scenario = *(int*)current_item;
 				process = false;
 				okval = true;
 				break;
+			}
 
 			case KN_ESC:
 			case 201|KN_BUTTON:
+			{
+				char const* current_item = list.Current_Item();
 				ScenPlayer = SCEN_PLAYER_GDI;
 				ScenDir = SCEN_DIR_EAST;
 				Whom = HOUSE_GOOD;
-				Scenario = *(int *)list.Current_Item();
+				if (current_item != NULL) {
+					Scenario = *(int*)current_item;
+				}
 				process = false;
 				okval = false;
 				break;
+			}
 
 			default:
 				break;

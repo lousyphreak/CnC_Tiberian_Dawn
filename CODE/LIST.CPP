@@ -442,6 +442,10 @@ char const * ListClass::Get_Item(int index) const
  *=============================================================================================*/
 char const * ListClass::Current_Item(void)
 {
+	if (List.Count() == 0 || SelectedIndex < 0 || SelectedIndex >= List.Count()) {
+		return NULL;
+	}
+
 	return(List[SelectedIndex]);
 }
 

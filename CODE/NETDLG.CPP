@@ -106,8 +106,10 @@
 #include "FUNCTION.H"
 #include <time.h>
 #include "TCPIP.H"
-#include "CCDDE.H"
+#include "WSMGR.H"
 #define SHOW_MONO		0
+
+extern int WChatMaxAhead;
 
 
 #ifndef DEMO
@@ -154,6 +156,27 @@ static JoinEventType Get_NewGame_Responses(ColorListClass *playerlist);
 static int Net_Fake_New_Dialog(void);
 static int Net_Fake_Join_Dialog(void);
 
+ConnManClass *Current_Network_Manager(void)
+{
+	if (GameToPlay == GAME_WOL) {
+		return &Wol;
+	}
+
+	return &Udp;
+}
+
+static unsigned long Current_Global_Response_Time(void)
+{
+	if (GameToPlay == GAME_WOL) {
+		int max_ahead = (WChatMaxAhead > 0) ? WChatMaxAhead : 9;
+		return static_cast<unsigned long>(max_ahead * 8);
+	}
+
+	return Udp.Global_Response_Time();
+}
+
+#define NetMgr (*Current_Network_Manager())
+
 
 /***********************************************************************************************
  * Init_Network -- initializes network stuff                               						  *
@@ -179,7 +202,7 @@ bool Init_Network (void)
 	This call allocates all necessary queue buffers, allocates Real-mode
 	memory, and commands IPX to start listening on the Global Channel.
 	------------------------------------------------------------------------*/
-	if (!Udp.Init())
+	if (!NetMgr.Init())
 		return(false);
 
 	/*------------------------------------------------------------------------
@@ -221,6 +244,7 @@ bool Init_Network (void)
  *=============================================================================================*/
 void Shutdown_Network (void)
 {
+	NetMgr.Shutdown();
 
 //
 // Note: The thought behind this section of code was that if the program
@@ -244,22 +268,22 @@ void Shutdown_Network (void)
 	GPacket.Command = NET_SIGN_OFF;
 	strcpy (GPacket.Name, MPlayerName);
 
-	Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType), 0, NULL);
-	Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType), 0, NULL);
+	NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType), 0, NULL);
+	NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType), 0, NULL);
 
 	if (IsBridge && !Winsock.Get_Connected()) {
-		Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0, &BridgeNet);
-		Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0, &BridgeNet);
+		NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0, &BridgeNet);
+		NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0, &BridgeNet);
 	}
 
 	/*------------------------------------------------------------------------
 	Wait for the packets to finish going out (or the Global Channel times out)
 	------------------------------------------------------------------------*/
 	for (;;) {
-		if (Udp.Global_Num_Send()==0) {
+		if (NetMgr.Global_Num_Send()==0) {
 			break;
 		}
-		Udp.Service();
+		NetMgr.Service();
 	}
 
 #endif	//(0)
@@ -330,7 +354,7 @@ bool Process_Global_Packet(GlobalPacketType *packet, UDPAddressClass *address)
 #endif
 			mypacket.GameInfo.IsOpen = NetOpen;
 
-			Udp.Send_Global_Message (&mypacket, sizeof(GlobalPacketType), 1,
+			NetMgr.Send_Global_Message (&mypacket, sizeof(GlobalPacketType), 1,
 				address);
 		}
 		return(true);
@@ -350,7 +374,7 @@ bool Process_Global_Packet(GlobalPacketType *packet, UDPAddressClass *address)
 			mypacket.PlayerInfo.Color = MPlayerColorIdx;
 			mypacket.PlayerInfo.NameCRC = Compute_Name_CRC(MPlayerGameName);
 
-			Udp.Send_Global_Message (&mypacket, sizeof(GlobalPacketType), 1, address);
+			NetMgr.Send_Global_Message (&mypacket, sizeof(GlobalPacketType), 1, address);
 			return(true);
 		}
 	}
@@ -388,9 +412,9 @@ void Destroy_Connection(int id, int error)
 	------------------------------------------------------------------------*/
 	txt[0] = '\0';
 	if (error==1) {
-		sprintf(txt,Text_String(TXT_CONNECTION_LOST),Udp.Connection_Name(id));
+		sprintf(txt,Text_String(TXT_CONNECTION_LOST),NetMgr.Connection_Name(id));
 	} else if (error==0) {
-		sprintf(txt,Text_String(TXT_LEFT_GAME),Udp.Connection_Name(id));
+		sprintf(txt,Text_String(TXT_LEFT_GAME),NetMgr.Connection_Name(id));
 	}
 
 	if (strlen(txt)) {
@@ -403,7 +427,7 @@ void Destroy_Connection(int id, int error)
 	/*------------------------------------------------------------------------
 	Delete the IPX connection, shift the MPlayerID's & MPlayerHouses' back one.
 	------------------------------------------------------------------------*/
-	Udp.Delete_Connection(id);
+	NetMgr.Delete_Connection(id);
 
 	for (i = 0; i < MPlayerCount; i++) {
 		if (MPlayerID[i] == (unsigned char)id) {
@@ -467,7 +491,7 @@ bool Remote_Connect(void)
 	Init network timing parameters; these values should work for both a "real"
 	network, and a simulated modem network (ie Kali)
 	------------------------------------------------------------------------*/
-	Udp.Set_Timing (	30, 		// retry 2 times per second
+	NetMgr.Set_Timing (	30, 		// retry 2 times per second
 							-1, 		// ignore max retries
 							600);		// give up after 10 seconds
 
@@ -572,7 +596,7 @@ bool Server_Remote_Connect(void)
 	Init network timing parameters; these values should work for both a "real"
 	network, and a simulated modem network (ie Kali)
 	------------------------------------------------------------------------*/
-	Udp.Set_Timing (	30, 		// retry 2 times per second
+	NetMgr.Set_Timing (	30, 		// retry 2 times per second
 							-1, 		// ignore max retries
 							600);		// give up after 10 seconds
 
@@ -594,7 +618,13 @@ bool Server_Remote_Connect(void)
 	------------------------------------------------------------------------*/
 	Read_MultiPlayer_Settings ();
 
-	if (!Net_Fake_New_Dialog()){
+	/*
+	** Match the visible host lobby flow: the host advertises the game under
+	** the player's current multiplayer name before entering the setup dialog.
+	*/
+	SDL_strlcpy(MPlayerGameName, MPlayerName, sizeof(MPlayerGameName));
+
+	if (!Net_New_Dialog()){
 		Write_MultiPlayer_Settings ();
 		return (false);
 	}
@@ -630,7 +660,7 @@ bool Client_Remote_Connect(void)
 	Init network timing parameters; these values should work for both a "real"
 	network, and a simulated modem network (ie Kali)
 	------------------------------------------------------------------------*/
-	Udp.Set_Timing (	30, 		// retry 2 times per second
+	NetMgr.Set_Timing (	30, 		// retry 2 times per second
 							-1, 		// ignore max retries
 							600);		// give up after 10 seconds
 
@@ -652,10 +682,16 @@ bool Client_Remote_Connect(void)
 	------------------------------------------------------------------------*/
 	Read_MultiPlayer_Settings ();
 
+	/*
+	** The client is not part of an advertised game yet, so clear any stale
+	** game name before entering the normal join dialog.
+	*/
+	MPlayerGameName[0] = 0;
+
 	/*---------------------------------------------------------------------
 	Pop up the network Join/New dialog
 	---------------------------------------------------------------------*/
-	rc = Net_Fake_Join_Dialog();
+	rc = Net_Join_Dialog();
 	Write_MultiPlayer_Settings ();
 
 	NetStealth = stealth;
@@ -700,34 +736,34 @@ bool Client_Remote_Connect(void)
  *                                                                         						  *
  * Any game running in Stealth mode won't show up on this dialog.										  *
  *                                                                         						  *
- *    ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿                     					  *
- *    ³                 Network Games                     ³                     					  *
- *    ³                                                   ³                     					  *
- *    ³              Your Name: ____________              ³                     					  *
- *    ³                  House: [GDI] [NOD]               ³                     					  *
- *    ³          Desired Color: [ ][ ][ ][ ]              ³                     					  *
- *    ³                                                   ³                     					  *
- *    ³            Games                 Players          ³                     					  *
- *    ³ ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄ¿ ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄ¿ ³                     					  *
- *    ³ ³(Bill's Game         )³³ ³ Peter Parker GDI ³³ ³                     					  *
- *    ³ ³ Peter Parker's Game  ÃÄ´ ³ Mary Jane    GDI ÃÄ´ ³                     					  *
- *    ³ ³(Magnum PI's Game    )³ ³ ³ JJ Jameson   NOD ³ ³ ³                     					  *
- *    ³ ³                      ÃÄ´ ³                  ÃÄ´ ³                     					  *
- *    ³ ³                      ³³ ³                  ³³ ³                     					  *
- *    ³ ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÙ ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÙ ³                     					  *
- *    ³           Scenario: Big Long Description          ³                     					  *
- *    ³                Starting Credits: xxxx             ³                     					  *
- *    ³          Count: ---          Level: ---           ³                     					  *
- *    ³          Bases: ON          Crates: ON            ³                          					  *
- *    ³       Tiberium: ON      AI Players: ON            ³                           					  *
- *    ³                                                   ³                     					  *
- *    ³            [Join]  [Cancel]    [New]              ³                     					  *
- *    ³  ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿  ³                     					  *
- *    ³  ³                                             ³  ³                     					  *
- *    ³  ³                                             ³  ³                     					  *
- *    ³  ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ  ³                     					  *
- *    ³                  [Send Message]                   ³                     					  *
- *    ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ                     					  *
+ *    ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿                     					  *
+ *    ï¿½                 Network Games                     ï¿½                     					  *
+ *    ï¿½                                                   ï¿½                     					  *
+ *    ï¿½              Your Name: ____________              ï¿½                     					  *
+ *    ï¿½                  House: [GDI] [NOD]               ï¿½                     					  *
+ *    ï¿½          Desired Color: [ ][ ][ ][ ]              ï¿½                     					  *
+ *    ï¿½                                                   ï¿½                     					  *
+ *    ï¿½            Games                 Players          ï¿½                     					  *
+ *    ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿ ï¿½                     					  *
+ *    ï¿½ ï¿½(Bill's Game         )ï¿½ï¿½ ï¿½ Peter Parker GDI ï¿½ï¿½ ï¿½                     					  *
+ *    ï¿½ ï¿½ Peter Parker's Game  ï¿½Ä´ ï¿½ Mary Jane    GDI ï¿½Ä´ ï¿½                     					  *
+ *    ï¿½ ï¿½(Magnum PI's Game    )ï¿½ ï¿½ ï¿½ JJ Jameson   NOD ï¿½ ï¿½ ï¿½                     					  *
+ *    ï¿½ ï¿½                      ï¿½Ä´ ï¿½                  ï¿½Ä´ ï¿½                     					  *
+ *    ï¿½ ï¿½                      ï¿½ï¿½ ï¿½                  ï¿½ï¿½ ï¿½                     					  *
+ *    ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½                     					  *
+ *    ï¿½           Scenario: Big Long Description          ï¿½                     					  *
+ *    ï¿½                Starting Credits: xxxx             ï¿½                     					  *
+ *    ï¿½          Count: ---          Level: ---           ï¿½                     					  *
+ *    ï¿½          Bases: ON          Crates: ON            ï¿½                          					  *
+ *    ï¿½       Tiberium: ON      AI Players: ON            ï¿½                           					  *
+ *    ï¿½                                                   ï¿½                     					  *
+ *    ï¿½            [Join]  [Cancel]    [New]              ï¿½                     					  *
+ *    ï¿½  ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿  ï¿½                     					  *
+ *    ï¿½  ï¿½                                             ï¿½  ï¿½                     					  *
+ *    ï¿½  ï¿½                                             ï¿½  ï¿½                     					  *
+ *    ï¿½  ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½  ï¿½                     					  *
+ *    ï¿½                  [Send Message]                   ï¿½                     					  *
+ *    ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½                     					  *
  *                                                                         						  *
  * INPUT:                                                                  						  *
  *		none.																												  *
@@ -995,9 +1031,9 @@ static int Net_Join_Dialog(void)
 	---------------------------- Init Mono Output ----------------------------
 	*/
 	#if(SHOW_MONO)
-	Udp.Configure_Debug(-1, sizeof (GlobalHeaderType),
+	NetMgr.Configure_Debug(-1, sizeof (GlobalHeaderType),
 		sizeof(NetCommandType), GlobalPacketNames, 11);
-	Udp.Mono_Debug_Print(-1,1);
+	NetMgr.Mono_Debug_Print(-1,1);
 	#endif
 	while (Get_Mouse_State() > 0) Show_Mouse();
 
@@ -1016,7 +1052,7 @@ static int Net_Join_Dialog(void)
 		}
 
 		#if(SHOW_MONO)
-		Udp.Mono_Debug_Print(-1,0);
+		NetMgr.Mono_Debug_Print(-1,0);
 		#endif
 		/*
 		...................... Refresh display if needed ......................
@@ -1403,9 +1439,9 @@ static int Net_Join_Dialog(void)
 					}
 
 					for (i = 0; i < Players.Count(); i++) {
-						Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 1,
+						NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 1,
 							&(Players[i]->Address));
-						Udp.Service();
+						NetMgr.Service();
 					}
 				}
 
@@ -1413,19 +1449,19 @@ static int Net_Join_Dialog(void)
 				Now broadcast my SIGN_OFF so other players looking at this game
 				know I'm leaving.
 				...............................................................*/
-				Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
+				NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 					0, NULL);
-				Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
+				NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 					0, NULL);
 
 				if (IsBridge) {
-					Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
+					NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
 						&BridgeNet);
-					Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
+					NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
 						&BridgeNet);
 				}
 
-				while (Udp.Global_Num_Send() > 0 && Udp.Service() != 0) ;
+				while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
 
 				if (joinstate != JOIN_CONFIRMED) {
 					process = false;
@@ -1591,9 +1627,9 @@ static int Net_Join_Dialog(void)
 								..................................................................*/
 								if (joinstate == JOIN_CONFIRMED) {
 									for (i = 1; i < Players.Count(); i++) {
-										Udp.Send_Global_Message (&GPacket,
+										NetMgr.Send_Global_Message (&GPacket,
 											sizeof(GlobalPacketType), 1, &(Players[i]->Address));
-										Udp.Service();
+										NetMgr.Service();
 									}
 
 									sprintf(txt,Text_String (TXT_FROM), MPlayerName, GPacket.Message.Buf);
@@ -1603,9 +1639,9 @@ static int Net_Join_Dialog(void)
 								}
 								else {
 									for (i = 0; i < Players.Count(); i++) {
-										Udp.Send_Global_Message (&GPacket,
+										NetMgr.Send_Global_Message (&GPacket,
 											sizeof(GlobalPacketType), 1, &(Players[i]->Address));
-										Udp.Service();
+										NetMgr.Service();
 									}
 								}
 								magic_number++;
@@ -1746,7 +1782,7 @@ static int Net_Join_Dialog(void)
 		/*---------------------------------------------------------------------
 		Service the Udp connections
 		---------------------------------------------------------------------*/
-		Udp.Service();
+		NetMgr.Service();
 
 		/*---------------------------------------------------------------------
 		Clean out the Game List; if an old entry is found:
@@ -1812,24 +1848,24 @@ static int Net_Join_Dialog(void)
 			strcpy (GPacket.Name, MPlayerName);
 
 			for (i = 0; i < Players.Count(); i++) {
-				Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 1,
+				NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 1,
 					&(Players[i]->Address));
-				Udp.Service();
+				NetMgr.Service();
 			}
 
-			Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
+			NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 				0, NULL);
-			Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
+			NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 				0, NULL);
 
 			if (IsBridge) {
-				Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
+				NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
 					&BridgeNet);
-				Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
+				NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
 					&BridgeNet);
 			}
 
-			while (Udp.Global_Num_Send() > 0 && Udp.Service() != 0) ;
+			while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
 
 			rc = -1;
 
@@ -1863,7 +1899,7 @@ static int Net_Join_Dialog(void)
 
 					tmp_id[i] = id;
 
-					Udp.Create_Connection((int)id, Players[i]->Name, &(Players[i]->Address) );
+					NetMgr.Create_Connection((int)id, Players[i]->Name, &(Players[i]->Address) );
 				} else {
 					tmp_id[i] = MPlayerLocalID;
 				}
@@ -1893,7 +1929,7 @@ static int Net_Join_Dialog(void)
 				if (MPlayerID[i] == MPlayerLocalID) {
 					strcpy (MPlayerNames[i], MPlayerName);
 				} else {
-					strcpy (MPlayerNames[i], Udp.Connection_Name(MPlayerID[i]));
+					strcpy (MPlayerNames[i], NetMgr.Connection_Name(MPlayerID[i]));
 				}
 			}
 		}
@@ -1902,10 +1938,10 @@ static int Net_Join_Dialog(void)
 		a chance to get to the other system.  If he doesn't get our ACK, he'll
 		be waiting the whole time we load MIX files.
 		---------------------------------------------------------------------*/
-		i = MAX(Udp.Global_Response_Time() * 2, 60);
+		i = MAX(Current_Global_Response_Time() * 2, 60);
 		starttime = TickCount.Time();
 		while (TickCount.Time() - starttime < i) {
-			Udp.Service();
+			NetMgr.Service();
 		}
 	}
 
@@ -1913,8 +1949,8 @@ static int Net_Join_Dialog(void)
 	Init network timing values, using previous response times as a measure
 	of what our retry delta & timeout should be.
 	------------------------------------------------------------------------*/
-	Udp.Set_Timing (Udp.Global_Response_Time() + 2, -1,
-		Udp.Global_Response_Time() * 4);
+	NetMgr.Set_Timing (Current_Global_Response_Time() + 2, -1,
+		Current_Global_Response_Time() * 4);
 
 	/*------------------------------------------------------------------------
 	Clear all lists
@@ -2120,7 +2156,7 @@ static int Request_To_Join (char *playername, int join_index, ListClass *playerl
 	GPacket.PlayerInfo.House = house;
 	GPacket.PlayerInfo.Color = color;
 
-	Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 1,
+	NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 1,
 		&(Games[join_index]->Address));
 
 	return(true);
@@ -2169,14 +2205,14 @@ static void Send_Join_Queries(int curgame, int gamenow, int playernow)
 
 		GPacket.Command = NET_QUERY_GAME;
 
-		Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0, NULL);
+		NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0, NULL);
 
 		/*.....................................................................
 		If the user specified a remote server address, broadcast over that
 		network, too.
 		.....................................................................*/
 		if (IsBridge)
-			Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
+			NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
 				&BridgeNet);
 	}
 
@@ -2194,14 +2230,14 @@ static void Send_Join_Queries(int curgame, int gamenow, int playernow)
 		GPacket.Command = NET_QUERY_PLAYER;
 		strcpy (GPacket.Name, Games[curgame]->Name);
 
-		Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0, NULL);
+		NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0, NULL);
 
 		/*.....................................................................
 		If the user specified a remote server address, broadcast over that
 		network, too.
 		.....................................................................*/
 		if (IsBridge)
-			Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
+			NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
 				&BridgeNet);
 	}
 
@@ -2262,7 +2298,7 @@ static JoinEventType Get_Join_Responses(JoinStateType *joinstate, ListClass *gam
 	/*------------------------------------------------------------------------
 	If there is no incoming packet, just return
 	------------------------------------------------------------------------*/
-	rc = Udp.Get_Global_Message (&GPacket, &GPacketlen, &GAddress, &GProductID);
+	rc = NetMgr.Get_Global_Message (&GPacket, &GPacketlen, &GAddress, &GProductID);
 	if (!rc || GProductID != UDPGlobalConnClass::COMMAND_AND_CONQUER)
 		return(EV_NONE);
 
@@ -2439,17 +2475,17 @@ static JoinEventType Get_Join_Responses(JoinStateType *joinstate, ListClass *gam
 			GPacket.Command = NET_SIGN_OFF;
 			strcpy (GPacket.Name,MPlayerName);
 
-			Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType), 0, NULL);
-			Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType), 0, NULL);
+			NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType), 0, NULL);
+			NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType), 0, NULL);
 
 			if (IsBridge) {
-				Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
+				NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
 					&BridgeNet);
-				Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
+				NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
 					&BridgeNet);
 			}
 
-			while (Udp.Global_Num_Send() > 0 && Udp.Service() != 0) ;
+			while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
 
 			MPlayerGameName[0] = 0;
 
@@ -2621,31 +2657,31 @@ CCDebugString ("C&C95 - Received the 'GO' packet\n");
  * This dialog shows a list of who's requesting to join this game, and lets						  *
  * the game initiator selectively approve each user.														  *
  *                                                                         						  *
- *    ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿                       						  *
- *    ³              New Network Game              ³                       						  *
- *    ³                                            ³                       						  *
- *    ³     Players               Scenario         ³   													  *
- *    ³ ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄ¿   ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄ¿ ³ 														  *
- *    ³ ³ Boffo       ³³   ³ Hell's Kitchen   ³³ ³ 														  *
- *    ³ ³ Bozo        ÃÄ´   ³ Heaven's Gate    ÃÄ´ ³														  *
- *    ³ ³ Bonzo       ³ ³   ³      ...         ³ ³ ³														  *
- *    ³ ³             ÃÄ´   ³                  ÃÄ´ ³ 														  *
- *    ³ ³             ³³   ³                  ³³ ³ 														  *
- *    ³ ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÙ   ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÙ ³ 														  *
- *    ³     [Reject]             Count:--- ##      ³														  *
- *    ³                          Level:--- ##      ³                       						  *
- *    ³                                            ³                       						  *
- *    ³               Credits: _____               ³                             				  *
- *    ³       [  Bases   ]   [   Crates   ]        ³                          					  *
- *    ³       [ Tiberium ]   [ AI Players ]        ³                           					  *
- *    ³                                            ³                       						  *
- *    ³              [OK]    [Cancel]              ³                       						  *
- *    ³  ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿   ³                       						  *
- *    ³  ³                                     ³   ³                       						  *
- *    ³  ³                                     ³   ³                       						  *
- *    ³  ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ   ³                       						  *
- *    ³               [Send Message]               ³                       						  *
- *    ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ                       						  *
+ *    ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿                       						  *
+ *    ï¿½              New Network Game              ï¿½                       						  *
+ *    ï¿½                                            ï¿½                       						  *
+ *    ï¿½     Players               Scenario         ï¿½   													  *
+ *    ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿   ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿ ï¿½ 														  *
+ *    ï¿½ ï¿½ Boffo       ï¿½ï¿½   ï¿½ Hell's Kitchen   ï¿½ï¿½ ï¿½ 														  *
+ *    ï¿½ ï¿½ Bozo        ï¿½Ä´   ï¿½ Heaven's Gate    ï¿½Ä´ ï¿½														  *
+ *    ï¿½ ï¿½ Bonzo       ï¿½ ï¿½   ï¿½      ...         ï¿½ ï¿½ ï¿½														  *
+ *    ï¿½ ï¿½             ï¿½Ä´   ï¿½                  ï¿½Ä´ ï¿½ 														  *
+ *    ï¿½ ï¿½             ï¿½ï¿½   ï¿½                  ï¿½ï¿½ ï¿½ 														  *
+ *    ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½   ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ 														  *
+ *    ï¿½     [Reject]             Count:--- ##      ï¿½														  *
+ *    ï¿½                          Level:--- ##      ï¿½                       						  *
+ *    ï¿½                                            ï¿½                       						  *
+ *    ï¿½               Credits: _____               ï¿½                             				  *
+ *    ï¿½       [  Bases   ]   [   Crates   ]        ï¿½                          					  *
+ *    ï¿½       [ Tiberium ]   [ AI Players ]        ï¿½                           					  *
+ *    ï¿½                                            ï¿½                       						  *
+ *    ï¿½              [OK]    [Cancel]              ï¿½                       						  *
+ *    ï¿½  ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿   ï¿½                       						  *
+ *    ï¿½  ï¿½                                     ï¿½   ï¿½                       						  *
+ *    ï¿½  ï¿½                                     ï¿½   ï¿½                       						  *
+ *    ï¿½  ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½   ï¿½                       						  *
+ *    ï¿½               [Send Message]               ï¿½                       						  *
+ *    ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½                       						  *
  *                                                                         						  *
  * INPUT:                                                                  						  *
  *		none.																												  *
@@ -3061,7 +3097,7 @@ static int Net_New_Dialog(void)
 		}
 
 		#if(SHOW_MONO)
-		Udp.Mono_Debug_Print(-1,0);
+		NetMgr.Mono_Debug_Print(-1,0);
 		#endif
 		/*
 		...................... Refresh display if needed ......................
@@ -3208,7 +3244,7 @@ static int Net_New_Dialog(void)
 
 				GPacket.Command = NET_REJECT_JOIN;
 
-				Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType), 1,
+				NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType), 1,
 					&(Players[index - 1]->Address));
 				break;
 
@@ -3372,9 +3408,9 @@ static int Net_New_Dialog(void)
 				an OK; force a wait longer than 1 second (to give all players
 				a chance to know about this new guy)
 				...............................................................*/
-				i = MAX(Udp.Global_Response_Time() * 2, 60);
+				i = MAX(Current_Global_Response_Time() * 2, 60);
 				while (TickCount.Time() - ok_timer < i)
-					Udp.Service();
+					NetMgr.Service();
 
 				/*...............................................................
 				If there are at least 2 players, go ahead & play; error otherwise
@@ -3406,22 +3442,22 @@ static int Net_New_Dialog(void)
 				/*...............................................................
 				Broadcast my sign-off over my network
 				...............................................................*/
-				Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
+				NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 					0, NULL);
-				Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
+				NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 					0, NULL);
-				while (Udp.Global_Num_Send() > 0 && Udp.Service() != 0) ;
+				while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
 
 				/*...............................................................
 				Broadcast my sign-off over a bridged network if there is one
 				...............................................................*/
 				if (IsBridge) {
-					Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
+					NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
 						&BridgeNet);
-					Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
+					NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
 						&BridgeNet);
 				}
-				while (Udp.Global_Num_Send() > 0 && Udp.Service() != 0) ;
+				while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
 
 				/*...............................................................
 				And now, just be absolutely sure, send my sign-off to each
@@ -3432,11 +3468,11 @@ static int Net_New_Dialog(void)
 				directly to him.)
 				...............................................................*/
 				for (i = 0; i < Players.Count(); i++) {
-					Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 1,
+					NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 1,
 						&(Players[i]->Address));
-					Udp.Service();
+					NetMgr.Service();
 				}
-				while (Udp.Global_Num_Send() > 0 && Udp.Service() != 0) ;
+				while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
 				MPlayerGameName[0] = 0;
 				process = false;
 				rc = false;
@@ -3553,9 +3589,9 @@ static int Net_New_Dialog(void)
 						Send the message to every player in our player list.
 						..................................................................*/
 						for (i = 0; i < Players.Count(); i++) {
-							Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 1,
+							NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 1,
 								&(Players[i]->Address));
-							Udp.Service();
+							NetMgr.Service();
 						}
 						/*..................................................................
 						Add the message to our own list, since we're not in the player list
@@ -3617,7 +3653,7 @@ static int Net_New_Dialog(void)
 				GPacket.ScenarioInfo.Special = Special;
 				GPacket.ScenarioInfo.GameSpeed = Options.GameSpeed;
 
-				Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
+				NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 					1, &(Players[i]->Address) );
 			}
 			transmit = 0;
@@ -3631,7 +3667,7 @@ static int Net_New_Dialog(void)
 			memset (&GPacket, 0, sizeof(GlobalPacketType));
 			GPacket.Command = NET_PING;
 			for (i = 0; i < Players.Count(); i++) {
-				Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
+				NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 					1, &(Players[i]->Address) );
 			}
 			ping_timer = TickCount.Time();
@@ -3640,7 +3676,7 @@ static int Net_New_Dialog(void)
 		/*---------------------------------------------------------------------
 		Service the Udp connections
 		---------------------------------------------------------------------*/
-		Udp.Service();
+		NetMgr.Service();
 
 		/*---------------------------------------------------------------------
 		Service the sounds & score; GameActive must be false at this point,
@@ -3670,7 +3706,7 @@ static int Net_New_Dialog(void)
 		- Divide global channel's response time by 8 (2 to convert to 1-way
 		  value, 4 more to convert from ticks to frames)
 		.....................................................................*/
-		MPlayerMaxAhead = MAX( (Udp.Global_Response_Time() / 8), 2);
+		MPlayerMaxAhead = MAX( (Current_Global_Response_Time() / 8), 2);
 
 		/*.....................................................................
 		Send all players the NET_GO packet.  Wait until all ACK's have been
@@ -3680,13 +3716,13 @@ static int Net_New_Dialog(void)
 		GPacket.Command = NET_GO;
 		GPacket.ResponseTime.OneWay = MPlayerMaxAhead;
 		for (i = 0; i < Players.Count(); i++) {
-			Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
+			NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 				1, &(Players[i]->Address) );
 			/*..................................................................
 			Wait for all the ACK's to come in.
 			..................................................................*/
-			while (Udp.Global_Num_Send() > 0)
-				Udp.Service();
+			while (NetMgr.Global_Num_Send() > 0)
+				NetMgr.Service();
 		}
 
 		/*.....................................................................
@@ -3701,7 +3737,7 @@ static int Net_New_Dialog(void)
 
 			tmp_id[i] = id;
 
-			Udp.Create_Connection(id, Players[i]->Name, &(Players[i]->Address) );
+			NetMgr.Create_Connection(id, Players[i]->Name, &(Players[i]->Address) );
 		}
 		tmp_id[i] = MPlayerLocalID;
 
@@ -3729,7 +3765,7 @@ static int Net_New_Dialog(void)
 			if (MPlayerID[i] == MPlayerLocalID) {
 				strcpy (MPlayerNames[i], MPlayerName);
 			} else {
-				strcpy (MPlayerNames[i], Udp.Connection_Name(MPlayerID[i]));
+				strcpy (MPlayerNames[i], NetMgr.Connection_Name(MPlayerID[i]));
 			}
 		}
 	}
@@ -3738,8 +3774,8 @@ static int Net_New_Dialog(void)
 	Init network timing values, using previous response times as a measure
 	of what our retry delta & timeout should be.
 	------------------------------------------------------------------------*/
-	Udp.Set_Timing (Udp.Global_Response_Time() + 2, -1,
-		Udp.Global_Response_Time() * 4);
+	NetMgr.Set_Timing (Current_Global_Response_Time() + 2, -1,
+		Current_Global_Response_Time() * 4);
 
 	/*------------------------------------------------------------------------
 	Clear all lists
@@ -3798,7 +3834,7 @@ static JoinEventType Get_NewGame_Responses(ColorListClass *playerlist)
 	/*------------------------------------------------------------------------
 	If there is no incoming packet, just return
 	------------------------------------------------------------------------*/
-	rc = Udp.Get_Global_Message (&GPacket, &GPacketlen, &GAddress, &GProductID);
+	rc = NetMgr.Get_Global_Message (&GPacket, &GPacketlen, &GAddress, &GProductID);
 	if (!rc || GProductID != UDPGlobalConnClass::COMMAND_AND_CONQUER) {
 		return(EV_NONE);
 	}
@@ -3847,7 +3883,7 @@ static JoinEventType Get_NewGame_Responses(ColorListClass *playerlist)
 
 			GPacket.Command = NET_REJECT_JOIN;
 
-			Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
+			NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 				1, &GAddress);
 		}
 
@@ -3903,7 +3939,7 @@ static JoinEventType Get_NewGame_Responses(ColorListClass *playerlist)
 			GPacket.PlayerInfo.House = who->Player.House;
 			GPacket.PlayerInfo.Color = who->Player.Color;
 
-			Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
+			NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 				1, &GAddress);
 
 			retval = EV_NEW_PLAYER;
@@ -4031,9 +4067,9 @@ void Net_Reconnect_Dialog(int reconn, int fresh, int oldest_index,
 		Fancy_Text_Print ("", 0, 0, CC_GREEN, TBLACK,
 			TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW);
 		if (reconn) {
-			id = Udp.Connection_ID(oldest_index);
+			id = NetMgr.Connection_ID(oldest_index);
 			sprintf(buf1,Text_String(TXT_RECONNECTING_TO),
-				Udp.Connection_Name(id));
+				NetMgr.Connection_Name(id));
 		} else {
 			sprintf(buf1,Text_String(TXT_WAITING_FOR_CONNECTIONS));
 		}
@@ -4135,8 +4171,6 @@ void Wait_For_Focus (void)
 
 
 
-
-extern bool Spawn_WChat(bool can_launch);
 
 /***********************************************************************************************
  * Net_Fake_New_Dialog -- Just like Net_New_Dialog but without the Dialog. For internet play   *
@@ -4353,7 +4387,7 @@ static int Net_Fake_New_Dialog(void)
 
 	GPacket.Command = (NetCommandType)50;		//Invalid command
 	strcpy (GPacket.Name, MPlayerName);
-	Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType), 0, NULL);
+	NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType), 0, NULL);
 #endif	//VIRTUAL_SUBNET_SERVER
 
 
@@ -4434,16 +4468,16 @@ static int Net_Fake_New_Dialog(void)
 				/*...............................................................
 				Broadcast my sign-off over my network
 				...............................................................*/
-				Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
+				NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 					0, NULL);
-				Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
+				NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 					0, NULL);
-				while (Udp.Global_Num_Send() > 0 && Udp.Service() != 0) ;
+				while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
 
 				/*...............................................................
 				Broadcast my sign-off over a bridged network if there is one
 				...............................................................*/
-				while (Udp.Global_Num_Send() > 0 && Udp.Service() != 0) ;
+				while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
 
 				/*...............................................................
 				And now, just be absolutely sure, send my sign-off to each
@@ -4454,17 +4488,15 @@ static int Net_Fake_New_Dialog(void)
 				directly to him.)
 				...............................................................*/
 				for (i = 0; i < Players.Count(); i++) {
-					Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 1,
+					NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 1,
 						&(Players[i]->Address));
-					Udp.Service();
+					NetMgr.Service();
 				}
-				while (Udp.Global_Num_Send() > 0 && Udp.Service() != 0) ;
+				while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
 				MPlayerGameName[0] = 0;
 				process = false;
 				rc = false;
-				Send_Data_To_DDE_Server ("Hello", strlen("Hello"), DDEServerClass::DDE_CONNECTION_FAILED);
 				GameStatisticsPacketSent = false;
-				Spawn_WChat(false);
 				break;
 
 			/*------------------------------------------------------------------
@@ -4502,9 +4534,9 @@ CCDebugString ("C&C95 - Join timer expired\n");
 					an OK; force a wait longer than 2 seconds (to give all players
 					a chance to know about this new guy)
 					...............................................................*/
-					i = MAX(Udp.Global_Response_Time() * 2, 120);
+					i = MAX(Current_Global_Response_Time() * 2, 120);
 					while (TickCount.Time() - ok_timer < i)
-						Udp.Service();
+						NetMgr.Service();
 
 					/*...............................................................
 					If there are at least 2 players, go ahead & play; error otherwise
@@ -4553,7 +4585,7 @@ CCDebugString ("C&C95 - Join timer expired\n");
 				GPacket.ScenarioInfo.Special = Special;
 				GPacket.ScenarioInfo.GameSpeed = Options.GameSpeed;
 
-				Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
+				NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 					1, &(Players[i]->Address) );
 			}
 			transmit = 0;
@@ -4567,7 +4599,7 @@ CCDebugString ("C&C95 - Join timer expired\n");
 			memset (&GPacket, 0, sizeof(GlobalPacketType));
 			GPacket.Command = NET_PING;
 			for (i = 0; i < Players.Count(); i++) {
-				Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
+				NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 					1, &(Players[i]->Address) );
 			}
 			ping_timer = TickCount.Time();
@@ -4576,7 +4608,7 @@ CCDebugString ("C&C95 - Join timer expired\n");
 		/*---------------------------------------------------------------------
 		Service the Udp connections
 		---------------------------------------------------------------------*/
-		Udp.Service();
+		NetMgr.Service();
 
 		/*---------------------------------------------------------------------
 		Service the sounds & score; GameActive must be false at this point,
@@ -4609,7 +4641,7 @@ CCDebugString ("C&C95 - Exited process loop\n");
 		- Divide global channel's response time by 8 (2 to convert to 1-way
 		  value, 4 more to convert from ticks to frames)
 		.....................................................................*/
-		MPlayerMaxAhead = MAX( (Udp.Global_Response_Time() / 8), 2);
+		MPlayerMaxAhead = MAX( (Current_Global_Response_Time() / 8), 2);
 
 		/*.....................................................................
 		Send all players the NET_GO packet.  Wait until all ACK's have been
@@ -4625,13 +4657,13 @@ sprintf (flopbuf, "Sending 'GO' packet to address %d\n", *((unsigned short*)&(Pl
 CCDebugString (flopbuf);
 
 
-			Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
+			NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 				1, &(Players[i]->Address) );
 			/*..................................................................
 			Wait for all the ACK's to come in.
 			..................................................................*/
-			while (Udp.Global_Num_Send() > 0)
-				Udp.Service();
+			while (NetMgr.Global_Num_Send() > 0)
+				NetMgr.Service();
 		}
 
 		/*.....................................................................
@@ -4646,7 +4678,7 @@ CCDebugString (flopbuf);
 
 			tmp_id[i] = id;
 
-			Udp.Create_Connection(id, Players[i]->Name, &(Players[i]->Address) );
+			NetMgr.Create_Connection(id, Players[i]->Name, &(Players[i]->Address) );
 		}
 
 #ifdef VIRTUAL_SUBNET_SERVER
@@ -4661,7 +4693,7 @@ CCDebugString ("C&C95 - Creating connection to the VSS\n");
 			memset (vss_net, 1, sizeof (vss_net));
 			memset (vss_node, 0, sizeof (vss_node));
 			vss_global_address.Set_Address(vss_net, vss_node);
-			Udp.Create_Connection( VSS_ID, "VSS", &vss_global_address);
+			NetMgr.Create_Connection( VSS_ID, "VSS", &vss_global_address);
 		}
 #endif	//VIRTUAL_SUBNET_SERVER
 		tmp_id[i] = MPlayerLocalID;
@@ -4690,7 +4722,7 @@ CCDebugString ("C&C95 - Creating connection to the VSS\n");
 			if (MPlayerID[i] == MPlayerLocalID) {
 				strcpy (MPlayerNames[i], MPlayerName);
 			} else {
-				strcpy (MPlayerNames[i], Udp.Connection_Name(MPlayerID[i]));
+				strcpy (MPlayerNames[i], NetMgr.Connection_Name(MPlayerID[i]));
 			}
 		}
 	}
@@ -4699,8 +4731,8 @@ CCDebugString ("C&C95 - Creating connection to the VSS\n");
 	Init network timing values, using previous response times as a measure
 	of what our retry delta & timeout should be.
 	------------------------------------------------------------------------*/
-	Udp.Set_Timing (Udp.Global_Response_Time() + 2, -1,
-		Udp.Global_Response_Time() * 4);
+	NetMgr.Set_Timing (Current_Global_Response_Time() + 2, -1,
+		Current_Global_Response_Time() * 4);
 
 	/*------------------------------------------------------------------------
 	Clear all lists
@@ -5026,9 +5058,9 @@ static int Net_Fake_Join_Dialog(void)
 					delete who;
 
 					for (i = 0; i < Players.Count(); i++) {
-						Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 1,
+						NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 1,
 							&(Players[i]->Address));
-						Udp.Service();
+						NetMgr.Service();
 					}
 				}
 
@@ -5036,23 +5068,21 @@ static int Net_Fake_Join_Dialog(void)
 				Now broadcast my SIGN_OFF so other players looking at this game
 				know I'm leaving.
 				...............................................................*/
-				Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
+				NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 					0, NULL);
-				Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
+				NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 					0, NULL);
 
 				if (IsBridge) {
-					Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
+					NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
 						&BridgeNet);
-					Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
+					NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
 						&BridgeNet);
 				}
 
-				while (Udp.Global_Num_Send() > 0 && Udp.Service() != 0) ;
+				while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
 
-				Send_Data_To_DDE_Server ("Hello", strlen("Hello"), DDEServerClass::DDE_CONNECTION_FAILED);
 				GameStatisticsPacketSent = false;
-				Spawn_WChat(false);
 				process = false;
 				rc = -1;
 #if (0)
@@ -5212,7 +5242,7 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 		/*---------------------------------------------------------------------
 		Service the Udp connections
 		---------------------------------------------------------------------*/
-		Udp.Service();
+		NetMgr.Service();
 
 		/*---------------------------------------------------------------------
 		Clean out the Game List; if an old entry is found:
@@ -5286,24 +5316,24 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 			strcpy (GPacket.Name, MPlayerName);
 
 			for (i = 0; i < Players.Count(); i++) {
-				Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 1,
+				NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 1,
 					&(Players[i]->Address));
-				Udp.Service();
+				NetMgr.Service();
 			}
 
-			Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
+			NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 				0, NULL);
-			Udp.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
+			NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 				0, NULL);
 
 			if (IsBridge) {
-				Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
+				NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
 					&BridgeNet);
-				Udp.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
+				NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
 					&BridgeNet);
 			}
 
-			while (Udp.Global_Num_Send() > 0 && Udp.Service() != 0) ;
+			while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
 
 			rc = -1;
 
@@ -5337,7 +5367,7 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 
 					tmp_id[i] = id;
 
-					Udp.Create_Connection((int)id, Players[i]->Name, &(Players[i]->Address) );
+					NetMgr.Create_Connection((int)id, Players[i]->Name, &(Players[i]->Address) );
 				} else {
 					tmp_id[i] = MPlayerLocalID;
 				}
@@ -5354,7 +5384,7 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 				memset (vss_net, 1, sizeof (vss_net));
 				memset (vss_node, 0, sizeof (vss_node));
 				vss_global_address.Set_Address(vss_net, vss_node);
-				Udp.Create_Connection( VSS_ID, "VSS", &vss_global_address);
+				NetMgr.Create_Connection( VSS_ID, "VSS", &vss_global_address);
 			}
 #endif	//VIRTUAL_SUBNET_SERVER
 
@@ -5382,7 +5412,7 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 				if (MPlayerID[i] == MPlayerLocalID) {
 					strcpy (MPlayerNames[i], MPlayerName);
 				} else {
-					strcpy (MPlayerNames[i], Udp.Connection_Name(MPlayerID[i]));
+					strcpy (MPlayerNames[i], NetMgr.Connection_Name(MPlayerID[i]));
 				}
 			}
 		}
@@ -5391,10 +5421,10 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 		a chance to get to the other system.  If he doesn't get our ACK, he'll
 		be waiting the whole time we load MIX files.
 		---------------------------------------------------------------------*/
-		i = MAX(Udp.Global_Response_Time() * 2, 120);
+		i = MAX(Current_Global_Response_Time() * 2, 120);
 		starttime = TickCount.Time();
 		while (TickCount.Time() - starttime < i) {
-			Udp.Service();
+			NetMgr.Service();
 		}
 	}
 
@@ -5402,8 +5432,8 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 	Init network timing values, using previous response times as a measure
 	of what our retry delta & timeout should be.
 	------------------------------------------------------------------------*/
-	Udp.Set_Timing (Udp.Global_Response_Time() + 2, -1,
-		Udp.Global_Response_Time() * 4);
+	NetMgr.Set_Timing (Current_Global_Response_Time() + 2, -1,
+		Current_Global_Response_Time() * 4);
 
 	/*------------------------------------------------------------------------
 	Clear all lists

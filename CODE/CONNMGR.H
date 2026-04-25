@@ -67,6 +67,8 @@
 #ifndef CONNMGR_H
 #define CONNMGR_H
 
+class UDPAddressClass;
+
 
 /*
 ***************************** Class Declaration *****************************
@@ -91,6 +93,12 @@ class ConnManClass
 		virtual ~ConnManClass () {};
 
 		/*.....................................................................
+		Optional initialization and manager-specific helpers.
+		.....................................................................*/
+		virtual int Init(void) { return(0); }
+		virtual void Shutdown(void) {}
+
+		/*.....................................................................
 		The Service routine:
 		- Parses incoming packets, and adds them to the Receive Queue for the
 		  Connection Class(s) for this protocol
@@ -106,12 +114,18 @@ class ConnManClass
 			int ack_req = 1, int conn_id = CONNECTION_NONE) = 0;
 		virtual int Get_Private_Message (void *buf, int *buflen, 
 			int *conn_id) = 0;
+		virtual int Send_Global_Message(void *, int, int = 0, UDPAddressClass * = 0) { return(0); }
+		virtual int Get_Global_Message(void *, int *, UDPAddressClass *, unsigned short *) { return(0); }
 
 		/*.....................................................................
 		Connection management
 		.....................................................................*/
+		virtual bool Create_Connection(int, char *, UDPAddressClass *) { return(false); }
+		virtual bool Delete_Connection(int) { return(false); }
 		virtual int Num_Connections(void) = 0;
 		virtual int Connection_ID(int index) = 0;
+		virtual char *Connection_Name(int) { return(const_cast<char *>("")); }
+		virtual UDPAddressClass *Connection_Address(int) { return(0); }
 		virtual int Connection_Index(int id) = 0;
 
 		/*.....................................................................
