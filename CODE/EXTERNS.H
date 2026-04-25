@@ -185,14 +185,14 @@ extern char const *	SystemStrings;
 extern HousesType				Whom;
 extern TimerClass				TickCount;
 extern _VQAConfig				AnimControl;
-extern long						SpareTicks;
+extern int32_t					SpareTicks;
 extern int						MonoPage;
 extern unsigned char *		OriginalPalette;
 extern int						EndCountDown;
 extern bool						GameActive;
 extern bool						SpecialFlag;
 extern int						ScenarioInit;
-extern long						TutorFlags[2];
+extern uint32_t					TutorFlags[2];
 extern HouseClass *			PlayerPtr;
 extern unsigned char *		BlackPalette;
 extern unsigned char *		WhitePalette;
@@ -206,7 +206,7 @@ extern int						CarryOverCap;
 extern int						CarryOverPercent;
 extern char 						ScenarioName[_MAX_FNAME+_MAX_EXT];
 extern unsigned					BuildLevel;
-extern unsigned long			ScenarioCRC;
+extern uint32_t					ScenarioCRC;
 
 #ifdef SCENARIO_EDITOR
 extern CELL 						CurrentCell;
@@ -266,8 +266,8 @@ extern int										MPlayerSolo;
 extern int										MPlayerUnitCount;
 extern int										MPlayerCountMin[2];
 extern int										MPlayerCountMax[2];
-extern unsigned long							MPlayerMaxAhead;
-extern unsigned long							FrameSendRate;
+extern uint32_t									MPlayerMaxAhead;
+extern uint32_t									FrameSendRate;
 extern unsigned char							MPlayerID[MAX_PLAYERS];
 extern HousesType								MPlayerHouses[MAX_PLAYERS];
 extern char										MPlayerNames [MAX_PLAYERS][MPLAYER_NAME_MAX];
@@ -300,7 +300,7 @@ typedef struct {
 	} Ptr;
 } TrapObjectType;
 
-extern long										TrapFrame;
+extern int32_t									TrapFrame;
 extern RTTIType								TrapObjType;
 extern TrapObjectType						TrapObject;
 extern COORDINATE									TrapCoord;
@@ -329,7 +329,7 @@ extern DynamicVectorClass <NodeNameType *> Games;
 extern DynamicVectorClass <NodeNameType *> Players;
 
 extern int										Seed;
-extern long *									RandSeedPtr;
+extern uint32_t *								RandSeedPtr;
 extern int										CustomSeed;
 extern int										NewMaxAheadFrame1;
 extern int										NewMaxAheadFrame2;

@@ -249,7 +249,7 @@ class BuildingClass : public TechnoClass
 		virtual bool Revealed(HouseClass * house);
 		virtual void Repair(int control);
 		virtual void Sell_Back(int control);
-		virtual RadioMessageType Receive_Message(RadioClass * from, RadioMessageType message, long & param);
+		virtual RadioMessageType Receive_Message(RadioClass * from, RadioMessageType message, int32_t & param);
 		virtual void AI(void);
 		virtual void Assign_Target(TARGET target);
 		virtual bool Toggle_Primary(void);

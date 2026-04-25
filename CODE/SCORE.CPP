@@ -642,7 +642,7 @@ void ScoreClass::Presentation(void)
 	*/
 	anim = Open_Animation(ScreenNames[house],NULL,0L,(WSAOpenType)(WSA_OPEN_FROM_MEM | WSA_OPEN_TO_PAGE),Palette);
 
-	unsigned minutes = (unsigned)((ElapsedTime / (long)TIMER_MINUTE))+1;
+	unsigned minutes = (unsigned)((ElapsedTime / static_cast<uint32_t>(TIMER_MINUTE)))+1;
 
 	/*
 	**	Determine leadership rating.
@@ -684,7 +684,7 @@ void ScoreClass::Presentation(void)
 	/*
 	** Calculate total score
 	*/
-	long total = ((leadership * 40) + (4600) + (efficiency * 14))/100;
+	int32_t total = ((leadership * 40) + (4600) + (efficiency * 14))/100;
 	if (!total) total++;
 	total *= (BuildLevel+1);
 
@@ -761,7 +761,7 @@ void ScoreClass::Presentation(void)
 	Play_Sample(sfx4, 255, Options.Normalize_Sound(120));
 	Call_Back_Delay(13);
 
-	max = MAX((long)leadership, (long)efficiency);
+	max = MAX(static_cast<int32_t>(leadership), static_cast<int32_t>(efficiency));
 	int scorecounter = 0;
 	Keyboard::Clear();
 
@@ -2020,10 +2020,10 @@ static BitMapHeaderType LocalHeader = {
 /* The following static functions are in this file:                       */
 /*=========================================================================*/
 
-static long CCWrite_BMHD(CCFileClass &lbmhandle, short bitplanes);
-static long CCWrite_CMAP(CCFileClass &lbmhandle, unsigned char * palette, short bitplanes);
-static long CCWrite_BODY(CCFileClass &lbmhandle, BufferClass& buff, short bitplanes);
-static long CCWrite_Row(CCFileClass &lbmhandle, unsigned char *buffer);
+static int32_t CCWrite_BMHD(CCFileClass &lbmhandle, short bitplanes);
+static int32_t CCWrite_CMAP(CCFileClass &lbmhandle, unsigned char * palette, short bitplanes);
+static int32_t CCWrite_BODY(CCFileClass &lbmhandle, BufferClass& buff, short bitplanes);
+static int32_t CCWrite_Row(CCFileClass &lbmhandle, unsigned char *buffer);
 
 
 /*= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =*/
@@ -2045,7 +2045,7 @@ static long CCWrite_Row(CCFileClass &lbmhandle, unsigned char *buffer);
  *=========================================================================*/
 bool CCWrite_LBM_File(CCFileClass &lbmhandle, BufferClass& buff, short bitplanes, unsigned char *palette)
 {
-	long filesize;
+	int32_t filesize;
 
 
 	lbmhandle.Seek(0L, SEEK_SET);						// goto beginning of file
@@ -2089,9 +2089,9 @@ bool CCWrite_LBM_File(CCFileClass &lbmhandle, BufferClass& buff, short bitplanes
  * HISTORY:                                                                *
  *   11/19/1991  SB : Created.                                             *
  *=========================================================================*/
-static long CCWrite_BMHD(CCFileClass &lbmhandle, short bitplanes)
+static int32_t CCWrite_BMHD(CCFileClass &lbmhandle, short bitplanes)
 {
-	long size;
+	int32_t size;
 
 	lbmhandle.Write("BMHD", 4L);					// write out chunk title
 	size = Reverse_LONG(sizeof(LocalHeader));			// write out size of LocalHeader chunk
@@ -2121,10 +2121,10 @@ static long CCWrite_BMHD(CCFileClass &lbmhandle, short bitplanes)
  * HISTORY:                                                                *
  *   11/19/1991  SB : Created.                                             *
  *=========================================================================*/
-static long CCWrite_CMAP(CCFileClass &lbmhandle, unsigned char * palette, short bitplanes)
+static int32_t CCWrite_CMAP(CCFileClass &lbmhandle, unsigned char * palette, short bitplanes)
 {
 	short color, r, g, b, colors;
-	long size;
+	int32_t size;
 	unsigned char *pal_ptr;
 	char rgb[3];
 
@@ -2169,11 +2169,11 @@ static long CCWrite_CMAP(CCFileClass &lbmhandle, unsigned char * palette, short 
  * HISTORY:                                                                *
  *   11/19/1991  SB : Created.                                             *
  *=========================================================================*/
-static long CCWrite_BODY(CCFileClass &lbmhandle, BufferClass& buff, short bitplanes)
+static int32_t CCWrite_BODY(CCFileClass &lbmhandle, BufferClass& buff, short bitplanes)
 {
-	long bodysize = 0;
-	long actualsize;
-	long size;
+	int32_t bodysize = 0;
+	int32_t actualsize;
+	int32_t size;
 	short planebit;
 	short line, plane;
 	unsigned char buffer[40];
@@ -2223,7 +2223,7 @@ static long CCWrite_BODY(CCFileClass &lbmhandle, BufferClass& buff, short bitpla
  * HISTORY:                                                                *
  *   11/19/1991  SB : Created.                                             *
  *=========================================================================*/
-static long CCWrite_Row(CCFileClass &lbmhandle, unsigned char *buffer)
+static int32_t CCWrite_Row(CCFileClass &lbmhandle, unsigned char *buffer)
 {
 	short i;
 	short chunksize = 0;
@@ -2272,7 +2272,7 @@ static long CCWrite_Row(CCFileClass &lbmhandle, unsigned char *buffer)
 			}
 			repCode = i - 1;
 			lbmhandle.Write(&repCode, 1L);			// Write count as count-1
-			lbmhandle.Write(buffer, (long) i);		// Write 'count' bytes
+			lbmhandle.Write(buffer, i);		// Write 'count' bytes
 			buffer += i;
 			dataLength -= i;
 			chunksize += i + 1;

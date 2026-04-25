@@ -8,6 +8,68 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
 
 ## Current status
 
+- Repo-owned `long` / `unsigned long` usage has been removed from active code paths for the SDL3/Linux port (2026-04-25):
+  - completed in this checkpoint:
+    - swept the TD game code and support-facing declarations to replace host-width `long` / `unsigned long` state with explicit `int32_t` / `uint32_t`, including:
+      - radio payload parameters and related override chains;
+      - multiplayer/session/network timing, CRC, queue, and packet bookkeeping;
+      - map/scenario CRCs, money/credit/tiberium storage, trigger data, score/runtime timestamps, and UI helper state;
+      - shape/frame, movie, and save/load helper declarations that still depended on 32-bit ABI assumptions.
+    - updated the remaining pointer-encoding holdouts in DOS/IPX-era paths to use `uintptr_t` where the old code was really storing or splitting pointers rather than 32-bit gameplay values.
+    - compiler-guided follow-up fixes also cleaned up the associated format strings, casts, and declaration/definition mismatches that surfaced once the headers were made explicit.
+    - a repo-owned grep now leaves only comment/documentation mentions of `long` in `CODE/`; active code paths no longer rely on host-width `long`.
+  - why this mattered:
+    - Linux/x86-64 makes `long` 64-bit, but large parts of TD still assume the original 32-bit DOS/Win32 layout for save, map, network, timer, and UI state;
+    - leaving those paths on host-width `long` silently widens data structures and breaks ABI-sensitive behavior even when the code still compiles.
+  - validation result:
+    - `cmake --build build --parallel 2` succeeds.
+    - `cmake --build build-asan --parallel 2` succeeds.
+    - `timeout --foreground 125s bash -lc './build-asan/tiberian-dawn -gamedata "$PWD/GameData" >/tmp/td-asan-long-cleanup.log 2>&1'` runs for the full probe window and exits on timeout (`124`); the remaining log output is host-driver leak noise from `libnvidia-glcore` / `libdbus-1`, not a new TD-owned runtime report.
+  - remaining follow-up from this sweep:
+    - if desired, trim stale comment/doc mentions of `long` so simple text greps are quieter;
+    - keep using `uintptr_t` for pointer-splitting code and fixed-width integers everywhere else when future porting work touches these files.
+
+- Gameplay-state portability cleanup fixed the reported construction-yard/sidebar unlock regression and fenced off the global no-damage gameplay kill switch from imported runtime state (2026-04-25):
+  - completed in this checkpoint:
+    - restored the original 32-bit contract for live gameplay prerequisite/existence masks:
+      - `HouseClass` building/unit/infantry/aircraft scan fields in `CODE/HOUSE.H` now use `uint32_t` instead of Linux `unsigned long`
+      - `TechnoTypeClass::Pre` and `BuildingTypeClass::CanEnter` in `CODE/TYPE.H` and their constructors/data-table definitions now use `uint32_t`
+      - the active buildability/ownership/scan-bit paths now use 32-bit shifts instead of `1L << ...`, covering the live gameplay code in:
+        - `CODE/HOUSE.CPP`
+        - `CODE/BUILDING.CPP`
+        - `CODE/LOGIC.CPP`
+        - `CODE/AIRCRAFT.CPP`
+        - `CODE/INFANTRY.CPP`
+        - `CODE/UNIT.CPP`
+        - `CODE/AADATA.CPP`
+        - `CODE/BDATA.CPP`
+        - `CODE/IDATA.CPP`
+        - `CODE/UDATA.CPP`
+        - `CODE/DEFINES.H`
+    - traced the "no damage applied" symptom through the live combat path and confirmed the damage pipeline itself is intact:
+      - `TechnoClass::Fire_At(...)` still creates bullets with real attack strength
+      - `BulletClass::AI()` still calls `Explosion_Damage(...)`
+      - `Explosion_Damage(...)` still reaches `ObjectClass::Take_Damage(...)`
+      - the only global path that suppresses all damage is the debug-only `Special.IsInert` flag in `CODE/COMBAT.CPP`
+    - hardened `SpecialClass` against unsupported imported debug state in the shipping SDL3 build:
+      - added `SpecialClass::Sanitize_Debug_Only()` in `CODE/SPECIAL.H`
+      - called it after record/playback option loads and after multiplayer/event option imports in:
+        - `CODE/INIT.CPP`
+        - `CODE/NETDLG.CPP`
+        - `CODE/NULLDLG.CPP`
+        - `CODE/EVENT.CPP`
+      - this keeps release gameplay from silently inheriting the cheat-only inert-weapons flag even if serialized/runtime state feeds it back in unexpectedly
+  - why this mattered:
+    - the construction sidebar/build unlock path was still depending on `long`-sized bitmasks even though the original game logic expects 32-bit prerequisite masks; on Linux that widened the underlying state and broke prerequisite/buildability checks in live gameplay
+    - the combat regression was not in bullet/warhead/armor math itself; the gameplay-wide "no damage" behavior maps directly to the debug-only inert flag being active, so sanitizing imported state fixes the general gameplay kill switch instead of patching individual weapon/object handlers
+  - validation result:
+    - `cmake --build build --parallel 2` succeeds
+    - `cmake --build build-asan --parallel 2` succeeds
+    - `timeout --foreground 125s bash -lc './build-asan/tiberian-dawn -gamedata "$PWD/GameData" >/tmp/td-asan.log 2>&1'` runs for the full probe window and exits on timeout (`124`); the captured log is empty, so this checkpoint did not introduce a new TD-owned ASan/UBSan runtime report
+  - remaining follow-up from this sweep:
+    - interactively re-test unit/building combat and the first construction-yard unlock in fresh gameplay to confirm the reported symptoms are gone end-to-end
+    - keep replacing remaining platform-sized gameplay/wire-state fields that are still only safe by luck or limited scope outside the active prerequisite/combat paths
+
 - Gameplay sanitizer cleanup removed the active in-game ASan/UBSan failures from the SDL3/Linux runtime path (2026-04-25):
   - completed in this checkpoint:
     - moved pooled object `IsActive` bookkeeping onto valid construction/destruction lifetime instead of writing typed members from raw heap slots in custom `operator new/delete`, which removed the invalid-vptr UBSan hits that were previously firing in `TEAMTYPE.CPP`, `TEAM.CPP`, and the same pooled-object pattern elsewhere;

@@ -56,7 +56,7 @@ class DDEServerClass {
 
 		char 	*Get_MPlayer_Game_Info (void);					//Returns pointer to game info
 		int    Get_MPlayer_Game_Info_Length(){return(MPlayerGameInfoLength);};	//Len of game info
-		BOOL	 Callback(unsigned char *data, long length);	//DDE callback function
+		BOOL	 Callback(unsigned char *data, int32_t length);	//DDE callback function
 		void	 Delete_MPlayer_Game_Info(void);					//release the game info memory
 		void	 Enable(void);											//Enable the DDE callback
 		void	 Disable(void);										//Disable the DDE callback
@@ -99,7 +99,7 @@ class DDEServerClass {
 
 		char* Get_MPlayer_Game_Info(void) { return NULL; }
 		int Get_MPlayer_Game_Info_Length(void) { return 0; }
-		BOOL Callback(unsigned char*, long) { return FALSE; }
+		BOOL Callback(unsigned char*, int32_t) { return FALSE; }
 		void Delete_MPlayer_Game_Info(void) {}
 		void Enable(void) {}
 		void Disable(void) {}

@@ -282,8 +282,8 @@ bool AircraftClass::Unlimbo(COORDINATE coord, DirType dir)
 		**	Ensure that the owning house knows about the
 		**	new object.
 		*/
-		House->AScan |= (1L << Class->Type);
-		House->ActiveAScan |= (1L << Class->Type);
+		House->AScan |= (1U << Class->Type);
+		House->ActiveAScan |= (1U << Class->Type);
 
 		/*
 		**	Forces the body of the helicopter to face the correct direction.
@@ -850,7 +850,7 @@ void AircraftClass::AI(void)
 		}
 	} else {
 		IsLocked = true;
-//		House->NewAScan |= (1L << Class->Type);
+//		House->NewAScan |= (1U << Class->Type);
 
 #ifdef NEVER
 		/*
@@ -861,11 +861,11 @@ void AircraftClass::AI(void)
 		while (foot) {
 			switch (foot->What_Am_I()) {
 				case RTTI_UNIT:
-					House->NewUScan |= (1L << ((UnitTypeClass const &)Class_Of()).Type);
+					House->NewUScan |= (1U << ((UnitTypeClass const &)Class_Of()).Type);
 					break;
 
 				case RTTI_INFANTRY:
-					House->NewIScan |= (1L << ((InfantryTypeClass const &)Class_Of()).Type);
+					House->NewIScan |= (1U << ((InfantryTypeClass const &)Class_Of()).Type);
 					break;
 			}
 
@@ -2468,7 +2468,7 @@ COORDINATE AircraftClass::Target_Coord(void) const
  * HISTORY:                                                                                    *
  *   06/19/1995 JLB : Created.                                                                 *
  *=============================================================================================*/
-RadioMessageType AircraftClass::Receive_Message(RadioClass * from, RadioMessageType message, long & param)
+RadioMessageType AircraftClass::Receive_Message(RadioClass * from, RadioMessageType message, int32_t & param)
 {
 	Validate();
 	switch (message) {
@@ -2563,7 +2563,7 @@ RadioMessageType AircraftClass::Receive_Message(RadioClass * from, RadioMessageT
 						if (cell == 0) {
 							Transmit_Message(RADIO_OVER_OUT, from);
 						} else {
-							param = (long)::As_Target(cell);
+							param = static_cast<int32_t>(::As_Target(cell));
 
 							/*
 							**	Tell the potential passenger where it should go. If the passenger is
@@ -2571,7 +2571,7 @@ RadioMessageType AircraftClass::Receive_Message(RadioClass * from, RadioMessageT
 							**	directly.
 							*/
 							if (Transmit_Message(RADIO_MOVE_HERE, param, from) == RADIO_YEA_NOW_WHAT) {
-								param = (long)As_Target();
+								param = static_cast<int32_t>(As_Target());
 								Transmit_Message(RADIO_TETHER);
 								if (Transmit_Message(RADIO_MOVE_HERE, param, from) != RADIO_ROGER) {
 									Transmit_Message(RADIO_OVER_OUT, from);

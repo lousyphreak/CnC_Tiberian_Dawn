@@ -1621,7 +1621,7 @@ InfantryTypeClass const * const InfantryTypeClass::Pointers[INFANTRY_COUNT] = {
  *=============================================================================================*/
 InfantryTypeClass::InfantryTypeClass	(
 						InfantryType type, int name, char const *ininame,
-						unsigned char level, long pre,
+						unsigned char level, uint32_t pre,
 						bool is_female,
 						bool is_leader,
 						bool is_crawling,
@@ -2117,7 +2117,7 @@ BuildingClass * InfantryTypeClass::Who_Can_Build_Me(bool intheory, bool legal, H
 			building->House->Class->House == house &&
 			building->Mission != MISSION_DECONSTRUCTION &&
 			building->Class->ToBuild == RTTI_INFANTRYTYPE &&
-			((1L << building->ActLike) & Ownable) &&
+			((1U << building->ActLike) & Ownable) &&
 			(!legal || building->House->Can_Build(Type, building->ActLike)) &&
 			(intheory || !building->In_Radio_Contact())) {
 

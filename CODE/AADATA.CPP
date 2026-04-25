@@ -314,7 +314,7 @@ AircraftTypeClass::AircraftTypeClass(
 				int name,
 				char const *ininame,
 				unsigned char level,
-				long pre,
+				uint32_t pre,
 				bool is_leader,
 				bool is_twoshooter,
 				bool is_transporter,
@@ -622,7 +622,7 @@ BuildingClass * AircraftTypeClass::Who_Can_Build_Me(bool , bool legal, HousesTyp
 				!building->IsInLimbo &&
 				building->House->Class->House == house &&
 				building->Mission != MISSION_DECONSTRUCTION &&
-				((1L << building->ActLike) & Ownable) &&
+				((1U << building->ActLike) & Ownable) &&
 				(!legal || building->House->Can_Build(Type, building->ActLike)) &&
 				building->Class->ToBuild == RTTI_AIRCRAFTTYPE) {
 

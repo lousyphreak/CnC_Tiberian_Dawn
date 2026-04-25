@@ -53,7 +53,7 @@ class ScoreClass {
 		int NHarvested;
 		int GHarvested;
 		int CHarvested;
-		unsigned long ElapsedTime;
+		uint32_t ElapsedTime;
 
 		void Init(void) {memset(this, 0, sizeof(ScoreClass));};
 		void Presentation(void);

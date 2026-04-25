@@ -69,8 +69,8 @@ class NonSequencedConnClass : public ConnectionClass
 		Constructor/destructor.
 		.....................................................................*/
 		NonSequencedConnClass (int numsend, int numrecieve, int maxlen, 
-			unsigned short magicnum, unsigned long retry_delta,
-			unsigned long max_retries, unsigned long timeout);
+			unsigned short magicnum, uint32_t retry_delta,
+			uint32_t max_retries, uint32_t timeout);
 		virtual ~NonSequencedConnClass ();
 
 		/*.....................................................................
@@ -105,25 +105,24 @@ class NonSequencedConnClass : public ConnectionClass
 		Running totals of # of packets we send & receive which require an ACK, 
 		and those that don't.
 		.....................................................................*/
-		unsigned long NumRecNoAck;
-		unsigned long NumRecAck;
-		unsigned long NumSendNoAck;
-		unsigned long NumSendAck;
+		uint32_t NumRecNoAck;
+		uint32_t NumRecAck;
+		uint32_t NumSendNoAck;
+		uint32_t NumSendAck;
 
 		/*.....................................................................
 		This is the ID of the last consecutively-received packet; anything older 
 		than this, we know is a resend.  Anything newer than this MUST be lying 
 		around in the Queue for us to detect it as a resend.
 		.....................................................................*/
-		unsigned long LastSeqID;
+		uint32_t LastSeqID;
 
 		/*.....................................................................
 		This is the ID of the PACKET_DATA_ACK packet we read last; it ensures
 		that the application reads that type of packet in order.
 		.....................................................................*/
-		unsigned long LastReadID;
+		uint32_t LastReadID;
 };
 
 #endif
-
 

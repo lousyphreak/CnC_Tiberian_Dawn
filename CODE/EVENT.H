@@ -38,6 +38,8 @@
 #ifndef EVENT_H
 #define EVENT_H
 
+#include <stdint.h>
+
 /*
 **	This event class is used to contain all external game events (things that the player can
 **	do at any time) so that these events can be transported between linked computers. This
@@ -172,7 +174,7 @@ class EventClass
 			** Delay: sender's propogation delay value for this frame
 			*/
 			struct {
-				unsigned long CRC;
+				uint32_t CRC;
 				unsigned short CommandCount;	// # commands sent so far
 				unsigned char Delay;				// propogation delay used this frame
 														// (Frame - Delay = sender's current frame #)

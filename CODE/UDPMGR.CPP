@@ -133,8 +133,8 @@ UDPManagerClass::UDPManagerClass (int glb_maxlen, int pvt_maxlen,
 	/*........................................................................
 	Save our socket ID number
 	........................................................................*/
-	Socket = (unsigned short)( (((unsigned long)socket & 0x00ff) << 8) |
-		(((unsigned long)socket & 0xff00) >> 8));
+	Socket = static_cast<unsigned short>((((static_cast<uint32_t>(socket) & 0x00ffU) << 8)
+		| ((static_cast<uint32_t>(socket) & 0xff00U) >> 8)));
 
 	/*........................................................................
 	Get the user's IPX local connection number
@@ -366,8 +366,7 @@ int UDPManagerClass::Is_IPX(void)
  * HISTORY:                                                                *
  *   07/02/1995 BR : Created.                                              *
  *=========================================================================*/
-void UDPManagerClass::Set_Timing (unsigned long retrydelta,
-	unsigned long maxretries, unsigned long timeout)
+void UDPManagerClass::Set_Timing(uint32_t retrydelta, uint32_t maxretries, uint32_t timeout)
 {
 	int i;
 
@@ -1423,8 +1422,8 @@ int UDPManagerClass::Private_Num_Receive(int id)
  *=========================================================================*/
 void UDPManagerClass::Set_Socket(unsigned short socket)
 {
-	Socket = (unsigned short)( (((unsigned long)socket & 0x00ff) << 8) |
-		(((unsigned long)socket & 0xff00) >> 8));
+	Socket = static_cast<unsigned short>((((static_cast<uint32_t>(socket) & 0x00ffU) << 8)
+		| ((static_cast<uint32_t>(socket) & 0xff00U) >> 8)));
 
 }	/* end of Set_Socket */
 
@@ -1444,10 +1443,10 @@ void UDPManagerClass::Set_Socket(unsigned short socket)
  * HISTORY:                                                                *
  *   05/04/1995 BRR : Created.                                             *
  *=========================================================================*/
-unsigned long UDPManagerClass::Response_Time(void)
+uint32_t UDPManagerClass::Response_Time(void)
 {
-	unsigned long resp;
-	unsigned long maxresp = 0;
+	uint32_t resp;
+	uint32_t maxresp = 0;
 	int i;
 #ifdef VIRTUAL_SUBNET_SERVER
 	int vss=0;
@@ -1484,7 +1483,7 @@ unsigned long UDPManagerClass::Response_Time(void)
  * HISTORY:                                                                *
  *   05/04/1995 BRR : Created.                                             *
  *=========================================================================*/
-unsigned long UDPManagerClass::Global_Response_Time(void)
+uint32_t UDPManagerClass::Global_Response_Time(void)
 {
 	if (GlobalChannel) {
 		return (GlobalChannel->Queue->Avg_Response_Time());
@@ -1541,8 +1540,8 @@ void UDPManagerClass::Reset_Response_Time(void)
 void * UDPManagerClass::Oldest_Send(void)
 {
 	int i,j;
-	unsigned long time;
-	unsigned long mintime = 0xffffffff;
+	uint32_t time;
+	uint32_t mintime = 0xffffffffU;
 	SendQueueType *send_entry;				// ptr to send entry header
 	CommHeaderType *packet;
 	void *buf = NULL;
@@ -1743,7 +1742,7 @@ int UDPManagerClass::Alloc_RealMode_Mem(void)
 	int size;									// required size of allocation
 	unsigned char *realmode;				// start addresses of real-mode data
 	int realmodelen;							// length of real-mode data
-	unsigned long func_val;
+	uintptr_t func_val;
 	char *p;										// for parsing buffer
 	int i;
 
@@ -1804,7 +1803,7 @@ int UDPManagerClass::Alloc_RealMode_Mem(void)
 	Selector = regs.w.dx;
 	Segment = regs.w.ax;
 	RealMemSize = size;
-	RealModeData = (RealModeDataType *)(((long)Segment) << 4);
+	RealModeData = reinterpret_cast<RealModeDataType *>(static_cast<uintptr_t>(Segment) << 4);
 
 	/*------------------------------------------------------------------------
 	Lock the memory (since we're servicing interrupts with it)
@@ -1816,10 +1815,10 @@ int UDPManagerClass::Alloc_RealMode_Mem(void)
 	memset (&regs, 0 ,sizeof(regs));
 	segread (&sregs);
 	regs.x.eax = DPMI_LOCK_MEM;							// DPMI function to call
-	regs.x.ebx = ((long)RealModeData & 0xffff0000) >> 16;
-	regs.x.ecx = ((long)RealModeData & 0x0000ffff);
-	regs.x.esi = ((long)RealMemSize & 0xffff0000) >> 16;
-	regs.x.edi = ((long)RealMemSize & 0x0000ffff);
+	regs.x.ebx = (reinterpret_cast<uintptr_t>(RealModeData) & 0xffff0000) >> 16;
+	regs.x.ecx = (reinterpret_cast<uintptr_t>(RealModeData) & 0x0000ffff);
+	regs.x.esi = (static_cast<uintptr_t>(RealMemSize) & 0xffff0000) >> 16;
+	regs.x.edi = (static_cast<uintptr_t>(RealMemSize) & 0x0000ffff);
 	int386x (DPMI_INT, &regs, &regs, &sregs);			// call DPMI
 	/*........................................................................
 	If the carry flag is set, DPMI is indicating an error.
@@ -1836,14 +1835,14 @@ int UDPManagerClass::Alloc_RealMode_Mem(void)
 	/*------------------------------------------------------------------------
 	Copy the Real-mode code into our memory buffer
 	------------------------------------------------------------------------*/
-	p = (char *)(((long)Segment) << 4);
+	p = reinterpret_cast<char *>(static_cast<uintptr_t>(Segment) << 4);
 	memcpy (p,realmode,realmodelen);
 	p += realmodelen;
 
 	/*------------------------------------------------------------------------
 	Compute & save the entry point for the real-mode packet handler
 	------------------------------------------------------------------------*/
-	func_val = (unsigned long)RealModeData;
+	func_val = reinterpret_cast<uintptr_t>(RealModeData);
 	Handler = (((func_val & 0xffff0) << 12) |
 		((func_val & 0x000f) + RealModeData->FuncOffset));
 
@@ -1876,12 +1875,12 @@ int UDPManagerClass::Alloc_RealMode_Mem(void)
 	------------------------------------------------------------------------*/
 	RealModeData->NumBufs = (short)NumBufs;
 	RealModeData->BufferFlags = (char *)
-		((((long)BufferFlags & 0xffff0) << 12) |
-		((long)BufferFlags & 0x0000f));
+		((((reinterpret_cast<uintptr_t>(BufferFlags)) & 0xffff0) << 12) |
+		((reinterpret_cast<uintptr_t>(BufferFlags)) & 0x0000f));
 	RealModeData->PacketSize = (short)FullPacketLen;
 	RealModeData->FirstPacketBuf = (IPXHeaderType *)
-		((((long)FirstHeaderBuf & 0xffff0) << 12) |
-		((long)FirstHeaderBuf & 0x0000f));
+		((((reinterpret_cast<uintptr_t>(FirstHeaderBuf)) & 0xffff0) << 12) |
+		((reinterpret_cast<uintptr_t>(FirstHeaderBuf)) & 0x0000f));
 	RealModeData->CurIndex = 0;
 	RealModeData->CurPacketBuf = RealModeData->FirstPacketBuf;
 	RealModeData->Semaphore = 0;
@@ -1939,10 +1938,10 @@ int UDPManagerClass::Free_RealMode_Mem(void)
 	memset (&regs, 0 ,sizeof(regs));
 	segread (&sregs);
 	regs.x.eax = DPMI_UNLOCK_MEM;							// DPMI function to call
-	regs.x.ebx = ((long)RealModeData & 0xffff0000) >> 16;
-	regs.x.ecx = ((long)RealModeData & 0x0000ffff);
-	regs.x.esi = ((long)RealMemSize & 0xffff0000) >> 16;
-	regs.x.edi = ((long)RealMemSize & 0x0000ffff);
+	regs.x.ebx = (reinterpret_cast<uintptr_t>(RealModeData) & 0xffff0000) >> 16;
+	regs.x.ecx = (reinterpret_cast<uintptr_t>(RealModeData) & 0x0000ffff);
+	regs.x.esi = (static_cast<uintptr_t>(RealMemSize) & 0xffff0000) >> 16;
+	regs.x.edi = (static_cast<uintptr_t>(RealMemSize) & 0x0000ffff);
 	int386x (DPMI_INT, &regs, &regs, &sregs);			// call DPMI
 	/*........................................................................
 	If the carry flag is set, DPMI is indicating an error.
@@ -1968,5 +1967,3 @@ int UDPManagerClass::Free_RealMode_Mem(void)
 
 #endif	// NOT_FOR_WIN95
 }	/* end of Free_RealMode_Mem */
-
-

@@ -71,8 +71,8 @@
  *   12/20/1994 BR : Created.                                              *
  *=========================================================================*/
 SequencedConnClass::SequencedConnClass (int numsend, int numreceive, 
-	int maxlen, unsigned short magicnum, unsigned long retry_delta,
-	unsigned long max_retries, unsigned long timeout) :
+	int maxlen, unsigned short magicnum, uint32_t retry_delta,
+	uint32_t max_retries, uint32_t timeout) :
 	ConnectionClass (maxlen, magicnum, retry_delta, max_retries, timeout)
 {
 	NumRecNoAck = 0;
@@ -396,7 +396,7 @@ int SequencedConnClass::Service_Send_Queue (void)
 {
 	CommQueueSendType *send_entry;						// ptr to send queue entry
 	CommHeaderType *packet_hdr;					// packet header
-	unsigned long curtime;							// current time
+	uint32_t curtime;							// current time
 
 	/*------------------------------------------------------------------------
 	- If the next packet is ACK'd remove it from the queue
@@ -476,9 +476,9 @@ if (packet_hdr->Code == PACKET_DATA_NOACK) {
 			/*..................................................................
 			Perform error detection, based on either MaxRetries or Timeout
 			..................................................................*/
-			if (MaxRetries != static_cast<unsigned long>(-1) && send_entry->SendCount > MaxRetries)
+			if (MaxRetries != UINT32_MAX && send_entry->SendCount > MaxRetries)
 				return(false);
-			if (Timeout != static_cast<unsigned long>(-1) && send_entry->LastTime - 
+			if (Timeout != UINT32_MAX && send_entry->LastTime - 
 				send_entry->FirstTime > Timeout)
 				return(false);
 

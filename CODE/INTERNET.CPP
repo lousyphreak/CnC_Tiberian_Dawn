@@ -60,7 +60,7 @@ HWND Decode_Window_Handle(char *buffer, uintptr_t default_value)
 {
 	char key_string[32];
 
-	snprintf(key_string, sizeof(key_string), "%llu", static_cast<unsigned long long>(default_value));
+	snprintf(key_string, sizeof(key_string), "%ju", static_cast<uintmax_t>(default_value));
 	WWGetPrivateProfileString("Internet", "HWND", key_string, key_string, sizeof(key_string), buffer);
 	return reinterpret_cast<HWND>(static_cast<uintptr_t>(strtoull(key_string, NULL, 10)));
 }
@@ -77,8 +77,8 @@ char PlanetWestwoodPassword[] = {"Password"};       //Planet WW password
 char PlanetWestwoodIPAddress[IP_ADDRESS_MAX] = {"206.154.108.87"};	//IP of server or other player
 uint16_t PlanetWestwoodPortNumber = 1234;				//Port number to send to
 bool PlanetWestwoodIsHost = false;                  //Flag true if player has control of game options
-unsigned long PlanetWestwoodGameID;                 //Game ID
-unsigned long PlanetWestwoodStartTime;              //Time that game was started
+uint32_t PlanetWestwoodGameID;                 //Game ID
+uint32_t PlanetWestwoodStartTime;              //Time that game was started
 HWND	WChatHWND = 0;                               //Handle to Wchat window.
 bool UseVirtualSubnetServer;
 int  InternetMaxPlayers;
@@ -387,9 +387,9 @@ bool Is_User_WChat_Registered(char *buffer, int buffer_len)
 {
 	HKEY	key;
 	char	user_handle[256];
-	DWORD	user_handle_size = sizeof (user_handle);
+	int32_t	user_handle_size = sizeof (user_handle);
 	char	user_pword[256];
-	DWORD	user_pword_size = sizeof (user_pword);
+	int32_t	user_pword_size = sizeof (user_pword);
 
 
 	/*
@@ -401,9 +401,9 @@ bool Is_User_WChat_Registered(char *buffer, int buffer_len)
 		key = Get_Registry_Sub_Key (key, "Nick1", TRUE);
 		if (key){
 
-			if (RegQueryValue(key, "Nick", user_handle, (long*)&user_handle_size) == ERROR_SUCCESS){
+			if (RegQueryValue(key, "Nick", user_handle, &user_handle_size) == ERROR_SUCCESS){
 
-				if (RegQueryValue(key, "Pass", user_pword, (long*)&user_pword_size) == ERROR_SUCCESS){
+				if (RegQueryValue(key, "Pass", user_pword, &user_pword_size) == ERROR_SUCCESS){
 
 					/*
 					** If the first char of the users name is non-numberic and there is a password

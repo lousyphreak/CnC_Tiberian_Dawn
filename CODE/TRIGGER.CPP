@@ -750,7 +750,7 @@ bool TriggerClass::Spring(EventType event, CELL cell)
  *   12/06/1994 BR : Created.                                                                  *
  *   06/25/1995 JLB : Added more trigger events.                                               *
  *=============================================================================================*/
-bool TriggerClass::Spring(EventType event, HousesType house, long data)
+bool TriggerClass::Spring(EventType event, HousesType house, int32_t data)
 {
 	Validate();
 	/*
@@ -1223,7 +1223,7 @@ void TriggerClass::Write_INI(char *buffer, bool refresh)
 			tname = trigger->Team->IniName;
 		}
 
-		sprintf(buf,"%s,%s,%ld,%s,%s,%d",
+				sprintf(buf,"%s,%s,%d,%s,%s,%d",
 			TriggerClass::Name_From_Event(trigger->Event),
 			TriggerClass::Name_From_Action(trigger->Action),
 			trigger->Data,

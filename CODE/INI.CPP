@@ -286,7 +286,7 @@ bool Read_Scenario_Ini(char *root, bool fresh)
 	for (int i = 0; i < len; i++) {
 		val = (unsigned char)buffer[i];
 #ifndef DEMO
-		Add_CRC(&ScenarioCRC, (unsigned long)val);
+		Add_CRC(&ScenarioCRC, static_cast<uint32_t>(val));
 #endif
 	}
 

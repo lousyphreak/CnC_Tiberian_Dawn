@@ -95,7 +95,7 @@ class NullModemConnClass : public NonSequencedConnClass
 		/*.....................................................................
 		Utility routines.
 		.....................................................................*/
-		unsigned long Actual_Max_Packet (void) { return (MaxPacketLen + (sizeof(SerialHeaderType)) + sizeof(int) + sizeof (char)); }
+		uint32_t Actual_Max_Packet (void) { return (MaxPacketLen + (sizeof(SerialHeaderType)) + sizeof(int) + sizeof (char)); }
 
 		/*.....................................................................
 		This routine computes a CRC value for the given buffer.

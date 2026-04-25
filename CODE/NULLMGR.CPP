@@ -629,8 +629,8 @@ void NullModemClass::Shutdown ( void )
  * HISTORY:                                                                *
  *   08/07/1995 DRD : Created.                                             *
  *=========================================================================*/
-void NullModemClass::Set_Timing (unsigned long retrydelta,
-	unsigned long maxretries, unsigned long timeout)
+void NullModemClass::Set_Timing (uint32_t retrydelta,
+	uint32_t maxretries, uint32_t timeout)
 {
 	RetryDelta = retrydelta;
 	MaxRetries = maxretries;
@@ -997,7 +997,7 @@ int NullModemClass::Num_Receive(void)
  * HISTORY:                                                                *
  *   05/01/1995 BRR : Created.                                             *
  *=========================================================================*/
-unsigned long NullModemClass::Response_Time(void)
+uint32_t NullModemClass::Response_Time(void)
 {
 	if (Connection)
 		return( Connection->Queue->Avg_Response_Time() );

@@ -1486,7 +1486,7 @@ bool FootClass::Restore_Mission(void)
  * HISTORY:                                                                                    *
  *   05/14/1995 JLB : Created.                                                                 *
  *=============================================================================================*/
-RadioMessageType FootClass::Receive_Message(RadioClass * from, RadioMessageType message, long & param)
+RadioMessageType FootClass::Receive_Message(RadioClass * from, RadioMessageType message, int32_t & param)
 {
 	switch (message) {
 
@@ -1515,7 +1515,7 @@ RadioMessageType FootClass::Receive_Message(RadioClass * from, RadioMessageType 
 		**	then it doesn't need furthur movement instructions.
 		*/
 		case RADIO_NEED_TO_MOVE:
-			param = (long)NavCom;
+			param = static_cast<int32_t>(NavCom);
 			if (!Target_Legal(NavCom)) {
 				return(RADIO_ROGER);
 			}

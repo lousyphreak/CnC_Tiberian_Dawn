@@ -17,7 +17,7 @@
 */
 
 	int 	hfile;
-	long	length;
+	int32_t	length;
 
 	hfile = _lopen(lpstrFileName, OF_READ | OF_SHARE_DENY_WRITE);
 	if (hfile == -1) {

@@ -201,7 +201,7 @@ void * SpeechBuffer;
 ** This accumulates into a useful value that contributes to a
 **	histogram of game performance.
 */
-long SpareTicks;
+int32_t SpareTicks;
 
 
 /***************************************************************************
@@ -297,7 +297,7 @@ CreditClass CreditDisplay;
 **	has been displayed. Once the message has been displayed, it will not be
 **	displayed again.
 */
-long TutorFlags[2];
+uint32_t TutorFlags[2];
 
 
 /**************************************************************************
@@ -335,7 +335,7 @@ unsigned BuildLevel = 3;				// Buildable level (1 = simplest)
 ** This value is computed every time a new scenario is loaded; it's a
 ** CRC of the INI and binary map files.
 */
-unsigned long ScenarioCRC;
+uint32_t ScenarioCRC;
 
 
 /***************************************************************************
@@ -356,7 +356,7 @@ bool GameActive;
 **	a long, but the value wasn't supplied to a function. This is used
 **	specifically for the default reference value. As such, it is not stable.
 */
-long LParam;
+int32_t LParam;
 
 
 #ifdef SCENARIO_EDITOR
@@ -579,14 +579,14 @@ int MPlayerCountMax[2] = {50,12};
 MPlayerMaxAhead is the number of frames ahead of this one to execute a given
 packet.  It's set by the RESPONSE_TIME event.
 ---------------------------------------------------------------------------*/
-unsigned long MPlayerMaxAhead = 3;
+uint32_t MPlayerMaxAhead = 3;
 
 
 /*---------------------------------------------------------------------------
 'FrameSendRate' is the # frames between data packets
 'FrameRateDelay' is the time ticks to wait between frames, for smoothing.
 ---------------------------------------------------------------------------*/
-unsigned long FrameSendRate;
+uint32_t FrameSendRate;
 
 
 /***************************************************************************
@@ -789,7 +789,7 @@ char const *SerialPacketNames[] = {
 /***************************************************************************
 **	These variables are just to help find sync bugs.
 */
-long TrapFrame = 0x7fffffff;				// frame to start trapping object values at
+int32_t TrapFrame = 0x7fffffff;				// frame to start trapping object values at
 RTTIType TrapObjType = RTTI_NONE;		// type of object to trap
 TrapObjectType TrapObject = {NULL};		// ptr to object being trapped
 COORDINATE TrapCoord = 0;							// COORD of object to trap
@@ -889,7 +889,7 @@ int MetaSize = ((546 - sizeof(CommHeaderType)) / sizeof(EventClass) ) * sizeof(E
 ** multiplayer games.
 */
 int Seed = 0;
-long *RandSeedPtr;
+uint32_t *RandSeedPtr;
 
 
 /***************************************************************************

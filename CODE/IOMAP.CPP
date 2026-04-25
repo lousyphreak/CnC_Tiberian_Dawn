@@ -415,7 +415,7 @@ bool MouseClass::Load(FileClass & file)
 bool MouseClass::Save(FileClass & file)
 {
 	unsigned count;
-	long pos;
+	int32_t pos;
 
 	/*
 	-------------------------- Save Theater >first< --------------------------

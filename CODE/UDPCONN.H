@@ -102,7 +102,7 @@ class UDPConnClass : public NonSequencedConnClass
 		static void Configure(unsigned short socket, 
 			int conn_num, ECBType *listen_ecb, ECBType *send_ecb, 
 			IPXHeaderType *listen_header, IPXHeaderType *send_header, 
-			char *listen_buf, char *send_buf, long handler_rm_ptr,
+			char *listen_buf, char *send_buf, uint32_t handler_rm_ptr,
 			int maxpacketlen);
 
 		/*.....................................................................
@@ -195,7 +195,7 @@ class UDPConnClass : public NonSequencedConnClass
 		the segment/offset to be computed by the caller gives the caller
 		control over CS.)
 		.....................................................................*/
-		static long Handler;
+		static uint32_t Handler;
 
 		/*.....................................................................
 		This status flag tells us if Configure() has been called or not.

@@ -797,8 +797,8 @@ int IPX_Listen_For_Packet(struct ECB *ecb_ptr)
 	Fill in registers for the interrupt call
 	........................................................................*/
 	rmi.ebx = IPX_LISTEN_FOR_PACKET;
-	rmi.es = (short)((long)ecb_ptr >> 4);
-	rmi.esi = (long)((long)ecb_ptr & 0x000f);
+	rmi.es = static_cast<short>(reinterpret_cast<uintptr_t>(ecb_ptr) >> 4);
+	rmi.esi = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(ecb_ptr) & 0x000f);
 	/*........................................................................
 	call DPMI
 	........................................................................*/
@@ -874,8 +874,8 @@ void IPX_Send_Packet(struct ECB *ecb_ptr)
 	Fill in registers for the interrupt call
 	........................................................................*/
 	rmi.ebx = IPX_SEND_PACKET;
-	rmi.es = (short)((long)ecb_ptr >> 4);
-	rmi.esi = (long)((long)ecb_ptr & 0x000f);
+	rmi.es = static_cast<short>(reinterpret_cast<uintptr_t>(ecb_ptr) >> 4);
+	rmi.esi = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(ecb_ptr) & 0x000f);
 	/*........................................................................
 	call DPMI
 	........................................................................*/
@@ -1046,8 +1046,8 @@ int IPX_Cancel_Event(struct ECB *ecb_ptr)
 	Fill in registers for the interrupt call
 	........................................................................*/
 	rmi.ebx = IPX_CANCEL_EVENT;
-	rmi.es = (short)((long)ecb_ptr >> 4);
-	rmi.esi = (long)((long)ecb_ptr & 0x000f);
+	rmi.es = static_cast<short>(reinterpret_cast<uintptr_t>(ecb_ptr) >> 4);
+	rmi.esi = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(ecb_ptr) & 0x000f);
 	/*........................................................................
 	call DPMI
 	........................................................................*/

@@ -121,7 +121,7 @@ void LogicClass::Debug_Dump(MonoClass *mono) const
 	/*
 	**	Fill in the data for the current frame's performance record.
 	*/
-	SpareTicks = MIN((long)SpareTicks, (long)TIMER_SECOND);
+	SpareTicks = MIN(static_cast<int32_t>(SpareTicks), static_cast<int32_t>(TIMER_SECOND));
 	_record[RECORDCOUNT-1].Graphic = Fixed_To_Cardinal(RECORDHEIGHT, Cardinal_To_Fixed(TIMER_SECOND, SpareTicks));
 
 	/*
@@ -215,29 +215,29 @@ void LogicClass::AI(void)
 	for (index = 0; index < Units.Count(); index++) {
 		UnitClass const * unit = Units.Ptr(index);
 		if (unit->IsLocked && (GameToPlay != GAME_NORMAL || !unit->House->IsHuman || unit->IsDiscoveredByPlayer)) {
-			unit->House->NewUScan |= (1L << unit->Class->Type);
-			if (!unit->IsInLimbo) unit->House->NewActiveUScan |= (1L << unit->Class->Type);
+			unit->House->NewUScan |= (1U << unit->Class->Type);
+			if (!unit->IsInLimbo) unit->House->NewActiveUScan |= (1U << unit->Class->Type);
 		}
 	}
 	for (index = 0; index < Infantry.Count(); index++) {
 		InfantryClass const * infantry = Infantry.Ptr(index);
 		if (infantry->IsLocked && (GameToPlay != GAME_NORMAL || !infantry->House->IsHuman || infantry->IsDiscoveredByPlayer)) {
-			infantry->House->NewIScan |= (1L << infantry->Class->Type);
-			if (!infantry->IsInLimbo) infantry->House->NewActiveIScan |= (1L << infantry->Class->Type);
+			infantry->House->NewIScan |= (1U << infantry->Class->Type);
+			if (!infantry->IsInLimbo) infantry->House->NewActiveIScan |= (1U << infantry->Class->Type);
 		}
 	}
 	for (index = 0; index < Aircraft.Count(); index++) {
 		AircraftClass const * aircraft = Aircraft.Ptr(index);
 		if (aircraft->IsLocked && (GameToPlay != GAME_NORMAL || !aircraft->House->IsHuman || aircraft->IsDiscoveredByPlayer)) {
-			aircraft->House->NewAScan |= (1L << aircraft->Class->Type);
-			if (!aircraft->IsInLimbo) aircraft->House->NewActiveAScan |= (1L << aircraft->Class->Type);
+			aircraft->House->NewAScan |= (1U << aircraft->Class->Type);
+			if (!aircraft->IsInLimbo) aircraft->House->NewActiveAScan |= (1U << aircraft->Class->Type);
 		}
 	}
 	for (index = 0; index < Buildings.Count(); index++) {
 		BuildingClass const * building = Buildings.Ptr(index);
 		if (building->IsLocked && (GameToPlay != GAME_NORMAL || !building->House->IsHuman || building->IsDiscoveredByPlayer)) {
-			building->House->NewBScan |= (1L << building->Class->Type);
-			if (!building->IsInLimbo) building->House->NewActiveBScan |= (1L << building->Class->Type);
+			building->House->NewBScan |= (1U << building->Class->Type);
+			if (!building->IsInLimbo) building->House->NewActiveBScan |= (1U << building->Class->Type);
 		}
 	}
 
@@ -271,4 +271,3 @@ void LogicClass::AI(void)
 
 //	Heap_Dump_Check( "After House AI" );
 }
-

@@ -144,11 +144,11 @@ typedef struct {
 	short	Height;			// Height of icons (pixels).
 	short	Count;			// Number of (logical) icons in this set.
 	short	Allocated;		// Was this iconset allocated?
-	long	Size;				// Size of entire iconset memory block.
+	int32_t	Size;				// Size of entire iconset memory block.
 	unsigned char * Icons;			// Offset from buffer start to icon data.
-	long	Palettes;		// Offset from buffer start to palette data.
-	long	Remaps;			// Offset from buffer start to remap index data.
-	long	TransFlag;		// Offset for transparency flag table.
+	int32_t	Palettes;		// Offset from buffer start to palette data.
+	int32_t	Remaps;			// Offset from buffer start to remap index data.
+	int32_t	TransFlag;		// Offset for transparency flag table.
 	unsigned char * Map;				// Icon map offset (if present).
 } IControl_Type;
 #endif

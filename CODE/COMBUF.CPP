@@ -594,7 +594,7 @@ ReceiveQueueType * CommBufferClass::Get_Receive(int index)
  * HISTORY:                                                                *
  *   01/19/1995 BR : Created.                                              *
  *=========================================================================*/
-void CommBufferClass::Add_Delay(unsigned long delay)
+void CommBufferClass::Add_Delay(uint32_t delay)
 {
 	int roundoff = 0;
 
@@ -631,7 +631,7 @@ void CommBufferClass::Add_Delay(unsigned long delay)
  * HISTORY:                                                                *
  *   01/19/1995 BR : Created.                                              *
  *=========================================================================*/
-unsigned long CommBufferClass::Avg_Response_Time(void)
+uint32_t CommBufferClass::Avg_Response_Time(void)
 {
 	return(MeanDelay);
 
@@ -653,7 +653,7 @@ unsigned long CommBufferClass::Avg_Response_Time(void)
  * HISTORY:                                                                *
  *   01/19/1995 BR : Created.                                              *
  *=========================================================================*/
-unsigned long CommBufferClass::Max_Response_Time(void)
+uint32_t CommBufferClass::Max_Response_Time(void)
 {
 	return(MaxDelay);
 
@@ -922,7 +922,7 @@ void CommBufferClass::Mono_Debug_Print2(int refresh)
 			hdr = (CommHdr *)SendQueue[i].Buffer;
 			hdr->MagicNumber = hdr->MagicNumber;
 			hdr->Code = hdr->Code;
-			sprintf(txt,"%4u %2lu %-5s  ",
+			sprintf(txt,"%4u %2u %-5s  ",
 				hdr->PacketID,
 				SendQueue[i].SendCount,
 				ConnectionClass::Command_Name(hdr->Code));

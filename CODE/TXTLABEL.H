@@ -59,7 +59,7 @@ class TextLabelClass : public GadgetClass
 		/*
 		** General-purpose data field
 		*/
-		unsigned long 	UserData;
+		uint32_t 	UserData;
 		TextPrintType 	Style;
 		char 				*Text;
 		int 				Color;
@@ -69,4 +69,3 @@ class TextLabelClass : public GadgetClass
 };
 
 #endif
-

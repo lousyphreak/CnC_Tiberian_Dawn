@@ -166,11 +166,11 @@ ConnManClass *Current_Network_Manager(void)
 	return &Udp;
 }
 
-static unsigned long Current_Global_Response_Time(void)
+static uint32_t Current_Global_Response_Time(void)
 {
 	if (GameToPlay == GAME_WOL) {
 		int max_ahead = (WChatMaxAhead > 0) ? WChatMaxAhead : 9;
-		return static_cast<unsigned long>(max_ahead * 8);
+		return static_cast<uint32_t>(max_ahead * 8);
 	}
 
 	return Udp.Global_Response_Time();
@@ -932,7 +932,7 @@ static int Net_Join_Dialog(void)
 	unsigned char min_id;					// for sorting player ID's
 	unsigned char id;							// connection ID
 	char * item;
-	unsigned long starttime;
+	uint32_t starttime;
 
 	NodeNameType *who;
 
@@ -1595,7 +1595,7 @@ static int Net_Join_Dialog(void)
 						If 'input' returned 3, it means send the current message.
 						...............................................................*/
 						if (i==3) {
-							long actual_message_size;
+							int32_t actual_message_size;
 							char *the_string;
 
 							sent_so_far = 0;
@@ -1954,7 +1954,7 @@ static int Net_Join_Dialog(void)
 		a chance to get to the other system.  If he doesn't get our ACK, he'll
 		be waiting the whole time we load MIX files.
 		---------------------------------------------------------------------*/
-		const unsigned long wait_time = static_cast<unsigned long>(MAX(Current_Global_Response_Time() * 2, 60));
+		const uint32_t wait_time = static_cast<uint32_t>(MAX(Current_Global_Response_Time() * 2, 60));
 		starttime = TickCount.Time();
 		while (TickCount.Time() - starttime < wait_time) {
 			NetMgr.Service();
@@ -2867,14 +2867,14 @@ static int Net_New_Dialog(void)
 	int old_cred;								// old value in credits buffer
 	int transmit;								// 1 = re-transmit new game options
 
-	long ok_timer = 0;						// for timing OK button
+	int32_t ok_timer = 0;						// for timing OK button
 	int index;									// index for rejecting a player
 	int rc;
 	int i,j;
 	char *item;
 	int tabs[] = {77*factor};						// tabs for player list box
 
-	long ping_timer = 0;						// for sending Ping packets
+	int32_t ping_timer = 0;						// for sending Ping packets
 
 	unsigned char tmp_id[MAX_PLAYERS];	// temp storage for sorting player ID's
 	int min_index;								// for sorting player ID's
@@ -3560,7 +3560,7 @@ static int Net_New_Dialog(void)
 				If 'input' returned 3, it means send the current message.
 				...............................................................*/
 				else if (i==3) {
-					long actual_message_size;
+					int32_t actual_message_size;
 					char *the_string;
 
 					sent_so_far = 0;
@@ -4025,17 +4025,17 @@ static JoinEventType Get_NewGame_Responses(ColorListClass *playerlist)
  * HISTORY:                                                                *
  *   06/29/1995 BRR : Created.                                             *
  *=========================================================================*/
-unsigned long Compute_Name_CRC(char *name)
+uint32_t Compute_Name_CRC(char *name)
 {
 	char buf[80];
-	unsigned long crc = 0L;
+	uint32_t crc = 0;
 	int i;
 
 	strcpy (buf, name);
 	strupr (buf);
 
 	for (i = 0; buf[i] != '\0'; i++) {
-		Add_CRC (&crc, (unsigned long)buf[i]);
+		Add_CRC(&crc, static_cast<uint32_t>(buf[i]));
 	}
 
 	return (crc);
@@ -4061,7 +4061,7 @@ unsigned long Compute_Name_CRC(char *name)
  *   07/08/1995 BRR : Created.                                             *
  *=========================================================================*/
 void Net_Reconnect_Dialog(int reconn, int fresh, int oldest_index,
-	unsigned long timeval)
+	uint32_t timeval)
 {
 	static int x,y,w,h;
 	int id;
@@ -4278,13 +4278,13 @@ static int Net_Fake_New_Dialog(void)
 	char credbuf[CREDITSBUF_MAX];			// for credit edit box
 	int transmit;								// 1 = re-transmit new game options
 
-	long ok_timer = 0;						// for timing OK button
+	int32_t ok_timer = 0;						// for timing OK button
 	int rc;
 	int i,j;
 	char *item;
 	int tabs[] = {77*factor};				// tabs for player list box
 
-	long ping_timer = 0;						// for sending Ping packets
+	int32_t ping_timer = 0;						// for sending Ping packets
 
 	unsigned char tmp_id[MAX_PLAYERS];	// temp storage for sorting player ID's
 	int min_index;								// for sorting player ID's
@@ -4880,7 +4880,7 @@ static int Net_Fake_Join_Dialog(void)
 	unsigned char min_id;					// for sorting player ID's
 	unsigned char id;							// connection ID
 	char * item;
-	unsigned long starttime;
+	uint32_t starttime;
 
 	NodeNameType *who;
 
@@ -5425,7 +5425,7 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 		a chance to get to the other system.  If he doesn't get our ACK, he'll
 		be waiting the whole time we load MIX files.
 		---------------------------------------------------------------------*/
-		const unsigned long wait_time = static_cast<unsigned long>(MAX(Current_Global_Response_Time() * 2, 120));
+		const uint32_t wait_time = static_cast<uint32_t>(MAX(Current_Global_Response_Time() * 2, 120));
 		starttime = TickCount.Time();
 		while (TickCount.Time() - starttime < wait_time) {
 			NetMgr.Service();

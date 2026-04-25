@@ -2364,8 +2364,8 @@ bool InfantryClass::Unlimbo(COORDINATE coord, DirType facing)
 		**	Ensure that the owning house knows about the
 		**	new object.
 		*/
-		House->IScan |= (1L << Class->Type);
-		House->ActiveIScan |= (1L << Class->Type);
+		House->IScan |= (1U << Class->Type);
+		House->ActiveIScan |= (1U << Class->Type);
 
 		/*
 		**	If there is no sight range, then this object isn't discovered by the player unless
@@ -2672,7 +2672,7 @@ COORDINATE InfantryClass::Fire_Coord(int) const
  *   01/19/1995 BWG : Created.                                             *
  *   05/14/1995 JLB : Handles loading maneuver messages.                   *
  *=========================================================================*/
-RadioMessageType InfantryClass::Receive_Message(RadioClass * from, RadioMessageType message, long & param)
+RadioMessageType InfantryClass::Receive_Message(RadioClass * from, RadioMessageType message, int32_t & param)
 {
 	Validate();
 	int damage;

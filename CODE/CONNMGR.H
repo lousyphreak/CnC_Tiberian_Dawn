@@ -67,6 +67,8 @@
 #ifndef CONNMGR_H
 #define CONNMGR_H
 
+#include <stdint.h>
+
 class UDPAddressClass;
 
 
@@ -140,9 +142,9 @@ class ConnManClass
 		Timing management
 		.....................................................................*/
 		virtual void Reset_Response_Time(void) = 0;
-		virtual unsigned long Response_Time(void) = 0;
-		virtual void Set_Timing (unsigned long retrydelta, 
-			unsigned long maxretries, unsigned long timeout) = 0;
+		virtual uint32_t Response_Time(void) = 0;
+		virtual void Set_Timing (uint32_t retrydelta, 
+			uint32_t maxretries, uint32_t timeout) = 0;
 
 		/*.....................................................................
 		Debugging

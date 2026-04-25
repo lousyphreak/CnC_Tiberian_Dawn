@@ -63,6 +63,10 @@ _Last updated: 2026-04-25_
   - modern-C++ correctness failures like `++` / `--` on `bool` and overloaded-name collisions (`index`) in older game code;
   - the still-unported WinSock-style multiplayer layer in `TCPIP.H` / `TCPIP.CPP`.
 - The current RAWFILE failures suggest the remaining work there is not just missing wrappers. TD's source now conflicts with the imported declarations and globals, so the next pass should compare directly against the Red Alert `RAWFILE` port and convert TD to that structure instead of continuing piecemeal fixes.
+- The broad 2026-04-25 `long` removal sweep established a stricter rule for TD-owned code:
+  - gameplay state, timers, CRCs, money, save metadata, UI timestamps, network/session fields, and similar original 32-bit values should use `int32_t` / `uint32_t`, not host-width `long`;
+  - old pointer-segmentation helpers in DOS/IPX-era code are the exception and should use `uintptr_t` instead of forcing them into 32-bit integer types;
+  - after the sweep, repo-owned `long` grep hits in active code should be treated as a bug, while remaining comment/documentation mentions are just historical text.
 - A few more compatibility decisions are now established and should be reused instead of reintroducing old globals/types:
   - `ScenarioInit` must stay an `int` counter, not a `bool`; TD still uses it with nested increment/decrement semantics, and Red Alert already matches that shape.
   - legacy audio-availability checks can be mapped onto the imported SDL audio backend through a tiny compatibility layer (`Get_Digi_Handle`, `Get_Sample_Type`, and a `SampleType` compatibility macro) instead of reviving old sound-driver globals.

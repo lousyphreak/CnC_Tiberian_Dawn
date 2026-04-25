@@ -84,7 +84,7 @@ char const *ConnectionClass::Commands[PACKET_COUNT] = {
  *   12/20/1994 BR : Created.                                              *
  *=========================================================================*/
 ConnectionClass::ConnectionClass (int maxlen, unsigned short magicnum, 
-	unsigned long retry_delta, unsigned long max_retries, unsigned long timeout)
+	uint32_t retry_delta, uint32_t max_retries, uint32_t timeout)
 {
 	/*------------------------------------------------------------------------
 	Compute our maximum packet length
@@ -204,16 +204,16 @@ int ConnectionClass::Service (void)
  * HISTORY:                                                                *
  *   12/20/1994 BR : Created.                                              *
  *=========================================================================*/
-unsigned long ConnectionClass::Time (void)
+uint32_t ConnectionClass::Time (void)
 {
 #ifdef WWLIB32_H
 	return(TickCount.Time());				// Westwood Library time
 #else
 	static struct timeb mytime;			// DOS time
-	unsigned long msec;
+	uint32_t msec;
 
 	ftime(&mytime);
-	msec = (unsigned long)mytime.time * 1000L + (unsigned long)mytime.millitm;
+	msec = static_cast<uint32_t>(mytime.time * 1000L + mytime.millitm);
 	return((msec / 100) * 6);
 #endif
 

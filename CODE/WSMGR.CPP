@@ -690,12 +690,12 @@ void WSManagerClass::Reset_Response_Time(void)
 {
 }
 
-unsigned long WSManagerClass::Response_Time(void)
+uint32_t WSManagerClass::Response_Time(void)
 {
 	return 0;
 }
 
-void WSManagerClass::Set_Timing(unsigned long, unsigned long, unsigned long)
+void WSManagerClass::Set_Timing(uint32_t, uint32_t, uint32_t)
 {
 }
 

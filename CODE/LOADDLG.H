@@ -42,7 +42,7 @@ class FileEntryClass {
 		unsigned Scenario;			// scenario #
 		HousesType House;				// house
 		int Num;							// save file number (from the extension)
-		unsigned long DateTime;		// date/time stamp of file
+		uint32_t DateTime;		// date/time stamp of file
 		bool Valid;						// Is the scenario valid?
 };
 

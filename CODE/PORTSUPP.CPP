@@ -159,7 +159,7 @@ extern "C" void Init_MMX(void)
 {
 }
 
-long Get_EAX(void)
+uint32_t Get_EAX(void)
 {
 	return 0;
 }

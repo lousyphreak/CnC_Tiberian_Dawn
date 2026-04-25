@@ -127,8 +127,8 @@ enum {
 };
 
 
-extern unsigned long 	PlanetWestwoodGameID;
-extern unsigned long 	PlanetWestwoodStartTime;
+extern uint32_t 	PlanetWestwoodGameID;
+extern uint32_t 	PlanetWestwoodStartTime;
 
 extern "C" char	CPUType;
 

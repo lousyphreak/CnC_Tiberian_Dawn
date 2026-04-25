@@ -35,6 +35,8 @@
 #ifndef SESSION_H
 #define SESSION_H
 
+#include <stdint.h>
+
 #include "UDPADDR.H"
 #include "MSGLIST.H"
 #include "CONNECT.H"
@@ -257,7 +259,7 @@ typedef struct NodeNameTag {
 	union {
 		struct {
 			unsigned char IsOpen;		// is the game open?
-			unsigned long LastTime;		// last time we heard from this guy
+			uint32_t LastTime;		// last time we heard from this guy
 		} Game;
 		struct {
 			HousesType House;				// "ActLike" House of this player
@@ -265,7 +267,7 @@ typedef struct NodeNameTag {
 			HousesType ID;					// Actual House of this player
 		} Player;
 		struct {
-			unsigned long LastTime;		// last time we heard from this guy
+			uint32_t LastTime;		// last time we heard from this guy
 			unsigned char LastChance;	// we're about to remove him from the list
 			unsigned char Color;			// chat player's color
 		} Chat;
@@ -278,8 +280,8 @@ typedef struct NodeNameTag {
 typedef struct {
 	SerialCommandType Command;					// One of the enum's defined above
 	char Name[MPLAYER_NAME_MAX];				// Player or Game Name
-	unsigned long MinVersion;					// min version this game supports
-	unsigned long MaxVersion;					// max version this game supports
+	uint32_t MinVersion;					// min version this game supports
+	uint32_t MaxVersion;					// max version this game supports
 	HousesType House;								// player's House
 	unsigned char Color;							// player's color or SIGNOFF ID
 	unsigned char Scenario;						// Scenario #
@@ -293,7 +295,7 @@ typedef struct {
 	int Seed;										// random number seed
 	SpecialClass Special;						// command-line options
 	unsigned int GameSpeed;						// Game Speed
-	unsigned long ResponseTime;				// packet response time
+	uint32_t ResponseTime;				// packet response time
 	char Message[COMPAT_MESSAGE_LENGTH];	// inter-player message
 	unsigned char ID;								// unique ID of sender of message
 } SerialPacketType;
@@ -311,9 +313,9 @@ typedef struct {
 		struct {
 			HousesType House;						// player's House
 			unsigned int Color;					// player's color
-			unsigned long NameCRC;				// CRC of player's game's name
-			unsigned long MinVersion;			// game's min supported version
-			unsigned long MaxVersion;			// game's max supported version
+			uint32_t NameCRC;				// CRC of player's game's name
+			uint32_t MinVersion;			// game's min supported version
+			uint32_t MaxVersion;			// game's max supported version
 		} PlayerInfo;
 		struct {
 			unsigned char Scenario;				// Scenario #
@@ -327,12 +329,12 @@ typedef struct {
 			int Seed;								// random number seed
 			SpecialClass Special;				// command-line options
 			unsigned int GameSpeed;				// Game Speed
-			unsigned long Version;				// version # common to all players
+			uint32_t Version;				// version # common to all players
 		} ScenarioInfo;
 		struct {
 			char Buf[COMPAT_MESSAGE_LENGTH];	// inter-user message
 			unsigned char Color;					// color of sender of message
-			unsigned long NameCRC;				// CRC of sender's Game Name
+			uint32_t NameCRC;				// CRC of sender's Game Name
 		} Message;
 		struct {
 			int OneWay;								// one-way response time
@@ -341,7 +343,7 @@ typedef struct {
 			int Why;									// why were we rejected from the game?
 		} Reject;
 		struct {
-			unsigned long ID;						// unique ID for this chat node
+			uint32_t ID;						// unique ID for this chat node
 			unsigned char Color;					// my color
 		} Chat;
 	};
@@ -407,7 +409,7 @@ class SessionClass
 		//.....................................................................
 		int Create_Connections(void);
 		bool Am_I_Master(void);
-		unsigned long Compute_Unique_ID(void);
+		uint32_t Compute_Unique_ID(void);
 
 		//.....................................................................
 		// File I/O
@@ -441,7 +443,7 @@ class SessionClass
 		//.....................................................................
 		// Unique workstation ID, for detecting my own packets
 		//.....................................................................
-		unsigned long UniqueID;
+		uint32_t UniqueID;
 
 		//.....................................................................
 		// Player's local options
@@ -468,9 +470,9 @@ class SessionClass
 		// 'FrameRateDelay' is the time ticks to wait between frames, for
 		// smoothing.
 		//.....................................................................
-		unsigned long MaxAhead;
-		unsigned long FrameSendRate;
-		unsigned long FrameRateDelay;
+		uint32_t MaxAhead;
+		uint32_t FrameSendRate;
+		uint32_t FrameRateDelay;
 
 		//.....................................................................
 		// This flag is set when we've loaded a multiplayer game.
@@ -560,7 +562,7 @@ class SessionClass
 		//.....................................................................
 		// For finding Sync Bugs
 		//.....................................................................
-		long TrapFrame;
+		int32_t TrapFrame;
 		RTTIType TrapObjType;
 		TrapObjectType TrapObject;
 		COORD TrapCoord;

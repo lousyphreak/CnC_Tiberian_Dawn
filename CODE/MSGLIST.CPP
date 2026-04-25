@@ -543,7 +543,7 @@ int MessageListClass::Manage (void)
 		/*.....................................................................
 		If this message's time is up, remove it from the list
 		.....................................................................*/
-		if (txtlabel->UserData != 0 && now >= 0 && static_cast<unsigned long>(now) > txtlabel->UserData) {
+		if (txtlabel->UserData != 0 && now >= 0 && static_cast<uint32_t>(now) > txtlabel->UserData) {
 			/*..................................................................
 			If we're about to delete the edit message, clear our edit message
 			values.

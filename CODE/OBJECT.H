@@ -222,7 +222,7 @@ class ObjectClass : public AbstractClass
 		**	AI.
 		*/
 		virtual BuildingClass * Who_Can_Build_Me(bool intheory, bool legal) const;
-		virtual RadioMessageType Receive_Message(RadioClass * from, RadioMessageType message, long & param);
+		virtual RadioMessageType Receive_Message(RadioClass * from, RadioMessageType message, int32_t & param);
 		virtual bool Revealed(HouseClass * house);
 		virtual void Repair(int );
 		virtual void Sell_Back(int );

@@ -158,7 +158,7 @@ void CreditClass::AI(bool forced)
 		**	Determine the amount to change the display toward the
 		**	desired value.
 		*/
-		long adder = Credits - Current;
+		int32_t adder = Credits - Current;
 		adder = ABS(adder);
 		adder >>= 5;
 		adder = Bound(adder, 1L, 71+72);

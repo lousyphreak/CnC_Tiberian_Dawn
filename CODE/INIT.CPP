@@ -1477,7 +1477,7 @@ bool Select_Game(bool fade)
 	**	the address of the random seed.  (Currently not used.)
 	*/
 	srand(0);
-	RandSeedPtr = (long *)Get_EAX();
+	RandSeedPtr = &RandNumb;
 
 	/*
 	**	Initialize the random number Seed.  For multiplayer, this will have been done
@@ -2751,7 +2751,7 @@ void Load_Recording_Values(void)
  * HISTORY:                                                                                    *
  *   08/19/1995 JLB : Created.                                                                 *
  *=============================================================================================*/
-long Obfuscate(char const * string)
+uint32_t Obfuscate(char const * string)
 {
 	char buffer[128];
 

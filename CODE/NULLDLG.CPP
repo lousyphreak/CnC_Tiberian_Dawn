@@ -176,7 +176,7 @@ void Shutdown_Modem( void )
  *=========================================================================*/
 void Modem_Signoff( void )
 {
-	unsigned long starttime;
+	uint32_t starttime;
 	EventClass event;
 
 	if (!PlaybackGame) {
@@ -227,7 +227,7 @@ int Test_Null_Modem( void )
 	KeyNumType input;
 
 	int retval;
-	unsigned long starttime;
+	uint32_t starttime;
 	int packetlen;
 
 	int x,y,width,height;					// dialog dimensions
@@ -573,8 +573,8 @@ static int Reconnect_Null_Modem( void )
 	KeyNumType input;
 
 	int retval;
-	unsigned long starttime;
-	unsigned long lastmsgtime;
+	uint32_t starttime;
+	uint32_t lastmsgtime;
 	int packetlen;
 
 	int x,y,width,height;					// dialog dimensions
@@ -3267,18 +3267,18 @@ int Com_Scenario_Dialog(void)
 	int i;
 	int version;
 	char txt[80];
-	unsigned long starttime;
-	unsigned long timingtime;
-	unsigned long lastmsgtime;
-	unsigned long lastredrawtime;
-	unsigned long transmittime = 0;
-	unsigned long theirresponsetime;
+	uint32_t starttime;
+	uint32_t timingtime;
+	uint32_t lastmsgtime;
+	uint32_t lastredrawtime;
+	uint32_t transmittime = 0;
+	uint32_t theirresponsetime;
 	int packetlen;
 	static int first_time = 1;
 	bool oppscorescreen = false;
 	bool gameoptions = false;
 	EventClass *event;					// event ptr
-	unsigned long msg_timeout = 1200;	// init to 20 seconds
+	uint32_t msg_timeout = 1200;	// init to 20 seconds
 
 	int					message_length;
 	int					sent_so_far;
@@ -4028,7 +4028,7 @@ int Com_Scenario_Dialog(void)
 				If 'input' returned 3, it means send the current message.
 				...............................................................*/
 				else if (i==3) {
-					long actual_message_size;
+					int32_t actual_message_size;
 					char *the_string;
 
 					sent_so_far = 0;
@@ -4660,16 +4660,16 @@ int Com_Show_Scenario_Dialog(void)
 	int i;
 	int version;
 	char txt[80];
-	unsigned long starttime;
-	unsigned long timingtime;
-	unsigned long lastmsgtime;
-	unsigned long lastredrawtime;
-	unsigned long transmittime = 0;
+	uint32_t starttime;
+	uint32_t timingtime;
+	uint32_t lastmsgtime;
+	uint32_t lastredrawtime;
+	uint32_t transmittime = 0;
 	int packetlen;
 	bool oppscorescreen = false;
 	bool gameoptions = false;
 	EventClass *event;					// event ptr
-	unsigned long msg_timeout = 1200;	// init to 20 seconds
+	uint32_t msg_timeout = 1200;	// init to 20 seconds
 
 	int					message_length;
 	int					sent_so_far;
@@ -5213,7 +5213,7 @@ int Com_Show_Scenario_Dialog(void)
 							If 'input' returned 3, it means send the current message.
 							...............................................................*/
 							if (i==3) {
-								long actual_message_size;
+								int32_t actual_message_size;
 								char *the_string;
 
 								sent_so_far = 0;
@@ -7175,17 +7175,17 @@ int Com_Fake_Scenario_Dialog(void)
 	int rc;
 	int recsignedoff = false;
 	int version;
-	unsigned long starttime;
-	unsigned long timingtime;
-	unsigned long lastmsgtime;
-	unsigned long lastredrawtime;
-	unsigned long transmittime = 0;
-	unsigned long theirresponsetime;
+	uint32_t starttime;
+	uint32_t timingtime;
+	uint32_t lastmsgtime;
+	uint32_t lastredrawtime;
+	uint32_t transmittime = 0;
+	uint32_t theirresponsetime;
 	int packetlen;
 	bool oppscorescreen = false;
 	bool gameoptions = false;
 	EventClass *event;					// event ptr
-	unsigned long msg_timeout = 60*60;	// init to 60 seconds
+	uint32_t msg_timeout = 60*60;	// init to 60 seconds
 
 	int 	factor 		= (SeenBuff.Get_Width() == 320) ? 1 : 2;
 
@@ -7693,16 +7693,16 @@ int Com_Show_Fake_Scenario_Dialog(void)
 	int recsignedoff = 0;
 	int i;
 	int version;
-	unsigned long starttime;
-	unsigned long timingtime;
-	unsigned long lastmsgtime;
-	unsigned long lastredrawtime;
-	unsigned long transmittime = 0;
+	uint32_t starttime;
+	uint32_t timingtime;
+	uint32_t lastmsgtime;
+	uint32_t lastredrawtime;
+	uint32_t transmittime = 0;
 	int packetlen;
 	bool oppscorescreen = false;
 	bool gameoptions = false;
 	EventClass *event;					// event ptr
-	unsigned long msg_timeout = 60*60;	// init to 60 seconds
+	uint32_t msg_timeout = 60*60;	// init to 60 seconds
 
 
 	int 	factor 		= (SeenBuff.Get_Width() == 320) ? 1 : 2;
@@ -8165,9 +8165,6 @@ int Com_Show_Fake_Scenario_Dialog(void)
 
 
 #endif	//(0)
-
-
-
 
 
 

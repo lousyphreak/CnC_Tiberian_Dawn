@@ -149,7 +149,7 @@ int NullModemConnClass::Send (char *buf, int buflen)
 	//int status;
 	int *ibuf;
 	SerialHeaderType *header;
-	unsigned long sendlen;
+	uint32_t sendlen;
 
 
 	/*------------------------------------------------------------------------
@@ -262,4 +262,3 @@ int NullModemConnClass::Packet_Overhead_Size ( void )
 	return( (PACKET_SERIAL_OVERHEAD_SIZE + sizeof(CommHeaderType)) );
 
 }	/* end of Packet_Overhead_Size */
-

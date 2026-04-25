@@ -820,7 +820,7 @@ static void Message_Input(KeyNumType &input)
 
 		message_length = strlen(Messages.Get_Edit_Buf());
 
-		long actual_message_size;
+		int32_t actual_message_size;
 		char *the_string;
 
 		if (Is_Network_Game(GameToPlay)) {
@@ -1697,10 +1697,10 @@ void Go_Editor(bool flag)
 #define VQ_THREAD_BUFFER_CHUNK VQ_THREAD_BUFFER_SIZE/4
 unsigned char *VQThreadBuffer = NULL;
 volatile bool ThreadReading = false;
-unsigned long VQThreadBlockHead;
-unsigned long VQThreadBlockTail;
-unsigned long VQBytesLeft;
-unsigned long VQBytesRead;
+uint32_t VQThreadBlockHead;
+uint32_t VQThreadBlockTail;
+uint32_t VQBytesLeft;
+uint32_t VQBytesRead;
 
 
 void Init_VQ_Threading(CCFileClass *file)
@@ -1725,12 +1725,12 @@ void Cleanup_VQ_Threading(void)
 	}
 }
 
-unsigned long Thread_Read(void *file)
+uint32_t Thread_Read(void *file)
 {
 	int bytes_to_read;
 	int left_to_read;
 	int read_this_time;
-	unsigned long head;
+	uint32_t head;
 	int sleep_time;
 
 	CCFileClass *ccfile = (CCFileClass*)file;
@@ -1819,7 +1819,7 @@ int32_t VQ_Thread_Read(CCFileClass *file, void *buffer, int32_t bytes)
 	VQThreadBlockTail += bytes_to_read;
 	VQThreadBlockTail &= VQ_THREAD_BUFFER_SIZE - 1;
 
-	unsigned long head = VQThreadBlockHead;
+	uint32_t head = VQThreadBlockHead;
 	if (head<VQThreadBlockTail) head+= VQ_THREAD_BUFFER_SIZE;
 	if (head-VQThreadBlockTail < VQ_THREAD_BUFFER_CHUNK && !ThreadReading) Read_VQ_Thread_Block(file);
 
@@ -3709,7 +3709,7 @@ bool Force_CD_Available(int cd)
  * HISTORY:                                                                *
  *   08/11/1995 PWG : Created.                                             *
  *=========================================================================*/
-unsigned long Disk_Space_Available(void)
+uint32_t Disk_Space_Available(void)
 {
 	std::error_code error;
 	const std::filesystem::path current_path = std::filesystem::current_path(error);
@@ -3722,12 +3722,12 @@ unsigned long Disk_Space_Available(void)
 		return(0);
 	}
 
-	const unsigned long long available = static_cast<unsigned long long>(space_info.available);
-	if (available > static_cast<unsigned long long>(ULONG_MAX)) {
-		return(ULONG_MAX);
+	const uint64_t available = static_cast<uint64_t>(space_info.available);
+	if (available > static_cast<uint64_t>(UINT32_MAX)) {
+		return(UINT32_MAX);
 	}
 
-	return(static_cast<unsigned long>(available));
+	return(static_cast<uint32_t>(available));
 }
 
 
@@ -3780,9 +3780,9 @@ static void Do_Record_Playback(void)
 	int i;
 	COORDINATE coord;
 	ObjectClass *obj;
-	unsigned long sum;
-	unsigned long sum2;
-	unsigned long ltgt;
+	uint32_t sum;
+	uint32_t sum2;
+	uint32_t ltgt;
 
 	/*------------------------------------------------------------------------
 	Record a game
@@ -3813,7 +3813,7 @@ static void Do_Record_Playback(void)
 		.....................................................................*/
 		sum = 0;
 		for (i = 0; i < count; i++) {
-			ltgt = (unsigned long)(CurrentObject[i]->As_Target());
+			ltgt = static_cast<uint32_t>(CurrentObject[i]->As_Target());
 			sum += ltgt;
 		}
 		RecordFile.Write (&sum, sizeof(sum));
@@ -3854,7 +3854,7 @@ static void Do_Record_Playback(void)
 			..................................................................*/
 			sum = 0;
 			for (i = 0; i < CurrentObject.Count(); i++) {
-				ltgt = (unsigned long)(CurrentObject[i]->As_Target());
+				ltgt = static_cast<uint32_t>(CurrentObject[i]->As_Target());
 				sum += ltgt;
 			}
 

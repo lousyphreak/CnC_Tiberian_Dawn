@@ -64,7 +64,7 @@ class	Instance_Class {
 	---------------------------- Public Interface ----------------------------
 	*/
 	public:
-		using CallbackProc = BOOL (*)(LPBYTE, long);
+		using CallbackProc = BOOL (*)(LPBYTE, int32_t);
 
 		/*.....................................................................
 		Constructor:

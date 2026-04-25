@@ -1346,7 +1346,7 @@ UnitTypeClass::UnitTypeClass(UnitType type,
 				char const *ininame,
 				AnimType exp,
 				unsigned char level,
-				long pre,
+				uint32_t pre,
 				bool is_goodie,
 				bool is_leader,
 				bool is_eight,
@@ -1767,7 +1767,7 @@ BuildingClass * UnitTypeClass::Who_Can_Build_Me(bool intheory, bool legal, House
 				building->House->Class->House == house &&
 				building->Class->ToBuild == RTTI_UNITTYPE &&
 				building->Mission != MISSION_DECONSTRUCTION &&
-				((1L << building->ActLike) & Ownable) &&
+				((1U << building->ActLike) & Ownable) &&
 				(!legal || building->House->Can_Build(Type, building->ActLike)) &&
 				(intheory || !building->In_Radio_Contact())) {
 

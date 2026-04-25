@@ -106,7 +106,7 @@ int Extract_Shape_Count(VOID const *buffer)
 VOID * Extract_Shape(VOID const *buffer, int shape)
 {
 	ShapeBlock_Type *block = (ShapeBlock_Type*) buffer;
-	long offset;			// Offset of shape data, from start of block
+	int32_t offset;			// Offset of shape data, from start of block
 	char *bytebuf = (char*) buffer;
 
 	/*
@@ -124,7 +124,7 @@ VOID * Extract_Shape(VOID const *buffer, int shape)
 
 
 
-unsigned long CCFocusMessage = WM_USER+50;	//Private message for receiving application focus
+uint32_t CCFocusMessage = WM_USER+50;	//Private message for receiving application focus
 extern	void VQA_PauseAudio(void);
 extern	void VQA_ResumeAudio(void);
 
@@ -601,7 +601,7 @@ void Memory_Error_Handler(void)
 
 
 
-GraphicBufferClass* Read_PCX_File(char* name, char* Palette, void *Buff, long Size);
+GraphicBufferClass* Read_PCX_File(char* name, char* Palette, void *Buff, int32_t Size);
 
 
 
@@ -675,7 +675,7 @@ void Load_Title_Screen(char const *name, GraphicViewPortClass *video_page, unsig
 							 }
 
 
-GraphicBufferClass* Read_PCX_File(char* name, char* palette, void *Buff, long Size)
+GraphicBufferClass* Read_PCX_File(char* name, char* palette, void *Buff, int32_t Size)
 {
 	int						i, j;
 	unsigned					rle;

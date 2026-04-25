@@ -70,8 +70,8 @@
  *   12/20/1994 BR : Created.                                              *
  *=========================================================================*/
 NonSequencedConnClass::NonSequencedConnClass (int numsend, int numreceive,
-	int maxlen, unsigned short magicnum, unsigned long retry_delta,
-	unsigned long max_retries, unsigned long timeout) :
+	int maxlen, unsigned short magicnum, uint32_t retry_delta,
+	uint32_t max_retries, uint32_t timeout) :
 	ConnectionClass (maxlen, magicnum, retry_delta, max_retries, timeout)
 {
 	/*------------------------------------------------------------------------
@@ -512,7 +512,7 @@ int NonSequencedConnClass::Service_Send_Queue (void)
 	int num_entries;
 	SendQueueType *send_entry;						// ptr to send queue entry
 	CommHeaderType *packet_hdr;					// packet header
-	unsigned long curtime;							// current time
+	uint32_t curtime;							// current time
 	int bad_conn = 0;
 
 	/*------------------------------------------------------------------------
@@ -612,12 +612,12 @@ int NonSequencedConnClass::Service_Send_Queue (void)
 			/*..................................................................
 			Perform error detection, based on either MaxRetries or Timeout
 			..................................................................*/
-			if (MaxRetries != static_cast<unsigned long>(-1) && send_entry->SendCount > MaxRetries) {
+			if (MaxRetries != UINT32_MAX && send_entry->SendCount > MaxRetries) {
 // Smart_Printf( "Max Retries!!! %d !!! \n", MaxRetries );
 				bad_conn = 1;
 			}
 
-			if (Timeout != static_cast<unsigned long>(-1) &&
+			if (Timeout != UINT32_MAX &&
 				(send_entry->LastTime - send_entry->FirstTime) > Timeout) {
 // Smart_Printf( "Timed out!!! Time %d, Timeout %d, buflen %d !!! \n",
 //	(send_entry->LastTime - send_entry->FirstTime), Timeout,

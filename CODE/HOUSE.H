@@ -38,6 +38,8 @@
 #ifndef HOUSE_H
 #define HOUSE_H
 
+#include <cstdint>
+
 #include	"TYPE.H"
 #include	"REGION.H"
 #include	"VECTOR.H"
@@ -203,10 +205,10 @@ class HouseClass {
 		**	accumulated over time, the "New" element contains the under-construction
 		**	version.
 		*/
-		unsigned long BScan;
-		unsigned long ActiveBScan;
-		unsigned long NewBScan;
-		unsigned long NewActiveBScan;
+		uint32_t BScan;
+		uint32_t ActiveBScan;
+		uint32_t NewBScan;
+		uint32_t NewActiveBScan;
 
 		/*
 		**	This is the last working scan bits for units. For every existing unit
@@ -214,26 +216,26 @@ class HouseClass {
 		**	the scan bits are being constructed, they are built into the "New" element
 		**	and then duplicated into the regular element at the end of every logic cycle.
 		*/
-		unsigned long UScan;
-		unsigned long ActiveUScan;
-		unsigned long NewUScan;
-		unsigned long NewActiveUScan;
+		uint32_t UScan;
+		uint32_t ActiveUScan;
+		uint32_t NewUScan;
+		uint32_t NewActiveUScan;
 
 		/*
 		**	Infantry type existence bits. Similar to unit and building bits.
 		*/
-		unsigned long IScan;
-		unsigned long ActiveIScan;
-		unsigned long NewIScan;
-		unsigned long NewActiveIScan;
+		uint32_t IScan;
+		uint32_t ActiveIScan;
+		uint32_t NewIScan;
+		uint32_t NewActiveIScan;
 
 		/*
 		**	Aircraft type existence bits. Similar to unit and building buts.
 		*/
-		unsigned long AScan;
-		unsigned long ActiveAScan;
-		unsigned long NewAScan;
-		unsigned long NewActiveAScan;
+		uint32_t AScan;
+		uint32_t ActiveAScan;
+		uint32_t NewAScan;
+		uint32_t NewActiveAScan;
 
 		/*
 		**	Record of gains and losses for this house during the course of the
@@ -259,10 +261,10 @@ class HouseClass {
 		/*
 		**	This is the running total of the number of credits this house has accumulated.
 		*/
-		long Tiberium;
-		long Credits;
-		long InitialCredits;
-		long Capacity;
+		int32_t Tiberium;
+		int32_t Credits;
+		int32_t InitialCredits;
+		int32_t Capacity;
 
 		/*
 		** Did this house lose via resignation?
@@ -420,7 +422,7 @@ class HouseClass {
 		TechnoTypeClass const *  Suggest_New_Object(RTTIType objectype) const;
 		bool  Does_Enemy_Building_Exist(StructType) const;
 		void  Harvested(unsigned tiberium);
-		long  Available_Money(void) const;
+		int32_t  Available_Money(void) const;
 		void  Spend_Money(unsigned money);
 		void  Refund_Money(unsigned money);
 		void  Attacked(void);
@@ -521,7 +523,7 @@ class HouseClass {
 		void MPlayer_Defeated(void);
 
 	private:
-		void Silo_Redraw_Check(long oldtib, long oldcap);
+		void Silo_Redraw_Check(int32_t oldtib, int32_t oldcap);
 
 		/*
 		**	This is a bit field record of all the other houses that are allies with
@@ -567,4 +569,3 @@ class HouseClass {
 		TCountDownTimerClass SpeakMaxedDelay;
 };
 #endif
-

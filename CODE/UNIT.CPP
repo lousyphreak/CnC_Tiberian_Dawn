@@ -580,7 +580,7 @@ FireErrorType UnitClass::Can_Fire(TARGET target, int which) const
  * HISTORY:                                                                                    *
  *   05/22/1994 JLB : Created.                                                                 *
  *=============================================================================================*/
-RadioMessageType UnitClass::Receive_Message(RadioClass * from, RadioMessageType message, long & param)
+RadioMessageType UnitClass::Receive_Message(RadioClass * from, RadioMessageType message, int32_t & param)
 {
 	Validate();
 	switch (message) {
@@ -646,7 +646,7 @@ RadioMessageType UnitClass::Receive_Message(RadioClass * from, RadioMessageType 
 						if (cell == 0) {
 							Transmit_Message(RADIO_OVER_OUT, from);
 						} else {
-							param = (long)::As_Target(cell);
+							param = static_cast<int32_t>(::As_Target(cell));
 							Do_Turn(dir);
 
 							/*
@@ -671,7 +671,7 @@ RadioMessageType UnitClass::Receive_Message(RadioClass * from, RadioMessageType 
 							*/
 							if (Transmit_Message(RADIO_MOVE_HERE, param, from) == RADIO_YEA_NOW_WHAT) {
 								if (Is_Door_Open()) {
-									param = (long)As_Target();
+									param = static_cast<int32_t>(As_Target());
 									Transmit_Message(RADIO_TETHER);
 									if (Transmit_Message(RADIO_MOVE_HERE, param, from) != RADIO_ROGER) {
 										Transmit_Message(RADIO_OVER_OUT, from);
@@ -739,8 +739,8 @@ bool UnitClass::Unlimbo(COORDINATE coord, DirType dir)
 		**	Ensure that the owning house knows about the
 		**	new object.
 		*/
-		House->UScan |= (1L << Class->Type);
-		House->ActiveUScan |= (1L << Class->Type);
+		House->UScan |= (1U << Class->Type);
+		House->ActiveUScan |= (1U << Class->Type);
 
 		/*
 		**	If it starts off the edge of the map, then it already starts cloaked.

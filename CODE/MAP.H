@@ -71,11 +71,11 @@ class MapClass: public GScreenClass
 		void  Pick_Up(CELL cell, ObjectClass * object);
 		void  Overlap_Down(CELL cell, ObjectClass * object);
 		void  Overlap_Up(CELL cell, ObjectClass * object);
-		bool  Read_Binary(char const *root, unsigned long *crc);
+		bool  Read_Binary(char const *root, uint32_t *crc);
 		bool  Write_Binary(char const *root);
 		bool  Place_Random_Crate(void);
 
-		long  Overpass(void);
+		int32_t  Overpass(void);
 
 		virtual void Logic(void);
 		virtual void Set_Map_Dimensions(int x, int y, int w, int h);
@@ -104,7 +104,7 @@ class MapClass: public GScreenClass
 		/*
 		**	This is the total value of all harvestable Tiberium on the map.
 		*/
-		long TotalValue;
+		int32_t TotalValue;
 
 	protected:
 

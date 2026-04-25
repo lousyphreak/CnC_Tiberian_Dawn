@@ -86,7 +86,7 @@ extern void 			CCDebugString (char const *string);
  * HISTORY:                                                                                    *
  *    6/8/96 3:19PM ST : Created                                                               *
  *=============================================================================================*/
-BOOL CALLBACK DDE_Callback (unsigned char *data, long length)
+BOOL CALLBACK DDE_Callback (unsigned char *data, int32_t length)
 {
 	return (DDEServer.Callback(data, length));
 }
@@ -200,7 +200,7 @@ DDEServerClass::~DDEServerClass(void)
  * HISTORY:                                                                                    *
  *    6/8/96 3:21PM ST : Created                                                               *
  *=============================================================================================*/
-BOOL DDEServerClass::Callback(unsigned char *data, long length)
+BOOL DDEServerClass::Callback(unsigned char *data, int32_t length)
 {
 
 	/*

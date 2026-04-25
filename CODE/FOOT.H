@@ -203,7 +203,7 @@ class FootClass :	public TechnoClass
 		*/
 		bool Basic_Path(void);
 
-		virtual RadioMessageType Receive_Message(RadioClass * from, RadioMessageType message, long & param);
+		virtual RadioMessageType Receive_Message(RadioClass * from, RadioMessageType message, int32_t & param);
 		virtual bool Can_Demolish(void) const;
 
 		/*

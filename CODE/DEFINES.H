@@ -866,33 +866,33 @@ typedef enum StructType {
 
 inline StructType operator++(StructType &, int);
 
-#define	STRUCTF_NONE				0L
-#define	STRUCTF_ADVANCED_POWER	(1L << STRUCT_ADVANCED_POWER)
-#define	STRUCTF_REPAIR				(1L << STRUCT_REPAIR)
-#define	STRUCTF_EYE					(1L << STRUCT_EYE)
-#define	STRUCTF_TEMPLE				(1L << STRUCT_TEMPLE)
-#define	STRUCTF_HAND				(1L << STRUCT_HAND)
-#define	STRUCTF_BIO_LAB			(1L << STRUCT_BIO_LAB)
-#define	STRUCTF_OBELISK			(1L << STRUCT_OBELISK)
-#define	STRUCTF_ATOWER				(1L << STRUCT_ATOWER)
-#define	STRUCTF_WEAP				(1L << STRUCT_WEAP)
-#define	STRUCTF_GTOWER				(1L << STRUCT_GTOWER)
-#define	STRUCTF_RADAR				(1L << STRUCT_RADAR)
-#define	STRUCTF_TURRET				(1L << STRUCT_TURRET)
-#define	STRUCTF_CIV1				(1L << STRUCT_CIV1)
-#define	STRUCTF_CIV2				(1L << STRUCT_CIV2)
-#define	STRUCTF_CIV3				(1L << STRUCT_CIV3)
-#define	STRUCTF_CONST				(1L << STRUCT_CONST)
-#define	STRUCTF_REFINERY			(1L << STRUCT_REFINERY)
-#define	STRUCTF_STORAGE			(1L << STRUCT_STORAGE)
-#define	STRUCTF_HELIPAD			(1L << STRUCT_HELIPAD)
-#define	STRUCTF_SAM					(1L << STRUCT_SAM)
-#define	STRUCTF_AIRSTRIP			(1L << STRUCT_AIRSTRIP)
-#define	STRUCTF_POWER				(1L << STRUCT_POWER)
-#define	STRUCTF_HOSPITAL			(1L << STRUCT_HOSPITAL)
-#define	STRUCTF_BARRACKS			(1L << STRUCT_BARRACKS)
-#define	STRUCTF_TANKER				(1L << STRUCT_TANKER)
-#define	STRUCTF_MISSION			(1L << STRUCT_MISSION)
+#define	STRUCTF_NONE				0U
+#define	STRUCTF_ADVANCED_POWER	(1U << STRUCT_ADVANCED_POWER)
+#define	STRUCTF_REPAIR				(1U << STRUCT_REPAIR)
+#define	STRUCTF_EYE					(1U << STRUCT_EYE)
+#define	STRUCTF_TEMPLE				(1U << STRUCT_TEMPLE)
+#define	STRUCTF_HAND				(1U << STRUCT_HAND)
+#define	STRUCTF_BIO_LAB			(1U << STRUCT_BIO_LAB)
+#define	STRUCTF_OBELISK			(1U << STRUCT_OBELISK)
+#define	STRUCTF_ATOWER				(1U << STRUCT_ATOWER)
+#define	STRUCTF_WEAP				(1U << STRUCT_WEAP)
+#define	STRUCTF_GTOWER				(1U << STRUCT_GTOWER)
+#define	STRUCTF_RADAR				(1U << STRUCT_RADAR)
+#define	STRUCTF_TURRET				(1U << STRUCT_TURRET)
+#define	STRUCTF_CIV1				(1U << STRUCT_CIV1)
+#define	STRUCTF_CIV2				(1U << STRUCT_CIV2)
+#define	STRUCTF_CIV3				(1U << STRUCT_CIV3)
+#define	STRUCTF_CONST				(1U << STRUCT_CONST)
+#define	STRUCTF_REFINERY			(1U << STRUCT_REFINERY)
+#define	STRUCTF_STORAGE			(1U << STRUCT_STORAGE)
+#define	STRUCTF_HELIPAD			(1U << STRUCT_HELIPAD)
+#define	STRUCTF_SAM					(1U << STRUCT_SAM)
+#define	STRUCTF_AIRSTRIP			(1U << STRUCT_AIRSTRIP)
+#define	STRUCTF_POWER				(1U << STRUCT_POWER)
+#define	STRUCTF_HOSPITAL			(1U << STRUCT_HOSPITAL)
+#define	STRUCTF_BARRACKS			(1U << STRUCT_BARRACKS)
+#define	STRUCTF_TANKER				(1U << STRUCT_TANKER)
+#define	STRUCTF_MISSION			(1U << STRUCT_MISSION)
 
 
 /**********************************************************************
@@ -1010,28 +1010,28 @@ typedef enum UnitType{
 
 inline UnitType operator++(UnitType &, int);
 
-#define	UNITF_HTANK			(1L<<UNIT_HTANK)
-#define	UNITF_MTANK			(1L<<UNIT_MTANK)
-#define	UNITF_LTANK			(1L<<UNIT_LTANK)
-#define	UNITF_STANK			(1L<<UNIT_STANK)
-#define	UNITF_FTANK			(1L<<UNIT_FTANK)
-#define	UNITF_APC			(1L<<UNIT_APC)
-#define	UNITF_MLRS			(1L<<UNIT_MLRS)
-#define	UNITF_JEEP			(1L<<UNIT_JEEP)
-#define	UNITF_BUGGY			(1L<<UNIT_BUGGY)
-#define	UNITF_HARVESTER	(1L<<UNIT_HARVESTER)
-#define	UNITF_ARTY			(1L<<UNIT_ARTY)
-#define	UNITF_MSAM			(1L<<UNIT_MSAM)
-#define	UNITF_HOVER			(1L<<UNIT_HOVER)
-#define	UNITF_MHQ			(1L<<UNIT_MHQ)
-#define	UNITF_GUNBOAT		(1L<<UNIT_GUNBOAT)
-#define	UNITF_MCV			(1L<<UNIT_MCV)
-#define	UNITF_BIKE			(1L<<UNIT_BIKE)
-#define	UNITF_VICE			(1L<<UNIT_VICE)
-#define	UNITF_TRIC			(1L<<UNIT_TRIC)
-#define	UNITF_TREX			(1L<<UNIT_TREX)
-#define	UNITF_RAPT			(1L<<UNIT_RAPT)
-#define	UNITF_STEG			(1L<<UNIT_STEG)
+#define	UNITF_HTANK			(1U << UNIT_HTANK)
+#define	UNITF_MTANK			(1U << UNIT_MTANK)
+#define	UNITF_LTANK			(1U << UNIT_LTANK)
+#define	UNITF_STANK			(1U << UNIT_STANK)
+#define	UNITF_FTANK			(1U << UNIT_FTANK)
+#define	UNITF_APC			(1U << UNIT_APC)
+#define	UNITF_MLRS			(1U << UNIT_MLRS)
+#define	UNITF_JEEP			(1U << UNIT_JEEP)
+#define	UNITF_BUGGY			(1U << UNIT_BUGGY)
+#define	UNITF_HARVESTER	(1U << UNIT_HARVESTER)
+#define	UNITF_ARTY			(1U << UNIT_ARTY)
+#define	UNITF_MSAM			(1U << UNIT_MSAM)
+#define	UNITF_HOVER			(1U << UNIT_HOVER)
+#define	UNITF_MHQ			(1U << UNIT_MHQ)
+#define	UNITF_GUNBOAT		(1U << UNIT_GUNBOAT)
+#define	UNITF_MCV			(1U << UNIT_MCV)
+#define	UNITF_BIKE			(1U << UNIT_BIKE)
+#define	UNITF_VICE			(1U << UNIT_VICE)
+#define	UNITF_TRIC			(1U << UNIT_TRIC)
+#define	UNITF_TREX			(1U << UNIT_TREX)
+#define	UNITF_RAPT			(1U << UNIT_RAPT)
+#define	UNITF_STEG			(1U << UNIT_STEG)
 
 
 /**********************************************************************
@@ -1050,11 +1050,11 @@ typedef enum AircraftType {
 	AIRCRAFT_FIRST=0
 } AircraftType;
 
-#define	AIRCRAFTF_TRANSPORT	(1L << AIRCRAFT_TRANSPORT)
-#define	AIRCRAFTF_A10			(1L << AIRCRAFT_A10)
-#define	AIRCRAFTF_HELICOPTER	(1L << AIRCRAFT_HELICOPTER)
-#define	AIRCRAFTF_CARGO		(1L << AIRCRAFT_CARGO)
-#define	AIRCRAFTF_ORCA			(1L << AIRCRAFT_ORCA)
+#define	AIRCRAFTF_TRANSPORT	(1U << AIRCRAFT_TRANSPORT)
+#define	AIRCRAFTF_A10			(1U << AIRCRAFT_A10)
+#define	AIRCRAFTF_HELICOPTER	(1U << AIRCRAFT_HELICOPTER)
+#define	AIRCRAFTF_CARGO		(1U << AIRCRAFT_CARGO)
+#define	AIRCRAFTF_ORCA			(1U << AIRCRAFT_ORCA)
 
 inline AircraftType operator++(AircraftType &, int);
 
@@ -2414,7 +2414,7 @@ typedef struct {
 	int				Cost;					// Accumulated terrain cost.
 	int				Length;				// Command string length.
 	FacingType		*Command;			// Pointer to command string.
-	unsigned long	*Overlap;			// Pointer to overlap list
+	uint32_t	*Overlap;			// Pointer to overlap list
 	CELL				LastOverlap;		// stores position of last overlap
 	CELL				LastFixup;			// stores position of last overlap
 } PathType;
@@ -2631,7 +2631,7 @@ typedef struct {
 	int Seed;										// random number seed
 	SpecialClass Special;						// command-line options
 	unsigned int GameSpeed;						// Game Speed
-	unsigned long ResponseTime;				// packet response time
+	uint32_t ResponseTime;				// packet response time
 	char Message[COMPAT_MESSAGE_LENGTH];	// inter-player message
 	unsigned char ID;								// ID of sender of message
 } SerialPacketType;
@@ -2685,7 +2685,7 @@ typedef struct {
 		struct {
 			HousesType House;						// player's House
 			unsigned int Color;					// player's color
-			unsigned long NameCRC;				// CRC of player's game's name
+			uint32_t NameCRC;				// CRC of player's game's name
 		} PlayerInfo;
 		struct {
 			unsigned char Scenario;				// Scenario #
@@ -2703,7 +2703,7 @@ typedef struct {
 		struct {
 			char Buf[COMPAT_MESSAGE_LENGTH];		// inter-user message
 			unsigned char ID;						// ID of sender of message
-			unsigned long NameCRC;				// CRC of sender's Game Name
+			uint32_t NameCRC;				// CRC of sender's Game Name
 		} Message;
 		struct {
 			int OneWay;								// one-way response time

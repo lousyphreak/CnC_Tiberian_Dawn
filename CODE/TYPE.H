@@ -38,6 +38,8 @@
 #ifndef TYPE_H
 #define TYPE_H
 
+#include <cstdint>
+
 #include	"MISSION.H"
 #include	"TARGET.H"
 
@@ -476,7 +478,7 @@ class TechnoTypeClass : public ObjectTypeClass
 		**	multi-player or special events.
 		*/
 		unsigned char Level;
-		long Pre;
+		uint32_t Pre;
 
 		/*
 		**	The risk and reward values are used to determine targets and paths
@@ -524,7 +526,7 @@ class TechnoTypeClass : public ObjectTypeClass
 				int name,
 				char const *ininame,
 				unsigned char level,
-				long pre,
+				uint32_t pre,
 				bool is_leader,
 				bool is_scanner,
 				bool is_nominal,
@@ -665,7 +667,7 @@ class BuildingTypeClass : public TechnoTypeClass {
 		**	left by the unit type ID. If the corresponding bit is set, then that
 		**	unit type can enter this building.
 		*/
-		unsigned long CanEnter;
+		uint32_t CanEnter;
 
 		/*
 		**	This is the starting facing to give this building when it first
@@ -724,7 +726,7 @@ class BuildingTypeClass : public TechnoTypeClass {
 						char const *ininame,
 						COORDINATE exitpoint,
 						unsigned char level,
-						long pre,
+						uint32_t pre,
 						bool is_scanner,
 						bool is_regulated,
 						bool is_bibbed,
@@ -758,7 +760,7 @@ class BuildingTypeClass : public TechnoTypeClass {
 						WeaponType primary,
 						WeaponType secondary,
 						ArmorType armor,
-						unsigned long canenter,
+						uint32_t canenter,
 						unsigned capacity,
 						int power,
 						int drain,
@@ -970,7 +972,7 @@ class UnitTypeClass : public TechnoTypeClass
 						char const *ininame,
 						AnimType exp,
 						unsigned char level,
-						long pre,
+						uint32_t pre,
 						bool is_goodie,
 						bool is_leader,
 						bool is_eight,
@@ -1117,7 +1119,7 @@ class InfantryTypeClass : public TechnoTypeClass
 						int name,
 						char const *ininame,
 						unsigned char level,
-						long pre,
+						uint32_t pre,
 						bool is_female,
 						bool is_leader,
 						bool is_crawling,
@@ -1713,7 +1715,7 @@ class AircraftTypeClass : public TechnoTypeClass
 				int name,
 				char const *ininame,
 				unsigned char level,
-				long pre,
+				uint32_t pre,
 				bool is_leader,
 				bool is_twoshooter,
 				bool is_transporter,

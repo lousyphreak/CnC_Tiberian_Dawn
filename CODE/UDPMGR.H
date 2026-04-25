@@ -116,6 +116,8 @@
 #ifndef IPXMANAGER_H
 #define IPXMANAGER_H
 
+#include <stdint.h>
+
 
 /*
 ********************************* Includes **********************************
@@ -145,7 +147,7 @@ it's stored in protected-mode memory.
 ---------------------------------------------------------------------------*/
 extern "C" {
 	void *Get_RM_IPX_Address(void);
-	long Get_RM_IPX_Size(void);
+	uint32_t Get_RM_IPX_Size(void);
 }
 
 /*
@@ -169,8 +171,8 @@ class UDPManagerClass : public ConnManClass
 		.....................................................................*/
 		int Init (void);
 		int Is_IPX(void);
-		virtual void Set_Timing (unsigned long retrydelta, unsigned long maxretries,
-			unsigned long timeout);
+		virtual void Set_Timing (uint32_t retrydelta, uint32_t maxretries,
+			uint32_t timeout);
 		void Set_Bridge(NetNumType bridge);
 
 		/*.....................................................................
@@ -228,8 +230,8 @@ class UDPManagerClass : public ConnManClass
 		Routines to return the largest average queue response time, and to
 		reset the response time for all queues.
 		.....................................................................*/
-		virtual unsigned long Response_Time(void);
-		unsigned long Global_Response_Time(void);
+		virtual uint32_t Response_Time(void);
+		uint32_t Global_Response_Time(void);
 		virtual void Reset_Response_Time(void);
 
 		/*.....................................................................
@@ -296,9 +298,9 @@ class UDPManagerClass : public ConnManClass
 		/*.....................................................................
 		Timing parameters for all connections
 		.....................................................................*/
-		unsigned long RetryDelta;
-		unsigned long MaxRetries;
-		unsigned long Timeout;
+		uint32_t RetryDelta;
+		uint32_t MaxRetries;
+		uint32_t Timeout;
 
 		/*---------------------------------------------------------------------
 		Real-mode memory pointers and such
@@ -349,7 +351,7 @@ class UDPManagerClass : public ConnManClass
 		This is a real-mode pointer to the address of the real-mode assembly
 		entry point.
 		.....................................................................*/
-		long Handler;
+		uint32_t Handler;
 
 		/*.....................................................................
 		Event Control Block for listening; contained within the real-mode

@@ -146,7 +146,7 @@ class UnitClass :	public TarComClass
 		**	AI.
 		*/
 		virtual DirType Desired_Load_Dir(ObjectClass * passenger, CELL & moveto) const;
-		virtual RadioMessageType Receive_Message(RadioClass * from, RadioMessageType message, long & param);
+		virtual RadioMessageType Receive_Message(RadioClass * from, RadioMessageType message, int32_t & param);
 		virtual void AI(void);
 		virtual int Mission_Attack(void);
 		virtual int Mission_Unload(void);

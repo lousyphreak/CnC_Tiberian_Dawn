@@ -189,7 +189,7 @@ void File_Fatal(char const *message)
  * HISTORY:                                                                                    *
  *   10/17/1994 JLB : Created.                                                                 *
  *=============================================================================================*/
-long Load_Uncompress(FileClass &file, BuffType &uncomp_buff, BuffType &dest_buff, void *reserved_data)
+uint32_t Load_Uncompress(FileClass &file, BuffType &uncomp_buff, BuffType &dest_buff, void *reserved_data)
 {
 	unsigned short	size;
 	void	*sptr = uncomp_buff.Get_Buffer();
@@ -262,7 +262,7 @@ long Load_Uncompress(FileClass &file, BuffType &uncomp_buff, BuffType &dest_buff
 	if (opened) {
 		file.Close();
 	}
-	return((long)size);
+	return(size);
 }
 
 
@@ -286,7 +286,7 @@ long Load_Uncompress(FileClass &file, BuffType &uncomp_buff, BuffType &dest_buff
 void * Load_Alloc_Data(FileClass &file)
 {
 	void *ptr = 0;
-	long size = file.Size();
+	int32_t size = file.Size();
 
 	ptr = new char [size];
 	if (ptr) {
@@ -312,9 +312,9 @@ void * Load_Alloc_Data(FileClass &file)
  * HISTORY:                                                                                    *
  *   04/02/1994 JLB : Created.                                                                 *
  *=============================================================================================*/
-long Translucent_Table_Size(int count)
+uint32_t Translucent_Table_Size(int count)
 {
-	return(256L + (256L * count));
+	return(static_cast<uint32_t>(256 + (256 * count)));
 }
 
 
@@ -425,4 +425,3 @@ void *Conquer_Build_Translucent_Table(void const *palette, TLucentType const *co
 	}
 	return(buffer);
 }
-

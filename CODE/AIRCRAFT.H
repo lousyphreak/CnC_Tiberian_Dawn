@@ -149,7 +149,7 @@ class AircraftClass : public FootClass, public FlyClass
 		*/
 		virtual void AI(void);
 		virtual void Enter_Idle_Mode(bool initial = false);
-		virtual RadioMessageType Receive_Message(RadioClass * from, RadioMessageType message, long & param);
+		virtual RadioMessageType Receive_Message(RadioClass * from, RadioMessageType message, int32_t & param);
 		virtual void Scatter(COORDINATE threat, bool forced=false);
 
 		/*

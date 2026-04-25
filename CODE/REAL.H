@@ -199,7 +199,7 @@ using std::min;
 #include <VQA32/VQAFILE.H>
 
 extern bool GameActive;
-extern long LParam;
+extern int32_t LParam;
 
 #include	"VECTOR.H"
 #include	"HEAP.H"
@@ -303,7 +303,7 @@ typedef struct NodeNameTag {
 		struct {
 			int Version;
 			unsigned char IsOpen;
-			unsigned long LastTime;
+			uint32_t LastTime;
 		} Game;
 		struct {
 			HousesType House;
@@ -374,7 +374,7 @@ void Bubba_Print(char *format,...);
 
 void Heap_Dump_Check( char const *string );
 void Dump_Heap_Pointers( void );
-unsigned long Disk_Space_Available(void);
+uint32_t Disk_Space_Available(void);
 
 void Validate_Error(char const *name);
 void const * Hires_Retrieve(char const *name);
@@ -481,7 +481,7 @@ int Scan_Place_Object(ObjectClass *obj, CELL cell);
 **	INIT.CPP
 */
 void Uninit_Game(void);
-long Obfuscate(char const * string);
+uint32_t Obfuscate(char const * string);
 void Anim_Init(void);
 bool Init_Game(int argc, char *argv[]);
 bool Select_Game(bool fade = false);
@@ -497,8 +497,8 @@ void Load_Recording_Values(void);
 void * Small_Icon(void const * iconptr, int iconnum);
 void Set_Window(int window, int x, int y, int w, int h);
 void * Load_Alloc_Data(FileClass &file);
-long Load_Uncompress(FileClass &file, BuffType &uncomp_buff, BuffType &dest_buff, void *reserved_data);
-long Translucent_Table_Size(int count);
+uint32_t Load_Uncompress(FileClass &file, BuffType &uncomp_buff, BuffType &dest_buff, void *reserved_data);
+uint32_t Translucent_Table_Size(int count);
 void *Build_Translucent_Table(void const *palette, TLucentType const *control, int count, void *buffer);
 void *Conquer_Build_Translucent_Table(void const *palette, TLucentType const *control, int count, void *buffer);
 
@@ -508,7 +508,7 @@ void *Conquer_Build_Translucent_Table(void const *palette, TLucentType const *co
 #ifdef __cplusplus
 extern "C" {
 #endif
-long Buffer_Frame_To_Page(int x, int y, int w, int h, void *Buffer, GraphicViewPortClass &view, int flags, ...);
+int32_t Buffer_Frame_To_Page(int x, int y, int w, int h, void *Buffer, GraphicViewPortClass &view, int flags, ...);
 #ifdef __cplusplus
 }
 #endif
@@ -534,11 +534,11 @@ int Coord_Spillage_Number(COORDINATE coord, int maxsize);
 /*
 **	MENUS.CPP
 */
-void Setup_Menu(int menu, char const *text[], unsigned long field, int index, int skip);
-int Check_Menu(int menu, char const *text[], char *selection, long field, int index);
+void Setup_Menu(int menu, char const *text[], uint32_t field, int index, int skip);
+int Check_Menu(int menu, char const *text[], char *selection, uint32_t field, int index);
 int Do_Menu(char const **strings, bool blue);
 extern int UnknownKey;
-int Main_Menu(unsigned long timeout);
+int Main_Menu(uint32_t timeout);
 
 /*
 ** MPLAYER.CPP
@@ -559,8 +559,8 @@ void Shutdown_Network (void);
 bool Remote_Connect (void);
 void Destroy_Connection(int id, int error);
 bool Process_Global_Packet(GlobalPacketType *packet, UDPAddressClass *address);
-unsigned long Compute_Name_CRC(char *name);
-void Net_Reconnect_Dialog(int reconn, int fresh, int oldest_index, unsigned long timeval);
+uint32_t Compute_Name_CRC(char *name);
+void Net_Reconnect_Dialog(int reconn, int fresh, int oldest_index, uint32_t timeval);
 
 /*
 ** NULLDLG.CPP
@@ -598,7 +598,7 @@ bool Queue_Mission(TARGET whom, MissionType mission, TARGET target, TARGET desti
 bool Queue_Options(void);
 bool Queue_Exit(void);
 void Queue_AI(void);
-void Add_CRC(unsigned long *crc, unsigned long val);
+void Add_CRC(uint32_t *crc, uint32_t val);
 
 /*
 **	RAND.CPP
@@ -673,7 +673,7 @@ void Remove_From_List(void **list, int *index, void * ptr);
 void *Conquer_Build_Fading_Table(void const *palette, void *dest, int color, int frac);
 void Fat_Put_Pixel(int x, int y, int color, int size, GraphicViewPortClass &);
 extern "C" void strtrim(char *buffer);
-long Get_EAX(void);
+uint32_t Get_EAX(void);
 #ifdef	__cplusplus
 }
 #endif
@@ -730,7 +730,7 @@ inline COORDINATE Coord_Sub(COORDINATE coord1, COORDINATE coord2) {return (COORD
 inline COORDINATE Coord_Snap(COORDINATE coord) {return (COORDINATE)MAKE_LONG((((*(((unsigned short *)&coord)+1))&0xFF00)|0x80), (((*((unsigned short *)&coord))&0xFF00)|0x80));}
 inline COORDINATE Coord_Mid(COORDINATE coord1, COORDINATE coord2) {return (COORDINATE)MAKE_LONG((*((unsigned short *)(&coord1)+1) + *((unsigned short *)(&coord2)+1))>>1, (*((unsigned short *)(&coord1)) + *((unsigned short *)(&coord2)))>>1);}
 inline COORDINATE Cell_Coord(CELL cell) {return (COORDINATE) MAKE_LONG( (((cell & 0x0FC0)<<2)|0x80), ((((cell & 0x003F)<<1)+1)<<7) );}
-inline COORDINATE XYPixel_Coord(int x, int y) {return ((COORDINATE)MAKE_LONG((int)(((long)y*(long)ICON_LEPTON_H)/(long)ICON_PIXEL_H)/*+LEPTON_OFFSET_Y*/, (int)(((long)x*(long)ICON_LEPTON_W)/(long)ICON_PIXEL_W)/*+LEPTON_OFFSET_X*/));}
+inline COORDINATE XYPixel_Coord(int x, int y) {return ((COORDINATE)MAKE_LONG((int)(((int32_t)y * ICON_LEPTON_H) / ICON_PIXEL_H)/*+LEPTON_OFFSET_Y*/, (int)(((int32_t)x * ICON_LEPTON_W) / ICON_PIXEL_W)/*+LEPTON_OFFSET_X*/));}
 //inline int Facing_To_16(int facing) {return Facing16[facing];}
 inline int Facing_To_32(DirType facing) {return Facing32[facing];}
 inline DirType Direction256(COORDINATE coord1, COORDINATE coord2) {return ((DirType)Desired_Facing256(Coord_X(coord1), Coord_Y(coord1), Coord_X(coord2), Coord_Y(coord2)));}

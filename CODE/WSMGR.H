@@ -89,8 +89,8 @@ class WSManagerClass : public ConnManClass
 		virtual int Private_Num_Send(int id = CONNECTION_NONE);
 		virtual int Private_Num_Receive(int id = CONNECTION_NONE);
 		virtual void Reset_Response_Time(void);
-		virtual unsigned long Response_Time(void);
-		virtual void Set_Timing(unsigned long retrydelta, unsigned long maxretries, unsigned long timeout);
+		virtual uint32_t Response_Time(void);
+		virtual void Set_Timing(uint32_t retrydelta, uint32_t maxretries, uint32_t timeout);
 		virtual void Configure_Debug(int index, int offset, int size, char **names, int maxnames);
 		virtual void Mono_Debug_Print(int index, int refresh = 0);
 

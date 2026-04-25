@@ -443,7 +443,7 @@ HouseClass::~HouseClass (void)
 bool HouseClass::Can_Build(TechnoTypeClass const * type, HousesType house) const
 {
 	Validate();
-	if (!type || !type->IsBuildable || !((1L << house) & type->Ownable)) return(false);
+	if (!type || !type->IsBuildable || !((1U << house) & type->Ownable)) return(false);
 
 	/*
 	**	The computer can always build everthing.
@@ -453,8 +453,8 @@ bool HouseClass::Can_Build(TechnoTypeClass const * type, HousesType house) const
 	/*
 	**	Perform some equivalency fixups for the building existance flags.
 	*/
-	long flags = ActiveBScan;
-	int pre = type->Pre;
+	uint32_t flags = ActiveBScan;
+	uint32_t pre = type->Pre;
 	if (flags & STRUCTF_ADVANCED_POWER) flags |= STRUCTF_POWER;
 	if (flags & STRUCTF_HAND) flags |= STRUCTF_BARRACKS;
 	if (flags & STRUCTF_OBELISK) flags |= STRUCTF_ATOWER;
@@ -1455,7 +1455,7 @@ void HouseClass::Attacked(void)
 void HouseClass::Harvested(unsigned tiberium)
 {
 	Validate();
-	long oldtib = Tiberium;
+	int32_t oldtib = Tiberium;
 
 	Tiberium += tiberium;
 	if (Tiberium > Capacity) {
@@ -1482,7 +1482,7 @@ void HouseClass::Harvested(unsigned tiberium)
  * HISTORY:                                                                                    *
  *   01/25/1995 JLB : Created.                                                                 *
  *=============================================================================================*/
-long HouseClass::Available_Money(void) const
+int32_t HouseClass::Available_Money(void) const
 {
 	Validate();
 	return(Tiberium + Credits);
@@ -1509,8 +1509,8 @@ long HouseClass::Available_Money(void) const
 void HouseClass::Spend_Money(unsigned money)
 {
 	Validate();
-	long oldtib = Tiberium;
-	if (money > Tiberium) {
+	int32_t oldtib = Tiberium;
+	if (static_cast<int32_t>(money) > Tiberium) {
 		money -= (unsigned)Tiberium;
 		Tiberium = 0;
 		Credits -= money;
@@ -1567,7 +1567,7 @@ void HouseClass::Refund_Money(unsigned money)
 int HouseClass::Adjust_Capacity(int adjust, bool inanger)
 {
 	Validate();
-	long oldcap = Capacity;
+	int32_t oldcap = Capacity;
 	int retval = 0;
 
 	Capacity += adjust;
@@ -1606,7 +1606,7 @@ int HouseClass::Adjust_Capacity(int adjust, bool inanger)
  * HISTORY:                                                                                    *
  *   02/02/1995 JLB : Created.                                                                 *
  *=============================================================================================*/
-void HouseClass::Silo_Redraw_Check(long oldtib, long oldcap)
+void HouseClass::Silo_Redraw_Check(int32_t oldtib, int32_t oldcap)
 {
 	Validate();
 	int oldratio = 0;
@@ -1664,7 +1664,7 @@ void HouseClass::Read_INI(char *buffer)
 
 		p->MaxBuilding = maxbuilding;
 		p->MaxUnit = maxunit;
-		p->Credits = (long)credits * 100;
+		p->Credits = static_cast<int32_t>(credits) * 100;
 		p->InitialCredits = p->Credits;
 		WWGetPrivateProfileString(hname, "Edge", "", buf, sizeof(buf)-1, buffer);
 		p->Edge = Source_From_Name(buf);
@@ -3144,7 +3144,7 @@ void HouseClass::Detach(TARGET, bool )
 bool HouseClass::Does_Enemy_Building_Exist(StructType btype) const
 {
 	Validate();
-	int bflag = 1L << btype;
+	uint32_t bflag = uint32_t(1) << btype;
 	for (HousesType index = HOUSE_FIRST; index < HOUSE_COUNT; index++) {
 		HouseClass * house = HouseClass::As_Pointer(index);
 

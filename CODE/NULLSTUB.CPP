@@ -64,7 +64,7 @@ int NullModemClass::Delete_Connection(void) { return 0; }
 int NullModemClass::Num_Connections(void) { return 0; }
 int NullModemClass::Init_Send_Queue(void) { return 0; }
 void NullModemClass::Shutdown(void) {}
-void NullModemClass::Set_Timing(unsigned long retrydelta, unsigned long maxretries, unsigned long timeout)
+void NullModemClass::Set_Timing(uint32_t retrydelta, uint32_t maxretries, uint32_t timeout)
 {
 	RetryDelta = retrydelta;
 	MaxRetries = maxretries;
@@ -75,7 +75,7 @@ int NullModemClass::Get_Message(void*, int*) { return 0; }
 int NullModemClass::Service(void) { return 0; }
 int NullModemClass::Num_Send(void) { return 0; }
 int NullModemClass::Num_Receive(void) { return 0; }
-unsigned long NullModemClass::Response_Time(void) { return 0; }
+uint32_t NullModemClass::Response_Time(void) { return 0; }
 void NullModemClass::Reset_Response_Time(void) {}
 void* NullModemClass::Oldest_Send(void) { return nullptr; }
 void NullModemClass::Configure_Debug(int, int, int, char**, int) {}

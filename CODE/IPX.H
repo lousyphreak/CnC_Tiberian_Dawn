@@ -38,6 +38,8 @@
 #ifndef IPX_H
 #define IPX_H
 
+#include <stdint.h>
+
 /*
 ******************************** Structures *********************************
 */
@@ -92,14 +94,14 @@ This structure is used for calling DPMI function 0x300, Call-Real-Mode-
 Interrupt.  It passes register values to & from the interrupt handler.
 ---------------------------------------------------------------------------*/
 typedef struct {
-	long edi;
-	long esi;
-	long ebp;
-	long Reserved;
-	long ebx;
-	long edx;
-	long ecx;
-	long eax;
+	uint32_t edi;
+	uint32_t esi;
+	uint32_t ebp;
+	uint32_t Reserved;
+	uint32_t ebx;
+	uint32_t edx;
+	uint32_t ecx;
+	uint32_t eax;
 	short Flags;
 	short es;
 	short ds;

@@ -3949,7 +3949,7 @@ BuildingTypeClass::BuildingTypeClass(
 						char const *ininame,
 						COORDINATE exitpoint,
 						unsigned char level,
-						long pre,
+						uint32_t pre,
 						bool is_scanner,
 						bool is_regulated,
 						bool is_bibbed,
@@ -3982,7 +3982,7 @@ BuildingTypeClass::BuildingTypeClass(
 						int ownable,
 						WeaponType primary, WeaponType secondary,
 						ArmorType armor,
-						unsigned long canenter,
+						uint32_t canenter,
 						unsigned capacity,
 						int power,
 						int drain,
@@ -4460,7 +4460,7 @@ BuildingClass * BuildingTypeClass::Who_Can_Build_Me(bool intheory, bool legal, H
 				building->House->Class->House == house &&
 				building->Class->ToBuild == RTTI_BUILDINGTYPE &&
 				building->Mission != MISSION_DECONSTRUCTION &&
-				((1L << building->ActLike) & Ownable) &&
+				((1U << building->ActLike) & Ownable) &&
 				(!legal || building->House->Can_Build(Type, building->ActLike)) &&
 				(intheory || !building->In_Radio_Contact())) {
 			return(building);

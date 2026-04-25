@@ -53,7 +53,7 @@ class RegionClass {
 		int Threat_Value(void) const {return Threat;};
 
 	protected:
-		long  Threat;
+		int32_t  Threat;
 };
 
 #endif

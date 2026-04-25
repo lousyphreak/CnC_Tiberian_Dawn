@@ -105,8 +105,8 @@ class NullModemClass : public ConnManClass
 		int Init_Send_Queue( void );
 		void Shutdown( void );
 
-		virtual void Set_Timing (unsigned long retrydelta,
-			unsigned long maxretries, unsigned long timeout);
+		virtual void Set_Timing (uint32_t retrydelta,
+			uint32_t maxretries, uint32_t timeout);
 
 		/*
 		**	This is how the application sends & receives messages.
@@ -135,7 +135,7 @@ class NullModemClass : public ConnManClass
 		*/
 		int Num_Send(void);
 		int Num_Receive(void);
-		virtual unsigned long Response_Time(void);
+		virtual uint32_t Response_Time(void);
 		virtual void Reset_Response_Time(void);
 		void * Oldest_Send(void);
 		virtual void Configure_Debug(int index, int offset, int size,
@@ -204,9 +204,9 @@ class NullModemClass : public ConnManClass
 		/*.....................................................................
 		Timing parameters for all connections
 		.....................................................................*/
-		unsigned long RetryDelta;
-		unsigned long MaxRetries;
-		unsigned long Timeout;
+		uint32_t RetryDelta;
+		uint32_t MaxRetries;
+		uint32_t Timeout;
 
 		/*
 		**	Various Statistics

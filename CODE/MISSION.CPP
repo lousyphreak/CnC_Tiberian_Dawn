@@ -160,7 +160,7 @@ void MissionClass::Debug_Dump(MonoClass *mono) const
 {
 	mono->Set_Cursor(21, 1);mono->Printf("%5.5s[%4.4s]", MissionClass::Mission_Name(Mission), MissionClass::Mission_Name(MissionQueue));
 //	mono->Text_Print(MissionClass::Mission_Name(Mission), 21, 1);
-	mono->Set_Cursor(20, 7);mono->Printf("%2d", (long)Timer);
+	mono->Set_Cursor(20, 7);mono->Printf("%2d", static_cast<int32_t>(Timer));
 	mono->Set_Cursor(74, 1);mono->Printf("%2d", Status);
 
 	ObjectClass::Debug_Dump(mono);

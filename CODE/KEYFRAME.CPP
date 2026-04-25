@@ -298,10 +298,10 @@ void * Build_Frame(void const *dataptr, unsigned short framenumber, void *buffpt
 				sprintf (crap, "C&C95 - Big shape buffer is now %d Kb.\n", BigShapeBufferLength / 1024);
 				CCDebugString (crap);
 
-				sprintf (crap, "C&C95 - %lld Kb Used in big shape buffer.\n", (long long)(BigShapeBufferPtr - BigShapeBufferStart)/1024);
+				sprintf (crap, "C&C95 - %jd Kb Used in big shape buffer.\n", static_cast<intmax_t>(BigShapeBufferPtr - BigShapeBufferStart) / 1024);
 				CCDebugString (crap);
 
-				sprintf (crap, "C&C95 - %lld Kb Used in theater shape buffer.\n", (long long)(TheaterShapeBufferPtr - TheaterShapeBufferStart)/1024);
+				sprintf (crap, "C&C95 - %jd Kb Used in theater shape buffer.\n", static_cast<intmax_t>(TheaterShapeBufferPtr - TheaterShapeBufferStart) / 1024);
 				CCDebugString (crap);
 				show_info = false;
 			}
@@ -377,7 +377,7 @@ void * Build_Frame(void const *dataptr, unsigned short framenumber, void *buffpt
 			currframe = (unsigned short)offset[1];
 
 			ptr = (char *)Add_Long_To_Pointer( dataptr, (((uint32_t)currframe << 3) + sizeof(KeyFrameHeaderType)) );
-			Mem_Copy( ptr, &offset[0], (long)(SUBFRAMEOFFS * sizeof(uint32_t)) );
+			Mem_Copy( ptr, &offset[0], static_cast<int32_t>(SUBFRAMEOFFS * sizeof(uint32_t)) );
 		}
 
 		// key frame
@@ -441,7 +441,7 @@ void * Build_Frame(void const *dataptr, unsigned short framenumber, void *buffpt
 					Mem_Copy( Add_Long_To_Pointer( dataptr,
 									(((uint32_t)currframe << 3) +
 									sizeof(KeyFrameHeaderType)) ),
-						&offset[0], (long)(SUBFRAMEOFFS * sizeof(uint32_t)) );
+						&offset[0], static_cast<int32_t>(SUBFRAMEOFFS * sizeof(uint32_t)) );
 					subframe = 0;
 				}
 			}
@@ -608,10 +608,9 @@ bool Get_Build_Frame_Palette(void const * dataptr, void * palette)
 {
 	KeyFrameHeaderType keyfr = Load_KeyFrame_Header(dataptr);
 	if (dataptr && (keyfr.flags & 1)) {
-		char const * ptr = (char const *)Add_Long_To_Pointer( dataptr,
-							( (( (long)sizeof(uint32_t) << 1) *
-								keyfr.frames ) +
-							16 + sizeof(KeyFrameHeaderType) ) );
+		char const * ptr = (char const *)Add_Long_To_Pointer(
+			dataptr,
+			((static_cast<int32_t>(sizeof(uint32_t)) << 1) * keyfr.frames) + 16 + sizeof(KeyFrameHeaderType));
 
 		memcpy(palette, ptr, 768L);
 		return(true);

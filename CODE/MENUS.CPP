@@ -46,7 +46,7 @@
 #ifdef SCENARIO_EDITOR
 
 PRIVATE int Coordinates_In_Region(int x,int y,int inx1,int iny1,int inx2,int iny2);
-PRIVATE int Select_To_Entry(int select, unsigned long bitfield, int index);
+PRIVATE int Select_To_Entry(int select, uint32_t bitfield, int index);
 PRIVATE void Flash_Line(char const *text,int xpix,int ypix,unsigned nfgc,unsigned hfgc,unsigned bgc);
 
 int UnknownKey;
@@ -66,20 +66,20 @@ PRIVATE int MenuSkip;
 /*				the starting index within the bit field.								*/
 /*	RETURNS:	int the index into the table of entries								*/
 /*=========================================================================*/
-PRIVATE int Select_To_Entry(int select, unsigned long bitfield, int index)
+PRIVATE int Select_To_Entry(int select, uint32_t bitfield, int index)
 {
 	int placement;
 
-	if (bitfield==0xFFFFFFFFL) 							/* if all bits are set	*/
+	if (bitfield == UINT32_MAX) 							/* if all bits are set	*/
 		return(select);										/*		then it as is		*/
 
 	placement=0;												/* current pos zero		*/
 	while (select) {											/* while still ones		*/
-		if (bitfield & (1L<<(placement+index)))			/* if this flagged then	*/
+		if (bitfield & (uint32_t{1} << (placement + index)))			/* if this flagged then	*/
 			select--;											/* decrement counter		*/
 		placement++;											/* and we moved a place	*/
 	}
-	while (!(bitfield & (1L<<(placement+index)))) {
+	while (!(bitfield & (uint32_t{1} << (placement + index)))) {
 		placement++;
 	}
 
@@ -141,7 +141,7 @@ PRIVATE int Coordinates_In_Region(int x,int y,int inx1,int iny1,int inx2,int iny
 /*				point to start at within the list.										*/
 /*	RETURNS:	int the total number of items in the menu							*/
 /*=========================================================================*/
- int Find_Menu_Items(int maxitems, unsigned long field, char index)
+ int Find_Menu_Items(int maxitems, uint32_t field, char index)
  {
 	int loop,ctr;
 
@@ -168,7 +168,7 @@ PRIVATE int Coordinates_In_Region(int x,int y,int inx1,int iny1,int inx2,int iny
 /*				index into the field, int the number of lines to skip.			*/
 /*	RETURNS:	none																				*/
 /*=========================================================================*/
-void Setup_Menu(int menu,char const *text[], unsigned long field, int index, int skip)
+void Setup_Menu(int menu,char const *text[], uint32_t field, int index, int skip)
 {
 	int *menuptr,lp;
 	int menuy,menux,idx,item,num,drawy;
@@ -202,7 +202,7 @@ void Setup_Menu(int menu,char const *text[], unsigned long field, int index, int
 /*	INPUTS:																						*/
 /*	RETURNS:																						*/
 /*=========================================================================*/
-int Check_Menu(int menu,char const *text[],char *,long field,int index)
+int Check_Menu(int menu,char const *text[],char *,uint32_t field,int index)
 {
 	int maxitem,select,key,menuy,menux;
 	int mx1,mx2,my1,my2,tempy;
@@ -451,7 +451,7 @@ int Do_Menu(char const **strings, bool blue)
  * HISTORY:                                                                *
  *   05/17/1995 BRR : Created.                                             *
  *=========================================================================*/
-int Main_Menu(unsigned long timeout)
+int Main_Menu(uint32_t timeout)
 {
 	enum {
 		D_DIALOG_W = 152*2,
@@ -542,7 +542,7 @@ int Main_Menu(unsigned long timeout)
 #else
 	TextButtonClass *buttons[5];
 #endif
-	unsigned long starttime;
+	uint32_t starttime;
 
 	ControlClass *commands = NULL;				// the button list
 

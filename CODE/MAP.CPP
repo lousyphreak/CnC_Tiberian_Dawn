@@ -583,9 +583,9 @@ void MapClass::Overlap_Up(CELL cell, ObjectClass * object)
  *   02/13/1995 JLB : Returns total tiberium worth.                                            *
  *   02/15/1995 JLB : Optimal scan.                                                            *
  *=============================================================================================*/
-long MapClass::Overpass(void)
+int32_t MapClass::Overpass(void)
 {
-	long value = 0;
+	int32_t value = 0;
 
 	/*
 	**	Smooth out Tiberium. Cells that are not surrounded by other tiberium
@@ -618,9 +618,9 @@ long MapClass::Overpass(void)
  *   01/08/1995 JLB : Fixup any obsolete icons detected.                                       *
  *=============================================================================================*/
 #ifdef DEMO
-bool MapClass::Read_Binary(char const * root, unsigned long *)
+bool MapClass::Read_Binary(char const * root, uint32_t *)
 #else
-bool MapClass::Read_Binary(char const * root, unsigned long *crc)
+bool MapClass::Read_Binary(char const * root, uint32_t *crc)
 #endif
 {
 	CCFileClass file;
@@ -689,8 +689,8 @@ bool MapClass::Read_Binary(char const * root, unsigned long *crc)
 		cellptr->Recalc_Attributes();
 
 #ifndef DEMO
-		Add_CRC(crc, (unsigned long)cellptr->TType);
-		Add_CRC(crc, (unsigned long)cellptr->TIcon);
+		Add_CRC(crc, static_cast<uint32_t>(cellptr->TType));
+		Add_CRC(crc, static_cast<uint32_t>(cellptr->TIcon));
 #endif
 
 		cellptr++;

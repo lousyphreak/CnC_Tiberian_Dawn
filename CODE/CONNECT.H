@@ -246,8 +246,8 @@ class ConnectionClass
 		Constructor/destructor.
 		.....................................................................*/
 		ConnectionClass (int maxlen, unsigned short magicnum, 
-			unsigned long retry_delta, unsigned long max_retries, 
-			unsigned long timeout);
+			uint32_t retry_delta, uint32_t max_retries, 
+			uint32_t timeout);
 		virtual ~ConnectionClass ();
 
 		/*.....................................................................
@@ -272,19 +272,19 @@ class ConnectionClass
 		This routine is used by the retry logic; returns the current time in
 		60ths of a second.
 		.....................................................................*/
-		static unsigned long Time (void);
+		static uint32_t Time (void);
 
 		/*.....................................................................
 		Utility routines.
 		.....................................................................*/
 		unsigned short Magic_Num (void) { return (MagicNum); }
-		unsigned long Retry_Delta (void) { return (RetryDelta); }
-		void Set_Retry_Delta (unsigned long delta) { RetryDelta = delta;}
-		unsigned long Max_Retries (void) { return (MaxRetries); }
-		void Set_Max_Retries (unsigned long retries) { MaxRetries = retries;}
-		unsigned long Time_Out (void) { return (Timeout); }
-		void Set_TimeOut (unsigned long t) { Timeout = t;}
-		unsigned long Max_Packet_Len (void) { return (MaxPacketLen); }
+		uint32_t Retry_Delta (void) { return (RetryDelta); }
+		void Set_Retry_Delta (uint32_t delta) { RetryDelta = delta;}
+		uint32_t Max_Retries (void) { return (MaxRetries); }
+		void Set_Max_Retries (uint32_t retries) { MaxRetries = retries;}
+		uint32_t Time_Out (void) { return (Timeout); }
+		void Set_TimeOut (uint32_t t) { Timeout = t;}
+		uint32_t Max_Packet_Len (void) { return (MaxPacketLen); }
 		static char const * Command_Name(int command);
 
 	/*
@@ -323,19 +323,19 @@ class ConnectionClass
 		/*.....................................................................
 		This value determines the time delay before a packet is re-sent.
 		.....................................................................*/
-		unsigned long RetryDelta;
+		uint32_t RetryDelta;
 
 		/*.....................................................................
 		This is the maximum number of retries allowed for a packet; if this
 		value is exceeded, the connection is probably broken.
 		.....................................................................*/
-		unsigned long MaxRetries;
+		uint32_t MaxRetries;
 
 		/*.....................................................................
 		This is the total timeout for this connection; if this time is exceeded
 		on a packet, the connection is probably broken.
 		.....................................................................*/
-		unsigned long Timeout;
+		uint32_t Timeout;
 
 		/*.....................................................................
 		Names of all packet commands

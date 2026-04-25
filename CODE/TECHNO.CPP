@@ -149,7 +149,7 @@ TechnoTypeClass::TechnoTypeClass(
 		int name,
 		char const *ininame,
 		unsigned char level,
-		long pre,
+		uint32_t pre,
 		bool is_leader,
 		bool is_scanner,
 		bool is_nominal,
@@ -629,7 +629,7 @@ bool TechnoClass::Mark(MarkType mark)
  *   10/17/1994 JLB : Created.                                                                 *
  *   06/17/1995 JLB : Handles tether contact messages.                                         *
  *=============================================================================================*/
-RadioMessageType TechnoClass::Receive_Message(RadioClass * from, RadioMessageType message, long & param)
+RadioMessageType TechnoClass::Receive_Message(RadioClass * from, RadioMessageType message, int32_t & param)
 {
 	switch (message) {
 
@@ -3918,7 +3918,7 @@ BuildingClass * TechnoClass::Find_Docking_Bay(StructType b, bool friendly) const
 	**	type in thi house's inventory. If not, then don't bother to scan
 	**	for one.
 	*/
-	if (House->BScan & (1L << b)) {
+	if (House->BScan & (uint32_t(1) << b)) {
 		int bestval = -1;
 
 		/*

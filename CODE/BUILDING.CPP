@@ -193,7 +193,7 @@ int BuildingClass::Validate(void) const
  *   06/26/1995 JLB : Forces refinery load anim to start immediately.                          *
  *   08/13/1995 JLB : Uses ScenarioInit for special loose "CAN_LOAD" check.                    *
  *=============================================================================================*/
-RadioMessageType BuildingClass::Receive_Message(RadioClass * from, RadioMessageType message, long & param)
+RadioMessageType BuildingClass::Receive_Message(RadioClass * from, RadioMessageType message, int32_t & param)
 {
 	Validate();
 	switch (message) {
@@ -1323,8 +1323,8 @@ bool BuildingClass::Unlimbo(COORDINATE coord, DirType dir)
 		**	Ensure that the owning house knows about the
 		**	new object.
 		*/
-		House->BScan |= (1L << Class->Type);
-		House->ActiveBScan |= (1L << Class->Type);
+		House->BScan |= (1U << Class->Type);
+		House->ActiveBScan |= (1U << Class->Type);
 
 		/*
 		**	Update the total factory type, assuming this building has a factory.
@@ -4159,7 +4159,7 @@ int BuildingClass::Mission_Repair(void)
 				}
 				if (IsReadyToCommence && Transmit_Message(RADIO_NEED_TO_MOVE) == RADIO_ROGER) {
 					IsReadyToCommence = false;
-					long param = Health_Ratio();
+					int32_t param = Health_Ratio();
 					if (Transmit_Message(RADIO_REPAIR, param) != RADIO_ROGER) {
 #ifdef OBSOLETE
 						if (House->Available_Money() < 10) {

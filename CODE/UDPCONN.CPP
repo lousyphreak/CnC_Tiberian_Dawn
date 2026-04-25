@@ -61,7 +61,7 @@ char *				UDPConnClass::ListenBuf;
 ECBType *			UDPConnClass::SendECB;
 IPXHeaderType *	UDPConnClass::SendHeader;
 char *				UDPConnClass::SendBuf;
-long 					UDPConnClass::Handler;
+uint32_t 			UDPConnClass::Handler;
 int 					UDPConnClass::Configured = 0;
 int 					UDPConnClass::SocketOpen = 0;
 int 					UDPConnClass::Listening = 0;
@@ -207,7 +207,7 @@ void UDPConnClass::Init (void)
 void UDPConnClass::Configure (unsigned short socket, int conn_num,
 	ECBType *listen_ecb, ECBType *send_ecb, IPXHeaderType *listen_header,
 	IPXHeaderType *send_header, char *listen_buf, char *send_buf,
-	long handler_rm_ptr, int maxpacketlen)
+	uint32_t handler_rm_ptr, int maxpacketlen)
 {
 	/*------------------------------------------------------------------------
 	Save the values passed in
@@ -272,9 +272,9 @@ bool UDPConnClass::Start_Listening(void)
 #else
 
 	void *hdr_ptr;
-	unsigned long hdr_val;
+	uint32_t hdr_val;
 	void *buf_ptr;
-	unsigned long buf_val;
+	uint32_t buf_val;
 	int rc;
 
 	/*------------------------------------------------------------------------
@@ -298,11 +298,11 @@ bool UDPConnClass::Start_Listening(void)
 	/*------------------------------------------------------------------------
 	Convert protected-mode ptrs to real-mode ptrs
 	------------------------------------------------------------------------*/
-	hdr_val = (unsigned long)ListenHeader;
-	hdr_ptr = (void *)(((hdr_val & 0xffff0) << 12) | (hdr_val & 0x000f));
+	hdr_val = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(ListenHeader));
+	hdr_ptr = reinterpret_cast<void *>(((hdr_val & 0xffff0U) << 12) | (hdr_val & 0x000fU));
 
-	buf_val = (unsigned long)ListenBuf;
-	buf_ptr = (void *)(((buf_val & 0xffff0) << 12) | (buf_val & 0x000f));
+	buf_val = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(ListenBuf));
+	buf_ptr = reinterpret_cast<void *>(((buf_val & 0xffff0U) << 12) | (buf_val & 0x000fU));
 
 	/*------------------------------------------------------------------------
 	Fill in the ECB
@@ -314,7 +314,7 @@ bool UDPConnClass::Start_Listening(void)
 	ListenECB->Packet[1].Address = buf_ptr;
 	ListenECB->Packet[1].Length = (unsigned short)PacketLen;
 
-	((long &)ListenECB->Event_Service_Routine) = Handler;
+	reinterpret_cast<uint32_t &>(ListenECB->Event_Service_Routine) = Handler;
 
 	/*------------------------------------------------------------------------
 	Command IPX to listen
