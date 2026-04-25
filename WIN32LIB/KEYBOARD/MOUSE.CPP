@@ -38,6 +38,18 @@
 
 static WWMouseClass *_Mouse=NULL;
 extern int32_t GameInFocus;
+void WWDraw_Flush_Present(void);
+
+namespace {
+
+void Flush_Mouse_Present(GraphicViewPortClass* screen)
+{
+	if (screen != NULL && screen->Get_IsVideoSurface()) {
+		WWDraw_Flush_Present();
+	}
+}
+
+}
 
 
 /***********************************************************************************************
@@ -179,6 +191,7 @@ void WWMouseClass::Process_Mouse(void)
 			// updated the mouse.
 			//
 			Screen->Unlock();
+			Flush_Mouse_Present(Screen);
 		}
 	}
 
@@ -241,6 +254,7 @@ void WWMouseClass::Hide_Mouse()
 	MouseUpdate++;
 	Low_Hide_Mouse();
 	MouseUpdate--;
+	Flush_Mouse_Present(Screen);
 }
 
 
@@ -293,6 +307,7 @@ void WWMouseClass::Show_Mouse()
 	MouseUpdate++;
 	Low_Show_Mouse(pt.x, pt.y);
 	MouseUpdate--;
+	Flush_Mouse_Present(Screen);
 }
 
 void WWMouseClass::Conditional_Hide_Mouse(int32_t x1, int32_t y1, int32_t x2, int32_t y2)
@@ -429,6 +444,7 @@ void WWMouseClass::Draw_Mouse(GraphicViewPortClass *scr)
 			// Unlock the screen and lets get moving.
 			//
 			scr->Unlock();
+			Flush_Mouse_Present(scr);
 		}
 	}
 
@@ -476,6 +492,7 @@ void WWMouseClass::Erase_Mouse(GraphicViewPortClass *scr, int32_t forced)
 				if (scr->Lock()){
 					Mouse_Shadow_Buffer(this, scr, EraseBuffer, EraseBuffX, EraseBuffY, EraseBuffHotX, EraseBuffHotY, 0);
 					scr->Unlock();
+					Flush_Mouse_Present(scr);
 				}
 				EraseBuffX = -1;
 				EraseBuffY = -1;

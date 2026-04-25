@@ -580,17 +580,14 @@ void WWKeyboardClass::Clear(void)
  *=============================================================================================*/
 int WWKeyboardClass::Available_Buffer_Room(void) const
 {
-	int avail;
-	if (Head == Tail) {
-		avail = ARRAY_SIZE(Buffer);
+	int used;
+	if (Head <= Tail) {
+		used = Tail - Head;
+	} else {
+		used = (Tail + ARRAY_SIZE(Buffer)) - Head;
 	}
-	if (Head < Tail) {
-		avail = Tail - Head;
-	}
-	if (Head > Tail) {
-		avail = (Tail + ARRAY_SIZE(Buffer)) - Head;
-	}
-	return(avail);
+
+	return ((ARRAY_SIZE(Buffer) - 1) - used);
 }
 
 int32_t Check_Key(void)

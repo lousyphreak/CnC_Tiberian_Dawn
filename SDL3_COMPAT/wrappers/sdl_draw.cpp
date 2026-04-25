@@ -4,6 +4,7 @@
 #include <SDL3/SDL_render.h>
 
 #include <algorithm>
+#include <cstring>
 #include <vector>
 
 namespace {
@@ -231,9 +232,25 @@ HRESULT WWSurface::Blit(RECT* dest_rect, WWSurface* src_surface, RECT* src_rect,
         return WWDRAW_OK;
     }
 
+    const bool overlapping_self_blit = src_surface == this
+        && dest.left < src_bounds.left + copy_width
+        && src_bounds.left < dest.left + copy_width
+        && dest.top < src_bounds.top + copy_height
+        && src_bounds.top < dest.top + copy_height;
+    std::vector<uint8_t> scratch;
+    if (overlapping_self_blit) {
+        scratch.resize(static_cast<size_t>(copy_width) * static_cast<size_t>(copy_height));
+        for (int row = 0; row < copy_height; ++row) {
+            const uint8_t* src = src_surface->Pixels() + (src_bounds.top + row) * src_surface->Width() + src_bounds.left;
+            std::memcpy(scratch.data() + static_cast<size_t>(row) * static_cast<size_t>(copy_width), src, static_cast<size_t>(copy_width));
+        }
+    }
+
     for (int row = 0; row < copy_height; ++row) {
         uint8_t* dst = pixels_.data() + (dest.top + row) * width_ + dest.left;
-        uint8_t* src = src_surface->Pixels() + (src_bounds.top + row) * src_surface->Width() + src_bounds.left;
+        const uint8_t* src = overlapping_self_blit
+            ? scratch.data() + static_cast<size_t>(row) * static_cast<size_t>(copy_width)
+            : src_surface->Pixels() + (src_bounds.top + row) * src_surface->Width() + src_bounds.left;
         if (use_source_key) {
             for (int col = 0; col < copy_width; ++col) {
                 if (src[col] != 0) {
@@ -241,7 +258,7 @@ HRESULT WWSurface::Blit(RECT* dest_rect, WWSurface* src_surface, RECT* src_rect,
                 }
             }
         } else {
-            std::copy(src, src + copy_width, dst);
+            std::memcpy(dst, src, static_cast<size_t>(copy_width));
         }
     }
     if (primary_) {

@@ -1075,6 +1075,10 @@ extern int32_t IconCacheAllowed;
 inline void GraphicViewPortClass::Draw_Stamp(void const * icondata, int32_t icon, int32_t x_pixel, int32_t y_pixel, void const * remap, int32_t clip_window)
 {
 	int32_t	cache_index=-1;
+	const int32_t clip_x = WindowList[clip_window][WINDOWX] << 3;
+	const int32_t clip_y = WindowList[clip_window][WINDOWY];
+	const int32_t clip_width = WindowList[clip_window][WINDOWWIDTH] << 3;
+	const int32_t clip_height = WindowList[clip_window][WINDOWHEIGHT];
 
    int32_t drewit = 0;
 	if (IconCacheAllowed){
@@ -1086,10 +1090,10 @@ inline void GraphicViewPortClass::Draw_Stamp(void const * icondata, int32_t icon
 			if (cache_index != -1){
 				if (CachedIcons[cache_index].Get_Is_Cached()  ){
 					CachedIcons[cache_index].Draw_It (GraphicBuff->Get_Video_Surface() , x_pixel, y_pixel,
-																WindowList[clip_window][WINDOWX] + XPos,
-																WindowList[clip_window][WINDOWY] +YPos,
-																WindowList[clip_window][WINDOWWIDTH],
-																WindowList[clip_window][WINDOWHEIGHT]);
+																clip_x + XPos,
+																clip_y + YPos,
+																clip_width,
+																clip_height);
 					CachedIconsDrawn++;
                drewit = 1;
 				}
@@ -1101,7 +1105,7 @@ inline void GraphicViewPortClass::Draw_Stamp(void const * icondata, int32_t icon
    if (drewit == 0) {
 		if (Lock()){
 			UnCachedIconsDrawn++;
-			Buffer_Draw_Stamp_Clip(this, icondata, icon, x_pixel, y_pixel, remap, WindowList[clip_window][WINDOWX], WindowList[clip_window][WINDOWY], WindowList[clip_window][WINDOWWIDTH], WindowList[clip_window][WINDOWHEIGHT]);
+			Buffer_Draw_Stamp_Clip(this, icondata, icon, x_pixel, y_pixel, remap, clip_x, clip_y, clip_width, clip_height);
 		}
    }
 	Unlock();

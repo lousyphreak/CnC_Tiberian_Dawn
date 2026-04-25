@@ -474,6 +474,7 @@ void Add_Current_Screen(void)
 
 
 extern bool CanVblankSync;
+void WWDraw_Flush_Present(void);
 
 /***********************************************************************************************
  * GScreenClass::Blit_Display -- Redraw the display from the hidpage to the seenpage.          *
@@ -512,6 +513,7 @@ void GScreenClass::Blit_Display(void)
 			Add_Current_Screen();
 #endif
 			WWMouse->Erase_Mouse(&HidPage, FALSE);
+			WWDraw_Flush_Present();
 #endif	//(0)
 #if (0)
 		}
@@ -522,7 +524,6 @@ void GScreenClass::Blit_Display(void)
 	}
 
 }
-
 
 
 

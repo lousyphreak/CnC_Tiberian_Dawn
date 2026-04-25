@@ -406,3 +406,22 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
   - current remaining runtime follow-up:
     - the 2-minute ASan runtime target is now met
     - non-fatal UBSan diagnostics still appear during gameplay, especially around old object-pool/vptr assumptions and some negative-shift pathing math, so runtime cleanup is not finished even though the current build no longer dies during the timed startup/gameplay probe
+- Menu/input and tactical redraw regressions were fixed after Red Alert comparison and TD-side runtime tracing (2026-04-25):
+  - root causes confirmed in this checkpoint:
+    - menu click delivery was unreliable because `CODE/KEY.CPP` `WWKeyboardClass::Available_Buffer_Room()` returned queue occupancy instead of free capacity, so mouse press/release events could be dropped once any earlier event was already pending in the ring buffer;
+    - menu cursor motion on the SDL3/video-surface path was not being flushed after `WIN32LIB/KEYBOARD/MOUSE.CPP` updated the software cursor directly on `SeenBuff`, so the internal cursor position could change without the window presenting the new pixels promptly;
+    - tactical terrain redraw used `LogicPage->Draw_Stamp(..., WINDOW_TACTICAL)`, but `WIN32LIB/DRAWBUFF/GBUFFER.H` was passing `WindowList` clip values to `Buffer_Draw_Stamp_Clip(...)` as raw pixels even though TD stores most window X/width values in character units; this clipped the terrain stamp path to roughly one eighth of the intended tactical width, which left only object/unit redraws visible and caused the reported smearing trails;
+    - `CODE/GSCREEN.CPP` `Blit_Display()` still relied on queued primary-surface presents without forcing a flush at the hidden-page -> seen-page frame boundary;
+    - `SDL3_COMPAT/wrappers/sdl_draw.cpp` `WWSurface::Blit()` did not preserve source pixels during overlapping self-blits, which is unsafe for the legacy scroll/copy behavior used by the SDL draw path.
+  - completed in this checkpoint:
+    - fixed the keyboard ring-buffer capacity math in `CODE/KEY.CPP` so mouse button press/release events are no longer spuriously dropped once the queue contains earlier input;
+    - added explicit present flushing after software-cursor updates on video surfaces in `WIN32LIB/KEYBOARD/MOUSE.CPP`, so menu cursor movement is visible again instead of waiting on unrelated later presents;
+    - converted clip-window X/width values back to pixel coordinates inside both imported `GBUFFER.H` copies before terrain stamps call the clipped draw path:
+      - `WIN32LIB/DRAWBUFF/GBUFFER.H`
+      - `WIN32LIB/INCLUDE/GBUFFER.H`
+    - flushed the queued hidden-page -> seen-page present at the end of `CODE/GSCREEN.CPP` `Blit_Display()`;
+    - made SDL surface self-blits overlap-safe in `SDL3_COMPAT/wrappers/sdl_draw.cpp` by copying overlapped source rectangles through scratch storage before writing the destination rows.
+  - validation result:
+    - `cmake --build build -- -j$(nproc)` succeeds after the runtime/input/render fixes;
+    - `cmake --build build-asan --target tiberian-dawn -j$(nproc)` succeeds after the same changes;
+    - `timeout --foreground 45s bash -lc 'env SDL_RENDER_DRIVER=software ./build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` still reaches the timeout window; the process exits under LeakSanitizer with the pre-existing startup/runtime leak set instead of a new crash in the touched input/render code.
