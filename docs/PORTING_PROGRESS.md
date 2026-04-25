@@ -8,6 +8,127 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
 
 ## Current status
 
+- Sound Controls redraw follow-up fixed missing input-time visible-page binding and swept sibling static menus for the same bug class (2026-04-25):
+  - completed in this checkpoint:
+    - investigated the reported `Sound Controls` redraw issue (stale/partial updates during input interaction) and traced it to a static-dialog loop gap:
+      - several dialogs were drawing on `SeenBuff` initially but did not always rebind `SeenBuff` as the logic page immediately before each gadget `Input()` tick.
+    - fixed `CODE/SOUNDDLG.CPP` to use the corrected static-menu contract:
+      - `Set_Logic_Page(SeenBuff);` before `optionsbtn->Input();`
+      - explicit `WWDraw_Flush_Present();` after the input tick.
+    - widened the same fix to other static menu/dialog loops that matched the same pattern:
+      - `CODE/MPLAYER.CPP` (transport chooser, host/join chooser, address prompt)
+      - `CODE/GOPTIONS.CPP`
+      - `CODE/SPECIAL.CPP`
+      - `CODE/MENUS.CPP` (main menu input tick)
+    - these loops now consistently rebind to the visible page before gadget-driven redraw work, preventing redraws from landing on a stale/non-visible logic page after callback activity.
+  - why this mattered:
+    - the recent redraw ownership changes intentionally reduced helper-path immediate presents, so old static loops now need to be stricter about visible-page binding at input time;
+    - missing this step causes exactly the observed class of bugs: controls that intermittently fail to redraw correctly while input/mouse interaction continues.
+  - validation result:
+    - `cmake --build build --target tiberian-dawn --parallel 4` succeeds.
+    - `cmake --build build-asan --target tiberian-dawn -- -j$(nproc)` succeeds.
+
+- Dialog-flicker follow-up tuned staged present cadence after reviewing the full staged redraw batch (2026-04-25):
+  - completed in this checkpoint:
+    - reviewed the staged UI/dialog refresh changes end-to-end with focus on where presents are required for input responsiveness vs where they are over-eager during dialog setup.
+    - identified that `CODE/GADGET.CPP::GadgetClass::Draw_All()` was now issuing an immediate `WWDraw_Flush_Present()` after batched redraws, which can submit an intermediate frame before dialog code finishes `Show_Mouse()` composition.
+    - adjusted `GadgetClass::Draw_All()` to keep `WWDraw_Request_Present()` when redraw occurred, but defer the flush to the owning dialog/frame code path.
+      - this preserves redraw visibility while reducing the chance of "first frame" dialog flicker caused by double-submit during one redraw branch.
+    - intentionally kept `GadgetClass::Input()`'s redraw-triggered present+flush behavior intact so hover/press/input updates still appear immediately during active interaction.
+  - why this mattered:
+    - static UI redraw branches often perform: draw controls -> show software cursor -> final present;
+    - forcing an extra present inside `Draw_All()` can expose a partially composed frame between those steps, matching the reported flicker-on-appear symptom.
+  - validation result:
+    - `cmake --build build --target tiberian-dawn --parallel 4` succeeds after the `Draw_All()` cadence adjustment.
+
+- Menu/submenu redraw pass was widened to fix peer-driven gadget updates across the whole UI/dialog surface (2026-04-25):
+  - completed in this checkpoint:
+    - removed all redundant `WWDraw_Flush_Present` forward declarations that had been manually inserted across TD `.CPP` files; the declarations now come only from the SDL draw wrapper headers.
+    - fixed a root redraw-present gap in `CODE/GADGET.CPP`:
+      - `GadgetClass::Input()` now tracks whether any gadget draw actually occurred during an input tick and requests a present once per tick when redraw happened;
+      - `GadgetClass::Draw_All()` now tracks forced/full redraw work and requests a present after batched drawing.
+    - fixed a second root redraw gap in `CODE/CONTROL.CPP`:
+      - `ControlClass::Draw_Me()` now reports redraw activity from peer gadgets (`Peer->Draw_Me()`) in its return value instead of discarding that information;
+      - this is important for list/slider/button peer chains used by many submenus (including expansion/bonus mission dialogs), where the visible redraw can happen through the peer path.
+    - fixed legacy text-menu redraw visibility in `CODE/MENUS.CPP`:
+      - `Setup_Menu()` now requests a present after drawing;
+      - `Check_Menu()` now requests a present when it redraws selection/highlight state.
+  - why this mattered:
+    - many menu/submenu loops rely on the shared gadget/control stack (`Input()` + peer-linked controls) and do not each own a bespoke present call;
+    - after presentation ownership cleanup, redraws that happened through peer calls could be visually missed because redraw state did not propagate back to the central present-request logic;
+    - this produced exactly the observed symptom cluster: submenu selection/highlight changes not reliably appearing on input.
+  - validation result:
+    - `cmake --build build --target tiberian-dawn --parallel 4` succeeds.
+    - `cmake --build build-asan --target tiberian-dawn -- -j$(nproc)` succeeds.
+    - runtime probe command runs successfully in this environment, but exits early (~8s) rather than naturally staying up for the 125s timeout window.
+
+- Menu-cursor fallout from the present-ownership cleanup was fixed, and the next static-dialog render sweep started immediately afterward (2026-04-25):
+  - completed in this checkpoint:
+    - traced the "cursor no longer visible in menus" regression to TD static UI loops that complete their redraw after the per-tick `Call_Back()` flush point:
+      - the title menu, in-game options dialog, and modernized multiplayer transport/setup dialogs all finished by drawing buttons and calling `Show_Mouse()` late in the frame, but no longer had a final present once the mouse-path flushes were removed.
+    - corrected the main title menu in `CODE/MENUS.CPP` while preserving TD's original button redraw contract:
+      - restored the original live-page button draw path after the `HidPage` -> `SeenBuff` copy;
+      - added an explicit `WWDraw_Flush_Present()` at the end of the redraw branch so both buttons and software cursor become visible immediately again.
+    - continued the next render-focused parity sweep in `CODE/MPLAYER.CPP` and updated the modernized multiplayer transport/setup dialogs to use the same TD-safe final-frame flush strategy:
+      - transport chooser (`UDP Direct` / `TCP Direct` / `Westwood Online`)
+      - host/join chooser
+      - remote address / host-name prompt
+      - those dialogs now keep TD's original draw order but explicitly flush after `Show_Mouse()`.
+    - applied the same end-of-branch flush fix to the in-game options dialog in `CODE/GOPTIONS.CPP`, which still uses TD's long-standing live-page redraw flow and was also affected by the missing final present.
+    - audit notes from this follow-up also identified more static UI/dialog surfaces that still use the older redraw model and should be handled in future parity passes, especially in:
+      - `CODE/NETDLG.CPP`
+      - `CODE/EXPAND.CPP`
+      - several editor/map-setup dialogs in `CODE/MAPEDTM.CPP`
+  - why this mattered:
+    - the previous present-ownership cleanup removed mid-update forced presents from the mouse path, which was the right fix for gameplay flicker, but it exposed menu/dialog code that had been relying on those extra presents instead of presenting a fully composed hidden-page frame;
+    - the main symptom is exactly what was reported: a missing or stale software cursor in static menus/dialogs even though the live gameplay callback path still owns presentation correctly.
+    - a short-lived hidden-page composition experiment for `MENUS.CPP` / `MPLAYER.CPP` was reverted after review because it changed TD's gadget redraw behavior more than necessary and broke the main-menu button path.
+  - validation result:
+    - `cmake --build build --parallel 4` succeeds.
+    - `cmake --build build-asan --parallel 4` succeeds.
+    - `env SDL_RENDER_DRIVER=software ASAN_OPTIONS=detect_leaks=0 timeout --foreground 20s ./build-asan/tiberian-dawn -gamedata "$PWD/GameData"` reaches the timeout window (`124`) without a new startup/menu crash in the touched cursor paths.
+    - a longer 125-second gameplay probe still reaches an unrelated pre-existing UBSan issue in `CODE/BUILDING.CPP` / `CODE/LOGIC.CPP` (32-bit mask shifts by exponent `48`); that remains separate from this render/menu fix.
+  - remaining follow-up from this sweep:
+    - visually re-check the title menu and the multiplayer transport/setup dialogs to confirm the software cursor is continuously visible again end-to-end;
+    - keep sweeping the remaining static UI/dialog files that still redraw directly onto the live page and then call `Show_Mouse()` afterward.
+
+- Window/present parity follow-up fixed the most likely TD-only redraw/flicker regression after a focused Red Alert comparison of the render path (2026-04-25):
+  - completed in this checkpoint:
+    - compared the active TD and Red Alert window/render path in the key SDL and game-side files involved in 640x400 presentation, tactical redraw, and cursor updates, including:
+      - `SDL3_COMPAT/wrappers/sdl_draw.cpp`
+      - `SDL3_COMPAT/wrappers/win32_compat.cpp`
+      - `CODE/CONQUER.CPP`
+      - `CODE/GSCREEN.CPP`
+      - `CODE/WINSTUB.CPP`
+      - `CODE/SDLINPUT.CPP`
+      - `WIN32LIB/KEYBOARD/MOUSE.CPP`
+      - `WIN32LIB/DRAWBUFF/GBUFFER.H`
+    - confirmed the SDL presentation/cropping math is already effectively aligned with the Red Alert reference:
+      - the wrapper still uses the centered 640x400 source rect when the runtime lands on a 640x480 primary surface;
+      - the recent TD-only overlap-safe self-blit path in `SDL3_COMPAT/wrappers/sdl_draw.cpp` remains intentional and was kept.
+    - identified the most suspicious remaining TD-vs-reference runtime difference in the redraw path:
+      - TD was still forcing immediate presents from software-cursor maintenance in `WIN32LIB/KEYBOARD/MOUSE.CPP` and from generic window redraw requests in `CODE/SDLINPUT.CPP`;
+      - Red Alert keeps those paths queue-oriented and relies on the existing frame/movie flush points instead of presenting from mouse/update helpers.
+    - removed those extra immediate presents so TD now stays closer to the reference presentation ownership model:
+      - `WIN32LIB/KEYBOARD/MOUSE.CPP` no longer calls `WWDraw_Flush_Present()` from `Process_Mouse()`, `Hide_Mouse()`, `Show_Mouse()`, `Draw_Mouse()`, or forced `Erase_Mouse()`;
+      - `CODE/SDLINPUT.CPP::SDL_GameInput_RequestRedraw()` now queues a redraw through `WWDraw_Request_Present()` without immediately flushing in the middle of SDL event handling.
+    - intentionally left the real frame-boundary and movie playback flushes in place:
+      - `CODE/GSCREEN.CPP::Blit_Display()`
+      - `CODE/CONQUER.CPP::Call_Back()`
+      - `CODE/CONQUER.CPP::VQ_Call_Back()`
+      - this keeps the previously fixed “queued presents never become visible” regression out while removing the mid-update extra presents most likely to cause flicker.
+  - why this mattered:
+    - the comparison showed that the 640x400-to-4:3 rect math itself was not the main divergence from Red Alert; TD’s larger difference was that several helper paths were each allowed to force a full present independently;
+    - cursor movement, hide/show transitions, and window redraw requests were therefore able to submit extra intermediate frames between the intended hidden-page -> seen-page frame boundary, which is a strong match for the reported flicker and redraw instability.
+  - validation result:
+    - `cmake --build build --parallel 4` succeeds after the change.
+    - `cmake --build build-asan --parallel 4` also succeeds.
+    - `env SDL_RENDER_DRIVER=software ASAN_OPTIONS=detect_leaks=0 timeout --foreground 125s ./build-asan/tiberian-dawn -gamedata "$PWD/GameData"` runs for the full probe window and exits on timeout (`124`) without a new ASan/UBSan crash in the touched render path.
+    - a plain leak-enabled timeout run still reports a pre-existing `HouseClass` / `UnitTrackerClass` leak cluster during shutdown; that was not introduced by this checkpoint, but it remains open runtime cleanup outside the presentation fix itself.
+  - remaining follow-up from this sweep:
+    - interactively re-check resize/expose redraw, software-cursor motion, and tactical scroll redraw in the normal runtime to confirm the reduced present churn removes the visible flicker symptoms end-to-end;
+    - continue comparing TD’s remaining drawing/window code against Red Alert a subsystem at a time rather than assuming the 640x400 wrapper math itself is the culprit.
+
 - Red Alert parity follow-up closed another batch of stale TD-vs-reference runtime gaps across save/load, queueing, wrapper branding, and UI/runtime helpers (2026-04-25):
   - completed in this checkpoint:
     - fixed remaining 64-bit save/load pointer-width hazards in the lightweight selection/layer paths:

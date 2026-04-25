@@ -172,13 +172,16 @@ bool ConfirmationClass::Process(char const * string)
 			*/
 			yesbtn.Draw_All();
 			Show_Mouse();
+			WWDraw_Flush_Present();
 			display = false;
 		}
 
 		/*
 		**	Get user input.
 		*/
+		Set_Logic_Page(SeenBuff);
 		KeyNumType input = yesbtn.Input();
+		WWDraw_Flush_Present();
 
 		/*
 		**	Process Input.

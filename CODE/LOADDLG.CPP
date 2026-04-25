@@ -368,13 +368,16 @@ int LoadOptionsClass::Process(void)
 				commands->Flag_List_To_Redraw();
 			}
 			Show_Mouse();
+			WWDraw_Flush_Present();
 			display = false;
 		}
 
 		/*
 		**	Get user input.
 		*/
+		Set_Logic_Page(SeenBuff);
 		KeyNumType input = commands->Input();
+		WWDraw_Flush_Present();
 
 		/*
 		**	The first time through the processing loop, set the edit

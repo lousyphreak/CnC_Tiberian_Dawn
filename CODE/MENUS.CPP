@@ -190,6 +190,8 @@ void Setup_Menu(int menu,char const *text[], uint32_t field, int index, int skip
 	}
 	MenuSkip=skip;
 	Show_Mouse();
+	WWDraw_Request_Present();
+	WWDraw_Flush_Present();
 	Keyboard::Clear();
 }
 
@@ -208,6 +210,7 @@ int Check_Menu(int menu,char const *text[],char *,uint32_t field,int index)
 	int mx1,mx2,my1,my2,tempy;
 	int drawy,menuskip,halfskip;
 	int normcol,litcol,item,newitem,idx;
+	bool redraw_occurred = false;
 	int *menuptr;
 
 	//selection++;												/* get rid of warning	*/
@@ -325,6 +328,7 @@ int Check_Menu(int menu,char const *text[],char *,uint32_t field,int index)
 		drawy=menuy+(newitem*menuskip);
 		Fancy_Text_Print(text[idx],menux,drawy,litcol,TBLACK, TPF_8POINT|TPF_DROPSHADOW);
 		Show_Mouse();												/* resurrect the mouse	*/
+		redraw_occurred = true;
 	}
 
 	if (select!=-1) {
@@ -334,9 +338,15 @@ int Check_Menu(int menu,char const *text[],char *,uint32_t field,int index)
 		Flash_Line(text[idx], menux, drawy, normcol, litcol, TBLACK);
 		Show_Mouse();
 		select=idx;
+		redraw_occurred = true;
 	}
 
 	menuptr[MSELECTED]=newitem;							/* update menu select	*/
+
+	if (redraw_occurred) {
+		WWDraw_Request_Present();
+		WWDraw_Flush_Present();
+	}
 
 	return(select);
 }
@@ -793,6 +803,7 @@ int Main_Menu(uint32_t timeout)
 
 			Set_Logic_Page(SeenBuff);
 			startbtn.Draw_All();
+			WWDraw_Flush_Present();
 			if (ScreenWidth==320){
 				ModeX_Blit (SeenBuff.Get_Graphic_Buffer());
 			}
@@ -802,7 +813,9 @@ int Main_Menu(uint32_t timeout)
 		/*
 		**	Get and process player input.
 		*/
+		Set_Logic_Page(SeenBuff);
 		input = commands->Input();
+		WWDraw_Flush_Present();
 		switch (static_cast<int>(input)) {
 #ifdef NEWMENU
 			case (BUTTON_EXPAND | KN_BUTTON):

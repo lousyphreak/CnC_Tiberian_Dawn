@@ -195,8 +195,9 @@ unsigned ControlClass::Get_ID(void) const
  *=============================================================================================*/
 int ControlClass::Draw_Me(int forced)
 {
+	int peer_redraw = false;
 	if (Peer) {
-		Peer->Draw_Me();
+		peer_redraw = Peer->Draw_Me();
 	}
-	return(GadgetClass::Draw_Me(forced));
+	return(peer_redraw || GadgetClass::Draw_Me(forced));
 }

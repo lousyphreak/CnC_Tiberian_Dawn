@@ -317,13 +317,16 @@ void SoundControlsClass::Process(void)
 
 			optionsbtn->Draw_All();
 			Show_Mouse();
+			WWDraw_Flush_Present();
 			display = false;
 		}
 
 		/*
 		**	Get user input.
 		*/
+		Set_Logic_Page(SeenBuff);
 		KeyNumType input = optionsbtn->Input();
+		WWDraw_Flush_Present();
 
 		/*
 		**	Process Input.

@@ -153,6 +153,15 @@ _Last updated: 2026-04-25_
 - TD support-wrapper defaults should not retain Red Alert branding/storage names where they affect user-visible title text, icon paths, or persistent browser/cache/config names; function names may remain `RA_*` temporarily where they are inherited wrapper API names.
   - that rule also applies to browser/Emscripten manifest names, settings filenames, and runtime diagnostics, not just the main desktop window title.
   - startup debug env vars should prefer TD-neutral names (for example `CNC_TRACE_STARTUP`) but may keep the older Red Alert name as a temporary compatibility alias while the wrapper/import cleanup is still in progress.
+- The 640x400 presentation rectangles in the SDL wrapper are already close to the Red Alert reference; the more fragile part of TD's current redraw path is present ownership, not the basic aspect-ratio math.
+  - `SDL3_COMPAT/wrappers/win32_compat.cpp` already preserves the centered 640x400 source rect when a 640x480 primary surface is active, so that wrapper should not be the first thing blamed for tactical/menu flicker.
+  - forcing `WWDraw_Flush_Present()` from helper paths such as software-cursor updates or generic SDL redraw requests creates extra intermediate full-frame submissions between the intended frame-boundary flushes (`GSCREEN`, `Call_Back`, movie callbacks).
+  - keep cursor/input helpers queue-oriented where possible and let the real frame/movie presentation sites own the final flush.
+- Static UI loops are a separate render category from live gameplay, and many of TD's older dialogs still rely on a pre-SDL pattern that is now easy to break:
+  - if a menu/dialog redraws a complete frame and then calls `Show_Mouse()` on `SeenBuff`, it is vulnerable once the mouse path stops force-presenting immediately;
+  - for TD's older menu/dialog code, the least risky fix is often to keep the original draw order and add one explicit final `WWDraw_Flush_Present()` at the end of the redraw branch, rather than forcing every screen over to a different hidden-page cursor composition model.
+  - a Red Alert-style hidden-page cursor composition can still be valid for some screens, but TD gadget/button behavior should be checked first because some TD menus still expect their final button paint to happen on `SeenBuff`.
+  - after fixing the title menu, options dialog, and TD's modernized multiplayer transport dialogs, the same older redraw pattern still exists in several other static UI paths (`NETDLG`, `EXPAND`, some map editor dialogs) and should be treated as likely cursor/redraw follow-up candidates.
 - For warning work, only a full clean rebuild is authoritative:
   - incremental rebuilds can make the warning count look artificially low because they only recompile touched translation units;
   - use `cmake --build <build-dir> --clean-first` when claiming the repository-wide warning baseline.

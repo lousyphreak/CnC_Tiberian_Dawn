@@ -31,7 +31,6 @@ extern bool InMovie;
 extern GraphicViewPortClass SeenBuff;
 extern WWMouseClass* WWMouse;
 extern void WWDraw_Request_Present(void);
-extern void WWDraw_Flush_Present(void);
 
 namespace {
 
@@ -1622,7 +1621,6 @@ void SDL_GameInput_RequestRedraw(void)
 	}
 
 	WWDraw_Request_Present();
-	WWDraw_Flush_Present();
 }
 
 void SDL_GameInput_SetMissionMouseCapture(bool enabled)

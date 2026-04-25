@@ -414,13 +414,16 @@ int MapEditClass::Select_Team(char const * caption)
 				commands->Draw_All();
 			}
 			Show_Mouse();
+			WWDraw_Flush_Present();
 			display = REDRAW_NONE;
 		}
 
 		/*
 		........................... Get user input ............................
 		*/
+		Set_Logic_Page(SeenBuff);
 		input = commands->Input();
+		WWDraw_Flush_Present();
 
 		/*
 		............................ Process input ............................
@@ -1048,13 +1051,16 @@ int MapEditClass::Edit_Team(void)
 				commands->Draw_All();
 			}
 			Show_Mouse();
+			WWDraw_Flush_Present();
 			display = REDRAW_NONE;
 		}
 
 		/*
 		........................... Get user input ............................
 		*/
+		Set_Logic_Page(SeenBuff);
 		input = commands->Input();
+		WWDraw_Flush_Present();
 
 		/*
 		............................ Process input ............................
@@ -1739,13 +1745,16 @@ int MapEditClass::Team_Members(HousesType house)
 				commands->Draw_All();
 			}
 			Show_Mouse();
+			WWDraw_Flush_Present();
 			display = REDRAW_NONE;
 		}
 
 		/*
 		**	Get user input.
 		*/
+		Set_Logic_Page(SeenBuff);
 		input = commands->Input();
+		WWDraw_Flush_Present();
 
 		/*
 		**	Process input.

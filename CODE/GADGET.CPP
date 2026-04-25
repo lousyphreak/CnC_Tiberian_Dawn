@@ -57,9 +57,7 @@
 
 #include "FUNCTION.H"
 #include <FILEPCX.H>
-
-void WWDraw_Begin_Present_Batch(void);
-void WWDraw_End_Present_Batch(void);
+#include "sdl_draw.h"
 
 /*
 **	This records the current gadget the the gadget system is "stuck on". Such a
@@ -415,15 +413,20 @@ int GadgetClass::Draw_Me(int forced)
 void GadgetClass::Draw_All(bool forced)
 {
 	GadgetClass *gadget = this;
+	bool redraw_occurred = false;
 
 	WWDraw_Begin_Present_Batch();
 
 	while (gadget != NULL) {
-		gadget->Draw_Me(forced);
+		redraw_occurred |= (gadget->Draw_Me(forced) != 0);
 		gadget = gadget->Get_Next();
 	}
 
 	WWDraw_End_Present_Batch();
+
+	if (redraw_occurred) {
+		WWDraw_Request_Present();
+	}
 }
 
 
@@ -444,6 +447,7 @@ KeyNumType GadgetClass::Input(void)
 	KeyNumType key;
 	unsigned flags;
 	int forced = false;
+	bool redraw_occurred = false;
 
 	/*
 	**	Record this list so that a forced redraw only occurs the FIRST time the
@@ -565,10 +569,10 @@ KeyNumType GadgetClass::Input(void)
 	**	If "sticky" processing is active, then only process the stuck gadget.
 	*/
 	if (StuckOn) {
-		StuckOn->Draw_Me(false);
+		redraw_occurred |= (StuckOn->Draw_Me(false) != 0);
 		StuckOn->Clicked_On(key, flags, mousex, mousey);
 		if (StuckOn) {
-			StuckOn->Draw_Me(false);
+			redraw_occurred |= (StuckOn->Draw_Me(false) != 0);
 		}
 	} else {
 
@@ -577,10 +581,10 @@ KeyNumType GadgetClass::Input(void)
 		**	events to it.
 		*/
 		if (Focused && (flags & KEYBOARD)) {
-			Focused->Draw_Me(false);
+			redraw_occurred |= (Focused->Draw_Me(false) != 0);
 			Focused->Clicked_On(key, flags, mousex, mousey);
 			if (Focused) {
-				Focused->Draw_Me(false);
+				redraw_occurred |= (Focused->Draw_Me(false) != 0);
 			}
 		} else {
 
@@ -597,7 +601,7 @@ KeyNumType GadgetClass::Input(void)
 				/*
 				**	Maybe redraw the button if it needs to or is being forced to redraw.
 				*/
-				next_button->Draw_Me(forced);
+				redraw_occurred |= (next_button->Draw_Me(forced) != 0);
 
 				if (!next_button->IsDisabled) {
 
@@ -611,7 +615,7 @@ KeyNumType GadgetClass::Input(void)
 						**	Some buttons will require repainting when they perform some action.
 						**	Do so at this time.
 						*/
-						next_button->Draw_Me(false);
+						redraw_occurred |= (next_button->Draw_Me(false) != 0);
 						break;
 					}
 				}
@@ -620,6 +624,12 @@ KeyNumType GadgetClass::Input(void)
 			}
 		}
 	}
+
+	if (redraw_occurred) {
+		WWDraw_Request_Present();
+		WWDraw_Flush_Present();
+	}
+
 	return(key);
 }
 

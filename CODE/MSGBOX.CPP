@@ -235,6 +235,7 @@ int CCMessageBox::Process(const char *msg, const char *b1txt, const char *b2txt,
 		buttonlist->Draw_All();
 	}
 	Show_Mouse();
+	WWDraw_Flush_Present();
 
 	/*
 	**	Main Processing Loop.
@@ -282,6 +283,7 @@ int CCMessageBox::Process(const char *msg, const char *b1txt, const char *b2txt,
 					buttonlist->Draw_All();
 				}
 				Show_Mouse();
+				WWDraw_Flush_Present();
 			}
 
 			/*
@@ -292,7 +294,9 @@ int CCMessageBox::Process(const char *msg, const char *b1txt, const char *b2txt,
 			/*
 			**	Fetch and process input.
 			*/
+			Set_Logic_Page(SeenBuff);
 			input = buttonlist->Input();
+			WWDraw_Flush_Present();
 			switch (static_cast<int>(input)) {
 				case (BUTTON_1|BUTTON_FLAG):
 					selection = realval[0];
@@ -421,6 +425,7 @@ int CCMessageBox::Process(const char *msg, const char *b1txt, const char *b2txt,
 		delete[] back;
 		back = NULL;
 		Show_Mouse();
+		WWDraw_Flush_Present();
 	}
 	return(retval);
 }

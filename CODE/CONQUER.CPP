@@ -77,7 +77,6 @@
 #define SHAPE_TRANS		0x40
 
 void SDL_GameInput_Pump(void);
-void WWDraw_Flush_Present(void);
 
 void *Get_Shape_Header_Data(void *ptr);
 

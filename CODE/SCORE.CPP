@@ -49,7 +49,6 @@
 
 #include	"FUNCTION.H"
 
-void WWDraw_Flush_Present(void);
 #include  "TEXTBLIT.H"
 #define SCORETEXT_X		184
 #define SCORETEXT_Y		8

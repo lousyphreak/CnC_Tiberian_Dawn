@@ -150,13 +150,16 @@ void DescriptionClass::Process(char *string)
 			*/
 			optionsbtn.Draw_All();
 			Window_Show_Mouse();
+			WWDraw_Flush_Present();
 			display = false;
 		}
 
 		/*
 		-------------- Get user input ---------------
 		*/
+		Set_Logic_Page(SeenBuff);
 		KeyNumType input = optionsbtn.Input();
+		WWDraw_Flush_Present();
 
 		/*
 		-------------- Process Input ----------------

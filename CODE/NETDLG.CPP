@@ -1327,13 +1327,16 @@ static int Net_Join_Dialog(void)
 			}
 
 			Show_Mouse();
+			WWDraw_Flush_Present();
 			display = REDRAW_NONE;
 		}
 
 		/*
 		........................... Get user input ............................
 		*/
+		Set_Logic_Page(SeenBuff);
 		input = commands->Input();
+		WWDraw_Flush_Present();
 
 		/*
 		---------------------------- Process input ----------------------------
@@ -3216,13 +3219,16 @@ static int Net_New_Dialog(void)
 			}
 
 			Show_Mouse();
+			WWDraw_Flush_Present();
 			display = REDRAW_NONE;
 		}
 
 		/*
 		........................... Get user input ............................
 		*/
+		Set_Logic_Page(SeenBuff);
 		input = commands->Input();
+		WWDraw_Flush_Present();
 
 		/*
 		---------------------------- Process input ----------------------------
@@ -4454,13 +4460,16 @@ static int Net_Fake_New_Dialog(void)
 			}
 
 			Show_Mouse();
+			WWDraw_Flush_Present();
 			display = REDRAW_NONE;
 		}
 
 		/*
 		........................... Get user input ............................
 		*/
+		Set_Logic_Page(SeenBuff);
 		input = commands->Input();
+		WWDraw_Flush_Present();
 
 		/*
 		---------------------------- Process input ----------------------------
@@ -5018,13 +5027,16 @@ static int Net_Fake_Join_Dialog(void)
 			}
 
 			Show_Mouse();
+			WWDraw_Flush_Present();
 			display = REDRAW_NONE;
 		}
 
 		/*
 		........................... Get user input ............................
 		*/
+		Set_Logic_Page(SeenBuff);
 		input = commands->Input();
+		WWDraw_Flush_Present();
 
 		/*
 		---------------------------- Process input ----------------------------

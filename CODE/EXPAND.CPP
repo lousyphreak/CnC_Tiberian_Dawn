@@ -192,9 +192,12 @@ bool Expansion_Dialog(void)
 			Draw_Caption(TXT_MISSION_DESCRIPTION, option_x, option_y, option_width);
 			buttons->Draw_All();
 			Show_Mouse();
+			WWDraw_Flush_Present();
 		}
 
+		Set_Logic_Page(SeenBuff);
 		KeyNumType input = buttons->Input();
+		WWDraw_Flush_Present();
 		switch (static_cast<int>(input)) {
 			case KN_RETURN:
 			case 200|KN_BUTTON:
@@ -386,9 +389,12 @@ bool Bonus_Dialog(void)
 			Draw_Caption(TXT_BONUS_MISSIONS, option_x, option_y, option_width);
 			buttons->Draw_All();
 			Show_Mouse();
+			WWDraw_Flush_Present();
 		}
 
+		Set_Logic_Page(SeenBuff);
 		KeyNumType input = buttons->Input();
+		WWDraw_Flush_Present();
 		switch (static_cast<int>(input)) {
 			case KN_RETURN:
 			case 200|KN_BUTTON:

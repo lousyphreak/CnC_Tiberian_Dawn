@@ -474,7 +474,6 @@ void Add_Current_Screen(void)
 
 
 extern bool CanVblankSync;
-void WWDraw_Flush_Present(void);
 
 /***********************************************************************************************
  * GScreenClass::Blit_Display -- Redraw the display from the hidpage to the seenpage.          *

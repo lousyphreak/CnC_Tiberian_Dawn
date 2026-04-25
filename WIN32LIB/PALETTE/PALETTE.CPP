@@ -58,7 +58,6 @@
 uint8_t CurrentPalette[768];
 
 void Set_Video_Palette(void *palette);
-void WWDraw_Flush_Present(void);
 extern uint8_t *InterpolationPalette;
 extern int32_t InterpolationPaletteChanged;
 extern uint8_t *InterpolatedPalettes[100];

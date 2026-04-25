@@ -117,10 +117,13 @@ static bool Choose_Internet_Game(InternetTransportType& transport)
 				TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW);
 			commands->Flag_List_To_Redraw();
 			Show_Mouse();
+			WWDraw_Flush_Present();
 			display = false;
 		}
 
+		Set_Logic_Page(SeenBuff);
 		KeyNumType input = commands->Input();
+		WWDraw_Flush_Present();
 		int selection = 0;
 		bool pressed = false;
 
@@ -244,10 +247,13 @@ static bool Get_Internet_Host_Or_Join(bool& host_game)
 				TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW);
 			commands->Flag_List_To_Redraw();
 			Show_Mouse();
+			WWDraw_Flush_Present();
 			display = false;
 		}
 
+		Set_Logic_Page(SeenBuff);
 		KeyNumType input = commands->Input();
+		WWDraw_Flush_Present();
 		int selection = 0;
 		bool pressed = false;
 
@@ -366,10 +372,13 @@ static bool Get_IP_Address(char* address_buffer, bool required)
 				TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW);
 			commands->Flag_List_To_Redraw();
 			Show_Mouse();
+			WWDraw_Flush_Present();
 			display = false;
 		}
 
+		Set_Logic_Page(SeenBuff);
 		KeyNumType input = commands->Input();
+		WWDraw_Flush_Present();
 		switch (static_cast<int>(input)) {
 			case KN_RETURN:
 			case BUTTON_OK | KN_BUTTON:
@@ -1339,13 +1348,16 @@ int Surrender_Dialog(void)
 				commands->Flag_List_To_Redraw();
 			}
 			Show_Mouse();
+			WWDraw_Flush_Present();
 			display = REDRAW_NONE;
 		}
 
 		/*
 		........................... Get user input ............................
 		*/
+		Set_Logic_Page(SeenBuff);
 		input = commands->Input();
+		WWDraw_Flush_Present();
 
 		/*
 		............................ Process input ............................

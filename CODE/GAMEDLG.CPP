@@ -218,6 +218,7 @@ void GameControlsClass::Process(void)
 			Dialog_Box(d_dialog_x, d_dialog_y, d_dialog_w, d_dialog_h);
 			Draw_Caption(TXT_GAME_CONTROLS, d_dialog_x, d_dialog_y, d_dialog_w);
 			Show_Mouse();
+			WWDraw_Flush_Present();
 			display = false;
 			refresh = true;
 		}
@@ -252,13 +253,16 @@ void GameControlsClass::Process(void)
 			commands->Draw_All();
 
 			Show_Mouse();
+			WWDraw_Flush_Present();
 			refresh = false;
 		}
 
 		/*
 		**	Get user input.
 		*/
+		Set_Logic_Page(SeenBuff);
 		input = commands->Input();
+		WWDraw_Flush_Present();
 
 		/*
 		**	Process input.

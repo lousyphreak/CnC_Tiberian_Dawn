@@ -270,13 +270,16 @@ void GameOptionsClass::Process(void)
 			buttons->Draw_All();
 			TabClass::Hilite_Tab(0);
 			Show_Mouse();
+			WWDraw_Flush_Present();
 			display = false;
 		}
 
 		/*
 		**	Get user input.
 		*/
+		Set_Logic_Page(SeenBuff);
 		KeyNumType input = buttons->Input();
+		WWDraw_Flush_Present();
 
 		/*
 		**	Process Input.

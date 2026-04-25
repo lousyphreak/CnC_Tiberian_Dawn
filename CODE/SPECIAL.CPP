@@ -176,9 +176,12 @@ void Special_Dialog(void)
 			}
 			buttons->Draw_All();
 			Show_Mouse();
+			WWDraw_Flush_Present();
 		}
 
+		Set_Logic_Page(SeenBuff);
 		KeyNumType input = buttons->Input();
+		WWDraw_Flush_Present();
 		switch (static_cast<int>(input)) {
 			case KN_ESC:
 			case 200|KN_BUTTON:

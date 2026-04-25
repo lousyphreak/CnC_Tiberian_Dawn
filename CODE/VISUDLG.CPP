@@ -221,6 +221,7 @@ void VisualControlsClass::Process(void)
 			Dialog_Box(Option_X, Option_Y, Option_Width, Option_Height);
 			Draw_Caption(TXT_VISUAL_CONTROLS, Option_X, Option_Y, Option_Width);
 			Show_Mouse();
+			WWDraw_Flush_Present();
 			display = false;
 			partial = true;
 		}
@@ -240,13 +241,16 @@ void VisualControlsClass::Process(void)
 			}
 			optionsbtn.Draw_All();
 			Show_Mouse();
+			WWDraw_Flush_Present();
 			partial = false;
 		}
 
 		/*
 		**	Get and process player input.
 		*/
+		Set_Logic_Page(SeenBuff);
 		KeyNumType input = optionsbtn.Input();
+		WWDraw_Flush_Present();
 		switch (static_cast<int>(input)) {
 			case (BUTTON_BRIGHTNESS | KN_BUTTON):
 				Options.Set_Brightness(brightness.Get_Value());
