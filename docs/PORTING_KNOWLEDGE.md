@@ -86,6 +86,10 @@ _Last updated: 2026-04-25_
 - TD's live VQA palette updates do not primarily flow through `CODE/WINSTUB.CPP::SetPalette(...)`:
   - `WIN32LIB/VQA32/DRAWER.CPP` / `LOADER.CPP` call the TD-only `WIN32LIB/PALETTE/PALETTE.CPP::SetPalette(...)` helper directly during playback;
   - that helper must preserve the loaded `.VQP` interpolation tables (`InterpolatedPalettes` / `PaletteCounter`) or certain movies can show a few wrong interpolation colors even though the base palette looks mostly correct.
+- `Build_Frame(...)` does not always hand callers a raw pixel pointer:
+  - when `UseBigShapeBuffer` is enabled, `KEYFRAME.CPP::Build_Frame(...)` returns a cached shape-header slot whose `shape_data` field points at the real uncompressed pixels;
+  - any caller that wants to read/draw the frame data directly must first resolve that slot through `Get_Shape_Header_Data(...)`;
+  - `CONQUER.CPP::CC_Draw_Shape()` was missing that step, which made shared SHP rendering consume cache metadata as pixels and produced globally skewed/rotated-looking sprites in both UI and gameplay.
 - TD's scenario/map/icon binary formats are not always the same as the later Red Alert SDL port:
   - scenario `.BIN` template records are byte-sized on disk and must be read through explicit fixed-width fields before converting to `TemplateType`;
   - TD icon sets still use the older 32-byte `IControl_Type` layout; dropping in Red Alert's later 40-byte iconset header corrupts map/icon offsets and crashes template validation.

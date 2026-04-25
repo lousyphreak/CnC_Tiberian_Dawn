@@ -8,6 +8,22 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
 
 ## Current status
 
+- Sprite corruption affecting menu and in-game shape rendering was traced to the big-shape cache handoff in `CC_Draw_Shape()` (2026-04-25):
+  - completed in this checkpoint:
+    - traced the shared shape path through `CONQUER.CPP::CC_Draw_Shape()`, `KEYFRAME.CPP::Build_Frame(...)`, and `KEYFBUFF.CPP::Buffer_Frame_To_Page(...)`;
+    - confirmed that when `UseBigShapeBuffer` is enabled on modern machines, `Build_Frame(...)` returns a cached shape header slot rather than the raw pixel pointer;
+    - fixed `CC_Draw_Shape()` so it now resolves cached frames through `Get_Shape_Header_Data(...)` before passing them to `Buffer_Frame_To_Page(...)`, matching the other `Build_Frame(...)` consumers in the same file.
+  - why this mattered:
+    - the draw path was treating the cache metadata/header bytes as if they were the start of the sprite pixel data;
+    - because this affects the common SHP frame path, it corrupted both main-menu/UI shapes and in-game object rendering with the reported rotated/skewed appearance.
+  - validation result:
+    - `cmake --build build --parallel 4` succeeds.
+    - `cmake --build build-asan --parallel 4` succeeds.
+    - `timeout --foreground 125s bash -lc './build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` still falls into the previously known invalid-vptr/raw-object-layout UBSan failures in live gameplay code rather than a new fault in the sprite draw path.
+  - remaining follow-up from this sweep:
+    - interactively confirm that menu chrome, sidebar/UI shapes, and in-game SHP actors now render normally end-to-end;
+    - keep the existing object-layout/save/runtime UBSan work separate from this shape-cache fix.
+
 - Briefing-movie edge-color corruption was traced to the direct VQA palette-update helper, not the deferred WINSTUB path (2026-04-25):
   - completed in this checkpoint:
     - reverted the earlier `CODE/WINSTUB.CPP::SetPalette(...)` experiment after it proved irrelevant to the live briefing-movie path;

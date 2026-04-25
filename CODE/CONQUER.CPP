@@ -2593,7 +2593,7 @@ void CC_Draw_Shape(void const * shapefile, int shapenum, int x, int y, WindowNum
 														WindowList[window][WINDOWWIDTH] << 3,
 														WindowList[window][WINDOWHEIGHT]);
 
-			shape_pointer = static_cast<char*>(built_frame);
+			shape_pointer = static_cast<char*>(Get_Shape_Header_Data(built_frame));
 
 			/*
 			**	Special shadow drawing code (used for aircraft and bullets).
