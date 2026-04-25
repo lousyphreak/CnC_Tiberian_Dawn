@@ -42,6 +42,12 @@
 #include  "CCDDE.H"
 #include "ra_messagebox.h"
 
+#include <SDL3/SDL_filesystem.h>
+
+#include <cstdio>
+#include <cstring>
+#include <string>
+
 bool Read_Private_Config_Struct(char *profile, NewConfigType *config);
 void Delete_Swap_Files(void);
 void Print_Error_End_Exit(char *string);
@@ -50,7 +56,7 @@ WinTimerClass *WinTimer;
 extern void Create_Main_Window ( HANDLE instance , int command_show , int width , int height);
 
 extern bool ReadyToQuit;
-void Read_Setup_Options(RawFileClass *config_file);
+void Read_Setup_Options(char *config_data);
 
 bool VideoBackBufferAllowed = true;
 void Check_From_WChat(char *wchat_name);
@@ -59,6 +65,172 @@ bool SpawnedFromWChat = false;
 extern "C"{
 	bool __cdecl Detect_MMX_Availability(void);
 	void __cdecl Init_MMX(void);
+}
+
+namespace
+{
+const char* const kStartupGameDataBaseMixfiles[] = {
+	"CONQUER.MIX",
+	"GENERAL.MIX"
+};
+
+void copy_base_path(char* buffer, size_t buffer_size)
+{
+	if (buffer == NULL || buffer_size == 0) {
+		return;
+	}
+
+	const char* base_path = SDL_GetBasePath();
+	std::string base_path_string = (base_path != NULL) ? base_path : "./";
+	if (!base_path_string.empty() && base_path_string.back() != '/' && base_path_string.back() != '\\') {
+		base_path_string.push_back('/');
+	}
+	std::snprintf(buffer, buffer_size, "%s", base_path_string.c_str());
+}
+
+std::string normalize_directory_path(const char* path)
+{
+	std::string normalized = WWFS_NormalizePath(path);
+	while (normalized.size() > 1 && (normalized.back() == '/' || normalized.back() == '\\')) {
+		normalized.pop_back();
+	}
+	return normalized.empty() ? std::string(".") : normalized;
+}
+
+std::string current_working_directory_path()
+{
+	char* current_directory = SDL_GetCurrentDirectory();
+	if (current_directory == NULL || current_directory[0] == '\0') {
+		if (current_directory != NULL) {
+			SDL_free(current_directory);
+		}
+		return std::string();
+	}
+
+	std::string normalized = normalize_directory_path(current_directory);
+	SDL_free(current_directory);
+	return normalized;
+}
+
+std::string startup_base_directory_path()
+{
+	const char* base_path = SDL_GetBasePath();
+	if (base_path != NULL && base_path[0] != '\0') {
+		return normalize_directory_path(base_path);
+	}
+
+	return std::string();
+}
+
+std::string executable_directory_path(const char* executable_path)
+{
+	const std::string base_directory = startup_base_directory_path();
+	if (!base_directory.empty()) {
+		return base_directory;
+	}
+
+	char drive[_MAX_DRIVE];
+	char path[_MAX_PATH];
+	char working_directory[_MAX_PATH];
+
+	_splitpath(executable_path, drive, path, NULL, NULL);
+	if (!path[0]) {
+		std::strcpy(path, ".");
+	}
+	const size_t path_length = std::strlen(path);
+	if (path_length > 0 && (path[path_length - 1] == '\\' || path[path_length - 1] == '/')) {
+		path[path_length - 1] = '\0';
+	}
+
+	working_directory[0] = '\0';
+	if (drive[0]) {
+		std::strcat(working_directory, drive);
+	}
+	std::strcat(working_directory, path);
+	return normalize_directory_path(working_directory);
+}
+
+bool directory_contains_game_data(const std::string& directory)
+{
+	SDL_PathInfo info;
+	if (!WWFS_GetPathInfo(directory.c_str(), &info) || info.type != SDL_PATHTYPE_DIRECTORY) {
+		return false;
+	}
+
+	for (size_t index = 0; index < (sizeof(kStartupGameDataBaseMixfiles) / sizeof(kStartupGameDataBaseMixfiles[0])); ++index) {
+		const std::string mixfile = directory + "/" + kStartupGameDataBaseMixfiles[index];
+		if (!WWFS_GetPathInfo(mixfile.c_str(), NULL)) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool try_get_command_line_gamedata_directory(int argc, char* argv[], std::string* directory)
+{
+	if (directory == NULL) {
+		return false;
+	}
+
+	for (int index = 1; index < argc; ++index) {
+		const char* argument = argv[index];
+		if (argument == NULL || SDL_strcasecmp(argument, "-gamedata") != 0) {
+			continue;
+		}
+		if (index + 1 >= argc || argv[index + 1] == NULL || argv[index + 1][0] == '\0') {
+			return false;
+		}
+
+		*directory = normalize_directory_path(argv[index + 1]);
+		return true;
+	}
+
+	return false;
+}
+
+std::string resolve_game_data_directory(int argc, char* argv[], const char* executable_path)
+{
+	std::string command_line_directory;
+	if (try_get_command_line_gamedata_directory(argc, argv, &command_line_directory) && directory_contains_game_data(command_line_directory)) {
+		return command_line_directory;
+	}
+
+	const std::string current_working_directory = current_working_directory_path();
+	if (!current_working_directory.empty() && directory_contains_game_data(current_working_directory)) {
+		return current_working_directory;
+	}
+
+	const std::string executable_directory = executable_directory_path(executable_path);
+	if (directory_contains_game_data(executable_directory)) {
+		return executable_directory;
+	}
+
+	return std::string();
+}
+
+void print_missing_game_data_error(int argc, char* argv[], const char* executable_path)
+{
+	std::string command_line_directory;
+	const bool has_command_line_directory = try_get_command_line_gamedata_directory(argc, argv, &command_line_directory);
+	const std::string current_working_directory = current_working_directory_path();
+	const std::string executable_directory = executable_directory_path(executable_path);
+
+	std::fprintf(stderr, "Required game data was not found.\n");
+	std::fprintf(stderr, "Checked for CONQUER.MIX and GENERAL.MIX in this order:\n");
+	if (has_command_line_directory) {
+		std::fprintf(stderr, "  1. -gamedata %s\n", command_line_directory.c_str());
+	} else {
+		std::fprintf(stderr, "  1. -gamedata <dir> (not provided)\n");
+	}
+	std::fprintf(stderr,
+		"  2. current working directory: %s\n",
+		current_working_directory.empty() ? "(unavailable)" : current_working_directory.c_str());
+	std::fprintf(stderr,
+		"  3. executable directory: %s\n",
+		executable_directory.empty() ? "(unavailable)" : executable_directory.c_str());
+	std::fprintf(stderr, "Use -gamedata <dir> or launch the game from a directory that contains those files.\n");
+}
 }
 
 
@@ -173,14 +345,21 @@ int main(int argc, char *argv[])
 	int		startup_argc;				// Command line argument count
 	char *	startup_argv[20];		// Pointers to command line arguments
 	char		path_to_exe[280];
+	char*	fallback_argv[1];
 
 	ProgramInstance = instance;
+
+	if (argv == NULL || argc <= 0 || argv[0] == NULL || argv[0][0] == '\0') {
+		copy_base_path(path_to_exe, sizeof(path_to_exe));
+		fallback_argv[0] = &path_to_exe[0];
+		argv = fallback_argv;
+		argc = 1;
+	}
 
 	/*
 	** Get the full path to the .EXE
 	*/
-	const char *base_path = SDL_GetBasePath();
-	snprintf(path_to_exe, sizeof(path_to_exe), "%s", (base_path != NULL) ? base_path : "./");
+	copy_base_path(path_to_exe, sizeof(path_to_exe));
 
 	/*
 	** First argument is supposed to be a pointer to the .EXE that is running
@@ -195,31 +374,20 @@ int main(int argc, char *argv[])
 
 
 	/*
-	**	Remember the current working directory and drive.
+	**	Select the asset directory in this exact order:
+	**	1) -gamedata <dir>
+	**	2) current working directory
+	**	3) executable directory
 	*/
-	unsigned olddrive;
-	char oldpath[PATH_MAX];
-	getcwd(oldpath, sizeof(oldpath));
-	_dos_getdrive(&olddrive);
-
-
-	/*
-	**	Change directory to the where the executable is located. Handle the
-	**	case where there is no path attached to argv[0].
-	*/
-	char drive[_MAX_DRIVE];
-	char path[_MAX_PATH];
-	_splitpath(startup_argv[0], drive, path, NULL, NULL);
-	if (!drive[0]) {
-		drive[0] = ('A' + olddrive)-1;
+	const std::string game_data_directory = resolve_game_data_directory(startup_argc, startup_argv, startup_argv[0]);
+	if (game_data_directory.empty()) {
+		print_missing_game_data_error(startup_argc, startup_argv, startup_argv[0]);
+		return(EXIT_FAILURE);
 	}
-	if (!path[0]) {
-		strcpy(path, ".");
+	if (!WWFS_SetCurrentDirectory(game_data_directory.c_str())) {
+		std::fprintf(stderr, "Failed to use game data directory: %s\n", game_data_directory.c_str());
+		return(EXIT_FAILURE);
 	}
-	if (path[strlen(path)-1] == '\\') {
-		path[strlen(path)-1] = '\0';
-	}
-	chdir(path);
 
 #ifdef JAPANESE
 	ForceEnglish = false;
@@ -298,15 +466,14 @@ int main(int argc, char *argv[])
 		CDFileClass::Set_CD_Drive (CDList.Get_First_CD_Drive());
 
 		if (cfile.Is_Available()) {
+			const int32_t config_size = cfile.Size();
+			char* config_data = new char[config_size + 1];
+			cfile.Read(config_data, config_size);
+			config_data[config_size] = '\0';
 
-#ifndef NOMEMCHECK
-			char * cdata = (char *)Load_Alloc_Data(cfile);
-			Read_Private_Config_Struct(cdata, &NewConfig);
-			delete [] cdata;
-#else
-			Read_Private_Config_Struct((char *)Load_Alloc_Data(cfile), &NewConfig);
-#endif
-			Read_Setup_Options( &cfile );
+			Read_Private_Config_Struct(config_data, &NewConfig);
+			Read_Setup_Options(config_data);
+			delete[] config_data;
 
 			CCDebugString ("C&C95 - Creating main window.\n");
 
@@ -415,9 +582,11 @@ int main(int argc, char *argv[])
 			** See if we should run the intro
 			*/
 			CCDebugString ("C&C95 - Reading CONQUER.INI.\n");
-			char *buffer = (char*)Alloc(64000 , MEM_NORMAL);		//(char *)HidPage.Get_Buffer();
-			cfile.Read(buffer, cfile.Size());
-			buffer[cfile.Size()] = '\0';
+			const int32_t ini_size = cfile.Size();
+			const int32_t ini_capacity = ini_size + 1024;
+			char *buffer = (char*)Alloc(ini_capacity, MEM_NORMAL);		//(char *)HidPage.Get_Buffer();
+			cfile.Read(buffer, ini_size);
+			buffer[ini_size] = '\0';
 
 			/*
 			**	Check for forced intro movie run disabling. If the conquer
@@ -524,15 +693,6 @@ int main(int argc, char *argv[])
 			Palette = NULL;
 		}
 	}
-
-	/*
-	**	Restore the current drive and directory.
-	*/
-#ifdef NOT_FOR_WIN95
-	_dos_setdrive(olddrive, &drivecount);
-	chdir(oldpath);
-#endif	//NOT_FOR_WIN95
-
 	return(EXIT_SUCCESS);
 }
 
@@ -575,7 +735,7 @@ void __cdecl Prog_End(void)
 
 	if (Palette){
 		CCDebugString ("C&C95 - Deleting palette object.\n");
-		delete [] Palette;
+		Free(Palette);
 		Palette = NULL;
 	}
 }
@@ -647,69 +807,63 @@ void Print_Error_Exit(char *string)
  * HISTORY:                                                                                    *
  *    6/7/96 4:09PM ST : Created                                                               *
  *=============================================================================================*/
-void Read_Setup_Options( RawFileClass *config_file )
+void Read_Setup_Options(char *config_data)
 {
-	char *buffer = new char [config_file->Size()];
-
-	if (config_file->Is_Available()){
-
-		config_file->Read (buffer, config_file->Size());
-
-		VideoBackBufferAllowed = WWGetPrivateProfileInt ("Options", "VideoBackBuffer", 1, buffer);
-		ScreenHeight = WWGetPrivateProfileInt ("Options", "Resolution", 0, buffer) ? 480 : 400;
-		IsV107 = WWGetPrivateProfileInt ("Options", "Compatibility", 0, buffer);
-
-		/*
-		** See if an alternative socket number has been specified
-		*/
-		int socket = WWGetPrivateProfileInt ("Options", "Socket", 0, buffer);
-		if (socket >0 ){
-			socket += 0x4000;
-			if (socket >= 0x4000 && socket < 0x8000) {
-				Ipx.Set_Socket (socket);
-			}
-		}
-
-		/*
-		** See if a destination network has been specified
-		*/
-		char netbuf [512];
-		memset (netbuf, 0, sizeof (netbuf) );
-		char *netptr = WWGetPrivateProfileString ("Options", "DestNet", NULL, netbuf, sizeof (netbuf), buffer);
-
-		if (netptr && strlen (netbuf)){
-			NetNumType net;
-			NetNodeType node;
-
-			/*
-			** Scan the string, pulling off each address piece
-			*/
-			int i = 0;
-			char * p = strtok(netbuf,".");
-			int x;
-			while (p) {
-				sscanf(p,"%x",&x);			// convert from hex string to int
-				if (i < 4) {
-					net[i] = (char)x;			// fill NetNum
-				} else {
-					node[i-4] = (char)x;		// fill NetNode
-				}
-				i++;
-				p = strtok(NULL,".");
-			}
-
-			/*
-			** If all the address components were successfully read, fill in the
-			** BridgeNet with a broadcast address to the network across the bridge.
-			*/
-			if (i >= 4) {
-				IsBridge = 1;
-				memset(node, 0xff, 6);
-				BridgeNet = IPXAddressClass(net, node);
-			}
-		}
-
+	if (!config_data) {
+		return;
 	}
 
-	delete [] buffer;
+	VideoBackBufferAllowed = WWGetPrivateProfileInt("Options", "VideoBackBuffer", 1, config_data);
+	ScreenHeight = WWGetPrivateProfileInt("Options", "Resolution", 0, config_data) ? 480 : 400;
+	IsV107 = WWGetPrivateProfileInt("Options", "Compatibility", 0, config_data);
+
+	/*
+	** See if an alternative socket number has been specified
+	*/
+	int socket = WWGetPrivateProfileInt("Options", "Socket", 0, config_data);
+	if (socket > 0) {
+		socket += 0x4000;
+		if (socket >= 0x4000 && socket < 0x8000) {
+			Ipx.Set_Socket(socket);
+		}
+	}
+
+	/*
+	** See if a destination network has been specified
+	*/
+	char netbuf[512];
+	memset(netbuf, 0, sizeof(netbuf));
+	char* netptr = WWGetPrivateProfileString("Options", "DestNet", NULL, netbuf, sizeof(netbuf), config_data);
+
+	if (netptr && strlen(netbuf)) {
+		NetNumType net;
+		NetNodeType node;
+
+		/*
+		** Scan the string, pulling off each address piece
+		*/
+		int i = 0;
+		char* p = strtok(netbuf, ".");
+		int x;
+		while (p) {
+			sscanf(p, "%x", &x);			// convert from hex string to int
+			if (i < 4) {
+				net[i] = (char)x;			// fill NetNum
+			} else {
+				node[i - 4] = (char)x;		// fill NetNode
+			}
+			i++;
+			p = strtok(NULL, ".");
+		}
+
+		/*
+		** If all the address components were successfully read, fill in the
+		** BridgeNet with a broadcast address to the network across the bridge.
+		*/
+		if (i >= 4) {
+			IsBridge = 1;
+			memset(node, 0xff, 6);
+			BridgeNet = IPXAddressClass(net, node);
+		}
+	}
 }

@@ -289,6 +289,20 @@ int32_t UnDip_Text(char const *source, char *dest)
 #define TXT_WINSOCK_CONNECTION_LOST					4567+20
 #define TXT_WINSOCK_RESOLVING_HOST_ADDRESS			4567+21
 
+#define TXT_READING_IMAGE_DATA							742
+#define TXT_ANALYZING									743
+#define TXT_ENHANCING_IMAGE_DATA						744
+#define TXT_ISOLATING_OPERATIONAL_THEATER				745
+#define TXT_ESTABLISHING_TRADITIONAL_BOUNDARIES		746
+#define TXT_FOR_VISUAL_REFERENCE						747
+#define TXT_ENHANCING_IMAGE								748
+#define TXT_BONUS_MISSIONS								749
+#define TXT_BONUS_MISSION_1								750
+#define TXT_BONUS_MISSION_2								751
+#define TXT_BONUS_MISSION_3								752
+#define TXT_BONUS_MISSION_4								753
+#define TXT_BONUS_MISSION_5								754
+
 static char InternetTxt[22][40]={
 	"Internet H2H",
 	"Host Internet Game",
@@ -314,14 +328,31 @@ static char InternetTxt[22][40]={
 	"Resolving address of host..."
 };
 
+static char LateGameTxt[13][40]={
+	"READING IMAGE DATA",
+	"ANALYZING",
+	"ENHANCING IMAGE DATA",
+	"ISOLATING OPERATIONAL THEATER",
+	"ESTABLISHING TRADITIONAL BOUNDARIES",
+	"FOR VISUAL REFERENCE",
+	"ENHANCING IMAGE",
+	"Bonus Missions",
+	"Bonus Mission 1",
+	"Bonus Mission 2",
+	"Bonus Mission 3",
+	"Bonus Mission 4",
+	"Bonus Mission 5"
+};
+
 char *Extract_String(void const *data, int32_t string)
 {
-	uint16_t	const *ptr;
+	uint16_t offset = 0;
 
 	if (!data || string < 0) return(NULL);
 
 	if (string >= 4567) return (InternetTxt[string-4567]);
+	if (string >= TXT_READING_IMAGE_DATA && string <= TXT_BONUS_MISSION_5) return (LateGameTxt[string-TXT_READING_IMAGE_DATA]);
 
-	ptr = (uint16_t const *)data;
-	return (((char*)data) + ptr[string]);
+	memcpy(&offset, static_cast<char const*>(data) + (string * (int32_t)sizeof(offset)), sizeof(offset));
+	return (((char*)data) + offset);
 }

@@ -39,8 +39,8 @@
  *   RawFileClass::Is_Open -- Checks to see if the file is open or not.                        *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#ifndef RAWFILE_H
-#define RAWFILE_H
+#ifndef RAWFILE_Hx
+#define RAWFILE_Hx
 
 #include <errno.h>
 #include <limits.h>

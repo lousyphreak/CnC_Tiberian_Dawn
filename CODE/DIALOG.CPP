@@ -667,9 +667,16 @@ void Fancy_Text_Print(char const *text, unsigned x, unsigned y, unsigned fore, u
 		**	Since vsprintf doesn't know about EMS pointers, be sure to surround this
 		**	call with locking code.
 		*/
-		va_start(arg, flag);
-		vsprintf(buffer, text, arg);
-		va_end(arg);
+		if (text[0] == '\0') {
+			buffer[0] = '\0';
+		} else if (strchr(text, '%') == NULL) {
+			strncpy(buffer, text, sizeof(buffer) - 1);
+			buffer[sizeof(buffer) - 1] = '\0';
+		} else {
+			va_start(arg, flag);
+			vsnprintf(buffer, sizeof(buffer), text, arg);
+			va_end(arg);
+		}
 
 		Simple_Text_Print(buffer, x, y, fore, back, flag);
 	} else {

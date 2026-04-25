@@ -79,21 +79,16 @@ typedef struct {
 	int16_t	Height;			// Height of icons (pixels).
 	int16_t	Count;			// Number of (logical) icons in this set.
 	int16_t	Allocated;		// Was this iconset allocated?
-	int16_t MapWidth;		// Width of map (in icons).
-	int16_t MapHeight;		// Height of map (in icons).
 	int32_t	Size;				// Size of entire iconset memory block.
 	int32_t	Icons;			// Offset from buffer start to icon data.
-//	unsigned char * Icons;	// Offset from buffer start to icon data.
 	int32_t	Palettes;		// Offset from buffer start to palette data.
 	int32_t	Remaps;			// Offset from buffer start to remap index data.
 	int32_t	TransFlag;		// Offset for transparency flag table.
-	int32_t	ColorMap;		// Offset for color control value table.
 	int32_t	Map;				// Icon map offset (if present).
-//	unsigned char * Map;				// Icon map offset (if present).
 } IControl_Type;
 #pragma pack(pop)
 
-static_assert(sizeof(IControl_Type) == 40, "IControl_Type layout mismatch");
+static_assert(sizeof(IControl_Type) == 32, "IControl_Type layout mismatch");
 
 
 #endif //TILE_H

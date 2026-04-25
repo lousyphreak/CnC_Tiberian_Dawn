@@ -1,6 +1,6 @@
 # Porting Knowledge
 
-_Last updated: 2026-04-24_
+_Last updated: 2026-04-25_
 
 - This repository starts from a much earlier state than the Red Alert SDL3 port:
   - there is no top-level CMake project yet;
@@ -55,3 +55,26 @@ _Last updated: 2026-04-24_
 - `CODE/KEY.H` shadows the imported support-layer keyboard header because they share the same include guard shape. When TD sources still need `_Kbd`, `Check_Key`, `Get_Key_Num`, `Clear_KeyBuffer`, `KN_To_VK`, and similar helpers, those declarations must be restored directly in `CODE/KEY.H`.
 - `COMQUEUE.H` and `COMBUF.H` both define `SendQueueType` / `ReceiveQueueType`; modernizing `COMQUEUE.CPP` to include its own header exposes that collision immediately. The queue entry typedefs in `COMQUEUE` must use distinct names instead of relying on older include-order accidents.
 - The null-modem stack is still not a buildable subsystem on Linux, but adding a tiny `commlib.h` forward declaration shim is enough to make `NULLMGR.H` parsable again while the real serial/null-modem sources remain excluded. This is useful for compile-time type completeness without committing to a full null-modem port yet.
+- The first black-window runtime bug was presentation plumbing, not game logic:
+  - TD was missing Red Alert's SDL-port present batching/flushing in a few hot paths;
+  - batching `GadgetClass::Draw_All()` and flushing presents from the main callback / VQ callback paths was enough to get visible output instead of only audio/movie playback.
+- TD's shipped string resources are missing a late string range that current menu/game flows still reference:
+  - IDs `742-754` can come back as junk/empty data on this tree;
+  - the existing `WIN32LIB/DIPTHONG/DIPTHONG.CPP` fallback-table approach used for internet text is also the safe place to patch these missing late TD strings.
+- `RandNumb` is a confirmed 32-bit global and must not be declared as `long` on Linux:
+  - the support layer defines it as `uint32_t`;
+  - any TD-side `extern long RandNumb` declaration causes ASan-detectable overflow on x86-64 because `long` is 64-bit there.
+- TD's scenario/map/icon binary formats are not always the same as the later Red Alert SDL port:
+  - scenario `.BIN` template records are byte-sized on disk and must be read through explicit fixed-width fields before converting to `TemplateType`;
+  - TD icon sets still use the older 32-byte `IControl_Type` layout; dropping in Red Alert's later 40-byte iconset header corrupts map/icon offsets and crashes template validation.
+- TD pathing/direction enums are byte-oriented data and must stay byte-sized in the modern build:
+  - `FacingType` should match the Red Alert SDL port (`uint8_t`, `FACING_NONE = 0xFF`);
+  - `DirType` should also remain `uint8_t`;
+  - leaving either enum as a default-sized C++ enum breaks path arrays, direction math, and adjacent-cell lookups because old code still copies and stores them as bytes.
+- Old runtime helper buffers that were declared `const` only to force near-data placement are unsafe in the modern port:
+  - `HelpClass::OverlapList` is written at runtime and must be mutable;
+  - `DisplayClass::Text_Overlap_List(...)` also needs explicit bounds guarding because the original static buffer assumptions are too fragile under sanitizers.
+- Any TD path-array shift that copies within the same array must use `Mem_Copy(...)` / `memmove`, not `memcpy(...)`:
+  - ASan caught this in both infantry and vehicle movement once gameplay was running.
+- TD's shadow/remap neighbor walk needs explicit modern bounds checks:
+  - `DisplayClass::Cell_Shadow(...)` and `DisplayClass::Map_Cell(...)` must guard against off-map and edge-adjacent cells using `MAP_CELL_TOTAL` / explicit edge tests before doing pointer arithmetic on neighboring cells.

@@ -165,6 +165,7 @@ class FixedIHeapClass : public FixedHeapClass
 **	class. By using this template, the object pointers are automatically converted
 **	to the correct type without any code overhead.
 */
+class FileClass;
 template<class T>
 class TFixedIHeapClass : public FixedIHeapClass
 {

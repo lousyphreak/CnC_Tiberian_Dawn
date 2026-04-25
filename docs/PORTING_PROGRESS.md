@@ -1,6 +1,6 @@
 # Porting Progress
 
-_Last updated: 2026-04-24_
+_Last updated: 2026-04-25_
 
 ## Goal
 
@@ -382,5 +382,27 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
     - legacy IPX multiplayer is currently a documented compatibility stub on this platform; the build succeeds, but the old Win95 IPX backend is not yet ported to a real modern transport
     - serial/null-modem flows are still held behind the earlier temporary compatibility stubs
   - next focus:
-    - move from build-frontier work to runtime bring-up and early startup validation with original game assets
-    - decide whether the IPX95 stub path should remain a deliberate unsupported legacy backend or be replaced with a UDP-backed compatibility layer later
+     - move from build-frontier work to runtime bring-up and early startup validation with original game assets
+     - decide whether the IPX95 stub path should remain a deliberate unsupported legacy backend or be replaced with a UDP-backed compatibility layer later
+- Runtime bring-up advanced from black-screen startup to a sustained ASan gameplay run (2026-04-25):
+  - completed in this checkpoint:
+    - fixed the first missing SDL present plumbing that was leaving the window black even though movies/audio were running:
+      - `CODE/GADGET.CPP` now batches `GadgetClass::Draw_All()` presents
+      - `CODE/CONQUER.CPP` now pumps SDL input during callbacks and flushes presents from both the main callback path and the VQ callback path
+    - restored missing late TD string IDs that were returning junk pointers and crashing text rendering in the menu/map-selection path:
+      - added fallback strings for IDs `742-754` in `WIN32LIB/DIPTHONG/DIPTHONG.CPP`, including `TXT_BONUS_MISSIONS` and the bonus mission labels
+    - fixed multiple confirmed 32-bit layout mismatches exposed by Linux/ASan:
+      - `CODE/INIT.CPP` now declares `RandNumb` as `uint32_t` instead of `long`
+      - `CODE/MAP.CPP` now reads scenario `.BIN` template records as explicit on-disk bytes instead of reading directly into a compiler-sized `TemplateType`
+      - `WIN32LIB/TILE/TILE.H` and `WIN32LIB/INCLUDE/TILE.H` now use TD's older 32-byte iconset header layout rather than the later Red Alert 40-byte layout
+      - `CODE/DEFINES.H` now keeps both `FacingType` and `DirType` explicitly 8-bit, matching the Red Alert port and the original byte-oriented pathing code
+    - fixed several runtime-only modern-memory issues that ASan immediately surfaced once gameplay started:
+      - `CODE/HELP.H`, `CODE/HELP.CPP`, and `CODE/DISPLAY.CPP` no longer write into a `const` help overlap buffer and now bound the overlap list generation
+      - `CODE/INFANTRY.CPP` and `CODE/DRIVE.CPP` now use `Mem_Copy(...)` for overlapping path shifts instead of raw `memcpy(...)`
+      - `CODE/DISPLAY.CPP` now rejects off-map cells and edge cells when computing shadow tiles / adjacent remap propagation
+  - validation result:
+    - `cmake --build build-asan --target tiberian-dawn -j32` succeeds
+    - `timeout --foreground 125s bash -lc 'env SDL_RENDER_DRIVER=software ./build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` now runs for the full timeout window (`STATUS=124`, `ELAPSED=125.001`) instead of crashing early
+  - current remaining runtime follow-up:
+    - the 2-minute ASan runtime target is now met
+    - non-fatal UBSan diagnostics still appear during gameplay, especially around old object-pool/vptr assumptions and some negative-shift pathing math, so runtime cleanup is not finished even though the current build no longer dies during the timed startup/gameplay probe

@@ -58,6 +58,9 @@
 #include "FUNCTION.H"
 #include <FILEPCX.H>
 
+void WWDraw_Begin_Present_Batch(void);
+void WWDraw_End_Present_Batch(void);
+
 /*
 **	This records the current gadget the the gadget system is "stuck on". Such a
 **	gadget will be processed to the exclusion of all others until the mouse button
@@ -411,10 +414,14 @@ void GadgetClass::Draw_All(bool forced)
 {
 	GadgetClass *gadget = this;
 
+	WWDraw_Begin_Present_Batch();
+
 	while (gadget != NULL) {
 		gadget->Draw_Me(forced);
 		gadget = gadget->Get_Next();
 	}
+
+	WWDraw_End_Present_Batch();
 }
 
 
@@ -799,4 +806,3 @@ int GadgetClass::Is_List_To_Redraw(void)
 	}
 	return (false);
 }
-

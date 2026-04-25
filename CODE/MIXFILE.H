@@ -54,30 +54,35 @@ class MixFileClass : public LinkClass
 		void Free(void);
 		bool Cache(void);
 		static bool Cache(char const *filename);
-		static bool Offset(char const *filename, void ** realptr = 0, MixFileClass ** mixfile = 0, long * offset = 0, long * size = 0);
+		static bool Offset(char const *filename, void ** realptr = 0, MixFileClass ** mixfile = 0, int32_t * offset = 0, int32_t * size = 0);
 		static void const * Retrieve(char const *filename);
 
 		struct SubBlock {
-			long CRC;				// CRC code for embedded file.
-			long Offset;			// Offset from start of data section.
-			long Size;				// Size of data subfile.
+			int32_t CRC;				// CRC code for embedded file.
+			int32_t Offset;			// Offset from start of data section.
+			int32_t Size;				// Size of data subfile.
 
-			int operator < (SubBlock & two) const {return (CRC < two.CRC);};
-			int operator > (SubBlock & two) const {return (CRC > two.CRC);};
-			int operator == (SubBlock & two) const {return (CRC == two.CRC);};
+			int operator < (SubBlock const& two) const {return (CRC < two.CRC);};
+			int operator > (SubBlock const& two) const {return (CRC > two.CRC);};
+			int operator == (SubBlock const& two) const {return (CRC == two.CRC);};
 		};
 
 	private:
 		static MixFileClass * Finder(char const *filename);
-		long Offset(long crc, long *size = 0);
+		int32_t Offset(int32_t crc, int32_t *size = 0);
 
+		#pragma pack(push, 1)
 		typedef struct {
-			short	count;
-			long	size;
+			int16_t count;
+			int32_t size;
 		} FileHeader;
+		#pragma pack(pop)
+
+		static_assert(sizeof(SubBlock) == 12, "MixFileClass::SubBlock must stay 12 bytes");
+		static_assert(sizeof(FileHeader) == 6, "MixFileClass::FileHeader must stay 6 bytes");
 
 		int Count;							// Number of sub-blocks.
-		long DataSize;						// Size of raw data.
+		int32_t DataSize;					// Size of raw data.
 		SubBlock * Buffer;				// Array of sub blocks (could be in EMS).
 		void *Data;							// Pointer to raw data.
 

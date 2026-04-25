@@ -237,7 +237,7 @@ int MonoPage;			// The current page.
 **	This is true if the game is the currently in focus windows app
 **
 */
-bool GameInFocus;
+int32_t GameInFocus = FALSE;
 
 /***************************************************************************
 **	This holds the theater specific mixfiles.

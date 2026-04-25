@@ -313,9 +313,21 @@ int32_t CCFileClass::Seek(int32_t pos, int dir)
  *=============================================================================================*/
 int32_t CCFileClass::Size(void)
 {
-	if (Pointer || FromDisk) return(Length);
+	int opened = false;
 
-	return(CDFileClass::Size());
+	if (!Pointer && !FromDisk && !Is_Open()) {
+		if (Open()) {
+			opened = true;
+		}
+	}
+
+	int32_t size = (Pointer || FromDisk) ? Length : CDFileClass::Size();
+
+	if (opened) {
+		Close();
+	}
+
+	return(size);
 }
 
 
@@ -433,11 +445,11 @@ int CCFileClass::Open(int rights)
 	**	into RAM.
 	*/
 	MixFileClass *mixfile = 0;
-	long mix_start = 0;
-	long mix_length = 0;
+	int32_t mix_start = 0;
+	int32_t mix_length = 0;
 	if (MixFileClass::Offset(File_Name(), &Pointer, &mixfile, &mix_start, &mix_length)) {
-		Start = static_cast<int32_t>(mix_start);
-		Length = static_cast<int32_t>(mix_length);
+		Start = mix_start;
+		Length = mix_length;
 
 		/*
 		**	If the mixfile is located on disk, then fake out the file system to read from

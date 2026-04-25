@@ -235,7 +235,10 @@ void DisplayClass::One_Time(void)
 					Mem_Copy(FadingShade, RemapTables[hindex][fade], 256);
 					break;
 			}
-			Mem_Copy(&RemapTables[hindex][fade][((int)hindex+11)*16], &RemapTables[hindex][fade][(0+11)*16], 16);
+			const int remap_start = (((int)hindex + 11) * 16);
+			if (remap_start >= 0 && remap_start + 16 <= 256) {
+				Mem_Copy(&RemapTables[hindex][fade][remap_start], &RemapTables[hindex][fade][(0+11)*16], 16);
+			}
 		}
 	}
 }
@@ -555,7 +558,8 @@ void DisplayClass::Init_Theater(TheaterType theater)
  *=============================================================================================*/
 short const * DisplayClass::Text_Overlap_List(char const * text, int x, int y, int lines)
 {
-	static short _list[30];
+	static short _list[60];
+	int count = sizeof(_list) / sizeof(_list[0]);
 
 	if (text) {
 		short * ptr = &_list[0];
@@ -570,6 +574,7 @@ short const * DisplayClass::Text_Overlap_List(char const * text, int x, int y, i
 		if (x+len >= TacPixelX+Lepton_To_Pixel(TacLeptonWidth)) {
 			len = right-x;
 			*ptr++ = REFRESH_SIDEBAR;
+			count--;
 		}
 
 		/*
@@ -589,7 +594,10 @@ short const * DisplayClass::Text_Overlap_List(char const * text, int x, int y, i
 				for (int yy = Cell_Y(ul); yy <= Cell_Y(lr); yy++) {
 					for (int xx = Cell_X(ul); xx <= Cell_X(lr); xx++) {
 						*ptr++ = XY_Cell(xx, yy) - Coord_Cell(TacticalCoord);
+						count--;
+						if (count < 2) break;
 					}
+					if (count < 2) break;
 				}
 			}
 		}
@@ -1482,7 +1490,9 @@ int DisplayClass::Cell_Shadow(CELL cell)
 	**	problem of accessing cells off the top or bottom of the map and into
 	**	who-knows-what memory.
 	*/
-	if ((unsigned)(Cell_Y(cell)-1) > MAP_CELL_H-2) return(-2);
+	if ((unsigned)cell >= MAP_CELL_TOTAL) return(-2);
+	if (Cell_Y(cell) == 0 || Cell_Y(cell) >= MAP_CELL_H-1) return(-2);
+	if (Cell_X(cell) == 0 || Cell_X(cell) >= MAP_CELL_W-1) return(-2);
 
 	cellptr = &(*this)[cell];
 	if (!cellptr->IsMapped) {
@@ -1550,7 +1560,7 @@ int DisplayClass::Cell_Shadow(CELL cell)
  *=============================================================================================*/
 bool DisplayClass::Map_Cell(CELL cell, HouseClass * house)
 {
-	if (house != PlayerPtr || cell >= (CELL)Size) return(false);
+	if (house != PlayerPtr || (unsigned)cell >= MAP_CELL_TOTAL) return(false);
 
 	/*
 	**	Don't bother remapping this cell if it is already mapped.
@@ -1578,6 +1588,7 @@ bool DisplayClass::Map_Cell(CELL cell, HouseClass * house)
 		CELL	c;
 
 		c = Adjacent_Cell(cell, dir);
+		if ((unsigned)c >= MAP_CELL_TOTAL) continue;
 
 		if (c != cell && !(*this)[c].IsMapped) {
 			shadow = Cell_Shadow(c);

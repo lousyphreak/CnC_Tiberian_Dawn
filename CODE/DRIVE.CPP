@@ -692,7 +692,7 @@ bool DriveClass::While_Moving(void)
 								Per_Cell_Process(true);
 								if (Start_Driver(c)) {
 									Set_Speed(oldspeed);
-									memcpy(&Path[0], &Path[1], CONQUER_PATH_MAX-1);
+									Mem_Copy(&Path[1], &Path[0], CONQUER_PATH_MAX-1);
 									Path[CONQUER_PATH_MAX-1] = FACING_NONE;
 								} else {
 									Path[0] = FACING_NONE;
@@ -1172,12 +1172,12 @@ bool DriveClass::Start_Of_Move(void)
 							return(true);
 						}
 					} else {
-						memcpy(&Path[0], &Path[2], CONQUER_PATH_MAX-2);
+						Mem_Copy(&Path[2], &Path[0], CONQUER_PATH_MAX-2);
 						Path[CONQUER_PATH_MAX-2] = FACING_NONE;
 						IsPlanningToLook = true;
 					}
 				} else {
-					memcpy(&Path[0], &Path[1], CONQUER_PATH_MAX-1);
+					Mem_Copy(&Path[1], &Path[0], CONQUER_PATH_MAX-1);
 				}
 				Path[CONQUER_PATH_MAX-1] = FACING_NONE;
 			}
@@ -2210,4 +2210,3 @@ DriveClass::TurnTrackType const DriveClass::TrackControl[67] = {
 	{12,	12,	DIR_SW_X2,	F_},															// Drive back into refinery.
 	{13,	13,	DIR_SW,	F_}																// Drive out of weapons factory.
 };
-

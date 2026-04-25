@@ -169,6 +169,7 @@ class TPoint2D
 #include	"WATCOM.H"
 #define FILE_H
 #define WWMEM_H
+#define RAWFILE_H
 #include "COMPAT.H"
 #include "KEY.H"
 #include <WWLIB32.H>
@@ -545,7 +546,7 @@ long __cdecl Buffer_Frame_To_Page(int x, int y, int w, int h, void *Buffer, Grap
 **	KEYFRAME.CPP
 */
 int Get_Last_Frame_Length(void);
-unsigned long Build_Frame(void const *dataptr, unsigned short framenumber, void *buffptr);
+void * Build_Frame(void const *dataptr, unsigned short framenumber, void *buffptr);
 unsigned short Get_Build_Frame_Count(void const *dataptr);
 unsigned short Get_Build_Frame_X(void const *dataptr);
 unsigned short Get_Build_Frame_Y(void const *dataptr);
@@ -815,7 +816,7 @@ inline unsigned short Build_MPlayerID(int c_idx, HousesType htype) { return ((c_
 //
 //  True if we are the currently in focus windows app
 //
-extern bool GameInFocus;
+extern int32_t GameInFocus;
 
 extern	int	ScreenWidth;
 extern	int	ScreenHeight;

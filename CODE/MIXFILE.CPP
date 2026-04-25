@@ -332,15 +332,15 @@ bool MixFileClass::Cache(void)
 
 		file.Open();
 		file.Seek(sizeof(SubBlock) * Count + sizeof(FileHeader));
-		long actual = file.Read(Data, DataSize);
+		int32_t actual = file.Read(Data, DataSize);
 		if (actual != DataSize) {
 #ifdef GERMAN
-			Fatal("Korrupte .MIX-Datei \"%s\". Beim Versuch, %ld zu lesen, nur %ld gefunden.", Filename, DataSize, actual);
+			Fatal("Korrupte .MIX-Datei \"%s\". Beim Versuch, %d zu lesen, nur %d gefunden.", Filename, DataSize, actual);
 #else
 #ifdef FRENCH
-			Fatal("Fichier .MIX corrumpu \"%s\". Essai de lecture de %ld, mais %ld obtenu.", Filename, DataSize, actual);
+			Fatal("Fichier .MIX corrumpu \"%s\". Essai de lecture de %d, mais %d obtenu.", Filename, DataSize, actual);
 #else
-			Fatal("Corrupt .MIX file \"%s\". Tried to read %ld, but got %ld.", Filename, DataSize, actual);
+			Fatal("Corrupt .MIX file \"%s\". Tried to read %d, but got %d.", Filename, DataSize, actual);
 #endif
 #endif
 		}
@@ -423,8 +423,8 @@ int compfunc(void const *ptr1, void const *ptr2)
 //	long diff = *(long const *)ptr1 - *(long const *)ptr2;
 //	return FP_SEG(diff);
 
-	if (*(long const *)ptr1 < *(long const *)ptr2) return(-1);
-	if (*(long const *)ptr1 > *(long const *)ptr2) return(1);
+	if (*(int32_t const *)ptr1 < *(int32_t const *)ptr2) return(-1);
+	if (*(int32_t const *)ptr1 > *(int32_t const *)ptr2) return(1);
 	return(0);
 }
 
@@ -459,7 +459,7 @@ int compfunc(void const *ptr1, void const *ptr2)
  * HISTORY:                                                                                    *
  *   10/17/1994 JLB : Created.                                                                 *
  *=============================================================================================*/
-bool MixFileClass::Offset(char const *filename, void ** realptr, MixFileClass ** mixfile, long * offset, long * size)
+bool MixFileClass::Offset(char const *filename, void ** realptr, MixFileClass ** mixfile, int32_t * offset, int32_t * size)
 {
 	MixFileClass * ptr;
 
@@ -468,7 +468,9 @@ bool MixFileClass::Offset(char const *filename, void ** realptr, MixFileClass **
 	/*
 	**	Create the key block that will be used to binary search for the file.
 	*/
-	long crc = Calculate_CRC(strupr((char *)filename), strlen(filename));
+	char upper_filename[_MAX_PATH];
+	snprintf(upper_filename, sizeof(upper_filename), "%s", filename);
+	int32_t crc = static_cast<int32_t>(Calculate_CRC(strupr(upper_filename), strlen(upper_filename)));
 	SubBlock key;
 	key.CRC = crc;
 

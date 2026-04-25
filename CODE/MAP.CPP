@@ -656,34 +656,40 @@ bool MapClass::Read_Binary(char const * root, unsigned long *crc)
 	CellClass * cellptr = &Map[0];
 	for (i = 0; i < MAP_CELL_TOTAL; i++) {
 		struct {
-			TemplateType TType;		// Template type.
-			unsigned char TIcon;		// Template icon number.
+			uint8_t TType;			// Template type stored in the BIN file.
+			uint8_t TIcon;			// Template icon number stored in the BIN file.
 		} temp;
+		TemplateType template_type;
 
 		if (file.Read(&temp, sizeof(temp)) != sizeof(temp)) break;
-		if (temp.TType == (TemplateType)255) {
-			temp.TType = TEMPLATE_NONE;
+		if (temp.TType == static_cast<uint8_t>(TEMPLATE_NONE)) {
+			template_type = TEMPLATE_NONE;
+		} else if (temp.TType >= static_cast<uint8_t>(TEMPLATE_COUNT)) {
+			template_type = TEMPLATE_NONE;
+			temp.TIcon = 0;
+		} else {
+			template_type = static_cast<TemplateType>(temp.TType);
 		}
 
 		/*
 		**	Verify that the template type actually contains the template number specified. If
 		**	an illegal icon was specified, then replace it with clear terrain.
 		*/
-		if (temp.TType != TEMPLATE_CLEAR1 && temp.TType != TEMPLATE_NONE) {
-			shape = TemplateTypeClass::As_Reference(temp.TType).Get_Image_Data();
+		if (template_type != TEMPLATE_CLEAR1 && template_type != TEMPLATE_NONE) {
+			shape = TemplateTypeClass::As_Reference(template_type).Get_Image_Data();
 			if (shape) {
 				rawmap = Get_Icon_Set_Map(shape);
 				if (rawmap) {
 					map = (char*)rawmap;
 					if (map[temp.TIcon] == -1) {
 						temp.TIcon = 0;
-						temp.TType = TEMPLATE_NONE;
+						template_type = TEMPLATE_NONE;
 					}
 				}
 			}
 		}
 
-		cellptr->TType = temp.TType;
+		cellptr->TType = template_type;
 		cellptr->TIcon = temp.TIcon;
 		cellptr->Recalc_Attributes();
 

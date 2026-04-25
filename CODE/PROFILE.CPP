@@ -78,13 +78,13 @@ bool Read_Private_Config_Struct (char *profile, NewConfigType *config)
  *=========================================================================*/
 unsigned WWGetPrivateProfileHex (char const *section, char const *entry, char *profile)
 {
-	char	buffer[MAX_ENTRY_SIZE];					// Integer staging buffer.
+	char	buffer[MAX_ENTRY_SIZE + 1];				// Integer staging buffer plus terminator.
 	unsigned card;
 
 	memset (buffer, '0', MAX_ENTRY_SIZE);		// MAX_ENTRY_SIZE = 15
 	buffer[MAX_ENTRY_SIZE] = '\0';
 
-	WWGetPrivateProfileString(section, entry, "0", buffer, MAX_ENTRY_SIZE, profile);
+	WWGetPrivateProfileString(section, entry, "0", buffer, sizeof(buffer), profile);
 
 	if (strlen (buffer) > 0) {
 		sscanf (buffer, "%x", &card);
@@ -120,16 +120,17 @@ unsigned WWGetPrivateProfileHex (char const *section, char const *entry, char *p
 int WWGetPrivateProfileInt(char const *section, char const *entry, int def, char *profile)
 {
 	char	buffer[16];			// Integer staging buffer.
+	char	default_buffer[16];
 
 	/*
 	**	Store the default in the buffer.
 	*/
-	sprintf(buffer, "%d", def);
+	sprintf(default_buffer, "%d", def);
 
 	/*
 	**	Get the buffer; use itself as the default.
 	*/
-	WWGetPrivateProfileString(section, entry, buffer, buffer, 15, profile);
+	WWGetPrivateProfileString(section, entry, default_buffer, buffer, sizeof(buffer), profile);
 
 	/*
 	**	Convert to int & return.
@@ -224,9 +225,15 @@ char * WWGetPrivateProfileString(char const *section, char const *entry, char co
 	/*
 	**	Fill in the default value just in case the entry could not be found.
 	*/
-	if (retbuffer) {
+	if (retbuffer && retlen > 0) {
+		retbuffer[0] = '\0';
 		if (def) {
-			strncpy(retbuffer, def, retlen);
+			size_t copy_length = strlen(def);
+			if (copy_length >= (size_t)retlen) {
+				copy_length = retlen - 1;
+			}
+			memmove(retbuffer, def, copy_length);
+			retbuffer[copy_length] = '\0';
 		}
 		retbuffer[retlen-1] = '\0';
 		orig_retbuf = retbuffer;
@@ -592,7 +599,7 @@ bool WWWritePrivateProfileString(char const *section, char const *entry, char co
 		/*
 		**	Remove the section
 		*/
-		strcpy(offset,next);
+		memmove(offset, next, strlen(next) + 1);
 
 		return(true);
 	}
@@ -620,7 +627,7 @@ bool WWWritePrivateProfileString(char const *section, char const *entry, char co
 		**	Erase the entry by strcpy'ing the entire INI file over this entry
 		*/
 		if (eol) {
-			strcpy(offset, offset + eol + 1);
+			memmove(offset, offset + eol + 1, strlen(offset + eol + 1) + 1);
 		}
 	} else {
 

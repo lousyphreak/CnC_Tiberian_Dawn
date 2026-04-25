@@ -72,6 +72,9 @@
 
 #define SHAPE_TRANS		0x40
 
+void SDL_GameInput_Pump(void);
+void WWDraw_Flush_Present(void);
+
 void *Get_Shape_Header_Data(void *ptr);
 
 /****************************************
@@ -1119,6 +1122,11 @@ void Call_Back(void)
 	unsigned short	magic_number;
 	unsigned short crc;
 #endif
+
+	SDL_GameInput_Pump();
+	if (WWMouse) {
+		WWMouse->Process_Mouse();
+	}
 
 	/*
 	**	Score maintenance
@@ -2610,21 +2618,21 @@ void const * Get_Radar_Icon(void const * shapefile, int shapenum, int frames, in
 void CC_Texture_Fill (void const *shapefile, int shapenum, int xpos, int ypos, int width, int height)
 {
 	unsigned char	*shape_pointer;
-	unsigned	long	shape_size;
+	void*			built_frame;
 
 	if (shapefile && shapenum != -1) {
 
 		/*
 		** Build frame returns a pointer now instead of the shapes length
 		*/
-		shape_size=Build_Frame(shapefile , shapenum , _ShapeBuffer);
+		built_frame = Build_Frame(shapefile , shapenum , _ShapeBuffer);
 		if (Get_Last_Frame_Length() > _ShapeBufferSize) {
-			Mono_Printf("Attempt to use shape buffer for size %d buffer is only size %d", shape_size, _ShapeBufferSize);
+			Mono_Printf("Attempt to use shape buffer for size %d buffer is only size %d", Get_Last_Frame_Length(), _ShapeBufferSize);
 			Get_Key();
 		}
 
-		if (shape_size) {
-			shape_pointer = (unsigned char *)Get_Shape_Header_Data ((void*)shape_size);
+		if (built_frame) {
+			shape_pointer = (unsigned char *)Get_Shape_Header_Data(built_frame);
 			int source_width = Get_Build_Frame_Width (shapefile);
 			int source_height = Get_Build_Frame_Height (shapefile);
 
@@ -2685,27 +2693,27 @@ void CC_Draw_Shape(void const * shapefile, int shapenum, int x, int y, WindowNum
 #if(TRUE)
 	int predoffset;
 	char				*shape_pointer;
-	unsigned	long	shape_size;
+	void*			built_frame;
 
 	if (shapefile && shapenum != -1) {
 
 		/*
 		** Build frame returns a pointer now instead of the shapes length
 		*/
-		shape_size=Build_Frame(shapefile , shapenum , _ShapeBuffer);
+		built_frame = Build_Frame(shapefile , shapenum , _ShapeBuffer);
 		if (Get_Last_Frame_Length() > _ShapeBufferSize) {
-			Mono_Printf("Attempt to use shape buffer for size %d buffer is only size %d", shape_size, _ShapeBufferSize);
+			Mono_Printf("Attempt to use shape buffer for size %d buffer is only size %d", Get_Last_Frame_Length(), _ShapeBufferSize);
 			Get_Key();
 		}
 
-		if (shape_size) {
+		if (built_frame) {
 			GraphicViewPortClass draw_window(LogicPage->Get_Graphic_Buffer(),
 														WindowList[window][WINDOWX] << 3 + LogicPage->Get_XPos(),
 														WindowList[window][WINDOWY] + LogicPage->Get_YPos(),
 														WindowList[window][WINDOWWIDTH] << 3,
 														WindowList[window][WINDOWHEIGHT]);
 
-			shape_pointer = (char *)shape_size;
+			shape_pointer = static_cast<char*>(built_frame);
 
 			/*
 			**	Special shadow drawing code (used for aircraft and bullets).
@@ -2747,6 +2755,8 @@ void CC_Draw_Shape(void const * shapefile, int shapenum, int x, int y, WindowNum
 		}
 	}
 #endif
+
+	WWDraw_Flush_Present();
 }
 
 
@@ -2949,6 +2959,7 @@ long VQ_Call_Back(unsigned char *, long )
 	Check_VQ_Palette_Set();
 
 	Interpolate_2X_Scale(&SysMemPage,&SeenBuff,NULL);
+	WWDraw_Flush_Present();
 	//Call_Back();
 	if ((BreakoutAllowed || Debug_Flag) && key == KN_ESC) {
 		Keyboard::Clear();
@@ -3587,7 +3598,7 @@ bool Force_CD_Available(int cd)
 	static char _palette[768];
 	static char _hold[256];
 	static void *font;
-	static char * _volid[] = {
+	static char const * const _volid[] = {
 		"GDI",
 		"NOD",
 		"COVERT"
@@ -3709,12 +3720,15 @@ bool Force_CD_Available(int cd)
 			**	Prompt to insert the CD into the drive.
 			*/
 			if (cd == -1) {
-				sprintf(buffer, Text_String(TXT_CD_DIALOG_1), cd+1, _volid[cd]);
+				char const* prompt = Text_String(TXT_CD_DIALOG_1);
+				sprintf(buffer, "%s", prompt ? prompt : "Please insert a Command & Conquer CD into the CD-ROM drive.");
 			} else {
 				if (cd == 2) {
-					sprintf(buffer, Text_String(TXT_CD_DIALOG_3));
+					char const* prompt = Text_String(TXT_CD_DIALOG_3);
+					sprintf(buffer, "%s", prompt ? prompt : "Please insert the Covert Operations CD into the CD-ROM drive.");
 				} else {
-					sprintf(buffer, Text_String(TXT_CD_DIALOG_2), cd+1, _volid[cd]);
+					char const* prompt = Text_String(TXT_CD_DIALOG_2);
+					sprintf(buffer, prompt ? prompt : "Please insert CD %d (%s) into the CD-ROM drive.", cd + 1, _volid[cd]);
 				}
 			}
 			GraphicViewPortClass * oldpage = Set_Logic_Page(SeenBuff);

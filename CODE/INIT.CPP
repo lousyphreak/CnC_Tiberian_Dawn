@@ -51,6 +51,7 @@
 #include  "CCDDE.H"
 
 static HANDLE			hCCLibrary;
+static bool				BootstrapCoreMixfilesRegistered = false;
 
 /****************************************
 **	Function prototypes for this module **
@@ -60,31 +61,72 @@ static void* Load_Alloc_Data_From_Name(char const* filename);
 
 int32_t Calculate_CRC(void* buffer, int32_t len)
 {
-	static uint32_t table[256];
-	static bool table_ready = false;
+	auto rotate_left = [](int32_t value, uint32_t count) -> int32_t {
+		const uint32_t bits = static_cast<uint32_t>(value);
+		return static_cast<int32_t>((bits << count) | (bits >> ((sizeof(bits) * 8) - count)));
+	};
 
-	if (!table_ready) {
-		for (uint32_t index = 0; index < 256; ++index) {
-			uint32_t value = index;
-			for (int bit = 0; bit < 8; ++bit) {
-				value = (value & 1U) ? ((value >> 1) ^ 0xEDB88320U) : (value >> 1);
-			}
-			table[index] = value;
+	if (buffer == NULL || len <= 0) {
+		return 0;
+	}
+
+	int32_t crc = 0;
+	int index = 0;
+	char staging_buffer[sizeof(int32_t)] = {0};
+
+	auto composite_value = [&]() -> int32_t {
+		uint32_t composite = 0;
+		for (int element = 0; element < index; ++element) {
+			composite |= static_cast<uint32_t>(static_cast<uint8_t>(staging_buffer[element])) << (element * 8);
 		}
-		table_ready = true;
+		return static_cast<int32_t>(composite);
+	};
+
+	auto submit_byte = [&](char datum) {
+		staging_buffer[index++] = datum;
+
+		if (index == static_cast<int>(sizeof(staging_buffer))) {
+			crc = static_cast<int32_t>(static_cast<uint32_t>(rotate_left(crc, 1))
+				+ static_cast<uint32_t>(composite_value()));
+			memset(staging_buffer, 0, sizeof(staging_buffer));
+			index = 0;
+		}
+	};
+
+	const char* data = static_cast<const char*>(buffer);
+	int bytes_left = len;
+
+	while (bytes_left && index != 0) {
+		submit_byte(*data++);
+		--bytes_left;
 	}
 
-	uint32_t crc = 0xFFFFFFFFU;
-	const uint8_t* data = static_cast<const uint8_t*>(buffer);
-	for (int32_t index = 0; index < len; ++index) {
-		crc = (crc >> 8) ^ table[(crc ^ data[index]) & 0xFFU];
+	int longcount = bytes_left / static_cast<int>(sizeof(int32_t));
+	while (longcount--) {
+		const uint32_t composite = static_cast<uint32_t>(static_cast<uint8_t>(data[0]))
+			| (static_cast<uint32_t>(static_cast<uint8_t>(data[1])) << 8)
+			| (static_cast<uint32_t>(static_cast<uint8_t>(data[2])) << 16)
+			| (static_cast<uint32_t>(static_cast<uint8_t>(data[3])) << 24);
+		crc = static_cast<int32_t>(static_cast<uint32_t>(rotate_left(crc, 1)) + composite);
+		data += sizeof(int32_t);
+		bytes_left -= sizeof(int32_t);
 	}
 
-	return static_cast<int32_t>(crc ^ 0xFFFFFFFFU);
+	while (bytes_left) {
+		submit_byte(*data++);
+		--bytes_left;
+	}
+
+	if (index != 0) {
+		return static_cast<int32_t>(static_cast<uint32_t>(rotate_left(crc, 1))
+			+ static_cast<uint32_t>(composite_value()));
+	}
+
+	return crc;
 }
 
 extern "C" {
-extern long RandNumb;
+extern uint32_t RandNumb;
 }
 
 extern int SimRandIndex;
@@ -230,6 +272,30 @@ bool Init_Game(int , char *[])
 
 	RequiredCD = temp;
 
+#ifndef DEMO
+	const bool bootstrap_core_data_available = CCFileClass("CONQUER.MIX").Is_Available()
+		&& CCFileClass("GENERAL.MIX").Is_Available();
+	if (bootstrap_core_data_available) {
+		if (!CCFileClass::Is_There_Search_Drives()) {
+			char local_search[] = ".";
+			CCFileClass::Set_Search_Drives(local_search);
+		}
+
+		RequiredCD = -2;
+
+		if (!CCFileClass("12GREEN.FNT").Is_Available()) {
+			CCDebugString("C&C95 - About to pre-register GENERAL.MIX\n");
+			if (!GeneralMix) {
+				GeneralMix = new MixFileClass("GENERAL.MIX");
+			}
+
+			CCDebugString("C&C95 - About to pre-register CONQUER.MIX\n");
+			new MixFileClass("CONQUER.MIX");
+			BootstrapCoreMixfilesRegistered = true;
+		}
+	}
+#endif
+
 #endif
 	CCDebugString ("C&C95 - About to load fonts\n");
 	Green12FontPtr = Load_Alloc_Data_From_Name("12GREEN.FNT");
@@ -300,7 +366,10 @@ bool Init_Game(int , char *[])
 	if (language_file.Is_Available()) {
 		SystemStrings = (char const *)Load_Alloc_Data(language_file);
 	} else {
-		SystemStrings = (char const *)MixFileClass::Retrieve(Language_Name("CONQUER"));
+		CCFileClass language_mix_file(Language_Name("CONQUER"));
+		SystemStrings = language_mix_file.Is_Available()
+			? (char const *)Load_Alloc_Data(language_mix_file)
+			: NULL;
 	}
 
 	/*
@@ -341,6 +410,15 @@ bool Init_Game(int , char *[])
 	/*
 	**	Always try to look at the CD-ROM for data files.
 	*/
+	if (!CCFileClass::Is_There_Search_Drives()) {
+		RawFileClass local_ccmix("CONQUER.MIX");
+		RawFileClass local_generalmix("GENERAL.MIX");
+		if (local_ccmix.Is_Available() && local_generalmix.Is_Available()) {
+			char local_search[] = ".";
+			CCFileClass::Set_Search_Drives(local_search);
+		}
+	}
+
 	if (!CCFileClass::Is_There_Search_Drives()) {
 
 		/*
@@ -428,8 +506,10 @@ bool Init_Game(int , char *[])
 #endif	//DEMO
 
 	CCDebugString ("C&C95 - About to register GENERAL.MIX\n");
-	if (GeneralMix) delete GeneralMix;
-	GeneralMix = new MixFileClass("GENERAL.MIX");
+	if (!BootstrapCoreMixfilesRegistered) {
+		if (GeneralMix) delete GeneralMix;
+		GeneralMix = new MixFileClass("GENERAL.MIX");
+	}
 
 //	if (!_dos_findfirst("SC*.MIX", _A_NORMAL, &ff)) {
 //		do {
@@ -451,7 +531,9 @@ bool Init_Game(int , char *[])
 
 #else
 	CCDebugString ("C&C95 - About to register CONQUER.MIX\n");
-	new MixFileClass("CONQUER.MIX");			// Cached.
+	if (!BootstrapCoreMixfilesRegistered) {
+		new MixFileClass("CONQUER.MIX");			// Cached.
+	}
 	CCDebugString ("C&C95 - About to register TRANSIT.MIX\n");
 	new MixFileClass("TRANSIT.MIX");
 
@@ -717,13 +799,18 @@ void Uninit_Game(void)
 
 	delete [] _ShapeBuffer;
 	Set_Shape_Buffer(NULL, 0);
-	delete [] BlackPalette;
-	delete [] GamePalette;
-	delete [] OriginalPalette;
-	delete [] WhitePalette;
+	Free(BlackPalette);
+	BlackPalette = NULL;
+	Free(GamePalette);
+	GamePalette = NULL;
+	Free(OriginalPalette);
+	OriginalPalette = NULL;
+	Free(WhitePalette);
+	WhitePalette = NULL;
 
 	WWDOS_Shutdown();
-	delete [] Palette;
+	Free(Palette);
+	Palette = NULL;
 }
 #endif
 
@@ -1981,6 +2068,13 @@ bool Parse_Command_Line(int argc, char *argv[])
 	for (int index = 1; index < argc; index++) {
 		char * string;		// Pointer to argument.
 		long code = 0;
+
+		if (argv[index] != NULL && stricmp(argv[index], "-gamedata") == 0) {
+			if (index + 1 < argc) {
+				++index;
+			}
+			continue;
+		}
 
 		string = strupr(argv[index]);
 
