@@ -61,7 +61,7 @@ typedef enum KindType {
 
 
 #define	TARGET_MANTISSA			12				// Bits of value precision.
-#define	TARGET_MANTISSA_MASK		(~((~0)<<TARGET_MANTISSA))
+#define	TARGET_MANTISSA_MASK		(~((~0U)<<TARGET_MANTISSA))
 #define	TARGET_EXPONENT			((sizeof(TARGET)*8)-TARGET_MANTISSA)
 #define	TARGET_EXPONENT_MASK		(~(((unsigned)(~0))>>TARGET_EXPONENT))
 

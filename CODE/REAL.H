@@ -211,7 +211,7 @@ extern long LParam;
 #include	"DEFINES.H"
 
 
-extern long Frame;
+extern int32_t Frame;
 inline CELL Coord_XCell(COORDINATE coord) {return (CELL)(*(((unsigned char*)&coord)+1));}
 inline CELL Coord_YCell(COORDINATE coord) {return (CELL)(*(((unsigned char*)&coord)+3));}
 //inline CELL Coord_Cell(COORD coord){return (CELL)(((*(((unsigned short *)&coord)+1) & 0xFF00) >> 2) | *(((unsigned char *)&coord)+1));}
@@ -710,7 +710,7 @@ int Terrain_Cost(CELL cell, FacingType facing);
 /*
 **	Inline miscellaneous functions.
 */
-#define	XYP_COORD(x,y)	(((x)*ICON_LEPTON_W)/CELL_PIXEL_W + ((((y)*ICON_LEPTON_H)/CELL_PIXEL_H)<<16))
+#define	XYP_COORD(x,y)	((COORDINATE)((uint16_t)(((x)*ICON_LEPTON_W)/CELL_PIXEL_W)) | ((COORDINATE)((uint16_t)(((y)*ICON_LEPTON_H)/CELL_PIXEL_H)) << 16))
 inline FacingType Dir_Facing(DirType facing) {return (FacingType)(((unsigned char)(facing+0x10)&0xFF)>>5);}
 inline DirType Facing_Dir(FacingType facing) {return (DirType)((int)facing << 5);}
 inline int Cell_To_Lepton(int cell) {return cell<<8;}

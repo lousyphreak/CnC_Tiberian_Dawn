@@ -339,7 +339,7 @@ bool Process_Global_Packet(GlobalPacketType *packet, UDPAddressClass *address)
 		.....................................................................*/
 		if (strlen(MPlayerName) > 0 && strlen(MPlayerGameName) > 0 &&
 			((!NetOpen) || (NetOpen && !strcmp(MPlayerName,MPlayerGameName)))) {
-			memset (packet, 0, sizeof(GlobalPacketType));
+			memset (&mypacket, 0, sizeof(GlobalPacketType));
 
 			mypacket.Command = NET_ANSWER_GAME;
 			strcpy(mypacket.Name, MPlayerGameName);
@@ -366,7 +366,7 @@ bool Process_Global_Packet(GlobalPacketType *packet, UDPAddressClass *address)
 		if (packet->Command==NET_QUERY_PLAYER &&
 			!strcmp (packet->Name, MPlayerGameName) &&
 				(strlen(MPlayerGameName) > 0) && NetStealth==0) {
-			memset (packet, 0, sizeof(GlobalPacketType));
+			memset (&mypacket, 0, sizeof(GlobalPacketType));
 
 			mypacket.Command = NET_ANSWER_PLAYER;
 			strcpy(mypacket.Name, MPlayerName);

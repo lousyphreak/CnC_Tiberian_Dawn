@@ -65,8 +65,8 @@ class FieldClass {
 		FieldClass(char const *id, unsigned char data);
 		FieldClass(char const *id, short data);
 		FieldClass(char const *id, unsigned short data);
-		FieldClass(char const *id, long data);
-		FieldClass(char const *id, unsigned long data);
+		FieldClass(char const *id, int32_t data);
+		FieldClass(char const *id, uint32_t data);
 		FieldClass(char const *id, char const *data);
 		FieldClass(char const *id, void *data, int length);
 

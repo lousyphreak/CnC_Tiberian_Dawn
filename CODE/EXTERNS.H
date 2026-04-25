@@ -109,7 +109,7 @@ extern bool							PlayerLoses;
 extern bool							PlayerRestarts;
 extern StructType					SabotagedType;
 extern bool							TempleIoned;
-extern long							Frame;
+extern int32_t							Frame;
 extern void *						SpeechBuffer;
 extern int							PreserveVQAScreen;
 extern bool							BreakoutAllowed;

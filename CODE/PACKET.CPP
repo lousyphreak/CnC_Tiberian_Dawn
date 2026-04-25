@@ -382,11 +382,11 @@ bool PacketClass::Get_Field(char const *id, unsigned short &data)
  * HISTORY:                                                               *
  *   04/23/1996 PWG : Created.                                            *
  *========================================================================*/
-bool PacketClass::Get_Field(char const *id, long &data)
+bool PacketClass::Get_Field(char const *id, int32_t &data)
 {
 	FieldClass *field = Find_Field(id);
 	if (field) {
-		data = *((long *)field->Data);
+		data = *((int32_t *)field->Data);
 	}
 	return((field) ? true : false);
 }
@@ -429,11 +429,11 @@ bool PacketClass::Get_Field(char const *id, char *data)
  * HISTORY:                                                               *
  *   04/23/1996 PWG : Created.                                            *
  *========================================================================*/
-bool PacketClass::Get_Field(char const *id, unsigned long &data)
+bool PacketClass::Get_Field(char const *id, uint32_t &data)
 {
 	FieldClass *field = Find_Field(id);
 	if (field) {
-		data = *((unsigned long *)field->Data);
+		data = *((uint32_t *)field->Data);
 	}
 	return((field) ? true : false);
 }

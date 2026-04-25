@@ -7,7 +7,7 @@
 
 inline void RA_ShowMessageBox(const char* text, const char* caption, Uint32 flags = SDL_MESSAGEBOX_INFORMATION)
 {
-    SDL_ShowSimpleMessageBox(flags, caption ? caption : "Red Alert", text ? text : "", nullptr);
+    SDL_ShowSimpleMessageBox(flags, caption ? caption : "Command & Conquer", text ? text : "", nullptr);
 }
 
 inline bool RA_ShowConfirmationMessageBox(const char* text, const char* caption, Uint32 flags = SDL_MESSAGEBOX_INFORMATION)
@@ -22,7 +22,7 @@ inline bool RA_ShowConfirmationMessageBox(const char* text, const char* caption,
     const SDL_MessageBoxData data = {
         flags,
         nullptr,
-        caption ? caption : "Red Alert",
+        caption ? caption : "Command & Conquer",
         text ? text : "",
         2,
         buttons,

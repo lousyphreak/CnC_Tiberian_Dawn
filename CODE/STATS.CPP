@@ -44,6 +44,8 @@
 #include "TCPIP.H"
 #include "PACKET.H"
 
+#include <algorithm>
+
 #define FIELD_PACKET_TYPE					"TYPE"
 #define FIELD_GAME_ID							"IDNO"
 #define FIELD_START_CREDITS					"CRED"
@@ -215,12 +217,12 @@ void Send_Statistics_Packet(void)
 		/*
 		** Game ID. A unique game identifier assigned by WChat.
 		*/
-		stats.Add_Field(FIELD_GAME_ID, PlanetWestwoodGameID);
+		stats.Add_Field(FIELD_GAME_ID, static_cast<uint32_t>(PlanetWestwoodGameID));
 
 		/*
 		** Start credits.
 		*/
-		stats.Add_Field(FIELD_START_CREDITS, (unsigned long)MPlayerCredits);
+		stats.Add_Field(FIELD_START_CREDITS, static_cast<uint32_t>(MPlayerCredits));
 
 		/*
 		** Bases (On/Off)
@@ -246,12 +248,12 @@ void Send_Statistics_Packet(void)
 		/*
 		** Start unit count
 		*/
-		stats.Add_Field(FIELD_START_UNIT_COUNT, (unsigned long)MPlayerUnitCount);
+		stats.Add_Field(FIELD_START_UNIT_COUNT, static_cast<uint32_t>(MPlayerUnitCount));
 
 		/*
 		** Tech level.
 		*/
-		stats.Add_Field(FIELD_TECH_LEVEL, (unsigned long)BuildLevel);
+		stats.Add_Field(FIELD_TECH_LEVEL, static_cast<uint32_t>(BuildLevel));
 
 		CCDebugString ("C&C95 - Adding stats field for scenario.\n");
 		/*
@@ -355,20 +357,20 @@ void Send_Statistics_Packet(void)
 		**
 		** Passed from WChat
 		*/
-		stats.Add_Field (FIELD_START_TIME, (long) PlanetWestwoodStartTime);
+		stats.Add_Field (FIELD_START_TIME, static_cast<uint32_t>(PlanetWestwoodStartTime));
 
 		/*
 		** Game duration (seconds).
 		*/
-		stats.Add_Field (FIELD_GAME_DURATION, (long) GameEndTime/60);
+		stats.Add_Field (FIELD_GAME_DURATION, static_cast<int32_t>(GameEndTime / 60));
 
 		/*
 		** Avg. frame rate.
 		*/
 		if (GameEndTime/60 == 0){
-			stats.Add_Field (FIELD_FRAME_RATE, 0L );
+			stats.Add_Field (FIELD_FRAME_RATE, static_cast<int32_t>(0));
 		}else{
-			stats.Add_Field (FIELD_FRAME_RATE, (long) Frame / (GameEndTime/60) );
+			stats.Add_Field (FIELD_FRAME_RATE, static_cast<int32_t>(Frame / (GameEndTime / 60)));
 		}
 
 
@@ -383,7 +385,7 @@ void Send_Statistics_Packet(void)
 		*/
 		const int total_ram_mb = SDL_GetSystemRAM();
 		const uint64_t total_ram = total_ram_mb > 0 ? static_cast<uint64_t>(total_ram_mb) * 1024ULL * 1024ULL : 0ULL;
-		stats.Add_Field(FIELD_MEMORY, (unsigned long)total_ram);
+		stats.Add_Field(FIELD_MEMORY, static_cast<uint32_t>(std::min<uint64_t>(total_ram, 0xFFFFFFFFULL)));
 
 		/*
 		** Video memory
@@ -395,7 +397,7 @@ void Send_Statistics_Packet(void)
 			if (video_memory) {
 				video_memory += 1024 * 1024 - 1;
 				video_memory &= 0xfff00000;
-				stats.Add_Field(FIELD_VIDEO_MEMORY, (unsigned long)video_memory);
+				stats.Add_Field(FIELD_VIDEO_MEMORY, static_cast<uint32_t>(video_memory));
 			}
 		}
 
@@ -461,7 +463,7 @@ void Send_Statistics_Packet(void)
 				** Player end credits.
 				*/
 				field_player_credits[3] = '1' + (char)house;
-				stats.Add_Field (field_player_credits, player->Credits + player->Tiberium);
+				stats.Add_Field (field_player_credits, static_cast<int32_t>(player->Credits + player->Tiberium));
 
 				/*
 				** Number of each unit/building type built
@@ -577,7 +579,7 @@ void Send_Statistics_Packet(void)
 				** Amount of tiberium turned into credits
 				*/
 				field_player_harvested[3] = '1' + (char)house;
-				stats.Add_Field (field_player_harvested, (unsigned long) player->HarvestedCredits);
+				stats.Add_Field (field_player_harvested, static_cast<uint32_t>(player->HarvestedCredits));
 			}
 		}
 

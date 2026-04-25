@@ -37,6 +37,8 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
+#include <stdint.h>
+
 
 /**********************************************************************
 **	If defined, then the advanced balancing features will be enabled
@@ -1602,10 +1604,10 @@ typedef enum RadioMessageType {
 **	with cell resolution. The COORD type is used for map coordinates that
 **	have a lepton resolution.
 */
-typedef unsigned long	COORDINATE;
-typedef signed short		CELL;
+typedef uint32_t			COORDINATE;
+typedef int16_t			CELL;
 
-typedef unsigned short	TARGET;
+typedef uint16_t			TARGET;
 #define	TARGET_NONE 	((TARGET)0)
 
 

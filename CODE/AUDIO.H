@@ -86,13 +86,11 @@ inline AudioClass::AudioClass(char const *name, MemoryClass &mem)
 
 inline AudioClass::~AudioClass(void)
 {
-	if (GameActive) {
-		if (Name) free(Name);
-		if (Data) Mem->Free(Data);
-		Name = 0;
-		Data = 0;
-		Handle = -1;
-	}
+	if (Name) free((void *)Name);
+	if (Data && Mem) Mem->Free(Data);
+	Name = 0;
+	Data = 0;
+	Handle = -1;
 };
 
 

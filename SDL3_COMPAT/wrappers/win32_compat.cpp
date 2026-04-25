@@ -126,7 +126,7 @@ std::string create_file_mode(DWORD desired_access, DWORD creation_disposition)
         case kCreateAlways:
             return can_read ? "w+b" : "wb";
         case kOpenAlways:
-            return can_write ? (can_read ? "a+b" : "ab") : "rb";
+            return can_write ? "r+b" : "rb";
         case kOpenExisting:
         default:
             if (can_read && can_write) return "r+b";
@@ -150,7 +150,7 @@ void set_window_icon(SDL_Window* sdl_window)
     if (icon_path.back() != '/' && icon_path.back() != '\\') {
         icon_path.push_back('/');
     }
-    icon_path += "resources/icons/redalert-window-icon.png";
+    icon_path += "resources/icons/tiberian-dawn-window-icon.png";
 
     SDL_Surface* icon_surface = SDL_LoadPNG(icon_path.c_str());
     if (!icon_surface) {
@@ -166,7 +166,7 @@ void set_window_icon(SDL_Window* sdl_window)
 RAWindow* RA_CreateWindow(const char* title, int width, int height, SDL_WindowFlags flags)
 {
     auto* window = new RAWindow{};
-    window->title = title ? title : "Red Alert";
+    window->title = title ? title : "Command & Conquer";
     window->width = width > 0 ? width : 640;
     window->height = height > 0 ? height : 480;
     window->sdl_window = SDL_CreateWindow(window->title.c_str(), window->width, window->height, flags);
@@ -362,6 +362,9 @@ HANDLE CreateFile(LPCSTR file_name, DWORD desired_access, DWORD, LPVOID, DWORD c
     auto mode = create_file_mode(desired_access, creation_disposition);
     const std::string normalized_path = WWFS_NormalizePath(file_name);
     SDL_IOStream* io = WWFS_OpenFile(normalized_path.c_str(), mode.c_str());
+    if (!io && creation_disposition == kOpenAlways && (desired_access & kGenericWrite) != 0) {
+        io = WWFS_OpenFile(normalized_path.c_str(), "w+b");
+    }
     if (!io) {
         set_last_error(kErrorFileNotFound);
         return invalid_handle_value();

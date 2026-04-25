@@ -420,6 +420,9 @@ int LoadOptionsClass::Process(void)
 			*/
 			case (BUTTON_LOAD | KN_BUTTON):
 				game_idx = listbtn.Current_Index();
+				if (game_idx < 0 || game_idx >= Files.Count()) {
+					break;
+				}
 				game_num = Files[game_idx]->Num;
 				if (Files[game_idx]->Valid) {
 					CCMessageBox().Process(TXT_LOADING, TXT_NONE);
@@ -448,6 +451,11 @@ int LoadOptionsClass::Process(void)
 					break;
 				}
 				game_idx = listbtn.Current_Index();
+				if (game_idx < 0 || game_idx >= Files.Count()) {
+					firsttime = true;
+					display = true;
+					break;
+				}
 				if (Disk_Space_Available() < SAVE_GAME_DISK_SPACE && game_idx == 0) {
 //					CCMessageBox().Process("Insuficent disk space to save a game.  Please delete a previous save to free up some disk space and try again.");
 					CCMessageBox().Process(TXT_SPACE_CANT_SAVE);
@@ -471,10 +479,13 @@ int LoadOptionsClass::Process(void)
 			*/
 			case (BUTTON_DELETE | KN_BUTTON):
 				game_idx = listbtn.Current_Index();
+				if (game_idx < 0 || game_idx >= Files.Count()) {
+					break;
+				}
 				game_num = Files[game_idx]->Num;
 				if (CCMessageBox().Process(TXT_DELETE_FILE_QUERY,TXT_YES,TXT_NO)==0) {
 					sprintf(fname,"SAVEGAME.%03d",game_num);
-					unlink(fname);
+					WWFS_RemovePath(fname);
 					Clear_List(&listbtn);
 					Fill_List(&listbtn);
 					if (listbtn.Count() == 0) {
@@ -494,7 +505,8 @@ int LoadOptionsClass::Process(void)
 					break;
 				}
 
-				if (listbtn.Count() && listbtn.Current_Index() != game_idx) {
+				if (listbtn.Count() && listbtn.Current_Index() != game_idx &&
+					listbtn.Current_Index() >= 0 && listbtn.Current_Index() < Files.Count()) {
 					game_idx = listbtn.Current_Index();
 					/*
 					** Copy the game's description, UNLESS it's the empty slot; if
@@ -588,8 +600,8 @@ void LoadOptionsClass::Fill_List(ListClass *list)
 {
 	FileEntryClass *fdata;	// for adding entries to 'Files'
 	char descr[DESCRIP_MAX];
-	unsigned scenario;			// scenario #
-	HousesType house;				// house
+	unsigned scenario = 0;			// scenario #
+	HousesType house = HOUSE_NONE;				// house
 	int id;
 
 	/*
@@ -622,6 +634,9 @@ void LoadOptionsClass::Fill_List(ListClass *list)
 		/*
 		** get the game's info; if success, add it to the list
 		*/
+		scenario = 0;
+		house = HOUSE_NONE;
+		descr[0] = '\0';
 		bool ok = Get_Savefile_Info(id, descr, &scenario, &house);
 
 		fdata = new FileEntryClass;

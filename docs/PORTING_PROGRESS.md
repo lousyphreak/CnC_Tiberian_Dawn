@@ -8,6 +8,40 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
 
 ## Current status
 
+- Red Alert parity audit pass applied safe SDL3/64-bit modernization fixes across platform, data, UI, networking, and shared gameplay code (2026-04-25):
+  - completed in this checkpoint:
+    - fixed stale Red Alert support-wrapper leftovers in TD defaults:
+      - `RA_CreateWindow(...)` and message-box fallbacks now default to `Command & Conquer`;
+      - the SDL window-icon path now looks for a TD-named icon instead of `redalert-window-icon.png`;
+      - `CreateFile(..., OPEN_ALWAYS, ...)` no longer opens in append mode and now preserves Win32-style read/write positioning with a create fallback.
+    - fixed network/UI bugs found by the parity comparison:
+      - `NETDLG.CPP::Process_Global_Packet(...)` now clears the outgoing reply packet instead of clearing the incoming packet before sending uninitialized stack bytes;
+      - `COMQUEUE.CPP::CommQueueClass::Init()` now resets send-buffer lengths on send queue entries;
+      - `LOADDLG.CPP` now guards stale/empty list selections, initializes save metadata fallbacks before probing corrupt saves, and deletes save files through `WWFS_RemovePath(...)`.
+    - applied fixed-width data and wire-layout fixes:
+      - `COORDINATE`, `CELL`, and `TARGET` are now explicit 32/16/16-bit storage types;
+      - `Frame` is now `int32_t` everywhere it is declared/defined;
+      - savegame version fields use `uint32_t`;
+      - packet `TYPE_LONG` / `TYPE_UNSIGNED_LONG` fields now store/convert 32-bit values instead of Linux `long`;
+      - `CommHeaderType` now uses fixed-width members with a size assertion for the original 8-byte wire header.
+    - fixed TD map/template binary handling:
+      - `MapClass::Write_Binary(...)` now writes the same 2-byte `{ TType, TIcon }` cell records that the TD reader expects;
+      - `MapClass::Read_Binary(...)` now bounds-checks template icon indices against the icon-set map dimensions before indexing.
+    - fixed gameplay/UI sanitizer and placement issues from the RA parity scan:
+      - `DisplayClass::Set_Cursor_Shape(...)` now copies placement lists up to `REFRESH_EOL` instead of blindly reading a 50-short buffer;
+      - `DisplayClass::Get_Occupy_Dimensions(...)` no longer dereferences a null list, and `Set_Cursor_Pos(...)` clamps the bottom edge into `y` instead of `x`;
+      - `TARGET_MANTISSA_MASK` and `XYP_COORD(...)` no longer trigger signed left-shift UB for negative offsets;
+      - `SoundControlsClass::Process()` now releases listbox strings with matching `delete[]`;
+      - `AudioClass` frees owned name/data memory regardless of `GameActive`.
+  - validation result:
+    - `cmake --build build --parallel 4` succeeds.
+    - `cmake --build build-asan --parallel 4` succeeds.
+    - `timeout 125s ./build-asan/tiberian-dawn -gamedata GameData` runs for the full probe window and is killed by the timeout (`137`) without the previous `SOUNDDLG.CPP` alloc/dealloc mismatch; UBSan still reports the known invalid-vptr/raw-object-layout warnings during startup, which remain a separate save/object-layout modernization frontier.
+  - remaining follow-up from this sweep:
+    - finish the larger savegame/raw-object ABI cleanup (`Read_Object` / `Write_Object`, selected-object pointer coding, cached vtable assumptions);
+    - continue fixed-width cleanup for radio message payloads, house/type bitmasks, trigger/team payloads, and CRC signatures;
+    - decide whether to do a full `CDFileClass` search-path refactor now or defer it behind the remaining runtime/layout sanitizer work.
+
 - `#pragma pack` cleanup removed the remaining include-boundary packing leaks from the active SDL3 build surface (2026-04-25):
   - completed in this checkpoint:
     - removed file-scope packing blocks from `WIN32LIB/AUDIO/SOUNDINT.CPP` and `WIN32LIB/AUDIO/SOUNDIO.CPP` so their `#include` stacks now compile at the translation unit's normal alignment

@@ -197,6 +197,8 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
+#include <stdint.h>
+
 #define CONN_DEBUG	0
 
 /*
@@ -213,10 +215,12 @@ PacketID:		This is a unique numerical ID for this packet.  The Connection
 					sets this ID on all packets sent out.
 ---------------------------------------------------------------------------*/
 typedef struct {
-	unsigned short MagicNumber;
-	unsigned char Code;
-	unsigned long PacketID;
+	uint16_t MagicNumber;
+	uint8_t Code;
+	uint32_t PacketID;
 } CommHeaderType;
+
+static_assert(sizeof(CommHeaderType) == 8, "CommHeaderType must match the original wire header size");
 
 
 /*

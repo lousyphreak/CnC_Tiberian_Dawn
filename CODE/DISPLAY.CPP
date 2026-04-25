@@ -705,7 +705,12 @@ void DisplayClass::Set_Cursor_Shape(short const * list)
 		int	w,h;
 		static short _list[50];
 
-		memcpy(_list, list, sizeof(_list));
+		int index = 0;
+		while (index < (int)(sizeof(_list) / sizeof(_list[0])) - 1 && list[index] != REFRESH_EOL) {
+			_list[index] = list[index];
+			index++;
+		}
+		_list[index] = REFRESH_EOL;
 		CursorSize = _list;
 		Get_Occupy_Dimensions (w, h, CursorSize);
 		ZoneOffset = -(((h/2)*MAP_CELL_W)+(w/2));
@@ -839,7 +844,7 @@ CELL DisplayClass::Set_Cursor_Pos(CELL pos)
 //	if (y < TacMapY) y = TacMapY;
 	if (x+w >= Coord_XCell(TacticalCoord) + Lepton_To_Cell(TacLeptonWidth)) x = Coord_XCell(TacticalCoord)+Lepton_To_Cell(TacLeptonWidth)-w;
 //	if (x+w >= TacMapX+TacWidth) x = TacMapX+TacWidth-w;
-	if (y+h >= Coord_YCell(TacticalCoord) + Lepton_To_Cell(TacLeptonHeight)) x = Coord_YCell(TacticalCoord)+Lepton_To_Cell(TacLeptonHeight)-h;
+	if (y+h >= Coord_YCell(TacticalCoord) + Lepton_To_Cell(TacLeptonHeight)) y = Coord_YCell(TacticalCoord)+Lepton_To_Cell(TacLeptonHeight)-h;
 //	if (y+h >= TacMapY+TacHeight) y = TacMapY+TacHeight-h;
 	pos = XY_Cell(x, y) - ZoneOffset;
 
@@ -905,7 +910,7 @@ void DisplayClass::Get_Occupy_Dimensions(int & w, int & h, short const *list)
 	w = 0;
 	h = 0;
 
-	if (!list) {
+	if (list) {
 		/*
 		** Loop through all cell offsets, accumulating max & min x- & y-coords
 		*/

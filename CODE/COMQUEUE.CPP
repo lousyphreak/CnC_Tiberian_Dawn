@@ -191,7 +191,7 @@ void CommQueueClass::Init(void)
 		SendQueue[i].FirstTime = 0L;
 		SendQueue[i].LastTime = 0L;
 		SendQueue[i].SendCount = 0L;
-		ReceiveQueue[i].BufLen = 0;
+		SendQueue[i].BufLen = 0;
 	}
 	for (i = 0; i < MaxReceive; i++) {
 		ReceiveQueue[i].IsActive = 0;

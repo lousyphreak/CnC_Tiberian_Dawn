@@ -680,8 +680,9 @@ bool MapClass::Read_Binary(char const * root, unsigned long *crc)
 			if (shape) {
 				rawmap = Get_Icon_Set_Map(shape);
 				if (rawmap) {
+					TemplateTypeClass const & tclass = TemplateTypeClass::As_Reference(template_type);
 					map = (char*)rawmap;
-					if (map[temp.TIcon] == -1) {
+					if (temp.TIcon >= tclass.Width * tclass.Height || map[temp.TIcon] == -1) {
 						temp.TIcon = 0;
 						template_type = TEMPLATE_NONE;
 					}
@@ -746,19 +747,14 @@ bool MapClass::Write_Binary(char const * root)
 	**	Loop through all cells.
 	*/
 	for (i = 0; i < MAP_CELL_TOTAL; i++) {
-		/*
-		**	Save TType.
-		*/
-		if (file->Write (&(Map[i].TType), sizeof(TemplateType)) != sizeof(TemplateType)) {
-			file->Close();
-			delete file;
-			return(false);
-		}
+		struct {
+			uint8_t TType;
+			uint8_t TIcon;
+		} temp;
 
-		/*
-		**	Save TIcon.
-		*/
-		if (file->Write (&(Map[i].TIcon), sizeof(unsigned char)) != sizeof(unsigned char)) {
+		temp.TType = static_cast<uint8_t>(Map[i].TType);
+		temp.TIcon = static_cast<uint8_t>(Map[i].TIcon);
+		if (file->Write (&temp, sizeof(temp)) != sizeof(temp)) {
 			file->Close();
 			delete file;
 			return(false);

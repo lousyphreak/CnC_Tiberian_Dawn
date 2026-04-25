@@ -103,3 +103,11 @@ _Last updated: 2026-04-25_
 - The current LCW/bonus-dialog sanitizer fixes are now part of the runtime baseline:
   - `LCW_Uncompress(...)` must honor the destination-length argument and reject out-of-range back-references/copy counts, otherwise TD will read past the end of 64000-byte CPS buffers under ASan;
   - `ListClass::Current_Item()` must return `NULL` for empty/out-of-range selections, and callers like `Expansion_Dialog()` / `Bonus_Dialog()` must treat that as cancel/no-selection rather than dereferencing the result.
+- The first broad Red Alert parity audit produced several safe TD fixes that should remain part of the modern baseline:
+  - low-level packet replies must clear the outgoing `GlobalPacketType`, not the received packet buffer;
+  - `CommHeaderType` is an 8-byte wire header (`uint16_t`, `uint8_t`, padding, `uint32_t`) and packet-field `TYPE_LONG` values are 32-bit wire values, not host `long`;
+  - TD map `.BIN` records are exactly two bytes per cell (`uint8_t TType`, `uint8_t TIcon`) for both reading and writing;
+  - placement cursor lists are sentinel-terminated with `REFRESH_EOL`; copying a fixed 50-short block can over-read shorter foundations;
+  - `XYP_COORD(...)` and target masks must avoid signed left shifts because negative pixel offsets are valid in TD weapon/animation code;
+  - save/load and object serialization still have larger ABI hazards beyond this pass: cached vtable slots, raw whole-object writes, selected-object pointer coding, and remaining host-width fields must be reviewed before savegames can be considered portable.
+- TD support-wrapper defaults should not retain Red Alert branding/storage names where they affect user-visible title text, icon paths, or persistent browser/cache/config names; function names may remain `RA_*` temporarily where they are inherited wrapper API names.
