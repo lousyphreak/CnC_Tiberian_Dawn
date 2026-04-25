@@ -69,6 +69,11 @@ class IPXConnClass : public NonSequencedConnClass
 	---------------------------- Public Interface ----------------------------
 	*/
 	public:
+#ifdef SEQ_NET
+		using SequencedConnClass::Init;
+#else
+		using NonSequencedConnClass::Init;
+#endif
 		/*.....................................................................
 		Various useful enums:
 		.....................................................................*/
@@ -81,7 +86,7 @@ class IPXConnClass : public NonSequencedConnClass
 		Constructor/destructor.
 		.....................................................................*/
 		IPXConnClass(int numsend, int numrecieve, int maxlen, 
-			unsigned short magicnum, IPXAddressClass *address, int id, char *name);
+			unsigned short magicnum, IPXAddressClass *address, int id, char const *name);
 		virtual ~IPXConnClass () {};
 
 		/*.....................................................................

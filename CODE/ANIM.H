@@ -48,8 +48,8 @@
 class AnimClass : public ObjectClass, private StageClass {
 	public:
 
-		static void * AnimClass::operator new(size_t size);
-		static void AnimClass::operator delete(void *ptr);
+		static void * operator new(size_t size);
+		static void operator delete(void *ptr);
 		AnimClass(void) : Class(0) {Owner=HOUSE_NONE;Object=0;};		// Default constructor does nothing.
 		AnimClass(AnimType animnum, COORDINATE coord, unsigned char timedelay=0, unsigned char loop=1, bool alt=false);
 		virtual ~AnimClass(void);
@@ -71,7 +71,7 @@ class AnimClass : public ObjectClass, private StageClass {
 		virtual COORDINATE Sort_Y(void) const;
 		virtual LayerType In_Which_Layer(void) const;
 		virtual ObjectTypeClass const & Class_Of(void) const {return *Class;};
-		virtual short const * Occupy_List(void) const;
+		virtual short const * Occupy_List(bool placement=false) const;
 		virtual short const * Overlap_List(void) const;
 		virtual void Draw_It(int x, int y, WindowNumberType window);
 		virtual void AI(void);

@@ -82,6 +82,9 @@ class IPXGlobalConnClass : public IPXConnClass
 	---------------------------- Public Interface ----------------------------
 	*/
 	public:
+		using IPXConnClass::Send_Packet;
+		using IPXConnClass::Receive_Packet;
+		using IPXConnClass::Get_Packet;
 		/*.....................................................................
 		Here are some useful enums:
 		.....................................................................*/

@@ -837,7 +837,7 @@ bool ObjectClass::Render(bool forced)
 		if (Special.IsShowPath && IsSelected) {
 			switch (What_Am_I()) {
 				case RTTI_INFANTRY:
-				case RTTI_UNIT:
+				case RTTI_UNIT: {
 					FootClass * foot = (FootClass *)this;
 					CELL cell;
 					int oldx, oldy;
@@ -855,6 +855,10 @@ bool ObjectClass::Render(bool forced)
 							oldy = y;
 						}
 					}
+					break;
+				}
+
+				default:
 					break;
 			}
 		}
@@ -1504,4 +1508,3 @@ short const * ObjectClass::Overlap_List(void) const {return(Class_Of().Overlap_L
 BuildingClass * ObjectClass::Who_Can_Build_Me(bool intheory, bool legal) const {return(Class_Of().Who_Can_Build_Me(intheory, legal, Owner()));};
 unsigned ObjectClass::Health_Ratio(void) const {return(Cardinal_To_Fixed(Class_Of().MaxStrength, Strength));};
 int ObjectClass::Full_Name(void) const {return Class_Of().Full_Name();};
-

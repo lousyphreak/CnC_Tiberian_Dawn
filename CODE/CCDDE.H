@@ -85,7 +85,7 @@ class DDEServerClass {
 
 
 extern DDEServerClass DDEServer;
-extern BOOL Send_Data_To_DDE_Server (char *data, int length, int packet_type);
+extern BOOL Send_Data_To_DDE_Server (char const *data, int length, int packet_type);
 
 
 #endif	//WIN32
@@ -116,7 +116,7 @@ class DDEServerClass {
 
 inline DDEServerClass DDEServer;
 
-inline BOOL Send_Data_To_DDE_Server(char*, int, int)
+inline BOOL Send_Data_To_DDE_Server(char const*, int, int)
 {
 	return FALSE;
 }

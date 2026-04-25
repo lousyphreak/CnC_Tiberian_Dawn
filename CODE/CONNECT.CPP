@@ -49,7 +49,7 @@
 /*
 ********************************* Globals ***********************************
 */
-static char *ConnectionClass::Commands[PACKET_COUNT] = {
+char const *ConnectionClass::Commands[PACKET_COUNT] = {
 	"ADATA",
 	"NDATA",
 	"ACK"
@@ -243,5 +243,3 @@ char *ConnectionClass::Command_Name(int command)
 		return(NULL);
 	}
 }
-
-

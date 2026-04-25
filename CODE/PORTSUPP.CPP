@@ -110,7 +110,7 @@ void __cdecl Fat_Put_Pixel(int x, int y, int color, int size, GraphicViewPortCla
 	}
 }
 
-void Smart_Printf(char* format, ...)
+void Smart_Printf(char const *format, ...)
 {
 	if (format == nullptr) {
 		return;

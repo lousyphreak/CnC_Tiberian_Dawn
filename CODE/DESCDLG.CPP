@@ -161,7 +161,7 @@ void DescriptionClass::Process(char *string)
 		/*
 		-------------- Process Input ----------------
 		*/
-		switch (input) {
+		switch (static_cast<int>(input)) {
 
 			case KN_RETURN:
 			case BUTTON_OPTIONS|KN_BUTTON:
@@ -178,7 +178,9 @@ void DescriptionClass::Process(char *string)
 
 			case BUTTON_EDIT|KN_BUTTON:
 				break;
+
+			default:
+				break;
 		}
 	}
 }
-

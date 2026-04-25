@@ -2600,6 +2600,9 @@ RadioMessageType AircraftClass::Receive_Message(RadioClass * from, RadioMessageT
 				return(RADIO_ROGER);
 			}
 			return(RADIO_NEGATIVE);
+
+		default:
+			break;
 	}
 
 	/*

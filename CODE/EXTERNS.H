@@ -236,8 +236,8 @@ extern int												CurPhoneIdx;
 extern DynamicVectorClass <char *>				InitStrings;
 extern SerialSettingsType							SerialDefaults;
 extern ModemGameType									ModemGameToPlay;
-extern char *											DialMethodCheck[ DIAL_METHODS ];
-extern char *											CallWaitStrings[ CALL_WAIT_STRINGS_NUM ];
+extern char const *									DialMethodCheck[ DIAL_METHODS ];
+extern char const *									CallWaitStrings[ CALL_WAIT_STRINGS_NUM ];
 
 /*
 ** Network/Modem globals
@@ -284,8 +284,8 @@ extern int										MPlayerCurGame;
 extern int										TheirProcessTime[MAX_PLAYERS - 1];
 extern int										DesiredFrameRate;
 
-extern char *									GlobalPacketNames[];
-extern char *									SerialPacketNames[];
+extern char const *								GlobalPacketNames[];
+extern char const *								SerialPacketNames[];
 
 typedef struct {
 	union {
@@ -392,9 +392,9 @@ void Memory_Error_Handler(void);
 extern bool GameStatisticsPacketSent;
 extern bool ConnectionLost;
 extern bool InMainLoop;			         // True if in game state rather than menu state
-void CCDebugString (char *string);
+void CCDebugString (char const *string);
 extern void *PacketLater;
-void Load_Title_Screen(char *name, GraphicViewPortClass *video_page, unsigned char *palette);
+void Load_Title_Screen(char const *name, GraphicViewPortClass *video_page, unsigned char *palette);
 
 extern "C"{
 	extern bool IsTheaterShape;

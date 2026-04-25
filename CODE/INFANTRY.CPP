@@ -2719,6 +2719,9 @@ RadioMessageType InfantryClass::Receive_Message(RadioClass * from, RadioMessageT
 			if (Take_Damage(damage, 0, WARHEAD_FIST, this) == RESULT_DESTROYED) return(RADIO_STATIC);
 			return(RADIO_ROGER);
 
+		default:
+			break;
+
 	}
 	return(FootClass::Receive_Message(from, message, param));
 }

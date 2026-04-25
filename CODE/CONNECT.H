@@ -336,8 +336,7 @@ class ConnectionClass
 		/*.....................................................................
 		Names of all packet commands
 		.....................................................................*/
-		static char *ConnectionClass::Commands[PACKET_COUNT];
+		static char const *Commands[PACKET_COUNT];
 };
 
 #endif
-

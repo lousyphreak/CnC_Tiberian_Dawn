@@ -160,7 +160,7 @@ int TriggerClass::Validate(void) const
  *=============================================================================================*/
 bool TriggerClass::Event_Need_Object(EventType event)
 {
-	switch (event) {
+	switch (static_cast<int>(event)) {
 		case EVENT_PLAYER_ENTERED:
 		case EVENT_DISCOVERED:
 		case EVENT_ATTACKED:
@@ -189,7 +189,7 @@ bool TriggerClass::Event_Need_Object(EventType event)
  *=============================================================================================*/
 bool TriggerClass::Event_Need_House(EventType event)
 {
-	switch (event) {
+	switch (static_cast<int>(event)) {
 		case EVENT_PLAYER_ENTERED:
 		case EVENT_HOUSE_DISCOVERED:
 		case EVENT_UNITS_DESTROYED:
@@ -225,7 +225,7 @@ bool TriggerClass::Event_Need_House(EventType event)
  *=============================================================================================*/
 bool TriggerClass::Event_Need_Data(EventType event)
 {
-	switch (event) {
+	switch (static_cast<int>(event)) {
 		case EVENT_CREDITS:
 		case EVENT_TIME:
 		case EVENT_NBUILDINGS_DESTROYED:
@@ -255,7 +255,7 @@ bool TriggerClass::Event_Need_Data(EventType event)
  *=============================================================================================*/
 bool TriggerClass::Action_Need_Team(TriggerClass::ActionType action)
 {
-	switch (action) {
+	switch (static_cast<int>(action)) {
 		case ACTION_CREATE_TEAM:
 		case ACTION_DESTROY_TEAM:
 		case ACTION_REINFORCEMENTS:

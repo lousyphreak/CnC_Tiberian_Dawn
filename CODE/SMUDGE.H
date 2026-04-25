@@ -68,7 +68,7 @@ class SmudgeClass : public ObjectClass
 		*/
 		static void Read_INI(char *);
 		static void Write_INI(char *);
-		static char *INI_Name(void) {return "SMUDGE";};
+		static char const * INI_Name(void) {return "SMUDGE";};
 		bool Load(FileClass & file);
 		bool Save(FileClass & file);
 		virtual void Code_Pointers(void);
@@ -101,4 +101,3 @@ class SmudgeClass : public ObjectClass
 };
 
 #endif
-

@@ -68,7 +68,7 @@ BOOL CC95AlreadyRunning = FALSE;		//Was there an instance of C&C 95 already runn
 extern HWND 			MainWindow;
 extern TimerClass	GameTimer;
 extern BOOL			GameTimerInUse;
-extern void 			CCDebugString (char *string);
+extern void 			CCDebugString (char const *string);
 
 
 /***********************************************************************************************
@@ -377,7 +377,7 @@ int DDEServerClass::Time_Since_Heartbeat(void)
  * HISTORY:                                                                                    *
  *    6/9/96 11:07PM ST : Created                                                              *
  *=============================================================================================*/
-BOOL Send_Data_To_DDE_Server (char *data, int length, int packet_type)
+BOOL Send_Data_To_DDE_Server (char const *data, int length, int packet_type)
 {
 #if (0)
 	BOOL	app_exists;
@@ -418,5 +418,3 @@ BOOL Send_Data_To_DDE_Server (char *data, int length, int packet_type)
 
 	return (TRUE);
 }
-
-

@@ -265,6 +265,9 @@ RadioMessageType BuildingClass::Receive_Message(RadioClass * from, RadioMessageT
 					Mark(MARK_CHANGE);
 					Assign_Mission(MISSION_HARVEST);
 					return(RADIO_ATTACH);
+
+				default:
+					break;
 			}
 			break;
 
@@ -370,6 +373,9 @@ RadioMessageType BuildingClass::Receive_Message(RadioClass * from, RadioMessageT
 			TechnoClass::Receive_Message(from, message, param);
 			if (*this == STRUCT_WEAP || *this == STRUCT_AIRSTRIP || *this == STRUCT_REPAIR) return(RADIO_RUN_AWAY);
 			return(RADIO_ROGER);
+
+		default:
+			break;
 	}
 
 	/*
@@ -400,26 +406,26 @@ void BuildingClass::Debug_Dump(MonoClass *mono) const
 	Validate();
 	mono->Set_Cursor(0, 0);
 	mono->Print(
-		"ÚName:ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂMission:ÄÄÄÂTarCom:ÂÄÄÄÄÄÄÄÂRadio:ÂCoord:ÄÄÂÄÄÄÄÄÄÄÄÂSt:Ä¿\n"
-		"³                   ³           ³       ³       ³      ³        ³        ³    ³\n"
-		"ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂNÂYÂHealth:ÄÂÄÄÄÁÄÂTurret:ÂÄÄÄÄÄÁÂÄBuilding:ÄÄÂCargo:ÄÄÄÄÁÄÄÄÄ´\n"
-		"³Active........³ ³ ³        ³     ³       ³      ³            ³               ³\n"
-		"³Limbo.........³ ³ ÃÄÄÄÄÄÄÄÄÁÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´\n"
-		"³Owned.........³ ³ ³Last Message:                                             ³\n"
-		"³Discovered....³ ³ ÃTimer:ÂArm:ÂÄÄÄÄÄÄÂTiberium:ÂFlash:ÂStage:ÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ\n"
-		"³Selected......³ ³ ³      ³    ³      ³         ³      ³      ³                \n"
-		"³Teathered.....³ ³ ÃÄÄÄÄÄÄÁÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÙ                \n"
-		"³Locked on Map.³ ³ ³                                                           \n"
-		"³Is A Loaner...³ ³ ³                                                           \n"
-		"³              ³ ³ ³                                                           \n"
-		"³              ³ ³ ³                                                           \n"
-		"³              ³ ³ ³                                                           \n"
-		"³Repairing.....³ ³ ³                                                           \n"
-		"³              ³ ³ ³                                                           \n"
-		"³              ³ ³ ³                                                           \n"
-		"³Recoiling.....³ ³ ³                                                           \n"
-		"³To Display....³ ³ ³                                                           \n"
-		"ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÁÄÙ                                                           \n");
+		"ï¿½Name:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Mission:ï¿½ï¿½ï¿½ï¿½TarCom:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Radio:ï¿½Coord:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½St:Ä¿\n"
+		"ï¿½                   ï¿½           ï¿½       ï¿½       ï¿½      ï¿½        ï¿½        ï¿½    ï¿½\n"
+		"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Nï¿½Yï¿½Health:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Turret:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Building:ï¿½ï¿½ï¿½Cargo:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä´\n"
+		"ï¿½Active........ï¿½ ï¿½ ï¿½        ï¿½     ï¿½       ï¿½      ï¿½            ï¿½               ï¿½\n"
+		"ï¿½Limbo.........ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä´\n"
+		"ï¿½Owned.........ï¿½ ï¿½ ï¿½Last Message:                                             ï¿½\n"
+		"ï¿½Discovered....ï¿½ ï¿½ ï¿½Timer:ï¿½Arm:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Tiberium:ï¿½Flash:ï¿½Stage:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\n"
+		"ï¿½Selected......ï¿½ ï¿½ ï¿½      ï¿½    ï¿½      ï¿½         ï¿½      ï¿½      ï¿½                \n"
+		"ï¿½Teathered.....ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½                \n"
+		"ï¿½Locked on Map.ï¿½ ï¿½ ï¿½                                                           \n"
+		"ï¿½Is A Loaner...ï¿½ ï¿½ ï¿½                                                           \n"
+		"ï¿½              ï¿½ ï¿½ ï¿½                                                           \n"
+		"ï¿½              ï¿½ ï¿½ ï¿½                                                           \n"
+		"ï¿½              ï¿½ ï¿½ ï¿½                                                           \n"
+		"ï¿½Repairing.....ï¿½ ï¿½ ï¿½                                                           \n"
+		"ï¿½              ï¿½ ï¿½ ï¿½                                                           \n"
+		"ï¿½              ï¿½ ï¿½ ï¿½                                                           \n"
+		"ï¿½Recoiling.....ï¿½ ï¿½ ï¿½                                                           \n"
+		"ï¿½To Display....ï¿½ ï¿½ ï¿½                                                           \n"
+		"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½                                                           \n");
 	mono->Set_Cursor(1, 1);mono->Printf("%s:%s", House->Class->IniName, Class->IniName);
 	mono->Set_Cursor(35, 3);mono->Printf("%02X:%02X", PrimaryFacing.Current(), PrimaryFacing.Desired());
 	mono->Set_Cursor(50, 3);
@@ -710,6 +716,9 @@ bool BuildingClass::Mark(MarkType mark)
 
 						case STRUCT_CYCLONE_WALL:
 							new OverlayClass(OVERLAY_CYCLONE_WALL, cell, House->Class->House);
+							break;
+
+						default:
 							break;
 					}
 					Transmit_Message(RADIO_OVER_OUT);
@@ -1287,6 +1296,9 @@ bool BuildingClass::Unlimbo(COORDINATE coord, DirType dir)
 
 				case STRUCT_WOOD_WALL:
 					otype = OVERLAY_WOOD_WALL;
+					break;
+
+				default:
 					break;
 			}
 			if (otype != OVERLAY_NONE) {
@@ -2026,8 +2038,8 @@ int BuildingClass::Exit_Object(TechnoClass * base)
 	**	Find a good cell to unload the object to. The object, probably a vehicle
 	**	will drive/walk to the adjacent free cell.
 	*/
+	CELL cell;
 	switch (base->What_Am_I()) {
-		CELL cell;
 
 		case RTTI_AIRCRAFT:
 			if (!In_Radio_Contact()) {
@@ -2110,7 +2122,7 @@ int BuildingClass::Exit_Object(TechnoClass * base)
 					break;
 
 				case STRUCT_BARRACKS:
-				case STRUCT_HAND:
+				case STRUCT_HAND: {
 					CELL cell;
 					bool found = false;
 
@@ -2154,6 +2166,10 @@ int BuildingClass::Exit_Object(TechnoClass * base)
 						ScenarioInit--;
 					}
 					break;
+				}
+
+				default:
+					break;
 			}
 			break;
 
@@ -2176,6 +2192,9 @@ int BuildingClass::Exit_Object(TechnoClass * base)
 					}
 				}
 			}
+			break;
+
+		default:
 			break;
 	}
 
@@ -2206,11 +2225,11 @@ void BuildingClass::Update_Buildables(void)
 {
 	Validate();
 	if (House == PlayerPtr && !IsInLimbo && IsDiscoveredByPlayer) {
+		StructType i;
+		UnitType u;
+		InfantryType f;
+		AircraftType a;
 		switch (Class->ToBuild) {
-			StructType i;
-			UnitType u;
-			InfantryType f;
-			AircraftType a;
 
 			case RTTI_BUILDINGTYPE:
 				for (i = STRUCT_FIRST; i < STRUCT_COUNT; i++) {
@@ -2250,6 +2269,9 @@ void BuildingClass::Update_Buildables(void)
 //						}
 					}
 				}
+				break;
+
+			default:
 				break;
 		}
 	}

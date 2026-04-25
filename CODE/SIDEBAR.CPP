@@ -1075,7 +1075,7 @@ SidebarClass::StripClass::StripClass(void)
  *=============================================================================================*/
 void SidebarClass::StripClass::One_Time(int )
 {
-	static char *_file[3] = {
+	static char const *_file[3] = {
 		"ION",
 		"ATOM",
 		"BOMB"
@@ -1224,7 +1224,7 @@ void SidebarClass::StripClass::Init_Theater(TheaterType theater)
 	//if (theater != LastTheater) {
 
 
-		static char *_file[3] = {
+		static char const *_file[3] = {
 			"ION",
 			"ATOM",
 			"BOMB"
@@ -1647,7 +1647,7 @@ bool SidebarClass::StripClass::AI(KeyNumType & input, int , int )
 						*/
 						TechnoClass * pending = factory->Get_Object();
 						if (pending) {
-							switch (pending->What_Am_I()) {
+							switch (static_cast<int>(pending->What_Am_I())) {
 								case RTTI_UNIT:
 								case RTTI_AIRCRAFT:
 									OutList.Add(EventClass(EventClass::PLACE, pending->What_Am_I(), -1));
@@ -1755,7 +1755,7 @@ void SidebarClass::StripClass::Draw_It(bool complete)
 					obj = Fetch_Techno_Type(Buildables[index].BuildableType, Buildables[index].BuildableID);
 					if (obj) {
 						bool isbusy = false;
-						switch (Buildables[index].BuildableType) {
+						switch (static_cast<int>(Buildables[index].BuildableType)) {
 							case RTTI_INFANTRYTYPE:
 								isbusy = (PlayerPtr->InfantryFactory != -1);
 								break;
@@ -2531,5 +2531,3 @@ bool SidebarClass::StripClass::Abandon_Production(int factory)
 	}
 	return(abandon);
 }
-
-

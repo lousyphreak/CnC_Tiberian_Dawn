@@ -472,7 +472,7 @@ BOOL FreeLibrary(HANDLE module)
         return 0;
     }
 
-    SDL_UnloadObject(module);
+    SDL_UnloadObject(static_cast<SDL_SharedObject*>(module));
     return 1;
 }
 

@@ -71,6 +71,7 @@ class TurretClass : public DriveClass
 		TurretClass(UnitType classid, HousesType house);
 		TurretClass(void);
 		virtual ~TurretClass(void);
+		using DriveClass::Ok_To_Move;
 
 		BulletClass * Fire_At(TARGET target, int which);
 

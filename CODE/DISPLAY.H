@@ -174,7 +174,7 @@ class DisplayClass: public MapClass
 		void  Remove(ObjectClass const *object, LayerType layer);
 		void  Submit(ObjectClass const *object, LayerType layer);
 		CELL  Calculated_Cell(SourceType dir, HousesType house);
-		bool  In_View(register CELL cell);
+		bool  In_View(CELL cell);
 		bool  Passes_Proximity_Check(ObjectTypeClass const *object);
 		ObjectClass *  Cell_Object(CELL cell, int x=0, int y=0);
 		ObjectClass *  Next_Object(ObjectClass * object);

@@ -415,7 +415,7 @@ HANDLE DebugFile = INVALID_HANDLE_VALUE;
  * HISTORY:                                                                                    *
  *    10/28/96 12:48PM ST : Created                                                            *
  *=============================================================================================*/
-void CCDebugString (char *string)
+void CCDebugString (char const *string)
 {
 #if (0)
 
@@ -630,7 +630,7 @@ GraphicBufferClass* Read_PCX_File(char* name, char* Palette, void *Buff, long Si
  *    7/5/96 11:30AM ST : Created                                                              *
  *=============================================================================================*/
 
-void Load_Title_Screen(char *name, GraphicViewPortClass *video_page, unsigned char *palette)
+void Load_Title_Screen(char const *name, GraphicViewPortClass *video_page, unsigned char *palette)
 {
 
 	GraphicBufferClass *load_buffer;

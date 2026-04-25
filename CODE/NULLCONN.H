@@ -79,6 +79,7 @@ class NullModemConnClass : public NonSequencedConnClass
 	---------------------------- Public Interface ----------------------------
 	*/
 	public:
+		using NonSequencedConnClass::Init;
 		/*.....................................................................
 		Constructor/destructor.
 		.....................................................................*/
@@ -137,4 +138,3 @@ class NullModemConnClass : public NonSequencedConnClass
 #endif
 
 /************************** end of nullconn.h ******************************/
-

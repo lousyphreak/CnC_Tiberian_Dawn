@@ -585,7 +585,7 @@ void RadarClass::Render_Infantry(CELL cell, int x, int y, int size)
 	obj = (ObjectClass *)Map[cell].Cell_Occupier();
 	while (obj) {
 		if (obj->Is_Techno() && (((TechnoClass *)obj)->Cloak != CLOAKED || ((TechnoClass *)obj)->House->Is_Ally(PlayerPtr))) {
-			switch (obj->What_Am_I()) {
+			switch (static_cast<int>(obj->What_Am_I())) {
 				case RTTI_INFANTRY:
 					{
 						//int divisor = 255 / ZoomFactor;

@@ -70,8 +70,8 @@ class BulletClass :	public ObjectClass,
 		/*---------------------------------------------------------------------
 		**	Constructors, Destructors, and overloaded operators.
 		*/
-		static void * BulletClass::operator new(size_t size);
-		static void BulletClass::operator delete(void *ptr);
+		static void * operator new(size_t size);
+		static void operator delete(void *ptr);
 		BulletClass(void);
 		BulletClass(BulletType id);
 		virtual ~BulletClass(void) {if (GameActive) BulletClass::Limbo();};
@@ -90,7 +90,7 @@ class BulletClass :	public ObjectClass,
 		virtual void Draw_It(int x, int y, WindowNumberType window);
 		virtual bool Mark(MarkType mark=MARK_CHANGE);
 		virtual void AI(void);
-		virtual short const * Occupy_List(void) const;
+		virtual short const * Occupy_List(bool placement=false) const;
 		virtual short const * Overlap_List(void) const {return Occupy_List();};
 		virtual TARGET As_Target(void) const;
 

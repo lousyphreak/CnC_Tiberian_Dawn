@@ -121,7 +121,7 @@ foreach(target ${TD_BUILD_TARGETS})
     target_compile_definitions(${target} PRIVATE _CRT_SECURE_NO_WARNINGS)
     target_compile_options(${target} PRIVATE /w /MP)
   else()
-    target_compile_options(${target} PRIVATE -w -fpermissive)
+    target_compile_options(${target} PRIVATE -Wall -fpermissive)
   endif()
 endforeach()
 

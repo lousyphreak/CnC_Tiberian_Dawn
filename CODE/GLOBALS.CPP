@@ -479,12 +479,12 @@ SerialSettingsType SerialDefaults;		// serial port default settings
 
 ModemGameType ModemGameToPlay;			// type of modem play Dialer, answerer, null
 
-char *DialMethodCheck[ DIAL_METHODS ] = {
+char const *DialMethodCheck[ DIAL_METHODS ] = {
 	"T",
 	"P"
 };
 
-char *CallWaitStrings[ CALL_WAIT_STRINGS_NUM ] = {
+char const *CallWaitStrings[ CALL_WAIT_STRINGS_NUM ] = {
 	"*70,",
 	"70#,",
 	"1170,",
@@ -656,7 +656,7 @@ int DesiredFrameRate;
 ** These values are used purely for the Mono debug display.  They show the
 ** names of the Global Channel packet types, and the event types.
 */
-char *GlobalPacketNames[] = {
+char const *GlobalPacketNames[] = {
 	"Game?",
 	"Game!",
 	"Player?",
@@ -673,7 +673,7 @@ char *GlobalPacketNames[] = {
 
 
 // yeah, there's 100 empty names here, because the SerialCommandType starts at 100.
-char *SerialPacketNames[] = {
+char const *SerialPacketNames[] = {
 	"",
 	"",
 	"",

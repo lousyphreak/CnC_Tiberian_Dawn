@@ -697,6 +697,9 @@ RadioMessageType UnitClass::Receive_Message(RadioClass * from, RadioMessageType 
 			TarComClass::Receive_Message(from, message, param);
 			return(RADIO_ROGER);
 
+		default:
+			break;
+
 	}
 	return(TarComClass::Receive_Message(from, message, param));
 }
@@ -2232,7 +2235,7 @@ int UnitClass::Mission_Unload(void)
 	DirType	dir;
 	CELL		cell;
 
-	switch (Class->Type) {
+	switch (static_cast<int>(Class->Type)) {
 		case UNIT_APC:
 			switch (Status) {
 				case INITIAL_CHECK:

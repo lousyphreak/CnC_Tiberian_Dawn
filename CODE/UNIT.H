@@ -153,7 +153,7 @@ class UnitClass :	public TarComClass
 		virtual int Mission_Guard(void);
 		virtual int Mission_Harvest(void);
 		virtual int Mission_Hunt(void);
-		virtual int UnitClass::Mission_Move(void);
+		virtual int Mission_Move(void);
 		virtual FireErrorType Can_Fire(TARGET, int which) const;
 
 		/*
@@ -178,7 +178,7 @@ class UnitClass :	public TarComClass
 		*/
 		static void  Read_INI(char *buffer);
 		static void  Write_INI(char *buffer);
-		static char *INI_Name(void) {return "UNITS";};
+		static char const * INI_Name(void) {return "UNITS";};
 		bool  Load(FileClass & file);
 		bool  Save(FileClass & file);
 		virtual void Code_Pointers(void);

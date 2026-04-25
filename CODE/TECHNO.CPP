@@ -2051,11 +2051,14 @@ BulletClass * TechnoClass::Fire_At(TARGET target, int which)
 		**	Perform any animation effect for this weapon.
 		*/
 		AnimType a = weapon->Anim;
-		switch (a) {
+		switch (static_cast<int>(a)) {
 			case ANIM_GUN_N:
 			case ANIM_CHEM_N:
 			case ANIM_FLAME_N:
 				a = (AnimType)(a + Dir_Facing(Fire_Direction()));
+				break;
+
+			default:
 				break;
 		}
 
@@ -2664,7 +2667,7 @@ void TechnoClass::Record_The_Kill(TechnoClass * source)
 		**	is necessary because we don't want to add a virtual function to the
 		**	CrewClass. Doing so would complicate the save/load process.
 		*/
-		switch (source->What_Am_I()) {
+		switch (static_cast<int>(source->What_Am_I())) {
 			case RTTI_INFANTRY:
 				((InfantryClass *)source)->Made_A_Kill();
 				break;
@@ -2679,6 +2682,9 @@ void TechnoClass::Record_The_Kill(TechnoClass * source)
 
 			case RTTI_AIRCRAFT:
 				((AircraftClass *)source)->Made_A_Kill();
+				break;
+
+			default:
 				break;
 		}
 

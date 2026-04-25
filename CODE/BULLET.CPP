@@ -224,7 +224,7 @@ BulletClass::BulletClass(BulletType id) :
  *   06/20/1994 JLB : Created.                                                                 *
  *   01/05/1995 JLB : Handles projectiles with altitude.                                       *
  *=============================================================================================*/
-short const *BulletClass::Occupy_List(void) const
+short const *BulletClass::Occupy_List(bool) const
 {
 	Validate();
 	switch (*this) {
@@ -783,4 +783,3 @@ TARGET BulletClass::As_Target(void) const
 	Validate();
 	return(Build_Target(KIND_BULLET, Bullets.ID(this)));
 }
-

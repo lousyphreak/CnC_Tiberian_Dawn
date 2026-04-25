@@ -22,7 +22,7 @@
 
 #include <string.h>
 
-void CCDebugString(char *string);
+void CCDebugString(char const *string);
 
 namespace {
 

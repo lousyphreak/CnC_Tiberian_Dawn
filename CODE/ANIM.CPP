@@ -258,6 +258,9 @@ void AnimClass::Draw_It(int x, int y, WindowNumberType window)
 				case ANIM_ATOM_BLAST:
 					transtable = Map.UnitShadow;
 					break;
+
+				default:
+					break;
 			}
 
 			/*
@@ -423,7 +426,7 @@ short const * AnimClass::Overlap_List(void) const
  * HISTORY:                                                                                    *
  *   03/19/1995 JLB : Created.                                                                 *
  *=============================================================================================*/
-short const * AnimClass::Occupy_List(void) const
+short const * AnimClass::Occupy_List(bool) const
 {
 	Validate();
 	static short _simple[] = {REFRESH_EOL};

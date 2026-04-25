@@ -90,9 +90,9 @@ bool Map_Edit_Loop(void);
 void Trap_Object(void);
 
 #ifdef CHEAT_KEYS
-void Heap_Dump_Check( char *string );
+void Heap_Dump_Check( char const *string );
 void Dump_Heap_Pointers( void );
-void Error_In_Heap_Pointers( char *string );
+void Error_In_Heap_Pointers( char const *string );
 #endif
 static void Do_Record_Playback(void);
 extern void Register_Game_Start_Time(void);
@@ -3161,7 +3161,7 @@ void Handle_View(int view, int action)
 }
 
 #ifdef CHEAT_KEYS
-void Heap_Dump_Check( char *string )
+void Heap_Dump_Check( char const *string )
 {
 #if 0
 	struct _heapinfo h_info;
@@ -3467,7 +3467,7 @@ void Dump_Heap_Pointers( void )
 }
 
 
-void Error_In_Heap_Pointers( char *string )
+void Error_In_Heap_Pointers( char const *string )
 {
 	Smart_Printf( "Error in Heap for %s\n", string );
 }
@@ -3843,7 +3843,7 @@ unsigned long Disk_Space_Available(void)
  * HISTORY:                                                                                    *
  *   08/15/1995 BRR : Created.                                                                 *
  *=============================================================================================*/
-void Validate_Error(char *name)
+void Validate_Error(char const *name)
 {
 #ifdef CHEAT_KEYS
 	Prog_End();
@@ -3995,7 +3995,7 @@ static void Do_Record_Playback(void)
  * HISTORY:                                                                *
  *   01/25/1996     : Created.                                             *
  *=========================================================================*/
-void const * Hires_Retrieve(char *name)
+void const * Hires_Retrieve(char const *name)
 {
 	char filename[30];
 

@@ -418,6 +418,61 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
     - added explicit present flushing after software-cursor updates on video surfaces in `WIN32LIB/KEYBOARD/MOUSE.CPP`, so menu cursor movement is visible again instead of waiting on unrelated later presents;
     - converted clip-window X/width values back to pixel coordinates inside both imported `GBUFFER.H` copies before terrain stamps call the clipped draw path:
       - `WIN32LIB/DRAWBUFF/GBUFFER.H`
+
+- Warning-cleanup pass substantially reduced the Linux/GCC warning storm without suppressing diagnostics (2026-04-25):
+  - completed in this checkpoint:
+    - ran repeated clean warning builds and treated the full clean rebuild as the authoritative baseline instead of relying on incremental-only warning counts
+    - fixed a large batch of legacy C++ declaration issues that GCC was only tolerating because of `-fpermissive`, including:
+      - extra member qualification in class declarations
+      - invalid operator declarations
+      - obsolete `register` usage
+      - hidden base overload families and mismatched override signatures
+      - non-const string-literal interfaces
+    - corrected several shared interfaces so callers no longer have to feed string literals through mutable `char*` APIs:
+      - `Validate_Error(...)`
+      - `Hires_Retrieve(...)`
+      - `CCDebugString(...)`
+      - `Load_Title_Screen(...)`
+      - `Smart_Printf(...)`
+      - `Heap_Dump_Check(...)`
+      - `Count_Up_Print(...)`
+      - `Send_Data_To_DDE_Server(...)`
+      - `CDFileClass::Set_Search_Drives(...)`
+      - `IPXConnClass` connection-name input
+      - `FootClass::Debug_Draw_Map(...)`
+      - `Open_Movie(...)`
+    - converted many literal-only tables and debug/name arrays from `char*` to `char const*`, including tables in:
+      - `CODE/EVENT.*`
+      - `CODE/GLOBALS.CPP`
+      - `CODE/SCORE.CPP`
+      - `CODE/QUEUE.CPP`
+      - `CODE/STATS.CPP`
+      - `CODE/CONNECT.*`
+      - `CODE/SIDEBAR.CPP`
+      - `CODE/INIT.CPP`
+    - fixed another wrapper-layer portability bug by routing `FreeLibrary(...)` through the correct `SDL_SharedObject*` type before calling `SDL_UnloadObject(...)`
+    - reduced a large block of intentional subset-enum warnings by making those partial switches explicit in the highest-volume gameplay/UI sites, using `default:` or integer-switched subset handling where that matched the existing behavior
+  - current clean-build warning baseline:
+    - latest authoritative clean rebuild: `cmake --build build --clean-first -j2`
+    - warning count reduced from about `11,935` initial warnings / `2,687` unique sites to `1,174` warnings / `919` unique sites
+    - `-Wwrite-strings` was reduced from `551` warnings to `0`
+  - current dominant remaining warning groups after this checkpoint:
+    1. `-Wswitch` on intentional subset enum handling in gameplay/UI control flow
+    2. `-Wnarrowing` in coordinate/pathing/numeric-heavy code
+    3. `-Wsign-compare` in older loops and size/count comparisons
+    4. smaller tails from `unused-variable`, format-width/overflow checks, reorder warnings, and a few old pointer-cast assumptions
+  - highest remaining warning concentrations after the latest clean rebuild:
+    - `CODE/COORD.CPP`
+    - `CODE/VECTOR.CPP`
+    - `CODE/CONQUER.CPP`
+    - `CODE/HOUSE.CPP`
+    - `CODE/SCORE.CPP`
+    - `CODE/BUILDING.CPP`
+    - `CODE/NETDLG.CPP`
+  - next focus:
+    - continue collapsing `-Wswitch` by auditing the remaining intentional subset switches and converting them to explicit integer-switch or exhaustive handling where appropriate
+    - fix narrowing/sign-compare warnings in coordinate/pathing-heavy files with explicit, size-correct types instead of implicit conversions
+    - clean up the remaining format/overflow sites such as fixed-width `sprintf(...)` cases once the switch/numeric warning counts are under control
       - `WIN32LIB/INCLUDE/GBUFFER.H`
     - flushed the queued hidden-page -> seen-page present at the end of `CODE/GSCREEN.CPP` `Blit_Display()`;
     - made SDL surface self-blits overlap-safe in `SDL3_COMPAT/wrappers/sdl_draw.cpp` by copying overlapped source rectangles through scratch storage before writing the destination rows.

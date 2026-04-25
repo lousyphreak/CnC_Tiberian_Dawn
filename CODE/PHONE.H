@@ -34,6 +34,8 @@
 #ifndef PHONE_H
 #define PHONE_H
 
+#include <cstring>
+
 /*
 ***************************** Class Declaration *****************************
 */
@@ -48,18 +50,18 @@ class PhoneEntryClass
 		PhoneEntryClass(void) {};
 		~PhoneEntryClass() {};
 
-		operator == (PhoneEntryClass &obj) 
-			{ return (memcmp (Name,obj.Name,strlen(Name))==0);}
-		operator != (PhoneEntryClass &obj)
-			{ return (memcmp (Name,obj.Name,strlen(Name))!=0);}
-		operator > (PhoneEntryClass &obj)
-			{ return (memcmp(Name, obj.Name, strlen(Name)) > 0);}
-		operator < (PhoneEntryClass &obj)
-			{ return (memcmp(Name, obj.Name, strlen(Name)) < 0);}
-		operator >= (PhoneEntryClass &obj)
-			{ return (memcmp(Name, obj.Name, strlen(Name)) >= 0);}
-		operator <= (PhoneEntryClass &obj)
-			{ return (memcmp(Name, obj.Name, strlen(Name)) <= 0);}
+		bool operator==(PhoneEntryClass const& obj) const
+			{ return std::strcmp(Name, obj.Name) == 0; }
+		bool operator!=(PhoneEntryClass const& obj) const
+			{ return std::strcmp(Name, obj.Name) != 0; }
+		bool operator>(PhoneEntryClass const& obj) const
+			{ return std::strcmp(Name, obj.Name) > 0; }
+		bool operator<(PhoneEntryClass const& obj) const
+			{ return std::strcmp(Name, obj.Name) < 0; }
+		bool operator>=(PhoneEntryClass const& obj) const
+			{ return std::strcmp(Name, obj.Name) >= 0; }
+		bool operator<=(PhoneEntryClass const& obj) const
+			{ return std::strcmp(Name, obj.Name) <= 0; }
 
 		SerialSettingsType Settings;
 		char Name[ PHONE_MAX_NAME ];		// destination person's name

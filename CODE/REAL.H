@@ -401,12 +401,12 @@ void CC_Add_Shape_To_Global(void const *shapeptr, char *filename, char code );
 
 void Bubba_Print(char *format,...);
 
-void Heap_Dump_Check( char *string );
+void Heap_Dump_Check( char const *string );
 void Dump_Heap_Pointers( void );
 unsigned long Disk_Space_Available(void);
 
-void Validate_Error(char *name);
-void const * Hires_Retrieve(char *name);
+void Validate_Error(char const *name);
+void const * Hires_Retrieve(char const *name);
 int Get_Resolution_Factor(void);
 
 
@@ -430,7 +430,7 @@ extern "C"{
 /*
 **	COORD.CPP
 */
-void  Move_Point(short &x, short &y, register DirType dir, unsigned short distance);
+void  Move_Point(short &x, short &y, DirType dir, unsigned short distance);
 COORDINATE  Adjacent_Cell(COORDINATE coord, FacingType dir);
 COORDINATE  Coord_Move(COORDINATE start, DirType facing, unsigned short distance);
 COORDINATE  Coord_Scatter(COORDINATE coord, unsigned distance, bool lock=false);
@@ -604,7 +604,7 @@ GameType Select_Serial_Dialog( void );
 int Com_Scenario_Dialog(void);
 int Com_Show_Scenario_Dialog(void);
 
-void Smart_Printf( char *format, ... );
+void Smart_Printf( char const *format, ... );
 void Hex_Dump_Data( char *buffer, int length );
 void itoh( int i, char *s);
 

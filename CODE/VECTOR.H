@@ -84,7 +84,7 @@ class VectorClass
 
 		T & operator[](unsigned index) {return(Vector[index]);};
 		T const & operator[](unsigned index) const {return(Vector[index]);};
-		virtual VectorClass<T> & operator =(VectorClass<T> const &); // Assignment operator.
+		VectorClass<T> & operator =(VectorClass<T> const &); // Assignment operator.
 		virtual int operator == (VectorClass<T> const &) const;	// Equality operator.
 		virtual int Resize(unsigned newsize, T const * array=0);
 		virtual void Clear(void);
@@ -126,6 +126,7 @@ class DynamicVectorClass : public VectorClass<T>
 {
 	public:
 		DynamicVectorClass(unsigned size=0, T const * array=0);
+		using VectorClass<T>::operator=;
 
 		// Change maximum size of vector.
 		virtual int Resize(unsigned newsize, T const * array=0);

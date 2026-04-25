@@ -1824,7 +1824,7 @@ static void Play_Intro(bool for_real)
 {
 	bool playright = !Key_Down(KN_LCTRL) || !Key_Down(KN_RCTRL);
 	static int _counter = -1;
-	static char * _names[] = {
+	static char const * _names[] = {
 #ifdef DEMO
 		"LOGO",
 
@@ -2677,8 +2677,8 @@ int Version_Number(void)
 #ifdef OBSOLETE
 	static bool initialized = false;
 	static int version;
-	static char * date = __DATE__;
-	static char * time = __TIME__;
+	static char const * date = __DATE__;
+	static char const * time = __TIME__;
 	static char const * months = "JANFEBMARAPRMAYJUNJULAUGSEPOCTNOVDEC";
 
 	if (!initialized) {

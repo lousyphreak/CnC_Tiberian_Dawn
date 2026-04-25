@@ -47,6 +47,7 @@
 class ColorListClass : public ListClass
 {
 	public:
+		using ListClass::Add_Item;
 		/*********************************************************************
 		** These enums are the ways a selected item can be drawn
 		*/

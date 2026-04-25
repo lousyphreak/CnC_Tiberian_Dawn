@@ -161,7 +161,7 @@ void CDFileClass::Refresh_Search_Drives (void)
  *   10/18/1994 JLB : Created.                                                                 *
  *   05/21/1996 ST  : Modified to recognise multiple CD drives                                 *
  *=============================================================================================*/
-int CDFileClass::Set_Search_Drives(char * pathlist)
+int CDFileClass::Set_Search_Drives(char const * pathlist)
 {
 	int found = FALSE;
 	int empty = FALSE;

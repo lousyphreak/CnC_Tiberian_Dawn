@@ -1544,6 +1544,9 @@ RadioMessageType FootClass::Receive_Message(RadioClass * from, RadioMessageType 
 				return(RADIO_ROGER);
 			}
 			break;
+
+		default:
+			break;
 	}
 	return(TechnoClass::Receive_Message(from, message, param));
 }
