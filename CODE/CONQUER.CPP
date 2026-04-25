@@ -1787,9 +1787,9 @@ void Read_VQ_Thread_Block(CCFileClass *file)
 
 
 
-int VQ_Thread_Read (CCFileClass *file, void *buffer, long bytes)
+int32_t VQ_Thread_Read(CCFileClass *file, void *buffer, int32_t bytes)
 {
-	long bytes_to_read;
+	int32_t bytes_to_read;
 
 	do {
 		if (VQThreadBlockHead > VQThreadBlockTail){
@@ -1826,7 +1826,7 @@ int VQ_Thread_Read (CCFileClass *file, void *buffer, long bytes)
 }
 
 
-int VQ_Thread_Seek (long bytes)
+int32_t VQ_Thread_Seek(int32_t bytes)
 {
 	VQThreadBlockTail += bytes;
 	VQBytesRead += bytes;
@@ -1858,10 +1858,10 @@ int VQ_Thread_Seek (long bytes)
  * HISTORY:                                                                                    *
  *   07/04/1995 JLB : Created.                                                                 *
  *=============================================================================================*/
-long MixFileHandler(VQAHandle *vqa, long action, void *buffer, long nbytes)
+int32_t MixFileHandler(VQAHandle *vqa, int32_t action, void *buffer, int32_t nbytes)
 {
 	CCFileClass *file;
-	long        error;
+	int32_t     error;
 
 	file = (CCFileClass *)vqa->VQAio;
 
@@ -1918,7 +1918,7 @@ long MixFileHandler(VQAHandle *vqa, long action, void *buffer, long nbytes)
 				error = file->Open((char *)buffer, READ);
 
 				if (error != -1) {
-					vqa->VQAio = (unsigned long)file;
+					vqa->VQAio = reinterpret_cast<uintptr_t>(file);
 					error = 0;
 					//file->Set_Buffer_Size(8*1024);
 				} else {
@@ -1991,10 +1991,10 @@ long MixFileHandler(VQAHandle *vqa, long action, void *buffer, long nbytes)
  * HISTORY:                                                                                    *
  *   07/04/1995 JLB : Created.                                                                 *
  *=============================================================================================*/
-long MixFileHandler(VQAHandle *vqa, long action, void *buffer, long nbytes)
+int32_t MixFileHandler(VQAHandle *vqa, int32_t action, void *buffer, int32_t nbytes)
 {
 	CCFileClass *file;
-	long        error;
+	int32_t     error;
 
 	file = (CCFileClass *)vqa->VQAio;
 
@@ -2047,7 +2047,7 @@ long MixFileHandler(VQAHandle *vqa, long action, void *buffer, long nbytes)
 				error = file->Open((char *)buffer, READ);
 
 				if (error != -1) {
-					vqa->VQAio = (unsigned long)file;
+					vqa->VQAio = reinterpret_cast<uintptr_t>(file);
 					error = 0;
 					file->Set_Buffer_Size(8*1024);
 				} else {
@@ -2828,7 +2828,7 @@ void Trap_Object(void)
 void VQA_PauseAudio(void);
 void Check_VQ_Palette_Set(void);
 
-long VQ_Call_Back(unsigned char *, long )
+int32_t VQ_Call_Back(unsigned char *, int32_t)
 {
 	int key = 0;
 	if (Keyboard::Check()){

@@ -66,7 +66,7 @@
  *=============================================================================================*/
 UnitTrackerClass::UnitTrackerClass (int unit_count)
 {
-	UnitTotals = new long [unit_count];		// Allocate memory for the unit totals
+	UnitTotals = new uint32_t [unit_count];		// Allocate memory for the unit totals
 	UnitCount = unit_count;						// Keep a record of how many unit entries there are
 	InNetworkFormat = 0;							// The unit entries are in host format
 	Clear_Unit_Total();							// Clear each entry
@@ -89,7 +89,7 @@ UnitTrackerClass::UnitTrackerClass (int unit_count)
  *=============================================================================================*/
 UnitTrackerClass::~UnitTrackerClass (void)
 {
-	delete UnitTotals;
+	delete[] UnitTotals;
 }
 
 
@@ -148,7 +148,7 @@ void UnitTrackerClass::Decrement_Unit_Total(int unit_type)
  * HISTORY:                                                                                    *
  *    6/7/96 0:13AM ST : Created                                                               *
  *=============================================================================================*/
-long *UnitTrackerClass::Get_All_Totals (void)
+uint32_t *UnitTrackerClass::Get_All_Totals (void)
 {
 	return (UnitTotals);
 }
@@ -170,7 +170,7 @@ long *UnitTrackerClass::Get_All_Totals (void)
  *=============================================================================================*/
 void UnitTrackerClass::Clear_Unit_Total (void)
 {
-	memset (UnitTotals, 0, UnitCount * sizeof(long) );
+	memset (UnitTotals, 0, UnitCount * sizeof(uint32_t) );
 }
 
 
@@ -223,4 +223,3 @@ void UnitTrackerClass::To_PC_Format (void)
 	}
 	InNetworkFormat = 0;		// Flag that data is now in PC format
 }
-

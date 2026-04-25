@@ -368,7 +368,7 @@ bool Main_Loop();
 TheaterType Theater_From_Name(char const *name);
 //DirType Rotation_Calc(DirType current, DirType desired, int rate);
 void Main_Game(int argc, char *argv[]);
-long VQ_Call_Back(unsigned char * buffer=NULL, long frame=0);
+int32_t VQ_Call_Back(unsigned char * buffer=NULL, int32_t frame=0);
 void Call_Back(void);
 char const *Language_Name(char const *basename);
 SourceType Source_From_Name(char const *name);
@@ -377,7 +377,7 @@ FacingType KN_To_Facing(int input);
 void const *Get_Radar_Icon(void const *shapefile, int shapenum, int frames, int zoomfactor);
 void CC_Draw_Shape(void const * shapefile, int shapenum, int x, int y, WindowNumberType window, ShapeFlags_Type flags, void const * fadingdata=0, void const * ghostdata=0);
 void Go_Editor(bool flag);
-long MixFileHandler(VQAHandle *vqa, long action, void *buffer, long nbytes);
+int32_t MixFileHandler(VQAHandle *vqa, int32_t action, void *buffer, int32_t nbytes);
 
 char *CC_Get_Shape_Filename(void const *shapeptr );
 void CC_Add_Shape_To_Global(void const *shapeptr, char *filename, char code );

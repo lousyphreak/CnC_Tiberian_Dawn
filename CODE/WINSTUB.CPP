@@ -519,18 +519,18 @@ void CCDebugString (char const *string)
 
 
 unsigned char	*VQPalette;
-long				VQNumBytes;
-unsigned long	VQSlowpal;
+int32_t			VQNumBytes;
+uint32_t		VQSlowpal;
 bool				VQPaletteChange = false;
 
 
 extern "C"{
-	void SetPalette(unsigned char *palette,long numbytes,unsigned long slowpal);
+	void SetPalette(unsigned char *palette, int32_t numbytes, uint32_t slowpal);
 }
 
 
 
-void Flag_To_Set_Palette(unsigned char *palette,long numbytes,unsigned long slowpal)
+void Flag_To_Set_Palette(unsigned char *palette, int32_t numbytes, uint32_t slowpal)
 {
 	VQPalette = palette;
 	VQNumBytes = numbytes;
@@ -552,7 +552,7 @@ void Check_VQ_Palette_Set(void)
 
 
 
-void SetPalette(unsigned char *palette,long,unsigned long)
+void SetPalette(unsigned char *palette, int32_t, uint32_t)
 {
 	for (int i=0 ; i<256*3 ; i++){
 		*(palette+i)&=63;

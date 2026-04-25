@@ -48,6 +48,8 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include	"FUNCTION.H"
+
+void WWDraw_Flush_Present(void);
 #include  "TEXTBLIT.H"
 #define SCORETEXT_X		184
 #define SCORETEXT_Y		8
@@ -1825,6 +1827,7 @@ void Call_Back_Delay(int time)
 			WWMouse->Draw_Mouse(&HidPage);
 			HidPage.Blit(SeenBuff);
 			WWMouse->Erase_Mouse(&HidPage, TRUE);
+			WWDraw_Flush_Present();
 		//}
 	} while(cd.Time());
 	StreamLowImpact = false;

@@ -61,6 +61,10 @@ void Set_Video_Palette(void *palette);
 void WWDraw_Flush_Present(void);
 extern uint8_t *InterpolationPalette;
 extern int32_t InterpolationPaletteChanged;
+extern uint8_t *InterpolatedPalettes[100];
+extern int32_t PalettesRead;
+extern unsigned PaletteCounter;
+extern uint8_t PaletteInterpolationTable[256][256];
 
 
 /*
@@ -417,12 +421,20 @@ void SetPalette(uint8_t *palette, int32_t numbytes, uint32_t slowpal)
 
 	if (numbytes >= (int32_t)sizeof(full_palette)) {
 		Set_Palette_Range(palette);
-		return;
+	} else {
+		memcpy(full_palette, CurrentPalette, sizeof(full_palette));
+		memcpy(full_palette, palette, (size_t)numbytes);
+		Set_Palette_Range(full_palette);
 	}
 
-	memcpy(full_palette, CurrentPalette, sizeof(full_palette));
-	memcpy(full_palette, palette, (size_t)numbytes);
-	Set_Palette_Range(full_palette);
+	if (PalettesRead) {
+		if (PaletteCounter < 100 && InterpolatedPalettes[PaletteCounter] != NULL) {
+			memcpy(&PaletteInterpolationTable[0][0], InterpolatedPalettes[PaletteCounter], 65536);
+			InterpolationPalette = CurrentPalette;
+			InterpolationPaletteChanged = FALSE;
+		}
+		++PaletteCounter;
+	}
 }
 
 

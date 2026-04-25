@@ -104,6 +104,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "FUNCTION.H"
+#include <SDL3/SDL_timer.h>
 #include <time.h>
 #include "TCPIP.H"
 #include "WSMGR.H"
@@ -176,6 +177,21 @@ static unsigned long Current_Global_Response_Time(void)
 }
 
 #define NetMgr (*Current_Network_Manager())
+
+static void Drain_Global_Send_Queue(void)
+{
+	while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) {
+		SDL_Delay(1);
+	}
+}
+
+static void Wait_For_Global_Acks(void)
+{
+	while (NetMgr.Global_Num_Send() > 0) {
+		NetMgr.Service();
+		SDL_Delay(1);
+	}
+}
 
 
 /***********************************************************************************************
@@ -1461,7 +1477,7 @@ static int Net_Join_Dialog(void)
 						&BridgeNet);
 				}
 
-				while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
+				Drain_Global_Send_Queue();
 
 				if (joinstate != JOIN_CONFIRMED) {
 					process = false;
@@ -1865,7 +1881,7 @@ static int Net_Join_Dialog(void)
 					&BridgeNet);
 			}
 
-			while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
+			Drain_Global_Send_Queue();
 
 			rc = -1;
 
@@ -2485,7 +2501,7 @@ static JoinEventType Get_Join_Responses(JoinStateType *joinstate, ListClass *gam
 					&BridgeNet);
 			}
 
-			while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
+			Drain_Global_Send_Queue();
 
 			MPlayerGameName[0] = 0;
 
@@ -3446,7 +3462,7 @@ static int Net_New_Dialog(void)
 					0, NULL);
 				NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 					0, NULL);
-				while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
+				Drain_Global_Send_Queue();
 
 				/*...............................................................
 				Broadcast my sign-off over a bridged network if there is one
@@ -3457,7 +3473,7 @@ static int Net_New_Dialog(void)
 					NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0,
 						&BridgeNet);
 				}
-				while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
+				Drain_Global_Send_Queue();
 
 				/*...............................................................
 				And now, just be absolutely sure, send my sign-off to each
@@ -3472,7 +3488,7 @@ static int Net_New_Dialog(void)
 						&(Players[i]->Address));
 					NetMgr.Service();
 				}
-				while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
+				Drain_Global_Send_Queue();
 				MPlayerGameName[0] = 0;
 				process = false;
 				rc = false;
@@ -3721,8 +3737,7 @@ static int Net_New_Dialog(void)
 			/*..................................................................
 			Wait for all the ACK's to come in.
 			..................................................................*/
-			while (NetMgr.Global_Num_Send() > 0)
-				NetMgr.Service();
+			Wait_For_Global_Acks();
 		}
 
 		/*.....................................................................
@@ -4472,12 +4487,12 @@ static int Net_Fake_New_Dialog(void)
 					0, NULL);
 				NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 					0, NULL);
-				while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
+				Drain_Global_Send_Queue();
 
 				/*...............................................................
 				Broadcast my sign-off over a bridged network if there is one
 				...............................................................*/
-				while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
+				Drain_Global_Send_Queue();
 
 				/*...............................................................
 				And now, just be absolutely sure, send my sign-off to each
@@ -4492,7 +4507,7 @@ static int Net_Fake_New_Dialog(void)
 						&(Players[i]->Address));
 					NetMgr.Service();
 				}
-				while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
+				Drain_Global_Send_Queue();
 				MPlayerGameName[0] = 0;
 				process = false;
 				rc = false;
@@ -4662,8 +4677,7 @@ CCDebugString (flopbuf);
 			/*..................................................................
 			Wait for all the ACK's to come in.
 			..................................................................*/
-			while (NetMgr.Global_Num_Send() > 0)
-				NetMgr.Service();
+			Wait_For_Global_Acks();
 		}
 
 		/*.....................................................................
@@ -5080,7 +5094,7 @@ static int Net_Fake_Join_Dialog(void)
 						&BridgeNet);
 				}
 
-				while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
+				Drain_Global_Send_Queue();
 
 				GameStatisticsPacketSent = false;
 				process = false;
@@ -5333,7 +5347,7 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 					&BridgeNet);
 			}
 
-			while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) ;
+			Drain_Global_Send_Queue();
 
 			rc = -1;
 

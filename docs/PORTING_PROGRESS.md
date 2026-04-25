@@ -8,6 +8,72 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
 
 ## Current status
 
+- Briefing-movie edge-color corruption was traced to the direct VQA palette-update helper, not the deferred WINSTUB path (2026-04-25):
+  - completed in this checkpoint:
+    - reverted the earlier `CODE/WINSTUB.CPP::SetPalette(...)` experiment after it proved irrelevant to the live briefing-movie path;
+    - traced the active VQA palette updates through `WIN32LIB/VQA32/DRAWER.CPP` / `LOADER.CPP` and found they land in the TD-only `WIN32LIB/PALETTE/PALETTE.CPP::SetPalette(...)` helper;
+    - fixed that helper so movie playback now consumes the loaded precomputed `InterpolatedPalettes[PaletteCounter]` tables and clears `InterpolationPaletteChanged` after each palette event, instead of always regenerating interpolation from `CurrentPalette`;
+    - this keeps the authored `.VQP` blend tables active for the side-briefing movies, which is the targeted path most likely to affect only a few edge/interpolation colors.
+  - validation result:
+    - `cmake --build build --parallel 4` succeeds.
+    - `cmake --build build-asan --parallel 4` succeeds.
+    - `timeout --foreground 125s bash -lc './build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` still reaches the existing late gameplay/object-layout crash rather than introducing a new fault in the movie path.
+
+- Side-briefing startup path was stabilized after the reported choose-side movie hang and the follow-up ASan trace (2026-04-25):
+  - completed in this checkpoint:
+    - `INTRO.CPP::Choose_Side()` no longer pre-opens both side-briefing VQAs or preloads both palette tables before the user commits to one side;
+      - it now stops the looping static sample, reloads only the selected side's interpolated palette set, opens only the chosen briefing VQA immediately before playback, and closes that handle again before scenario startup;
+      - this removes the old special-case path that kept two retained briefing handles and shared palette state alive across the side-selection transition.
+    - `Choose_Side()` cleanup now matches the active allocation API:
+      - the speech/static buffers returned by `Load_Alloc_Data(...)` are now released with `delete[]` instead of `Free(...)`, matching `JSHELL.CPP`'s `new char[]` allocation path and removing the alloc/dealloc mismatch ASan found immediately after the old movie stall was bypassed.
+    - `UnitTrackerClass` was brought back onto its original 32-bit contract in `UTRACKER.{H,CPP}`:
+      - `UnitTotals` is now a `uint32_t[]` instead of Linux `long[]`;
+      - the destructor now uses `delete[]`;
+      - `Get_All_Totals()` and `Clear_Unit_Total()` now use the same explicit 32-bit width, matching the existing stats packet sizing and the Red Alert SDL port.
+  - validation result:
+    - `cmake --build build --parallel 4` succeeds.
+    - `cmake --build build-asan --parallel 4` succeeds.
+    - `timeout --foreground 125s bash -lc './build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` no longer aborts in `Choose_Side()` / `VQA_Play(...)`; it now reaches live scenario/gameplay code and then falls into the older invalid-vptr/object-layout failure chain, eventually crashing in `LogicClass::AI()` / `ClassV08`, which is outside the intro-path cleanup fixed here.
+  - remaining follow-up from this sweep:
+    - interactively confirm whether the selected-side briefing corruption is fully gone visually, since the latest automated evidence only proves the path now advances through movie playback and into scenario startup;
+    - keep the older invalid-vptr/raw-object-layout runtime issues separate from this intro-path fix so they do not mask regressions in the movie handoff again.
+
+- Intro-loop follow-up addressed the newly reported side-select redraw starvation and remaining VQA callback ABI drift (2026-04-25):
+  - completed in this checkpoint:
+    - `SCORE.CPP::Call_Back_Delay(...)` now flushes the queued SDL present after its manual `HidPage` -> `SeenBuff` redraw path, which matches the observed symptom where the choose-side screen only refreshed when fresh SDL input events arrived.
+    - `MixFileHandler(...)` now matches the `VQA32` I/O callback ABI everywhere it is declared/defined:
+      - `FUNCTION.H`
+      - `REAL.H`
+      - `CONQUER.CPP`
+      - the callback parameters/return type now use `int32_t` instead of Linux `long`;
+      - the VQA handle payload store now uses `uintptr_t` casts instead of `unsigned long`.
+    - the threaded VQA read/seek helpers in `CONQUER.CPP` now also use `int32_t` byte counts so the active movie I/O path stays on the original 32-bit contract end-to-end.
+  - validation result:
+    - `cmake --build build --parallel 4` succeeds.
+    - `cmake --build build-asan --parallel 4` succeeds.
+    - `timeout --foreground 125s bash -lc './build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` again runs until timeout (`137`) without introducing a new sanitizer failure beyond the longstanding invalid-vptr/raw-object-layout startup reports.
+  - remaining follow-up from this sweep:
+    - interactively confirm that the choose-side screen now animates continuously without requiring mouse motion;
+    - interactively re-test the selected-side briefing movie to confirm it now advances past the intro instead of stalling with looped tail audio.
+
+- Runtime regression pass targeted the reported movie, tactical-view, and network-dialog failures with Red Alert parity fixes (2026-04-25):
+  - completed in this checkpoint:
+    - fixed the VQA callback / palette handoff ABI on 64-bit builds:
+      - `CONQUER.CPP::VQ_Call_Back(...)` now matches the `VQA32` callback signature with `int32_t` frame/return types instead of Linux `long`;
+      - `WINSTUB.CPP::Flag_To_Set_Palette(...)`, the deferred `SetPalette(...)` shim, and the cached `VQNumBytes` / `VQSlowpal` state now use `int32_t` / `uint32_t`, matching the in-tree VQA/palette interfaces and the Red Alert SDL3 port.
+    - fixed network-dialog cancel/teardown stalls by matching the Red Alert SDL path in `NETDLG.CPP`:
+      - all global send-queue drain loops now yield with `SDL_Delay(1)` while servicing the network manager instead of hot-spinning the main thread;
+      - the global ACK wait loops now do the same through local helpers, so cancel/sign-off paths no longer freeze the SDL event loop while waiting for queued packets to drain.
+    - aligned tactical scrolling with the Red Alert display path:
+      - `DisplayClass::Draw_It()` now always blits from `SeenBuff` when `HidPage` is a video surface, instead of falling back to the overlapped self-blit path when the SDL wrapper reports overlapped blits as supported.
+  - validation result:
+    - `cmake --build build --parallel 4` succeeds.
+    - `cmake --build build-asan --parallel 4` succeeds.
+    - `timeout --foreground 125s bash -lc './build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` again runs until timeout (`137`); the remaining UBSan output is still the previously known invalid-vptr/raw-object-layout startup noise rather than a new regression from this checkpoint.
+  - remaining follow-up from this sweep:
+    - interactively re-test the side-selection briefing, tactical scrolling redraw, and multiplayer cancel flows to confirm the reported runtime symptoms are gone end-to-end;
+    - if the side-selection movie still stalls after the ABI cleanup, inspect the post-`VQA_Play(...)` mission-briefing handoff rather than the callback/palette bridge.
+
 - Red Alert parity audit pass applied safe SDL3/64-bit modernization fixes across platform, data, UI, networking, and shared gameplay code (2026-04-25):
   - completed in this checkpoint:
     - fixed stale Red Alert support-wrapper leftovers in TD defaults:

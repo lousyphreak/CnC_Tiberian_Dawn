@@ -41,6 +41,8 @@
 #ifndef DEMO
 
 VQAHandle *Open_Movie(char const *name);
+extern BOOL InMovie;
+extern bool VQPaletteChange;
 VQAHandle *Open_Movie(char const *name)
 {
 	if (!Debug_Quiet && Get_Digi_Handle() != -1) {
@@ -86,13 +88,11 @@ void Choose_Side(void)
 
 
 	void *anim;
-	VQAHandle *gdibrief=0, *nodbrief=0;
 	void const *staticaud, *oldfont;
 	void const *speechg, *speechn, *speech;
 	int statichandle, speechhandle, speechplaying = 0;
 	int oldfontxspacing = FontXSpacing;
 	int setpalette = 0;
-	int	gdi_start_palette;
 
 	MEMORYSTATUS	mem_info;
 	mem_info.dwLength=sizeof(mem_info);
@@ -136,12 +136,6 @@ void Choose_Side(void)
 	InterpolationPaletteChanged = TRUE;
 	InterpolationPalette = Palette;
 	Read_Interpolation_Palette("SIDES.PAL");
-
-	nodbrief = Open_Movie("NOD1PRE.VQA");
-	gdi_start_palette = Load_Interpolated_Palettes("NOD1PRE.VQP");
-	Call_Back();
-	gdibrief = Open_Movie("GDI1.VQA");
-	Load_Interpolated_Palettes("GDI1.VQP" , TRUE);
 
 	WWMouse->Erase_Mouse(&HidPage, TRUE);
 	HiddenPage.Clear();
@@ -241,44 +235,36 @@ void Choose_Side(void)
 	Interpolate_2X_Scale (PseudoSeenBuff , &SeenBuff ,"SIDES.PAL");
 	Keyboard::Clear();
 	SysMemPage.Clear();
+	Stop_Sample(statichandle);
 
 	/*
 	** Skip the briefings if we're in special mode.
 	*/
-	if (Special.IsJurassic && AreThingiesEnabled) {
-		if (nodbrief) {
-			VQA_Close(nodbrief);
-			VQA_Free(nodbrief);
-			nodbrief = NULL;
-		}
-		if (gdibrief) {
-			VQA_Close(gdibrief);
-			VQA_Free(gdibrief);
-			gdibrief = NULL;
-		}
-	}
+	if (!(Special.IsJurassic && AreThingiesEnabled)) {
+		char const *briefing_movie = NULL;
+		char const *briefing_palette = NULL;
 
-	/* play the scenario 1 briefing movie */
-	if (Whom == HOUSE_GOOD) {
-		if (nodbrief) {
-			VQA_Close(nodbrief);
-			VQA_Free(nodbrief);
+		if (Whom == HOUSE_GOOD) {
+			briefing_movie = "GDI1.VQA";
+			briefing_palette = "GDI1.VQP";
+		} else {
+			briefing_movie = "NOD1PRE.VQA";
+			briefing_palette = "NOD1PRE.VQP";
 		}
-		if (gdibrief) {
-			PaletteCounter = gdi_start_palette;
-			VQA_Play(gdibrief, VQAMODE_RUN);
-			VQA_Close(gdibrief);
-			VQA_Free(gdibrief);
-		}
-	} else {
-		if (gdibrief) {
-			VQA_Close(gdibrief);
-			VQA_Free(gdibrief);
-		}
-		if (nodbrief) {
-			VQA_Play(nodbrief, VQAMODE_RUN);
-			VQA_Close(nodbrief);
-			VQA_Free(nodbrief);
+
+		Anim_Init();
+		VQPaletteChange = false;
+		Free_Interpolated_Palettes();
+		Load_Interpolated_Palettes(briefing_palette);
+		SysMemPage.Clear();
+
+		VQAHandle *briefing = Open_Movie(briefing_movie);
+		if (briefing) {
+			InMovie = TRUE;
+			VQA_Play(briefing, VQAMODE_RUN);
+			InMovie = FALSE;
+			VQA_Close(briefing);
+			VQA_Free(briefing);
 		}
 	}
 
@@ -301,9 +287,9 @@ void Choose_Side(void)
 	} else {
 		PreserveVQAScreen = 1;
 	}
-	Free(staticaud);
-	Free(speechg);
-	Free(speechn);
+	delete[] static_cast<char const *>(staticaud);
+	delete[] static_cast<char const *>(speechg);
+	delete[] static_cast<char const *>(speechn);
 
 	Set_Font(oldfont);
 	FontXSpacing = oldfontxspacing;

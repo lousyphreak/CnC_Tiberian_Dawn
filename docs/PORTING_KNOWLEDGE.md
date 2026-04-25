@@ -74,6 +74,18 @@ _Last updated: 2026-04-25_
 - `RandNumb` is a confirmed 32-bit global and must not be declared as `long` on Linux:
   - the support layer defines it as `uint32_t`;
   - any TD-side `extern long RandNumb` declaration causes ASan-detectable overflow on x86-64 because `long` is 64-bit there.
+- `Choose_Side()` is a fragile special-case movie path and should stay close to the normal one-movie-at-a-time playback flow:
+  - on the SDL3/Linux port, pre-opening both side-briefing VQAs and preloading both palette tables before the user commits to one side can stall the selected-side handoff;
+  - loading the selected palette set and opening only the chosen briefing VQA immediately before playback avoids that retained shared-state problem.
+- Any buffer returned by `Load_Alloc_Data(FileClass&)` must be released with `delete[]`, not `Free(...)`:
+  - `JSHELL.CPP` allocates those blobs with `new char[]`;
+  - mismatching that cleanup shows up quickly under ASan in intro/audio paths that still use `Load_Alloc_Data(...)`.
+- `UnitTrackerClass` is part of TD's fixed-width stats/network data surface and must not use host-width `long` on Linux:
+  - `UnitTotals` should stay a `uint32_t[]`, `Get_All_Totals()` should expose `uint32_t*`, and cleanup must use `delete[]`;
+  - the stats packet code already assumes 4-byte entries (`Get_Unit_Count() * 4`), so a 64-bit `long` silently breaks the intended layout even when the program appears to run.
+- TD's live VQA palette updates do not primarily flow through `CODE/WINSTUB.CPP::SetPalette(...)`:
+  - `WIN32LIB/VQA32/DRAWER.CPP` / `LOADER.CPP` call the TD-only `WIN32LIB/PALETTE/PALETTE.CPP::SetPalette(...)` helper directly during playback;
+  - that helper must preserve the loaded `.VQP` interpolation tables (`InterpolatedPalettes` / `PaletteCounter`) or certain movies can show a few wrong interpolation colors even though the base palette looks mostly correct.
 - TD's scenario/map/icon binary formats are not always the same as the later Red Alert SDL port:
   - scenario `.BIN` template records are byte-sized on disk and must be read through explicit fixed-width fields before converting to `TemplateType`;
   - TD icon sets still use the older 32-byte `IControl_Type` layout; dropping in Red Alert's later 40-byte iconset header corrupts map/icon offsets and crashes template validation.
