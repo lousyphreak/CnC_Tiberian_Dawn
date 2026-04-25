@@ -99,7 +99,7 @@ static int drawer_trace_enabled(void)
 {
 	static int enabled = -1;
 	if (enabled == -1) {
-		enabled = (getenv("RA_TRACE_STARTUP") != NULL) ? 1 : 0;
+		enabled = (getenv("CNC_TRACE_STARTUP") != NULL || getenv("RA_TRACE_STARTUP") != NULL) ? 1 : 0;
 	}
 	return (enabled);
 }

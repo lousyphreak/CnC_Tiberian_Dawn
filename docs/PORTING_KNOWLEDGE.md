@@ -143,7 +143,16 @@ _Last updated: 2026-04-25_
   - placement cursor lists are sentinel-terminated with `REFRESH_EOL`; copying a fixed 50-short block can over-read shorter foundations;
   - `XYP_COORD(...)` and target masks must avoid signed left shifts because negative pixel offsets are valid in TD weapon/animation code;
   - save/load and object serialization still have larger ABI hazards beyond this pass: cached vtable slots, raw whole-object writes, selected-object pointer coding, and remaining host-width fields must be reviewed before savegames can be considered portable.
+- The latest Red Alert parity follow-up established a few more TD-specific baseline rules:
+  - savegame-owned pointer-code lists such as `CurrentObject` and `LayerClass` contents must be serialized as fixed-width `TARGET`-compatible 32-bit values, not raw `ObjectClass*` widths; if that wire/storage shape changes, bump `SAVEGAME_VERSION`;
+  - queue-style network buffers (`COMQUEUE`, `COMBUF`) must reject oversized payload lengths before copying into fixed packet buffers, even on receive paths that used to only log after the fact;
+  - packet/field wire helpers should read and write 16/32-bit values with `memcpy`-based fixed-width locals rather than unaligned casts into raw byte buffers;
+  - `EventClass` comparisons cannot depend on whatever bytes happen to be left in outer-struct padding; zero-initialize the payload/header state first, then compare only defined fields/data;
+  - `CellClass::Adjacent_Cell(...)` should validate the adjacent cell number before dereferencing a neighboring pointer, because the intended fallback on invalid facings/edges is still "return `*this`";
+  - save/load UI sorting should continue to use real file timestamps through `RawFileClass::Get_Date_Time()` rather than placeholder zeros.
 - TD support-wrapper defaults should not retain Red Alert branding/storage names where they affect user-visible title text, icon paths, or persistent browser/cache/config names; function names may remain `RA_*` temporarily where they are inherited wrapper API names.
+  - that rule also applies to browser/Emscripten manifest names, settings filenames, and runtime diagnostics, not just the main desktop window title.
+  - startup debug env vars should prefer TD-neutral names (for example `CNC_TRACE_STARTUP`) but may keep the older Red Alert name as a temporary compatibility alias while the wrapper/import cleanup is still in progress.
 - For warning work, only a full clean rebuild is authoritative:
   - incremental rebuilds can make the warning count look artificially low because they only recompile touched translation units;
   - use `cmake --build <build-dir> --clean-first` when claiming the repository-wide warning baseline.

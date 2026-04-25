@@ -169,6 +169,7 @@ inline const char* WWFS_ModeFromOpenFlags(int flags, bool create_fallback)
 
 inline SDL_IOStream* WWFS_OpenWithFlags(const char* path, int flags)
 {
+    int last_errno = ENOENT;
     for (int attempt = 0; attempt < 2; ++attempt) {
         const char* mode = WWFS_ModeFromOpenFlags(flags, attempt != 0);
         if (!mode) {
@@ -180,6 +181,9 @@ inline SDL_IOStream* WWFS_OpenWithFlags(const char* path, int flags)
         if (stream) {
             return stream;
         }
+        if (errno != 0) {
+            last_errno = errno;
+        }
 
         const bool can_retry_create = ((flags & WWFS_OPEN_ACCESS_MASK) == WWFS_OPEN_READ_WRITE)
             && (flags & WWFS_OPEN_CREATE) && !(flags & WWFS_OPEN_TRUNCATE);
@@ -188,7 +192,7 @@ inline SDL_IOStream* WWFS_OpenWithFlags(const char* path, int flags)
         }
     }
 
-    errno = ENOENT;
+    errno = last_errno;
     return nullptr;
 }
 

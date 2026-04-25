@@ -650,7 +650,8 @@ void LoadOptionsClass::Fill_List(ListClass *list)
 		fdata->Scenario = scenario;
 		fdata->House = house;
 		fdata->Num = id;
-		fdata->DateTime = 0;
+		RawFileClass save_file(save_files[si]);
+		fdata->DateTime = save_file.Get_Date_Time();
 		Files.Add(fdata);
 	}
 

@@ -66,13 +66,15 @@ bool lookup_config_uint32_value(const char*, const char* value_name, uint32_t* v
         return true;
     }
 
-    if (std::strcmp(value_name, "CStrikeInstalled") == 0) {
+    if (std::strcmp(value_name, "CovertInstalled") == 0
+        || std::strcmp(value_name, "CovertOpsInstalled") == 0
+        || std::strcmp(value_name, "CStrikeInstalled") == 0) {
         *value = config_reports_expansion_installed("EXPAND.MIX") ? 1u : 0u;
         return true;
     }
 
     if (std::strcmp(value_name, "AftermathInstalled") == 0) {
-        *value = config_reports_expansion_installed("EXPAND2.MIX") ? 1u : 0u;
+        *value = 0;
         return true;
     }
 

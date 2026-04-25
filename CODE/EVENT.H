@@ -39,6 +39,7 @@
 #define EVENT_H
 
 #include <stdint.h>
+#include <string.h>
 
 /*
 **	This event class is used to contain all external game events (things that the player can
@@ -201,7 +202,7 @@ class EventClass
 		} Data;
 
 		//-------------- Functions ---------------------
-		EventClass(void) {Type = EMPTY;};
+		EventClass(void);
 		EventClass(SpecialClass data);
 		EventClass(EventType type, TARGET target);
 		EventClass(EventType type);
@@ -217,9 +218,7 @@ class EventClass
 		// Process the event.
 		void Execute(void);
 
-		int operator == (EventClass & q) {
-			return memcmp(this, &q, sizeof(q)) == 0;
-		};
+		int operator == (EventClass const & q) const;
 
 		static unsigned char EventLength[LAST_EVENT];
 		static char const * EventNames[LAST_EVENT];

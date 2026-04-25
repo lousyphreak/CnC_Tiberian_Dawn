@@ -235,6 +235,11 @@ int CommQueueClass::Queue_Send(void *buf, int buflen)
 	if (SendCount==MaxSend || SendQueue[SendEmpty].IsActive!=0)
 		return(0);
 
+	if (buflen < 0 || buflen > MaxPacketSize) {
+		CCDebugString("C&C95 - Error. Outgoing packet too large");
+		return(0);
+	}
+
 	/*
 	---------------------------- Set entry flags -----------------------------
 	*/
@@ -401,6 +406,11 @@ int CommQueueClass::Queue_Receive(void *buf, int buflen)
 		return(0);
 	}
 
+	if (buflen < 0 || buflen > MaxPacketSize) {
+		CCDebugString("C&C95 - Error. Incoming packet too large");
+		return(0);
+	}
+
 	/*
 	---------------------------- Set entry flags -----------------------------
 	*/
@@ -412,9 +422,6 @@ int CommQueueClass::Queue_Receive(void *buf, int buflen)
 	/*
 	------------------------- Copy the packet data ---------------------------
 	*/
-	if (buflen > MaxPacketSize){
-		CCDebugString ("C&C95 - Error. Incoming packet too large");
-	}
 	memcpy(ReceiveQueue[ReceiveEmpty].Buffer,buf,buflen);
 
 	/*

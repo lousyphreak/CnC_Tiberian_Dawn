@@ -1680,12 +1680,15 @@ bool LayerClass::Load(FileClass & file)
 {
 	int count;
 	int i;
-	ObjectClass * ptr;
+	uint32_t target;
 
 	/*
 	---------------------- Read # elements in the layer ----------------------
 	*/
 	if (file.Read(&count,sizeof(count)) != sizeof(count)) {
+		return(false);
+	}
+	if (count < 0) {
 		return(false);
 	}
 
@@ -1698,10 +1701,10 @@ bool LayerClass::Load(FileClass & file)
 	----------------------- Read in all array elements -----------------------
 	*/
 	for (i = 0; i < count; i++) {
-		if (file.Read(&ptr, sizeof(ObjectClass *)) != sizeof(ObjectClass *)) {
+		if (file.Read(&target, sizeof(target)) != sizeof(target)) {
 			return(false);
 		}
-		Add(ptr);
+		Add(Encode_Target_As_Pointer<ObjectClass>(static_cast<TARGET>(target)));
 	}
 	
 	return(true);
@@ -1724,7 +1727,7 @@ bool LayerClass::Save(FileClass & file)
 {
 	int count;
 	int i;
-	ObjectClass * ptr;
+	uint32_t target;
 
 	/*
 	------------------------- Save # array elements --------------------------
@@ -1737,8 +1740,8 @@ bool LayerClass::Save(FileClass & file)
 	--------------------------- Save all elements ----------------------------
 	*/
 	for (i = 0; i < count; i++) {
-		ptr = (*this)[i];
-		if (file.Write(&ptr, sizeof(ObjectClass *)) != sizeof(ObjectClass *))
+		target = static_cast<uint32_t>(Decode_Target_From_Pointer((*this)[i]));
+		if (file.Write(&target, sizeof(target)) != sizeof(target))
 			return(false);
 	}
 

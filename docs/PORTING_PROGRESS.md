@@ -8,6 +8,41 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
 
 ## Current status
 
+- Red Alert parity follow-up closed another batch of stale TD-vs-reference runtime gaps across save/load, queueing, wrapper branding, and UI/runtime helpers (2026-04-25):
+  - completed in this checkpoint:
+    - fixed remaining 64-bit save/load pointer-width hazards in the lightweight selection/layer paths:
+      - `CODE/SAVELOAD.CPP` now writes the `CurrentObject` list as 32-bit encoded targets instead of host-width pointer values
+      - `CODE/IOOBJ.CPP::LayerClass::Save/Load()` now does the same for serialized layer contents
+      - bumped `SAVEGAME_VERSION` so the new fixed-width misc/layer encoding does not silently misread older pointer-sized saves
+    - hardened gameplay/runtime helpers found during the parity audit:
+      - `CODE/CELL.CPP::Adjacent_Cell(...)` now validates the destination cell index before dereferencing it
+      - `CODE/SCENARIO.CPP::Read_Scenario(...)` now balances `ScenarioInit` on the failed INI-load path
+      - `CODE/EVENT.H` / `CODE/EVENT.CPP` now fully zero-initialize event state before populating payload fields, and equality no longer depends on uninitialized outer-struct bytes
+    - aligned queue/save-dialog behavior with the safer modern baseline:
+      - `CODE/COMQUEUE.CPP` and `CODE/COMBUF.CPP` now reject oversized packets before copying into fixed queue buffers, and `COMBUF` now aborts cleanly if no free slot is actually found
+      - `CODE/LOADDLG.CPP` now restores real save-file timestamps through `RawFileClass::Get_Date_Time()` so the load/save list sort is meaningful again
+      - `CODE/PACKET.CPP` and `CODE/FIELD.CPP` now read/write wire values through `memcpy`-based fixed-width helpers instead of potentially unaligned casts into byte buffers
+    - removed more Red Alert-branded wrapper leftovers from the active TD runtime path:
+      - `SDL3_COMPAT/wrappers/sdl_draw.cpp` now creates fallback windows with `Command & Conquer` instead of `Red Alert`
+      - Emscripten/browser persistence names in `SDL3_COMPAT/wrappers/sdl_fs.cpp` now use TD-specific manifest/settings filenames
+      - the same wrapper now reports `Command & Conquer` in its browser/range-cache diagnostics instead of `Red Alert`
+      - `SDL3_COMPAT/wrappers/sdl_config.cpp` now treats Covert Ops as the TD expansion flag and leaves the Red Alert-only `AftermathInstalled` probe as a no-op
+      - startup trace helpers in the SDL audio/VQA backend now honor a TD-neutral `CNC_TRACE_STARTUP` env var while still accepting the old `RA_TRACE_STARTUP` alias
+    - improved SDL filesystem error fidelity:
+      - `SDL3_COMPAT/wrappers/sdl_fs.h::WWFS_OpenWithFlags(...)` now preserves the real failing `errno` instead of always collapsing failures to `ENOENT`
+  - why this mattered:
+    - the parity audit still had a few places where TD was serializing runtime pointer codes with host pointer width even though the rest of the port has already moved to explicit 32-bit target encodings for save-compatible state
+    - queue overflow checks, event zero-init, and safe adjacent-cell validation are all reference-style runtime hardening fixes that remove undefined behavior and stale DOS/Win32 assumptions without changing intended TD gameplay
+    - wrapper branding/config/cache names are user-visible or persistent runtime state, so leaving Red Alert identifiers there makes the TD port look unfinished and can create confusing browser/config storage carryover
+  - validation result:
+    - `cmake --build build --parallel 4` succeeds
+    - `cmake --build build-asan --parallel 4` succeeds
+    - `timeout --foreground 125s bash -lc './build-asan/tiberian-dawn -gamedata "$PWD/GameData" >/tmp/td-parity-asan.log 2>&1'` now exits from the usual host-side LeakSanitizer shutdown noise (`1`) rather than a TD-owned report; the captured stack still points only at the external graphics / DBus stack (`libnvidia-glcore`, `libdbus-1`)
+  - remaining follow-up from this sweep:
+    - the larger raw-object save/load ABI modernization is still open in `Read_Object(...)` / `Write_Object(...)` and the class-specific save/load overrides that still serialize whole objects
+    - `CODE/INTERNET.CPP` still carries dead WChat/DDE launcher code, and the fuller WOL control-frame / lobby parity work in `NETDLG` / `WSMGR` is still unfinished
+    - `CODE/CDFILE.CPP` / `CODE/CCFILE.CPP` still have additional portability cleanup opportunities from the parity audit
+
 - Repo-owned `long` / `unsigned long` usage has been removed from active code paths for the SDL3/Linux port (2026-04-25):
   - completed in this checkpoint:
     - swept the TD game code and support-facing declarations to replace host-width `long` / `unsigned long` state with explicit `int32_t` / `uint32_t`, including:

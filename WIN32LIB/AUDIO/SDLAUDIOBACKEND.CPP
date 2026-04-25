@@ -16,7 +16,10 @@ bool audio_trace_enabled(void)
 {
 	static int32_t enabled = -1;
 	if (enabled == -1) {
-		char const *env = std::getenv("RA_TRACE_STARTUP");
+		char const *env = std::getenv("CNC_TRACE_STARTUP");
+		if (env == NULL || env[0] == '\0') {
+			env = std::getenv("RA_TRACE_STARTUP");
+		}
 		enabled = (env != NULL && env[0] != '\0') ? 1 : 0;
 	}
 	return (enabled != 0);

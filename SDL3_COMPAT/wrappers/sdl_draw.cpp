@@ -25,7 +25,7 @@ RAWindow* ensure_window(RAWindow* window, int width, int height)
         return window;
     }
 
-    return RA_CreateWindow("Red Alert", width, height, SDL_WINDOW_RESIZABLE);
+    return RA_CreateWindow("Command & Conquer", width, height, SDL_WINDOW_RESIZABLE);
 }
 
 void ensure_renderer(RAWindow* window, int width, int height)

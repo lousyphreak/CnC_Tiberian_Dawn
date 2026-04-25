@@ -1722,10 +1722,12 @@ CellClass const & CellClass::Adjacent_Cell(FacingType face) const
 		return(*this);
 	}
 
-	CellClass const * ptr = this + AdjacentCell[face];
-	if (ptr->Cell_Number() & 0xF000) return(*this);
-	return(*ptr);
-//	return(*(this + AdjacentCell[face]));
+	CELL cell = static_cast<CELL>(Cell_Number() + AdjacentCell[face]);
+	if (cell & 0xF000) {
+		return(*this);
+	}
+
+	return(Map[cell]);
 }
 
 

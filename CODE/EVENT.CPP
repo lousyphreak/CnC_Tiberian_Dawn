@@ -113,6 +113,34 @@ char const * EventClass::EventNames[EventClass::LAST_EVENT] = {
 
 
 /***********************************************************************************************
+ * EventClass::EventClass -- Default constructor for event objects.                            *
+ *=============================================================================================*/
+EventClass::EventClass(void)
+	: Type(EMPTY)
+	, Frame(0)
+	, ID(0)
+	, IsExecuted(0)
+	, MPlayerID(0)
+	, Data{}
+{
+}
+
+
+/***********************************************************************************************
+ * EventClass::operator == -- Equality operator.                                               *
+ *=============================================================================================*/
+int EventClass::operator == (EventClass const & q) const
+{
+	return(Type == q.Type
+		&& Frame == q.Frame
+		&& ID == q.ID
+		&& IsExecuted == q.IsExecuted
+		&& MPlayerID == q.MPlayerID
+		&& memcmp(&Data, &q.Data, sizeof(Data)) == 0);
+}
+
+
+/***********************************************************************************************
  * EventClass::EventClass -- Constructs event to transfer special flags.                       *
  *                                                                                             *
  *    This constructs an event that will transfer the special flags.                           *
@@ -127,6 +155,7 @@ char const * EventClass::EventNames[EventClass::LAST_EVENT] = {
  *   06/25/1995 JLB : Created.                                                                 *
  *=============================================================================================*/
 EventClass::EventClass(SpecialClass data)
+	: EventClass()
 {
 	ID = Houses.ID(PlayerPtr);
 	Type = SPECIAL;
@@ -153,6 +182,7 @@ EventClass::EventClass(SpecialClass data)
  *   06/25/1995 JLB : Created.                                                                 *
  *=============================================================================================*/
 EventClass::EventClass(EventType type, TARGET target)
+	: EventClass()
 {
 	ID = Houses.ID(PlayerPtr);
 	Type = type;
@@ -177,6 +207,7 @@ EventClass::EventClass(EventType type, TARGET target)
  *   12/27/1994 JLB : Created.                                                                 *
  *=============================================================================================*/
 EventClass::EventClass(EventType type)
+	: EventClass()
 {
 	ID = Houses.ID(PlayerPtr);
 	Type = type;
@@ -198,6 +229,7 @@ EventClass::EventClass(EventType type)
  *   12/27/1994 JLB : Created.                                                                 *
  *=============================================================================================*/
 EventClass::EventClass(EventType type, int val)
+	: EventClass()
 {
 	ID = Houses.ID(PlayerPtr);
 	Type = type;
@@ -226,6 +258,7 @@ EventClass::EventClass(EventType type, int val)
  *   12/27/1994 JLB : Created.                                                                 *
  *=============================================================================================*/
 EventClass::EventClass(EventType type, TARGET src, TARGET dest)
+	: EventClass()
 {
 	ID = Houses.ID(PlayerPtr);
 	Type = type;
@@ -252,6 +285,7 @@ EventClass::EventClass(EventType type, TARGET src, TARGET dest)
  *   05/19/1995 JLB : Created.                                                                 *
  *=============================================================================================*/
 EventClass::EventClass(AnimType anim, HousesType owner, COORDINATE coord)
+	: EventClass()
 {
 	ID = Houses.ID(PlayerPtr);
 	Type = ANIMATION;
@@ -284,6 +318,7 @@ EventClass::EventClass(AnimType anim, HousesType owner, COORDINATE coord)
  *   05/18/1995 JLB : Created.                                                                 *
  *=============================================================================================*/
 EventClass::EventClass(TARGET src, MissionType mission, TARGET target, TARGET destination)
+	: EventClass()
 {
 	ID = Houses.ID(PlayerPtr);
 	Type = MEGAMISSION;
@@ -315,6 +350,7 @@ EventClass::EventClass(TARGET src, MissionType mission, TARGET target, TARGET de
  *   05/18/1995 JLB : Created.                                                                 *
  *=============================================================================================*/
 EventClass::EventClass(EventType type, RTTIType object, int id)
+	: EventClass()
 {
 	ID = Houses.ID(PlayerPtr);
 	Type = type;
@@ -345,6 +381,7 @@ EventClass::EventClass(EventType type, RTTIType object, int id)
  *   05/18/1995 JLB : Created.                                                                 *
  *=============================================================================================*/
 EventClass::EventClass(EventType type, RTTIType object, CELL cell)
+	: EventClass()
 {
 	ID = Houses.ID(PlayerPtr);
 	Type = type;
@@ -373,6 +410,7 @@ EventClass::EventClass(EventType type, RTTIType object, CELL cell)
  *   05/18/1995 JLB : Created.                                                                 *
  *=============================================================================================*/
 EventClass::EventClass(EventType type, int id, CELL cell)
+	: EventClass()
 {
 	ID = Houses.ID(PlayerPtr);
 	Type = type;

@@ -527,7 +527,7 @@ bool Save_Misc_Values(FileClass &file)
 {
 	int i;
 	int count;								// # ptrs in 'CurrentObject'
-	ObjectClass * ptr;					// for saving 'CurrentObject' ptrs
+	uint32_t target;					// for saving 'CurrentObject' ptrs
 
 	/*
 	**	Player's House.
@@ -575,8 +575,8 @@ bool Save_Misc_Values(FileClass &file)
 	**	Save the pointers.
 	*/
 	for (i = 0; i < count; i++) {
-		ptr = CurrentObject[i];
-		if (file.Write(&ptr, sizeof(ptr)) != sizeof(ptr)) {
+		target = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(CurrentObject[i]));
+		if (file.Write(&target, sizeof(target)) != sizeof(target)) {
 			return(false);
 		}
 	}
@@ -621,7 +621,7 @@ bool Load_Misc_Values(FileClass &file)
 {
 	int i;
 	int count;								// # ptrs in 'CurrentObject'
-	ObjectClass * ptr;					// for loading 'CurrentObject' ptrs
+	uint32_t target;					// for loading 'CurrentObject' ptrs
 
 	/*
 	**	Player's House.
@@ -664,15 +664,18 @@ bool Load_Misc_Values(FileClass &file)
 	if (file.Read(&count, sizeof(count)) != sizeof(count)) {
 		return(false);
 	}
+	if (count < 0) {
+		return(false);
+	}
 
 	/*
 	**	Load the pointers.
 	*/
 	for (i = 0; i < count; i++) {
-		if (file.Read(&ptr, sizeof(ptr)) != sizeof(ptr)) {
+		if (file.Read(&target, sizeof(target)) != sizeof(target)) {
 			return(false);
 		}
-		CurrentObject.Add(ptr);	// add to the list
+		CurrentObject.Add(reinterpret_cast<ObjectClass*>(static_cast<uintptr_t>(target)));
 	}
 
 	/*

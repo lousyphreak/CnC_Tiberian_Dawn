@@ -237,7 +237,7 @@ int32_t VQA_Open(VQAHandle *vqa, char const *filename, VQAConfig *config)
 					return (VQAERR_READ);
 				}
 
-				if (getenv("RA_TRACE_STARTUP") != NULL) {
+				if (getenv("CNC_TRACE_STARTUP") != NULL || getenv("RA_TRACE_STARTUP") != NULL) {
 					fprintf(stderr,
 							"[vqa] header version=%u flags=0x%04x image=%ux%u block=%ux%u fps=%u frames=%u group=%u cb=%u one=%u audio=%u/%u/%u alt=%u/%u/%u\n",
 							(unsigned)header->Version,
@@ -1528,7 +1528,7 @@ static VQAData *AllocBuffers(VQAHeader *header, VQAConfig *config)
 				audio->Buffer = config->AudioBuf;
 			}
 
-			if (getenv("RA_TRACE_STARTUP") != NULL) {
+			if (getenv("CNC_TRACE_STARTUP") != NULL || getenv("RA_TRACE_STARTUP") != NULL) {
 				fprintf(stderr,
 						"[vqa] audio alloc buffer=%p size=%d configbuf=%p\n",
 						audio->Buffer,
@@ -1571,7 +1571,7 @@ static VQAData *AllocBuffers(VQAHeader *header, VQAConfig *config)
 			/* Add temporary buffer size to memory usage. */
 			vqa->MemUsed += audio->TempBufSize;
 
-			if (getenv("RA_TRACE_STARTUP") != NULL) {
+			if (getenv("CNC_TRACE_STARTUP") != NULL || getenv("RA_TRACE_STARTUP") != NULL) {
 				fprintf(stderr,
 						"[vqa] audio tempbuf=%p size=%u isloaded=%p blocks=%u bytespersec=%u\n",
 						audio->TempBuf,

@@ -35,6 +35,24 @@
 #include <string.h>
 #include "FIELD.H"
 
+namespace {
+
+template <typename T>
+T Read_Unaligned(void const *data)
+{
+	T value;
+	memcpy(&value, data, sizeof(value));
+	return(value);
+}
+
+template <typename T>
+void Write_Unaligned(void *data, T value)
+{
+	memcpy(data, &value, sizeof(value));
+}
+
+}	// namespace
+
 FieldClass::FieldClass(char const *id, char data)
 {
 	strncpy(ID, id, sizeof(ID));
@@ -141,12 +159,12 @@ void FieldClass::Host_To_Net(void)
 
 		case TYPE_SHORT:
 		case TYPE_UNSIGNED_SHORT:
-			*((unsigned short *)Data) = htons(*((unsigned short *)Data));
+			Write_Unaligned<unsigned short>(Data, htons(Read_Unaligned<unsigned short>(Data)));
 			break;
 
 		case TYPE_LONG:
 		case TYPE_UNSIGNED_LONG:
-			*((uint32_t *)Data) = htonl(*((uint32_t *)Data));
+			Write_Unaligned<uint32_t>(Data, htonl(Read_Unaligned<uint32_t>(Data)));
 			break;
 
 		//
@@ -195,12 +213,12 @@ void FieldClass::Net_To_Host(void)
 
 		case TYPE_SHORT:
 		case TYPE_UNSIGNED_SHORT:
-			*((unsigned short *)Data) = ntohs(*((unsigned short *)Data));
+			Write_Unaligned<unsigned short>(Data, ntohs(Read_Unaligned<unsigned short>(Data)));
 			break;
 
 		case TYPE_LONG:
 		case TYPE_UNSIGNED_LONG:
-			*((uint32_t *)Data) = ntohl(*((uint32_t *)Data));
+			Write_Unaligned<uint32_t>(Data, ntohl(Read_Unaligned<uint32_t>(Data)));
 			break;
 
 		//

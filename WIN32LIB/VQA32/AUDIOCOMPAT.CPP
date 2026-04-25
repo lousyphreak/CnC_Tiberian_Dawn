@@ -305,7 +305,7 @@ int32_t VQA_OpenAudio(VQAHandleP *vqap)
 	Set_State(&audio->Flags, VQAAUDF_DIGIINIT, VQAAUDB_DIGIINIT, HMI_VQAINIT);
 	Set_State(&AudioFlags, VQAAUDF_DIGIINIT, VQAAUDB_DIGIINIT, HMI_VQAINIT);
 
-	if (getenv("RA_TRACE_STARTUP") != NULL) {
+	if (getenv("CNC_TRACE_STARTUP") != NULL || getenv("RA_TRACE_STARTUP") != NULL) {
 		fprintf(stderr,
 				"[vqa] audio open audio=%p buffer=%p tempbuf=%p isloaded=%p blocks=%u rate=%u ch=%u bits=%u\n",
 				audio,

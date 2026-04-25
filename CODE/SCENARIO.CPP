@@ -193,6 +193,7 @@ bool Read_Scenario(char *root)
 		Show_Mouse();
 		CCMessageBox().Process(TXT_UNABLE_READ_SCENARIO);
 		Hide_Mouse();
+		ScenarioInit--;
 		return(false);
 	}
 	ScenarioInit--;

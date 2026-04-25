@@ -264,6 +264,11 @@ int CommBufferClass::Queue_Send(void *buf, int buflen)
 	if (SendCount==MaxSend)
 		return(0);
 
+	if (buflen < 0 || buflen > MaxPacketSize) {
+		CCDebugString("C&C95 - Error - Outgoing packet too large!\n");
+		return(0);
+	}
+
 	/*
 	-------------------------- Find an empty slot ----------------------------
 	*/
@@ -273,6 +278,10 @@ int CommBufferClass::Queue_Send(void *buf, int buflen)
 			index = i;
 			break;
 		}
+	}
+	if (index == -1) {
+		CCDebugString("C&C95 - Error - Send queue full!\n");
+		return(0);
 	}
 
 	/*
@@ -431,6 +440,11 @@ CCDebugString ("C&C95 - Error - Receive queue full!\n");
 		return(0);
 	}
 
+	if (buflen < 0 || buflen > MaxPacketSize) {
+		CCDebugString("C&C95 - Error - Incoming packet too large!\n");
+		return(0);
+	}
+
 	/*
 	-------------------------- Find an empty slot ----------------------------
 	*/
@@ -444,6 +458,7 @@ CCDebugString ("C&C95 - Error - Receive queue full!\n");
 
 if (index == -1){
 CCDebugString ("C&C95 - Error - Receive queue full too!\n");
+		return(0);
 }
 
 

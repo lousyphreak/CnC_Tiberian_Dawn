@@ -265,10 +265,10 @@ std::string WWFS_ResolveMainMixAlias(const std::string& normalized_path)
 }
 
 #if defined(__EMSCRIPTEN__) && RA_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
-constexpr char kWWFSEmscriptenAssetManifestPath[] = "/ra-assets-manifest.txt";
+constexpr char kWWFSEmscriptenAssetManifestPath[] = "/tiberian-dawn-assets-manifest.txt";
 constexpr char kWWFSEmscriptenDefaultAssetBaseUrl[] = "../GameData/";
 constexpr Sint64 kWWFSEmscriptenRangeChunkSize = 512 * 1024;
-constexpr char kWWFSEmscriptenSettingsFileName[] = "redalert.ini";
+constexpr char kWWFSEmscriptenSettingsFileName[] = "tiberian-dawn.ini";
 
 struct WWFS_EmscriptenRangeFileCache {
     std::string remote_relative_path;
@@ -564,7 +564,7 @@ EM_ASYNC_JS(int, wwfs_emscripten_init_cache_js, (const char* base_dir_c), {
         await Module.raWWFSCacheInitPromise;
         return 1;
     } catch (err) {
-        console.error('Red Alert Emscripten cache initialization failed:', err);
+        console.error('Command & Conquer Emscripten cache initialization failed:', err);
         Module.raWWFSCacheInitPromise = null;
         return 0;
     }
@@ -611,7 +611,7 @@ EM_ASYNC_JS(int, wwfs_emscripten_fetch_asset_js, (const char* local_path_c, cons
 
         const response = await fetch(assetUrl, { credentials: 'same-origin' });
         if (!response.ok) {
-            console.error(`Red Alert asset fetch failed for ${assetUrl}: ${response.status} ${response.statusText}`);
+            console.error(`Command & Conquer asset fetch failed for ${assetUrl}: ${response.status} ${response.statusText}`);
             return 0;
         }
 
@@ -624,7 +624,7 @@ EM_ASYNC_JS(int, wwfs_emscripten_fetch_asset_js, (const char* local_path_c, cons
 
         return 1;
     } catch (err) {
-        console.error(`Red Alert asset fetch failed for ${assetUrl}:`, err);
+        console.error(`Command & Conquer asset fetch failed for ${assetUrl}:`, err);
         return 0;
     }
 });
@@ -632,7 +632,7 @@ EM_ASYNC_JS(int, wwfs_emscripten_fetch_asset_js, (const char* local_path_c, cons
 EM_ASYNC_JS(int, wwfs_emscripten_sync_cache_js, (), {
     try {
         if (!Module.raWWFSCacheInitPromise) {
-            console.error('Red Alert Emscripten cache sync requested before initialization');
+            console.error('Command & Conquer Emscripten cache sync requested before initialization');
             return 0;
         }
 
@@ -642,7 +642,7 @@ EM_ASYNC_JS(int, wwfs_emscripten_sync_cache_js, (), {
         });
         return 1;
     } catch (err) {
-        console.error('Red Alert Emscripten cache sync failed:', err);
+        console.error('Command & Conquer Emscripten cache sync failed:', err);
         return 0;
     }
 });
@@ -738,16 +738,16 @@ EM_JS(void, wwfs_emscripten_init_range_cache_helpers_js, (), {
     };
 
     const dropUnreadableRecord = (storeName, key, err) => {
-        console.warn(`Red Alert range cache dropped unreadable ${storeName} entry for ${key}:`, err);
+        console.warn(`Command & Conquer range cache dropped unreadable ${storeName} entry for ${key}:`, err);
         void deleteRecords(storeName, [key]).catch((deleteErr) => {
-            console.warn(`Red Alert range cache failed to delete unreadable ${storeName} entry for ${key}:`, deleteErr);
+            console.warn(`Command & Conquer range cache failed to delete unreadable ${storeName} entry for ${key}:`, deleteErr);
         });
     };
 
     const dropUnreadableChunk = (assetKey, chunkIndex, partCount, err) => {
-        console.warn(`Red Alert range cache dropped unreadable chunk ${chunkIndex} for ${assetKey}:`, err);
+        console.warn(`Command & Conquer range cache dropped unreadable chunk ${chunkIndex} for ${assetKey}:`, err);
         void deleteChunkRecords(assetKey, chunkIndex, partCount).catch((deleteErr) => {
-            console.warn(`Red Alert range cache failed to delete unreadable chunk ${chunkIndex} for ${assetKey}:`, deleteErr);
+            console.warn(`Command & Conquer range cache failed to delete unreadable chunk ${chunkIndex} for ${assetKey}:`, deleteErr);
         });
     };
 
@@ -785,7 +785,7 @@ EM_JS(void, wwfs_emscripten_init_range_cache_helpers_js, (), {
         if (!meta || meta.chunkIndex !== chunkIndex || !Number.isInteger(meta.byteLength) || meta.byteLength <= 0 || partCount <= 0) {
             if (meta) {
                 void deleteChunkRecords(assetKey, chunkIndex, partCount).catch((err) => {
-                    console.warn(`Red Alert range cache failed to delete invalid chunk ${chunkIndex} for ${assetKey}:`, err);
+                    console.warn(`Command & Conquer range cache failed to delete invalid chunk ${chunkIndex} for ${assetKey}:`, err);
                 });
             }
             return null;
@@ -817,7 +817,7 @@ EM_JS(void, wwfs_emscripten_init_range_cache_helpers_js, (), {
                 }
                 settled = true;
                 void deleteChunkRecords(assetKey, chunkIndex, partCount).catch((err) => {
-                    console.warn(`Red Alert range cache failed to delete unreadable chunk ${chunkIndex} for ${assetKey}:`, err);
+                    console.warn(`Command & Conquer range cache failed to delete unreadable chunk ${chunkIndex} for ${assetKey}:`, err);
                 });
                 resolve(null);
             };
@@ -1003,7 +1003,7 @@ EM_ASYNC_JS(int, wwfs_emscripten_query_range_asset_size_js, (const char* remote_
     const assetUrl = new URL(remoteRelative, absoluteBaseUrl);
     const rangeCache = Module.raWWFSRangeCacheHelpers;
     if (!rangeCache) {
-        console.error(`Red Alert range size probe failed for ${assetUrl}: range cache helpers are not initialized`);
+        console.error(`Command & Conquer range size probe failed for ${assetUrl}: range cache helpers are not initialized`);
         return -1;
     }
 
@@ -1021,7 +1021,7 @@ EM_ASYNC_JS(int, wwfs_emscripten_query_range_asset_size_js, (const char* remote_
         });
 
         if (!response.ok) {
-            console.error(`Red Alert range size probe failed for ${assetUrl}: ${response.status} ${response.statusText}`);
+            console.error(`Command & Conquer range size probe failed for ${assetUrl}: ${response.status} ${response.statusText}`);
             return -1;
         }
 
@@ -1042,7 +1042,7 @@ EM_ASYNC_JS(int, wwfs_emscripten_query_range_asset_size_js, (const char* remote_
         }
         return totalSize;
     } catch (err) {
-        console.error(`Red Alert range size probe failed for ${assetUrl}:`, err);
+        console.error(`Command & Conquer range size probe failed for ${assetUrl}:`, err);
         return -1;
     }
 });
@@ -1055,7 +1055,7 @@ EM_ASYNC_JS(int, wwfs_emscripten_load_or_fetch_asset_range_span_js, (const char*
     const assetUrl = new URL(remoteRelative, absoluteBaseUrl);
     const rangeCache = Module.raWWFSRangeCacheHelpers;
     if (!rangeCache) {
-        console.error(`Red Alert range fetch failed for ${assetUrl}: range cache helpers are not initialized`);
+        console.error(`Command & Conquer range fetch failed for ${assetUrl}: range cache helpers are not initialized`);
         return -1;
     }
     const cacheKey = rangeCache.assetKey(assetUrl);
@@ -1092,7 +1092,7 @@ EM_ASYNC_JS(int, wwfs_emscripten_load_or_fetch_asset_range_span_js, (const char*
         });
 
         if (!response.ok) {
-            throw new Error(`Red Alert range fetch failed for ${assetUrl}: ${response.status} ${response.statusText}`);
+            throw new Error(`Command & Conquer range fetch failed for ${assetUrl}: ${response.status} ${response.statusText}`);
         }
 
         if (response.status !== 206) {
@@ -1148,7 +1148,7 @@ EM_ASYNC_JS(int, wwfs_emscripten_load_or_fetch_asset_range_span_js, (const char*
         if (err && err.raRangeUnsupported) {
             return -2;
         }
-        console.error(`Red Alert range fetch failed for ${assetUrl}:`, err);
+        console.error(`Command & Conquer range fetch failed for ${assetUrl}:`, err);
         return -1;
     }
 });
@@ -1165,7 +1165,7 @@ EM_JS(void, wwfs_emscripten_prefetch_asset_range_span_js, (const char* remote_re
     const assetUrl = new URL(remoteRelative, absoluteBaseUrl);
     const rangeCache = Module.raWWFSRangeCacheHelpers;
     if (!rangeCache) {
-        console.error(`Red Alert chunk prefetch failed for ${assetUrl}: range cache helpers are not initialized`);
+        console.error(`Command & Conquer chunk prefetch failed for ${assetUrl}: range cache helpers are not initialized`);
         return;
     }
 
@@ -1186,7 +1186,7 @@ EM_JS(void, wwfs_emscripten_prefetch_asset_range_span_js, (const char* remote_re
             });
 
             if (!response.ok) {
-                throw new Error(`Red Alert chunk prefetch failed for ${assetUrl}: ${response.status} ${response.statusText}`);
+                throw new Error(`Command & Conquer chunk prefetch failed for ${assetUrl}: ${response.status} ${response.statusText}`);
             }
 
             if (response.status !== 206) {
@@ -1212,10 +1212,10 @@ EM_JS(void, wwfs_emscripten_prefetch_asset_range_span_js, (const char* remote_re
         });
     })().catch((err) => {
         if (err && err.raRangeUnsupported) {
-            console.error(`Red Alert chunk prefetch skipped for ${assetUrl}: HTTP range requests are not available`);
+            console.error(`Command & Conquer chunk prefetch skipped for ${assetUrl}: HTTP range requests are not available`);
             return;
         }
-        console.error(`Red Alert chunk prefetch failed for ${assetUrl}:`, err);
+        console.error(`Command & Conquer chunk prefetch failed for ${assetUrl}:`, err);
     });
 });
 

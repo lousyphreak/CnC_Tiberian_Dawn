@@ -46,6 +46,24 @@ typedef int bool;
 
 #include "PACKET.H"
 
+namespace {
+
+template <typename T>
+T Read_Unaligned(void const *data)
+{
+	T value;
+	memcpy(&value, data, sizeof(value));
+	return(value);
+}
+
+template <typename T>
+void Write_Unaligned(void *data, T value)
+{
+	memcpy(data, &value, sizeof(value));
+}
+
+}	// namespace
+
 
 /**************************************************************************
  * PACKETCLASS::~PACKETCLASS -- destroys a packet class be freeing list   *
@@ -105,10 +123,10 @@ PacketClass::PacketClass(char *curbuf)
 	//
 	// Pull the size and packet ID out of the linear packet stream.
 	//
-	Size = *(unsigned short *)curbuf;
+	Size = Read_Unaligned<unsigned short>(curbuf);
 	curbuf += sizeof (unsigned short);
 	Size = ntohs(Size);
-	ID	  = *(short *)curbuf;
+	ID	  = Read_Unaligned<short>(curbuf);
 	curbuf += sizeof (short);
 	ID   = ntohs(ID);
 	Head = NULL;
@@ -214,9 +232,9 @@ char *PacketClass::Create_Comms_Packet(int &size)
 	//
 	// write the size into the packet header
 	//
-	*(unsigned short *)curbuf = (unsigned short)htons((unsigned short)size);
+	Write_Unaligned<unsigned short>(curbuf, static_cast<unsigned short>(htons(static_cast<unsigned short>(size))));
 	curbuf += sizeof (unsigned short);
-	*(short *)curbuf = htons(ID);
+	Write_Unaligned<short>(curbuf, htons(ID));
 	curbuf += sizeof (short);
 
 	//
@@ -300,7 +318,7 @@ bool PacketClass::Get_Field(char const *id, char &data)
 {
 	FieldClass *field = Find_Field(id);
 	if (field) {
-		data = *((char *)field->Data);
+		data = Read_Unaligned<char>(field->Data);
 	}
 	return((field) ? true : false);
 }
@@ -324,7 +342,7 @@ bool PacketClass::Get_Field(char const *id, unsigned char &data)
 {
 	FieldClass *field = Find_Field(id);
 	if (field) {
-		data = *((unsigned char *)field->Data);
+		data = Read_Unaligned<unsigned char>(field->Data);
 	}
 	return((field) ? true : false);
 }
@@ -348,7 +366,7 @@ bool PacketClass::Get_Field(char const *id, short &data)
 {
 	FieldClass *field = Find_Field(id);
 	if (field) {
-		data = *((short *)field->Data);
+		data = Read_Unaligned<short>(field->Data);
 	}
 	return((field) ? true : false);
 }
@@ -372,7 +390,7 @@ bool PacketClass::Get_Field(char const *id, unsigned short &data)
 {
 	FieldClass *field = Find_Field(id);
 	if (field) {
-		data = *((unsigned short *)field->Data);
+		data = Read_Unaligned<unsigned short>(field->Data);
 	}
 	return((field) ? true : false);
 }
@@ -396,7 +414,7 @@ bool PacketClass::Get_Field(char const *id, int32_t &data)
 {
 	FieldClass *field = Find_Field(id);
 	if (field) {
-		data = *((int32_t *)field->Data);
+		data = Read_Unaligned<int32_t>(field->Data);
 	}
 	return((field) ? true : false);
 }
@@ -443,7 +461,7 @@ bool PacketClass::Get_Field(char const *id, uint32_t &data)
 {
 	FieldClass *field = Find_Field(id);
 	if (field) {
-		data = *((uint32_t *)field->Data);
+		data = Read_Unaligned<uint32_t>(field->Data);
 	}
 	return((field) ? true : false);
 }
