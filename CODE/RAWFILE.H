@@ -84,6 +84,7 @@ class RawFileClass : public FileClass
 		virtual uint32_t Get_Date_Time(void);
 		virtual bool Set_Date_Time(uint32_t datetime);
 		virtual void Error(int error, int canretry = false, char const* filename = NULL);
+		virtual void Set_Buffer_Size(int32_t size);
 
 		void Bias(int32_t start, int32_t length = -1);
 		SDL_IOStream* Get_File_Handle(void) { return Handle; }

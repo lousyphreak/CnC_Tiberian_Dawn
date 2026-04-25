@@ -566,11 +566,14 @@ template<class T>
 int DynamicVectorClass<T>::Delete(T const & object)
 {
 	int index = ID(object);
-	if (index != -1){
-		return(Delete(index));
-	}else{
-		return (false);
+	if (index >= 0 && static_cast<unsigned>(index) < ActiveCount) {
+		ActiveCount--;
+		for (int i = index; i < ActiveCount; i++) {
+			(*this)[i] = (*this)[i+1];
+		}
+		return(true);
 	}
+	return(false);
 }
 
 
@@ -895,4 +898,24 @@ void BooleanVectorClass::Fixup(int index) const
 }
 
 template class VectorClass<CellClass>;
+template class VectorClass<BaseNodeClass>;
+template class VectorClass<char>;
+template class VectorClass<char *>;
+template class VectorClass<char const *>;
+template class VectorClass<int>;
+template class VectorClass<void *>;
+template class VectorClass<ObjectClass *>;
+template class VectorClass<PhoneEntryClass *>;
+template class VectorClass<NodeNameTag *>;
+template class VectorClass<FileEntryClass *>;
+template class DynamicVectorClass<BaseNodeClass>;
+template class DynamicVectorClass<char>;
+template class DynamicVectorClass<char *>;
+template class DynamicVectorClass<char const *>;
+template class DynamicVectorClass<int>;
+template class DynamicVectorClass<void *>;
+template class DynamicVectorClass<ObjectClass *>;
+template class DynamicVectorClass<PhoneEntryClass *>;
+template class DynamicVectorClass<NodeNameTag *>;
+template class DynamicVectorClass<FileEntryClass *>;
 template class DynamicVectorClass<TriggerClass *>;

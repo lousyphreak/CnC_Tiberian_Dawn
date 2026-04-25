@@ -299,3 +299,36 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
     1. decide which excluded legacy backends should be stubbed for first-playable Linux bring-up versus ported properly now (`IPX`, null-modem, CRC helpers);
     2. continue the explicit template-instantiation or header-definition cleanup for vector/heap/save-load templates now that link-time gaps are visible;
     3. replace the last assembly-era utility holdouts (`strtrim`, `Fat_Put_Pixel`, related helpers) with SDL/C++ implementations.
+- Helper/instantiation follow-up kept the project at the final-link frontier while shrinking the remaining gap set (2026-04-25):
+  - completed in this checkpoint:
+    - added new C++ support translation units to replace several missing asm-era or reference-only sources:
+      - `CODE/FACE.CPP`
+      - `CODE/KEYFBUFF.CPP`
+      - `CODE/READLINE.CPP`
+      - `CODE/PORTSUPP.CPP`
+      - `CODE/NULLSTUB.CPP`
+    - restored more concrete template output so TD’s monolithic build keeps emitting code under modern C++:
+      - expanded `CODE/VECTOR.CPP` explicit instantiations for `BaseNodeClass`, `ObjectClass*`, `NodeNameTag*`, `FileEntryClass*`, `PhoneEntryClass*`, `char`, `char*`, `char const*`, `int`, and `void*`;
+      - expanded `CODE/HEAP.CPP` explicit `TFixedIHeapClass<...>` instantiations for the active object/save heap types TD actually uses at link.
+    - added or aligned several compatibility definitions that were previously only available through missing asm/object files:
+      - `Calculate_CRC(...)` in `CODE/INIT.CPP`
+      - `Set_Buffer_Size(...)` in `CODE/RAWFILE.H` / `CODE/RAWFILE.CPP`
+      - `TrackControlType` and `EditStyle` bitwise operators in `CODE/DRIVE.H` / `CODE/EDIT.H`
+      - `ShapeBuffer` call sites in `CODE/CONQUER.CPP` moved to `_ShapeBuffer`
+    - tried re-enabling the real TD IPX sources (`CODE/IPX.CPP`, `CODE/IPXMGR.CPP`) in the build so network code can link against the preserved implementation instead of only stubs.
+  - current build result:
+    - the target now recompiles essentially the entire game plus the new helper sources and still reaches the final executable link step;
+    - build failures are now concentrated in a smaller set of ABI/legacy-support glue points instead of broad compile-frontier issues.
+  - current blocker groups exposed by the latest rebuild:
+    1. keyboard/input ABI is still split between TD’s `CODE/KEY.*` expectations and the imported support layer:
+       - `Keyboard` global wiring and `WWKeyboardClass` method signatures still need to be normalized cleanly;
+       - SDL input callback hooks are now clearly identified (`Keyboard_Handle_*`, focus/close handlers, bootstrap focus state).
+    2. a last set of old asm support routines still needs C++ replacements or wiring:
+       - `Distance_Coord`, `Set_Bit`, `First_False_Bit`, `ModeX_Blit`
+       - palette/interpolation/MMX helpers
+       - `LCW_Uncompress`, `Get_EAX`, and a few remaining legacy codec helpers
+    3. obsolete UI/network entry points still need either SDL replacements or temporary documented stubs:
+       - `Select_Serial_Dialog()`
+       - `Com_Scenario_Dialog()`
+       - `Com_Show_Scenario_Dialog()`
+       - some IPX95 wrapper exports that are still not provided by the current support import.

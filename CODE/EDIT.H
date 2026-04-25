@@ -103,4 +103,19 @@ inline EditClass::EditStyle operator |(EditClass::EditStyle, EditClass::EditStyl
 inline EditClass::EditStyle operator &(EditClass::EditStyle, EditClass::EditStyle);
 inline EditClass::EditStyle operator ~(EditClass::EditStyle);
 
+inline EditClass::EditStyle operator |(EditClass::EditStyle lhs, EditClass::EditStyle rhs)
+{
+	return static_cast<EditClass::EditStyle>(static_cast<int>(lhs) | static_cast<int>(rhs));
+}
+
+inline EditClass::EditStyle operator &(EditClass::EditStyle lhs, EditClass::EditStyle rhs)
+{
+	return static_cast<EditClass::EditStyle>(static_cast<int>(lhs) & static_cast<int>(rhs));
+}
+
+inline EditClass::EditStyle operator ~(EditClass::EditStyle value)
+{
+	return static_cast<EditClass::EditStyle>(~static_cast<int>(value));
+}
+
 #endif

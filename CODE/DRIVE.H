@@ -211,5 +211,20 @@ inline DriveClass::TrackControlType operator |(DriveClass::TrackControlType, Dri
 inline DriveClass::TrackControlType operator &(DriveClass::TrackControlType, DriveClass::TrackControlType);
 inline DriveClass::TrackControlType operator ~(DriveClass::TrackControlType);
 
+inline DriveClass::TrackControlType operator |(DriveClass::TrackControlType lhs, DriveClass::TrackControlType rhs)
+{
+	return static_cast<DriveClass::TrackControlType>(static_cast<int>(lhs) | static_cast<int>(rhs));
+}
+
+inline DriveClass::TrackControlType operator &(DriveClass::TrackControlType lhs, DriveClass::TrackControlType rhs)
+{
+	return static_cast<DriveClass::TrackControlType>(static_cast<int>(lhs) & static_cast<int>(rhs));
+}
+
+inline DriveClass::TrackControlType operator ~(DriveClass::TrackControlType value)
+{
+	return static_cast<DriveClass::TrackControlType>(~static_cast<int>(value));
+}
+
 
 #endif

@@ -381,7 +381,7 @@ extern int RequiredCD;
 extern int MouseInstalled;
 extern int AreThingiesEnabled;
 
-extern WWKeyboardClass	Kbd;
+extern KeyboardClass	Kbd;
 extern int In_Debugger;
 extern WWMouseClass	*WWMouse;
 extern HANDLE hInstance;

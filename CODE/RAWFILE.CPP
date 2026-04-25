@@ -480,6 +480,10 @@ bool RawFileClass::Set_Date_Time(uint32_t)
 	return false;
 }
 
+void RawFileClass::Set_Buffer_Size(int32_t)
+{
+}
+
 void RawFileClass::Bias(int32_t start, int32_t length)
 {
 	if (start == 0) {

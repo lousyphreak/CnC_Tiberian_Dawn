@@ -58,6 +58,31 @@ static HANDLE			hCCLibrary;
 static void Play_Intro(bool for_real = false);
 static void* Load_Alloc_Data_From_Name(char const* filename);
 
+int32_t Calculate_CRC(void* buffer, int32_t len)
+{
+	static uint32_t table[256];
+	static bool table_ready = false;
+
+	if (!table_ready) {
+		for (uint32_t index = 0; index < 256; ++index) {
+			uint32_t value = index;
+			for (int bit = 0; bit < 8; ++bit) {
+				value = (value & 1U) ? ((value >> 1) ^ 0xEDB88320U) : (value >> 1);
+			}
+			table[index] = value;
+		}
+		table_ready = true;
+	}
+
+	uint32_t crc = 0xFFFFFFFFU;
+	const uint8_t* data = static_cast<const uint8_t*>(buffer);
+	for (int32_t index = 0; index < len; ++index) {
+		crc = (crc >> 8) ^ table[(crc ^ data[index]) & 0xFFU];
+	}
+
+	return static_cast<int32_t>(crc ^ 0xFFFFFFFFU);
+}
+
 extern "C" {
 extern long RandNumb;
 }

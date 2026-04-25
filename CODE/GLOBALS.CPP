@@ -1019,7 +1019,8 @@ char *				Argv[20];		//Pointers to command line arguments
 int					Argc;				//Command line argument count
 
 
-WWKeyboardClass	Kbd;
+KeyboardClass	Kbd;
+KeyboardClass *Keyboard = &Kbd;
 int					ScreenWidth=640;
 int					ScreenHeight=400;
 WWMouseClass		*WWMouse = NULL;

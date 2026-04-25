@@ -549,3 +549,19 @@ void TFixedIHeapClass<T>::Decode_Pointers(void)
 		Ptr(i)->Decode_Pointers();
 	}
 }
+
+template class TFixedIHeapClass<AircraftClass>;
+template class TFixedIHeapClass<AnimClass>;
+template class TFixedIHeapClass<BuildingClass>;
+template class TFixedIHeapClass<BulletClass>;
+template class TFixedIHeapClass<FactoryClass>;
+template class TFixedIHeapClass<HouseClass>;
+template class TFixedIHeapClass<InfantryClass>;
+template class TFixedIHeapClass<OverlayClass>;
+template class TFixedIHeapClass<SmudgeClass>;
+template class TFixedIHeapClass<TeamClass>;
+template class TFixedIHeapClass<TeamTypeClass>;
+template class TFixedIHeapClass<TemplateClass>;
+template class TFixedIHeapClass<TerrainClass>;
+template class TFixedIHeapClass<TriggerClass>;
+template class TFixedIHeapClass<UnitClass>;
