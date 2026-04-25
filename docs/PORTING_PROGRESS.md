@@ -332,3 +332,38 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
        - `Com_Scenario_Dialog()`
        - `Com_Show_Scenario_Dialog()`
        - some IPX95 wrapper exports that are still not provided by the current support import.
+- Keyboard ABI restoration and link-frontier trimming continued cleanly (2026-04-25):
+  - completed in this checkpoint:
+    - restored TD-owned keyboard compatibility exports in `CODE/KEY.CPP` and `CODE/GLOBALS.CPP`:
+      - `_Kbd`
+      - `Check_Key`, `Check_Key_Num`, `Get_Key_Num`, `Get_Key`
+      - `Clear_KeyBuffer`, `Key_Down`, `KN_To_VK`
+      - `Get_Global_Mouse_X`, `Get_Global_Mouse_Y`
+    - fixed lingering C/C++ linkage mismatches that were still blocking the link even after the new helper files existed:
+      - `strtrim` now uses explicit C linkage in `CODE/READLINE.CPP`, `CODE/FUNCTION.H`, and `CODE/REAL.H`
+      - `Set_Palette_Register` now uses C linkage in `WIN32LIB/PALETTE/PALETTE.CPP`
+    - added more portable support glue in place of old asm/Win95-era assumptions:
+      - `BootstrapFocusSeen` and `CC95AlreadyRunning` globals in `CODE/GLOBALS.CPP`
+      - `Main_Window_Handle_Focus_Change(...)` and `Main_Window_Handle_Close_Request()` in `CODE/WINSTUB.CPP`
+      - `Detect_MMX_Availability`, `Init_MMX`, `Get_EAX`, and `ModeX_Blit` in `CODE/PORTSUPP.CPP`
+      - temporary documented serial-dialog cancellation shims in `CODE/NULLSTUB.CPP`
+  - current build result:
+    - the keyboard/input unresolved-symbol cluster is gone; the build still reaches final executable link with a significantly smaller non-keyboard blocker set.
+  - current blocker groups exposed by the latest rebuild:
+    1. palette interpolation asm holdouts:
+       - `Asm_Create_Palette_Interpolation_Table`
+       - `Asm_Interpolate`
+       - `Asm_Interpolate_Line_Double`
+       - `Asm_Interpolate_Line_Interpolate`
+    2. IPX compatibility layer exports still missing behind TD’s preserved IPX sources:
+       - `IPX_Initialise`
+       - `IPX_*95`
+       - `IPX_Get_Outstanding_Buffer95`
+    3. compression / VQA / audio support glue still absent from the imported support layer:
+       - `LCW_Uncompress`
+       - `GetINIString`
+       - `sosCODECInitStream`, `sosCODECDecompressData`, `General_sosCODECDecompressData`
+       - `TestVBIBit`, `SetDAC`, `SetPalette`, `WaitVB`, `WaitNoVB`
+       - `Fill_Rect`, `Draw_Char`, `Text_Print`
+  - next focus:
+    - port or selectively re-enable the remaining interpolation/compression helpers from the Red Alert support tree first, because that should collapse both TD-side and `WIN32LIB` VQA/audio unresolved groups at once.

@@ -59,6 +59,7 @@
 
 #include	"MONOC.H"
 
+#include <ctype.h>
 #include <stdint.h>
 //void Message_Loop(void);
 
@@ -590,4 +591,134 @@ int WWKeyboardClass::Available_Buffer_Room(void) const
 		avail = (Tail + ARRAY_SIZE(Buffer)) - Head;
 	}
 	return(avail);
+}
+
+int32_t Check_Key(void)
+{
+	if (!_Kbd) {
+		return KN_NONE;
+	}
+
+	return _Kbd->Check() & ~WWKEY_SHIFT_BIT;
+}
+
+void Clear_KeyBuffer(void)
+{
+	if (_Kbd) {
+		_Kbd->Clear();
+	}
+}
+
+int32_t Check_Key_Num(void)
+{
+	if (!_Kbd) {
+		return KN_NONE;
+	}
+
+	int32_t key = _Kbd->Check();
+	int32_t flags = key & 0xFF00;
+	key &= 0x00FF;
+
+	if (isupper(key)) {
+		key = tolower(key);
+		if (!(flags & WWKEY_VK_BIT)) {
+			flags |= WWKEY_SHIFT_BIT;
+		}
+	}
+
+	return key | flags;
+}
+
+int32_t Get_Key_Num(void)
+{
+	if (!_Kbd) {
+		return KN_NONE;
+	}
+
+	int32_t key = _Kbd->Get();
+	int32_t flags = key & 0xFF00;
+	key &= 0x00FF;
+
+	if (isupper(key)) {
+		key = tolower(key);
+		if (!(flags & WWKEY_VK_BIT)) {
+			flags |= WWKEY_SHIFT_BIT;
+		}
+	}
+
+	return key | flags;
+}
+
+int32_t KN_To_KA(int32_t key)
+{
+	if (key & WWKEY_RLS_BIT) {
+		return KA_NONE;
+	}
+
+	if (!(key & WWKEY_VK_BIT)) {
+		int32_t flags = key & 0xFF00;
+		key &= 0x00FF;
+		if (flags & WWKEY_SHIFT_BIT) {
+			key = toupper(key);
+		}
+	} else {
+		if ((key & 0xFF) >= 0x60 && (key & 0xFF) <= 0x69) {
+			key = (key & 0xFF) - 0x60 + KA_0;
+		}
+	}
+
+	return key;
+}
+
+int32_t KN_To_VK(int32_t key)
+{
+	if (!_Kbd) {
+		return KN_NONE;
+	}
+	if (key & WWKEY_RLS_BIT) {
+		return KN_NONE;
+	}
+
+	int32_t flags = key & 0xFF00;
+	if (!(flags & WWKEY_VK_BIT)) {
+		int32_t mapped = SDL_GameInput_AsciiToLegacyKey(static_cast<uint8_t>(key & 0x00FF));
+		if (mapped != KN_NONE) {
+			key = (mapped & 0x00FF) | ((mapped & 0xFF00) | flags);
+		}
+	}
+
+	key &= ~WWKEY_VK_BIT;
+	return key;
+}
+
+int32_t Key_Down(int32_t key)
+{
+	if (!_Kbd) {
+		return 0;
+	}
+
+	return _Kbd->Down(static_cast<KeyNumType>(key));
+}
+
+int32_t Get_Key(void)
+{
+	if (!_Kbd) {
+		return KN_NONE;
+	}
+
+	int32_t retval = _Kbd->Get() & ~WWKEY_SHIFT_BIT;
+	if (retval & WWKEY_RLS_BIT) {
+		retval = KN_NONE;
+	}
+	return retval;
+}
+
+int Get_Global_Mouse_X(void)
+{
+	return SDL_GameInput_GetGlobalMouseX();
+}
+
+int Get_Global_Mouse_Y(void)
+{
+	return SDL_GameInput_GetGlobalMouseY();
 }

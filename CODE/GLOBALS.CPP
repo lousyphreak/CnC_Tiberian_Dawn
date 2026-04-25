@@ -1020,7 +1020,10 @@ int					Argc;				//Command line argument count
 
 
 KeyboardClass	Kbd;
+WWKeyboardClass *_Kbd = &Kbd;
 KeyboardClass *Keyboard = &Kbd;
+int32_t BootstrapFocusSeen = FALSE;
+BOOL CC95AlreadyRunning = FALSE;
 int					ScreenWidth=640;
 int					ScreenHeight=400;
 WWMouseClass		*WWMouse = NULL;

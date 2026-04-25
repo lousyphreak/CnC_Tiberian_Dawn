@@ -20,7 +20,7 @@
 #include <stdint.h>
 #include <string.h>
 
-void strtrim(char* buffer)
+extern "C" void strtrim(char* buffer)
 {
 	if (buffer == nullptr) {
 		return;

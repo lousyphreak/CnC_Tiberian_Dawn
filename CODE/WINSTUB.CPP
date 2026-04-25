@@ -43,6 +43,9 @@
 #include "TCPIP.H"
 #include "SDLINPUT.H"
 
+extern int32_t BootstrapFocusSeen;
+void Main_Window_Destroy(void);
+
 void output(short,short)
 {}
 
@@ -219,6 +222,28 @@ void Check_For_Focus_Loss(void)
 
 	focus_last_time = GameInFocus;
 
+}
+
+void Main_Window_Handle_Focus_Change(bool focused)
+{
+	if (focused) {
+		BootstrapFocusSeen = TRUE;
+		GameInFocus = TRUE;
+		AllSurfaces.Set_Surface_Focus(TRUE);
+		AllSurfaces.Restore_Surfaces();
+	} else if (!BootstrapFocusSeen) {
+		GameInFocus = FALSE;
+		Focus_Loss();
+		AllSurfaces.Set_Surface_Focus(FALSE);
+		AllSurfaces.Restore_Surfaces();
+	} else {
+		GameInFocus = TRUE;
+	}
+}
+
+void Main_Window_Handle_Close_Request(void)
+{
+	Main_Window_Destroy();
 }
 
 void Main_Window_Destroy(void)

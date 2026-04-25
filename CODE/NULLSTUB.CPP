@@ -101,3 +101,18 @@ void Shutdown_Modem(void) {}
 void Modem_Signoff(void) {}
 int Reconnect_Modem(void) { return 0; }
 void Destroy_Null_Connection(int, int) {}
+
+GameType Select_Serial_Dialog(void)
+{
+	return GAME_NORMAL;
+}
+
+int Com_Scenario_Dialog(void)
+{
+	return 0;
+}
+
+int Com_Show_Scenario_Dialog(void)
+{
+	return 0;
+}

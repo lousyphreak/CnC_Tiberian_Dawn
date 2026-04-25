@@ -145,3 +145,28 @@ void Hex_Dump_Data(char* buffer, int length)
 		putchar('\n');
 	}
 }
+
+extern "C" bool __cdecl Detect_MMX_Availability(void)
+{
+#if defined(__MMX__) || defined(_M_IX86_FP) || defined(__x86_64__) || defined(_M_X64)
+	return true;
+#else
+	return false;
+#endif
+}
+
+extern "C" void __cdecl Init_MMX(void)
+{
+}
+
+long __cdecl Get_EAX(void)
+{
+	return 0;
+}
+
+extern "C" void ModeX_Blit(GraphicBufferClass* source)
+{
+	if (source != nullptr) {
+		source->Blit(SeenBuff);
+	}
+}

@@ -700,7 +700,7 @@ extern "C" {
 void __cdecl Remove_From_List(void **list, int *index, void * ptr);
 void * __cdecl Conquer_Build_Fading_Table(void const *palette, void *dest, int color, int frac);
 void __cdecl Fat_Put_Pixel(int x, int y, int color, int size, GraphicViewPortClass &);
-void __cdecl strtrim(char *buffer);
+extern "C" void __cdecl strtrim(char *buffer);
 long __cdecl Get_EAX( void );
 #ifdef	__cplusplus
 }

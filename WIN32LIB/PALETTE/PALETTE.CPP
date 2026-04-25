@@ -406,7 +406,7 @@ void  Set_Palette_Range(void *palette){
 }
 
 
-void Set_Palette_Register(int32_t number, int32_t red, int32_t green, int32_t blue){
+extern "C" void Set_Palette_Register(int number, int red, int green, int blue){
 	uint8_t *entry;
 
 	if (number < 0 || number >= 256) {
