@@ -19,12 +19,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include "CCFILE.H"
 #include "DRAWBUFF.H"
 #include "FONT.H"
 #include "GBUFFER.H"
-#include "INI.H"
 #include "PALETTE.H"
+
+int WWGetPrivateProfileInt(char const *section, char const *entry, int def, char *profile);
+char *WWGetPrivateProfileString(char const *section, char const *entry, char const *def, char *retbuffer, int retlen, char *profile);
 
 extern uint8_t ColorXlat[256];
 static uint16_t Read_Font_Word(uint8_t const *ptr)
@@ -182,13 +183,9 @@ static void Draw_Char_To_View(GraphicViewPortClass *view, uint8_t character,
 int32_t  GetINIInt(char const *section, char const *entry,
 		int32_t deflt, char const * fname)
 {
-	INIClass ini;
-
 	if (fname != NULL && *fname != '\0') {
-		CCFileClass file(fname);
-		if (ini.Load(file)) {
-			return ((int32_t)ini.Get_Int(section, entry, (int)deflt));
-		}
+		return (int32_t)WWGetPrivateProfileInt(section, entry, (int)deflt,
+			const_cast<char*>(fname));
 	}
 
 	return (deflt);
@@ -198,18 +195,14 @@ int32_t  GetINIInt(char const *section, char const *entry,
 int32_t  GetINIString(char const *section, char const *entry,
 		char const *deflt, char *retbuffer, int32_t retlen, char const * fname)
 {
-	INIClass ini;
-
 	if (retbuffer == NULL || retlen <= 0) {
 		return (0);
 	}
 
 	if (fname != NULL && *fname != '\0') {
-		CCFileClass file(fname);
-		if (ini.Load(file)) {
-			return ((int32_t)ini.Get_String(section, entry, deflt ? deflt : "",
-					retbuffer, (int)retlen));
-		}
+		WWGetPrivateProfileString(section, entry, deflt ? deflt : "", retbuffer,
+			(int)retlen, const_cast<char*>(fname));
+		return (int32_t)strlen(retbuffer);
 	}
 
 	return (Copy_Default_String(retbuffer, retlen, deflt));

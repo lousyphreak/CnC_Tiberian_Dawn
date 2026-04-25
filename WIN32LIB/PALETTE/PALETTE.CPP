@@ -405,6 +405,26 @@ void  Set_Palette_Range(void *palette){
 	Set_Video_Palette(CurrentPalette);
 }
 
+void SetPalette(uint8_t *palette, int32_t numbytes, uint32_t slowpal)
+{
+	uint8_t full_palette[768];
+
+	(void)slowpal;
+
+	if (palette == NULL || numbytes <= 0) {
+		return;
+	}
+
+	if (numbytes >= (int32_t)sizeof(full_palette)) {
+		Set_Palette_Range(palette);
+		return;
+	}
+
+	memcpy(full_palette, CurrentPalette, sizeof(full_palette));
+	memcpy(full_palette, palette, (size_t)numbytes);
+	Set_Palette_Range(full_palette);
+}
+
 
 extern "C" void Set_Palette_Register(int number, int red, int green, int blue){
 	uint8_t *entry;

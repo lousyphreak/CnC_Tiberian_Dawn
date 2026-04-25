@@ -367,3 +367,20 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
        - `Fill_Rect`, `Draw_Char`, `Text_Print`
   - next focus:
     - port or selectively re-enable the remaining interpolation/compression helpers from the Red Alert support tree first, because that should collapse both TD-side and `WIN32LIB` VQA/audio unresolved groups at once.
+- Final-link support sweep completed and the game now builds successfully (2026-04-25):
+  - completed in this checkpoint:
+    - re-enabled `WIN32LIB/VQA32/VQCOMPAT.CPP` in `CMakeLists.txt` and adapted its INI accessors to TD’s `WWGetPrivateProfileInt` / `WWGetPrivateProfileString` helpers instead of the missing Red Alert `INIClass` wrapper
+    - added a `SetPalette(uint8_t*, int32_t, uint32_t)` compatibility wrapper in `WIN32LIB/PALETTE/PALETTE.CPP`
+    - added TD-owned portable support files modeled on the Red Alert port for the last major asm/codec holdouts:
+      - `CODE/WINASM.CPP` for `Asm_Create_Palette_Interpolation_Table`, `Asm_Interpolate`, `Asm_Interpolate_Line_Double`, and `Asm_Interpolate_Line_Interpolate`
+      - `CODE/ADPCM.CPP` for `sosCODECInitStream`, `sosCODECDecompressData`, and `General_sosCODECDecompressData`
+      - `CODE/LCWUNCMP.CPP` for `LCW_Uncompress`
+    - added `CODE/IPX95STUB.CPP` so the missing Win95 IPX exports now exist and fail cleanly on modern platforms rather than blocking the link
+  - current build result:
+    - `cmake --build . -- -j$(nproc)` in `build/` now completes successfully and produces a linked `tiberian-dawn` executable
+  - important behavior notes:
+    - legacy IPX multiplayer is currently a documented compatibility stub on this platform; the build succeeds, but the old Win95 IPX backend is not yet ported to a real modern transport
+    - serial/null-modem flows are still held behind the earlier temporary compatibility stubs
+  - next focus:
+    - move from build-frontier work to runtime bring-up and early startup validation with original game assets
+    - decide whether the IPX95 stub path should remain a deliberate unsupported legacy backend or be replaced with a UDP-backed compatibility layer later
