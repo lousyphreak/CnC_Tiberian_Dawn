@@ -1740,7 +1740,7 @@ BuildingClass::BuildingClass(StructType type, HousesType house) :
 		IsCaptured = true;
 	}
 
-	if (GameToPlay == GAME_INTERNET){
+	if (Is_Online_Game(GameToPlay)){
 		House->BuildingTotals->Increment_Unit_Total( (int) type);
 	}
 
@@ -3243,7 +3243,7 @@ bool BuildingClass::Captured(HouseClass * newowner)
 		/*
 		** Add this building to the list of buildings captured this game. For internet stats purposes
 		*/
-		if (GameToPlay == GAME_INTERNET){
+		if (Is_Online_Game(GameToPlay)){
 			newowner->CapturedBuildings->Increment_Unit_Total (Class->Type);
 		}
 

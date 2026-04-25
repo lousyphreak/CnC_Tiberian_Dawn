@@ -33,17 +33,17 @@
  *                                                                         *
  *-------------------------------------------------------------------------*
  * Functions:    			                                                   *
- *   IPXConnClass::IPXConnClass -- class constructor           				*
- *   IPXConnClass::~IPXConnClass -- class destructor           				*
- *   IPXConnClass::Init -- hardware-specific initialization routine			*
- *   IPXConnClass::Configure -- One-time initialization routine				*
- *   IPXConnClass::Start_Listening -- commands IPX to listen               *
- *   IPXConnClass::Stop_Listening -- commands IPX to stop  listen          *
- *   IPXConnClass::Send -- sends a packet; invoked by SequencedConnection	*
- *   IPXConnClass::Open_Socket -- opens communications socket    				*
- *   IPXConnClass::Close_Socket -- closes the socket 								*
- *   IPXConnClass::Send_To -- sends the packet to the given address			*
- *   IPXConnClass::Broadcast -- broadcasts the given packet						*
+ *   UDPConnClass::UDPConnClass -- class constructor           				*
+ *   UDPConnClass::~UDPConnClass -- class destructor           				*
+ *   UDPConnClass::Init -- hardware-specific initialization routine			*
+ *   UDPConnClass::Configure -- One-time initialization routine				*
+ *   UDPConnClass::Start_Listening -- commands IPX to listen               *
+ *   UDPConnClass::Stop_Listening -- commands IPX to stop  listen          *
+ *   UDPConnClass::Send -- sends a packet; invoked by SequencedConnection	*
+ *   UDPConnClass::Open_Socket -- opens communications socket    				*
+ *   UDPConnClass::Close_Socket -- closes the socket 								*
+ *   UDPConnClass::Send_To -- sends the packet to the given address			*
+ *   UDPConnClass::Broadcast -- broadcasts the given packet						*
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "FUNCTION.H"
@@ -53,23 +53,23 @@
 /*
 ********************************* Globals ***********************************
 */
-unsigned short 	IPXConnClass::Socket;
-int			 		IPXConnClass::ConnectionNum;
-ECBType *			IPXConnClass::ListenECB;
-IPXHeaderType *	IPXConnClass::ListenHeader;
-char *				IPXConnClass::ListenBuf;
-ECBType *			IPXConnClass::SendECB;
-IPXHeaderType *	IPXConnClass::SendHeader;
-char *				IPXConnClass::SendBuf;
-long 					IPXConnClass::Handler;
-int 					IPXConnClass::Configured = 0;
-int 					IPXConnClass::SocketOpen = 0;
-int 					IPXConnClass::Listening = 0;
-int					IPXConnClass::PacketLen;
+unsigned short 	UDPConnClass::Socket;
+int			 		UDPConnClass::ConnectionNum;
+ECBType *			UDPConnClass::ListenECB;
+IPXHeaderType *	UDPConnClass::ListenHeader;
+char *				UDPConnClass::ListenBuf;
+ECBType *			UDPConnClass::SendECB;
+IPXHeaderType *	UDPConnClass::SendHeader;
+char *				UDPConnClass::SendBuf;
+long 					UDPConnClass::Handler;
+int 					UDPConnClass::Configured = 0;
+int 					UDPConnClass::SocketOpen = 0;
+int 					UDPConnClass::Listening = 0;
+int					UDPConnClass::PacketLen;
 
 
 /***************************************************************************
- * IPXConnClass::IPXConnClass -- class constructor             				*
+ * UDPConnClass::UDPConnClass -- class constructor             				*
  *                                                                         *
  * INPUT:                                                                  *
  *		numsend			desired # of entries for the send queue					*
@@ -89,8 +89,8 @@ int					IPXConnClass::PacketLen;
  * HISTORY:                                                                *
  *   12/20/1994 BR : Created.                                              *
  *=========================================================================*/
-IPXConnClass::IPXConnClass (int numsend, int numreceive, int maxlen,
-	unsigned short magicnum, IPXAddressClass *address, int id, char const *name) :
+UDPConnClass::UDPConnClass (int numsend, int numreceive, int maxlen,
+	unsigned short magicnum, UDPAddressClass *address, int id, char const *name) :
 #ifdef SEQ_NET
 	SequencedConnClass (numsend, numreceive, maxlen, magicnum,
 #else
@@ -143,11 +143,11 @@ IPXConnClass::IPXConnClass (int numsend, int numreceive, int maxlen,
 		}
 	}
 
-}	/* end of IPXConnClass */
+}	/* end of UDPConnClass */
 
 
 /***************************************************************************
- * IPXConnClass::Init -- hardware-specific initialization routine				*
+ * UDPConnClass::Init -- hardware-specific initialization routine				*
  *                                                                         *
  * INPUT:                                                                  *
  *		none.																						*
@@ -161,7 +161,7 @@ IPXConnClass::IPXConnClass (int numsend, int numreceive, int maxlen,
  * HISTORY:                                                                *
  *   12/20/1994 BR : Created.                                              *
  *=========================================================================*/
-void IPXConnClass::Init (void)
+void UDPConnClass::Init (void)
 {
 	/*------------------------------------------------------------------------
 	Invoke the parent's Init routine
@@ -175,7 +175,7 @@ void IPXConnClass::Init (void)
 
 
 /***************************************************************************
- * IPXConnClass::Configure -- One-time initialization routine					*
+ * UDPConnClass::Configure -- One-time initialization routine					*
  *                                                                         *
  * This routine sets up static members that are shared by all IPX				*
  * connections (ie those variables used by the Send/Listen/Broadcast			*
@@ -204,7 +204,7 @@ void IPXConnClass::Init (void)
  * HISTORY:                                                                *
  *   12/20/1994 BR : Created.                                              *
  *=========================================================================*/
-void IPXConnClass::Configure (unsigned short socket, int conn_num,
+void UDPConnClass::Configure (unsigned short socket, int conn_num,
 	ECBType *listen_ecb, ECBType *send_ecb, IPXHeaderType *listen_header,
 	IPXHeaderType *send_header, char *listen_buf, char *send_buf,
 	long handler_rm_ptr, int maxpacketlen)
@@ -229,7 +229,7 @@ void IPXConnClass::Configure (unsigned short socket, int conn_num,
 
 
 /***************************************************************************
- * IPXConnClass::Start_Listening -- commands IPX to listen                 *
+ * UDPConnClass::Start_Listening -- commands IPX to listen                 *
  *                                                                         *
  * This routine may be used to start listening in polled mode (if the 		*
  * ECB's Event_Service_Routine is NULL), or in interrupt mode; it's			*
@@ -249,7 +249,7 @@ void IPXConnClass::Configure (unsigned short socket, int conn_num,
  * HISTORY:                                                                *
  *   12/16/1994 BR : Created.                                              *
  *=========================================================================*/
-bool IPXConnClass::Start_Listening(void)
+bool UDPConnClass::Start_Listening(void)
 {
 
 #ifndef NOT_FOR_WIN95
@@ -333,7 +333,7 @@ bool IPXConnClass::Start_Listening(void)
 
 
 /***************************************************************************
- * IPXConnClass::Stop_Listening -- commands IPX to stop  listen            *
+ * UDPConnClass::Stop_Listening -- commands IPX to stop  listen            *
  *                                                                         *
  * INPUT:                                                                  *
  *		none.																						*
@@ -347,7 +347,7 @@ bool IPXConnClass::Start_Listening(void)
  * HISTORY:                                                                *
  *   12/16/1994 BR : Created.                                              *
  *=========================================================================*/
-bool IPXConnClass::Stop_Listening(void)
+bool UDPConnClass::Stop_Listening(void)
 {
 	/*------------------------------------------------------------------------
 	Don't do anything unless we're already Listening.
@@ -386,7 +386,7 @@ bool IPXConnClass::Stop_Listening(void)
 
 
 /***************************************************************************
- * IPXConnClass::Send -- sends a packet; invoked by SequencedConnection		*
+ * UDPConnClass::Send -- sends a packet; invoked by SequencedConnection		*
  *                                                                         *
  * INPUT:                                                                  *
  *		socket		desired socket ID number											*
@@ -400,7 +400,7 @@ bool IPXConnClass::Stop_Listening(void)
  * HISTORY:                                                                *
  *   12/16/1994 BR : Created.                                              *
  *=========================================================================*/
-int IPXConnClass::Send(char *buf, int buflen)
+int UDPConnClass::Send(char *buf, int buflen)
 {
 	/*------------------------------------------------------------------------
 	Invoke our own Send_To routine, filling in our Address as the destination.
@@ -415,7 +415,7 @@ int IPXConnClass::Send(char *buf, int buflen)
 
 
 /***************************************************************************
- * IPXConnClass::Open_Socket -- opens communications socket    				*
+ * UDPConnClass::Open_Socket -- opens communications socket    				*
  *                                                                         *
  * INPUT:                                                                  *
  *		socket		desired socket ID number											*
@@ -429,7 +429,7 @@ int IPXConnClass::Send(char *buf, int buflen)
  * HISTORY:                                                                *
  *   12/16/1994 BR : Created.                                              *
  *=========================================================================*/
-int IPXConnClass::Open_Socket(unsigned short socket)
+int UDPConnClass::Open_Socket(unsigned short socket)
 {
 	int rc;
 
@@ -469,7 +469,7 @@ int IPXConnClass::Open_Socket(unsigned short socket)
 
 
 /***************************************************************************
- * IPXConnClass::Close_Socket -- closes the socket 								*
+ * UDPConnClass::Close_Socket -- closes the socket 								*
  *                                                                         *
  * INPUT:                                                                  *
  *		socket		desired socket ID number											*
@@ -483,7 +483,7 @@ int IPXConnClass::Open_Socket(unsigned short socket)
  * HISTORY:                                                                *
  *   12/16/1994 BR : Created.                                              *
  *=========================================================================*/
-void IPXConnClass::Close_Socket(unsigned short socket)
+void UDPConnClass::Close_Socket(unsigned short socket)
 {
 	if (Winsock.Get_Connected()){
 		SocketOpen = 0;
@@ -503,7 +503,7 @@ void IPXConnClass::Close_Socket(unsigned short socket)
 
 
 /***************************************************************************
- * IPXConnClass::Send_To -- sends the packet to the given address				*
+ * UDPConnClass::Send_To -- sends the packet to the given address				*
  *                                                                         *
  * The "ImmediateAddress" field of the SendECB must be filled in with the	*
  * address of a bridge, or the node address of the destination if there		*
@@ -531,7 +531,7 @@ void IPXConnClass::Close_Socket(unsigned short socket)
  *   12/16/1994 BR : Created.                                              *
  *=========================================================================*/
 #pragma off (unreferenced)
-int IPXConnClass::Send_To(char *buf, int buflen, IPXAddressClass *address,
+int UDPConnClass::Send_To(char *buf, int buflen, UDPAddressClass *address,
 	NetNodeType immed)
 {
 
@@ -626,7 +626,7 @@ CCDebugString (tempbuf);
 #pragma on (unreferenced)
 
 /***************************************************************************
- * IPXConnClass::Broadcast -- broadcasts the given packet						*
+ * UDPConnClass::Broadcast -- broadcasts the given packet						*
  *                                                                         *
  * INPUT:                                                                  *
  *		socket		desired socket ID number											*
@@ -640,7 +640,7 @@ CCDebugString (tempbuf);
  * HISTORY:                                                                *
  *   12/16/1994 BR : Created.                                              *
  *=========================================================================*/
-int IPXConnClass::Broadcast(char *buf, int buflen)
+int UDPConnClass::Broadcast(char *buf, int buflen)
 {
 
 	if (Winsock.Get_Connected()){

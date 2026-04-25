@@ -178,7 +178,7 @@ void Main_Game(int argc, char *argv[])
 
 		SpecialDialog = SDLG_NONE;
 		//Start_Profiler();
-		if (GameToPlay == GAME_INTERNET){
+		if (Is_Online_Game(GameToPlay)){
 			Register_Game_Start_Time();
 			GameStatisticsPacketSent = false;
 			PacketLater = NULL;
@@ -332,17 +332,11 @@ void Main_Game(int argc, char *argv[])
 		if (!PlaybackGame){
 
 			switch (GameToPlay){
-				case GAME_NULL_MODEM:
-				case GAME_MODEM:
-					Modem_Signoff();
-					break;
-
-				case GAME_IPX:
-					Shutdown_Network();
-					break;
-
+				case GAME_UDP:
+				case GAME_WOL:
 				case GAME_INTERNET:
-					//Winsock.Close();
+					Shutdown_Network();
+					Winsock.Close();
 					break;
 			}
 		}
@@ -749,7 +743,6 @@ static void Message_Input(KeyNumType &input)
 	int 					rc;
 	char 					txt[MAX_MESSAGE_LENGTH+12];
 	int 					id;
-	SerialPacketType 	*serial_packet;
 	int 					i;
 	int					message_length;
 	int					sent_so_far;
@@ -770,52 +763,28 @@ static void Message_Input(KeyNumType &input)
 		Messages.Get_Edit_Buf()==NULL) {
 		memset (txt, 0, 40);
 
-		/*
-		**	For a serial game, send a message on F1 or F4; set 'txt' to the
-		**	"Message:" string & add an editable message to the list.
-		*/
-		if (GameToPlay==GAME_NULL_MODEM
-			|| GameToPlay==GAME_MODEM){
-			//|| GameToPlay == GAME_INTERNET) {
-			if (input==KN_F1 || input==(KN_F1 + MPlayerMax - 1)) {
+		if (Is_Network_Game(GameToPlay)) {
+			if (input==(KN_F1 + MPlayerMax - 1) && Messages.Get_Edit_Buf()==NULL) {
 
-				strcpy(txt,Text_String(TXT_MESSAGE));	// "Message:"
+				MessageAddress = UDPAddressClass();		// set to broadcast
+				strcpy(txt,Text_String(TXT_TO_ALL));	// "To All:"
 
-				Messages.Add_Edit (MPlayerTColors[MPlayerColorIdx],
+				Messages.Add_Edit(MPlayerTColors[MPlayerColorIdx],
 					TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_FULLSHADOW, txt, 180*factor);
 
 				Map.Flag_To_Redraw(false);
-			}
-		} else {
+			} else {
+				if (Messages.Get_Edit_Buf()==NULL) {
+					if ((input - KN_F1) < Udp.Num_Connections() && !MPlayerObiWan) {
 
-			/*
-			**	For a network game:
-			**	F1-F3 = "To <name> (house):" (only allowed if we're not in ObiWan mode)
-			**	F4 = "To All:"
-			*/
-			if (GameToPlay == GAME_IPX || GameToPlay == GAME_INTERNET) {
-				if (input==(KN_F1 + MPlayerMax - 1) && Messages.Get_Edit_Buf()==NULL) {
+						id = Udp.Connection_ID(input - KN_F1);
+						MessageAddress = (*(Udp.Connection_Address (id)));
+						sprintf(txt,Text_String(TXT_TO),Udp.Connection_Name(id));
 
-					MessageAddress = IPXAddressClass();		// set to broadcast
-					strcpy(txt,Text_String(TXT_TO_ALL));	// "To All:"
+						Messages.Add_Edit(MPlayerTColors[MPlayerColorIdx],
+							TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_FULLSHADOW, txt, 180*factor);
 
-					Messages.Add_Edit(MPlayerTColors[MPlayerColorIdx],
-						TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_FULLSHADOW, txt, 180*factor);
-
-					Map.Flag_To_Redraw(false);
-				} else {
-					if (Messages.Get_Edit_Buf()==NULL) {
-						if ((input - KN_F1) < Ipx.Num_Connections() && !MPlayerObiWan) {
-
-							id = Ipx.Connection_ID(input - KN_F1);
-							MessageAddress = (*(Ipx.Connection_Address (id)));
-							sprintf(txt,Text_String(TXT_TO),Ipx.Connection_Name(id));
-
-							Messages.Add_Edit(MPlayerTColors[MPlayerColorIdx],
-								TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_FULLSHADOW, txt, 180*factor);
-
-							Map.Flag_To_Redraw(false);
-						}
+						Map.Flag_To_Redraw(false);
 					}
 				}
 			}
@@ -869,75 +838,13 @@ static void Message_Input(KeyNumType &input)
 		long actual_message_size;
 		char *the_string;
 
-		/*
-		**	Serial game: fill in a SerialPacketType & send it.
-		**	(Note: The size of the SerialPacketType.Command must be the same as
-		**	the EventClass.Type!)
-		*/
-		if (GameToPlay==GAME_NULL_MODEM
-			|| GameToPlay==GAME_MODEM){
-			//|| GameToPlay==GAME_INTERNET) {
+		if (Is_Network_Game(GameToPlay)) {
 
 			sent_so_far = 0;
-			magic_number = MESSAGE_HEAD_MAGIC_NUMBER;
+ 			magic_number = MESSAGE_HEAD_MAGIC_NUMBER;
 			crc = (unsigned short) (Calculate_CRC(Messages.Get_Edit_Buf(), message_length) & 0xffff);
 
 			while (sent_so_far < message_length){
-
-				serial_packet = (SerialPacketType *)NullModem.BuildBuf;
-
-				serial_packet->Command = SERIAL_MESSAGE;
-				strcpy (serial_packet->Name, MPlayerName);
-				memcpy (serial_packet->Message, Messages.Get_Edit_Buf()+sent_so_far, COMPAT_MESSAGE_LENGTH-5);
-
-				/*
-				** Steve I's stuff for splitting message on word boundries
-				*/
-				actual_message_size = COMPAT_MESSAGE_LENGTH - 5;
-
-				/* Start at the end of the message and find a space with 10 chars. */
-				the_string = serial_packet->Message;
-				while ( (COMPAT_MESSAGE_LENGTH -5) -actual_message_size < 10 &&
-					the_string[actual_message_size] != ' '){
-					--actual_message_size;
-				}
-				if ( the_string[actual_message_size] == ' ' ){
-
-					/* Now delete the extra characters after the space (they musnt print) */
-					for ( int i=0 ; i< (COMPAT_MESSAGE_LENGTH-5) - actual_message_size; i++ ){
-						the_string[i + actual_message_size] = 0xff;
-					}
-				}else{
-					actual_message_size = COMPAT_MESSAGE_LENGTH - 5;
-				}
-
-
-				*(serial_packet->Message + COMPAT_MESSAGE_LENGTH-5) = 0;
-				/*
-				** Flag this message segment as either a message head or a message tail.
-				*/
-				*((unsigned short*)(serial_packet->Message + COMPAT_MESSAGE_LENGTH-4)) = magic_number;
-				*((unsigned short*)(serial_packet->Message + COMPAT_MESSAGE_LENGTH-2)) = crc;
-				serial_packet->ID = MPlayerLocalID;
-
-				NullModem.Send_Message(NullModem.BuildBuf, sizeof(SerialPacketType), 1);
-
-				magic_number++;
-				sent_so_far += actual_message_size;	//COMPAT_MESSAGE_LENGTH-5;
-			}
-
-		} else {
-
-			/*
-			**	Network game: fill in a GlobalPacketType & send it.
-			*/
-			if (GameToPlay == GAME_IPX || GameToPlay == GAME_INTERNET) {
-
-				sent_so_far = 0;
- 				magic_number = MESSAGE_HEAD_MAGIC_NUMBER;
-				crc = (unsigned short) (Calculate_CRC(Messages.Get_Edit_Buf(), message_length) & 0xffff);
-
-				while (sent_so_far < message_length){
 
 					GPacket.Command = NET_MESSAGE;
 					strcpy (GPacket.Name, MPlayerName);
@@ -979,10 +886,10 @@ static void Message_Input(KeyNumType &input)
 					**	the message to every player we have a connection with.
 					*/
 					if (MessageAddress.Is_Broadcast()) {
-						for (i = 0; i < Ipx.Num_Connections(); i++) {
-							Ipx.Send_Global_Message(&GPacket, sizeof(GlobalPacketType), 1,
-								Ipx.Connection_Address(Ipx.Connection_ID(i)));
-							Ipx.Service();
+						for (i = 0; i < Udp.Num_Connections(); i++) {
+							Udp.Send_Global_Message(&GPacket, sizeof(GlobalPacketType), 1,
+								Udp.Connection_Address(Udp.Connection_ID(i)));
+							Udp.Service();
 						}
 					} else {
 
@@ -990,16 +897,14 @@ static void Message_Input(KeyNumType &input)
 						**	Otherwise, MessageAddress contains the exact address to send to.
 						**	Send to that address only.
 						*/
-						Ipx.Send_Global_Message(&GPacket, sizeof(GlobalPacketType), 1,
+						Udp.Send_Global_Message(&GPacket, sizeof(GlobalPacketType), 1,
 							&MessageAddress);
-						Ipx.Service();
+						Udp.Service();
 					}
 
 				magic_number++;
 				sent_so_far += actual_message_size;	//COMPAT_MESSAGE_LENGTH-5;
 				}
-			}
-
 		}
 
 		/*
@@ -1140,17 +1045,17 @@ void Call_Back(void)
 	/*
 	**	Network maintenance
 	*/
-	if (GameToPlay == GAME_IPX || GameToPlay == GAME_INTERNET) {
+	if (Is_Network_Game(GameToPlay)) {
 
-		Ipx.Service();
+		Udp.Service();
 
 		/*
 		** Read packets only if the game is "closed", so we don't steal global
 		** messages from the connection dialogs.
 		*/
 		if (!NetOpen) {
-			if (Ipx.Get_Global_Message (&GPacket, &GPacketlen, &GAddress, &GProductID)) {
-				if (GProductID == IPXGlobalConnClass::COMMAND_AND_CONQUER) {
+			if (Udp.Get_Global_Message (&GPacket, &GPacketlen, &GAddress, &GProductID)) {
+				if (GProductID == UDPGlobalConnClass::COMMAND_AND_CONQUER) {
 
 					/*
 					**	If this is another player signing off, remove the connection &
@@ -1158,12 +1063,12 @@ void Call_Back(void)
 					**	it over.
 					*/
 					if (GPacket.Command == NET_SIGN_OFF) {
-						for (i = 0; i < Ipx.Num_Connections(); i++) {
+						for (i = 0; i < Udp.Num_Connections(); i++) {
 
-							id = Ipx.Connection_ID(i);
+							id = Udp.Connection_ID(i);
 
-							if (!strcmp (GPacket.Name, Ipx.Connection_Name(id) ) &&
-								GAddress == (*Ipx.Connection_Address(id))) {
+							if (!strcmp (GPacket.Name, Udp.Connection_Name(id) ) &&
+								GAddress == (*Udp.Connection_Address(id))) {
 
 								CCDebugString ("C&C95 = Destroying connection due to sign off\n");
 								Destroy_Connection (id,0);
@@ -1222,14 +1127,6 @@ void Call_Back(void)
 		}
 	}
 
-	/*
-	**	Modem and Null Modem maintenance
-	*/
-	if (GameToPlay == GAME_NULL_MODEM
-	|| ((GameToPlay == GAME_MODEM) && ModemService)){
-	//|| GameToPlay == GAME_INTERNET) {
-		NullModem.Service();
-	}
 #endif
 }
 
@@ -1617,7 +1514,7 @@ bool Main_Loop()
 
 	if (PlayerWins) {
 
-		if (GameToPlay == GAME_INTERNET && !GameStatisticsPacketSent){
+		if (Is_Online_Game(GameToPlay) && !GameStatisticsPacketSent){
 			Register_Game_End_Time();
 			Send_Statistics_Packet();
 		}
@@ -1631,7 +1528,7 @@ bool Main_Loop()
 	}
 	if (PlayerLoses) {
 
-		if (GameToPlay == GAME_INTERNET && !GameStatisticsPacketSent){
+		if (Is_Online_Game(GameToPlay) && !GameStatisticsPacketSent){
 			Register_Game_End_Time();
 			Send_Statistics_Packet();
 		}

@@ -251,7 +251,7 @@ AircraftClass::AircraftClass(AircraftType classid, HousesType house) :
 	** Keep count of the number of units created. Dont track cargo planes as they are created
 	** automatically, not bought.
 	*/
-	if (classid != AIRCRAFT_CARGO && GameToPlay == GAME_INTERNET){
+	if (classid != AIRCRAFT_CARGO && Is_Online_Game(GameToPlay)){
 		House->AircraftTotals->Increment_Unit_Total((int)classid);
 	}
 }

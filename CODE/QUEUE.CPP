@@ -336,10 +336,9 @@ void Queue_AI(void)
 				Queue_AI_Normal();
 				break;
 
-			case GAME_MODEM:
-			case GAME_NULL_MODEM:
-			case GAME_IPX:
+			case GAME_UDP:
 			case GAME_INTERNET:
+			case GAME_WOL:
 				Queue_AI_Multiplayer();
 				break;
 		}
@@ -526,7 +525,7 @@ static void Queue_AI_Multiplayer(void)
 		FRAMESYNC_TIMEOUT = (25*60),	// timeout waiting for frame sync packet
 	};
 
-	int timeout_factor = (GameToPlay == GAME_INTERNET) ? 6 : 1;
+	int timeout_factor = (Is_Online_Game(GameToPlay)) ? 6 : 1;
 
 	//........................................................................
 	// Variables for sending, receiving & parsing packets:
@@ -560,16 +559,12 @@ static void Queue_AI_Multiplayer(void)
 	//------------------------------------------------------------------------
 	//	Initialize the packet buffer pointer & its max size
 	//------------------------------------------------------------------------
-	if (GameToPlay == GAME_MODEM
-		|| GameToPlay == GAME_NULL_MODEM){
-		multi_packet_buf = NullModem.BuildBuf;
-		multi_packet_max = NullModem.MaxLen - sizeof (CommHeaderType);
-		net = &NullModem;
-	}
-	else if (GameToPlay == GAME_IPX || GameToPlay == GAME_INTERNET) {
+	if (!Is_Network_Game(GameToPlay)) {
+		return;
+	} else {
 		multi_packet_buf = MetaPacket;
 		multi_packet_max = MetaSize;
-		net = &Ipx;
+		net = &Udp;
 	}
 
 	//------------------------------------------------------------------------
@@ -925,46 +920,6 @@ static RetcodeType Wait_For_Players(int first_time, ConnManClass *net,
 			event = (EventClass *)multi_packet_buf;
 
 			//------------------------------------------------------------------
-			// Special processing for a modem game: process SERIAL packets
-			//------------------------------------------------------------------
-			if (GameToPlay == GAME_MODEM
-				|| GameToPlay == GAME_NULL_MODEM){
-				//|| GameToPlay == GAME_INTERNET) {
-				rc = Process_Serial_Packet(multi_packet_buf, first_time);
-				//...............................................................
-				// SERIAL packet received & processed
-				//...............................................................
-				if (rc == RC_SERIAL_PROCESSED) {
-					net->Service();
-					retry_timer.Set (resend_delta, true);
-					dialog_timer.Set (dialog_time, true);
-					timeout_timer.Set (timeout, true);
-					continue;
-				}
-				//...............................................................
-				// other player has left the game
-				//...............................................................
-				else if (rc == RC_PLAYER_LEFT) {
-					if (first_time) {
-						num_ready++;
-					}
-					break;
-				}
-				//...............................................................
-				// Connection was lost
-				//...............................................................
-				else if (rc == RC_HUNG_UP) {
-					return (RC_NOT_RESPONDING);
-				}
-				//...............................................................
-				// If it was any other type of serial packet, break
-				//...............................................................
-				else if (rc != RC_NORMAL) {
-					break;
-				}
-			}
-
-			//------------------------------------------------------------------
 			//	Process the incoming packet
 			//------------------------------------------------------------------
 			rc = Process_Receive_Packet(net, multi_packet_buf, id, packetlen,
@@ -1120,16 +1075,7 @@ CCDebugString (flip);
 			// response time.
 			//..................................................................
 			else {
-				if (GameToPlay == GAME_MODEM
-					|| GameToPlay == GAME_NULL_MODEM){
-					//|| GameToPlay == GAME_INTERNET) {
-					ev.Data.FrameInfo.Delay = MAX( (resp_time / 8),
-						 MODEM_MIN_MAX_AHEAD );
-				}
-				else if (GameToPlay == GAME_IPX || GameToPlay == GAME_INTERNET) {
-					ev.Data.FrameInfo.Delay = MAX( (resp_time / 8),
-						 NETWORK_MIN_MAX_AHEAD );
-				}
+				ev.Data.FrameInfo.Delay = MAX((resp_time / 8), NETWORK_MIN_MAX_AHEAD);
 			}
 			OutList.Add(ev);
 		}
@@ -1431,7 +1377,7 @@ static int Send_Packets(ConnManClass *net, char *multi_packet_buf,
 	**
 	** Or for serial games for that matter ST - 5/31/96 4:00PM
 	*/
-	if (GameToPlay == GAME_INTERNET || GameToPlay == GAME_MODEM || GameToPlay == GAME_NULL_MODEM){
+	if (Is_Online_Game(GameToPlay)) {
 		cap = OutList.Count;
 		do_once = 0;
 	}
@@ -1977,23 +1923,9 @@ static int Handle_Timeout(ConnManClass *net, long *their_frame,
 	int id;
 
 	//------------------------------------------------------------------------
-	// For modem, attempt to reconnect; if that fails, save the game & bail.
-	//------------------------------------------------------------------------
-	if (GameToPlay == GAME_MODEM || GameToPlay == GAME_NULL_MODEM) {
-		if ( net->Num_Connections() ) {
-			if (!Reconnect_Modem()) {
-				return (0);
-			}
-			else {
-				return (1);
-			}
-		}
-	}
-
-	//------------------------------------------------------------------------
 	//	For network, destroy the oldest connection
 	//------------------------------------------------------------------------
-	else if (GameToPlay == GAME_IPX || GameToPlay == GAME_INTERNET) {
+	if (Is_Network_Game(GameToPlay)) {
 		j = 0x7fffffff;
 		oldest_index = 0;
 		for (i = 0; i < net->Num_Connections(); i++) {
@@ -2009,7 +1941,7 @@ static int Handle_Timeout(ConnManClass *net, long *their_frame,
 		** Send the game statistics packet now if the game is effectivly over
 		*/
 		if (MPlayerCount == 2 &&
-				GameToPlay == GAME_INTERNET &&
+				Is_Online_Game(GameToPlay) &&
 				!GameStatisticsPacketSent){
 			Register_Game_End_Time();
 			ConnectionLost = true;
@@ -2058,7 +1990,7 @@ static void Stop_Game(void)
 		MonoClass::Disable();
 	}
 
-	if (GameToPlay == GAME_INTERNET){
+	if (Is_Online_Game(GameToPlay)){
 		ConnectionLost = true;
 		CCDebugString ("C&C95 - About to send statistics packet.\n");
 		Register_Game_End_Time();
@@ -2958,7 +2890,7 @@ CCDebugString ("C&C95 -  Received EXIT packet\n");
 						** Send the game statistics packet now since the game is effectivly over
 						*/
 						if (MPlayerCount == 2 &&
-								GameToPlay == GAME_INTERNET &&
+								Is_Online_Game(GameToPlay) &&
 								!GameStatisticsPacketSent){
 							Register_Game_End_Time();
 							Send_Statistics_Packet();
@@ -2977,13 +2909,7 @@ CCDebugString ("C&C95 -  Received EXIT packet\n");
 					// connection ID.
 					//............................................................
 					else if (DoList[j].Type==EventClass::EXIT) {
-						if (GameToPlay == GAME_MODEM
-							|| GameToPlay == GAME_NULL_MODEM){
-							//|| GameToPlay == GAME_INTERNET) {
-							Destroy_Null_Connection( DoList[j].MPlayerID, 0 );
-						}
-
-						else if ((GameToPlay == GAME_IPX || GameToPlay == GAME_INTERNET) && net) {
+						if ((Is_Network_Game(GameToPlay)) && net) {
 							index = net->Connection_Index (DoList[j].MPlayerID);
 							if (index != -1) {
 								for (k = index; k < net->Num_Connections() - 1; k++) {
@@ -3017,13 +2943,7 @@ CCDebugString ("C&C95 -  Received EXIT packet\n");
 							Print_CRCs(&DoList[j]);
 							if (CCMessageBox().Process (TXT_OUT_OF_SYNC,
 								TXT_CONTINUE, TXT_STOP) == 0) {
-								if (GameToPlay == GAME_MODEM ||
-									GameToPlay == GAME_NULL_MODEM){
-									Destroy_Null_Connection( DoList[j].MPlayerID, -1 );
-									Shutdown_Modem();
-									GameToPlay = GAME_NORMAL;
-								}
-								else if ((GameToPlay == GAME_IPX || GameToPlay == GAME_INTERNET) && net) {
+								if ((Is_Network_Game(GameToPlay)) && net) {
 									CCDebugString ("C&C95 = Destroying connections due to bad frame info packet\n");
 									while (net->Num_Connections()) {
 										Destroy_Connection (net->Connection_ID(0), -1);

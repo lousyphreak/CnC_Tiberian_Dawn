@@ -1043,30 +1043,6 @@ bool Select_Game(bool fade)
 				Theme.Queue_Song(THEME_NONE);
 			}
 
-			/*
-			** Handle case where we were spawned from Wchat
-			*/
-			if (Special.IsFromWChat && DDEServer.Get_MPlayer_Game_Info()){
-				Check_From_WChat(NULL);
-				selection = SEL_MULTIPLAYER_GAME;
-				Theme.Queue_Song(THEME_NONE);
-				GameToPlay = GAME_INTERNET;
-			}else{
-				/*
-				** We werent spawned but we could still receive a DDE packet from wchat
-				*/
-				if (DDEServer.Get_MPlayer_Game_Info()){
-					Check_From_WChat(NULL);
-					/*
-					** Make sure top and bottom of screen are clear in 640x480 mode
-					*/
-					if (ScreenHeight == 480){
-						VisiblePage.Fill_Rect (0, 0, 639, 40, 0);
-						VisiblePage.Fill_Rect (0, 440, 639, 479, 0);
-					}
-				}
-			}
-
 			if (selection == SEL_NONE) {
 //				selection = Main_Menu(0);
 				selection = Main_Menu(ATTRACT_MODE_TIMEOUT);
@@ -1078,27 +1054,13 @@ bool Select_Game(bool fade)
 #ifdef NEWMENU
 
 				case SEL_INTERNET:
-					/*
-					** Only call up the internet menu code if we dont already have connect info from WChat
-					*/
-					if (!DDEServer.Get_MPlayer_Game_Info()){
-						CCDebugString ("C&C95 - About to call Internet Menu.\n");
-						if (Do_The_Internet_Menu_Thang() && DDEServer.Get_MPlayer_Game_Info()){
-							CCDebugString ("C&C95 - About to call Check_From_WChat.\n");
-							Check_From_WChat(NULL);
-							selection = SEL_MULTIPLAYER_GAME;
-							display = false;
-							GameToPlay = GAME_INTERNET;
-						}else{
-							selection = SEL_NONE;
-							display = true;
-						}
-					}else{
-						CCDebugString ("C&C95 - About to call Check_From_WChat.\n");
-						Check_From_WChat(NULL);
+					if (Do_The_Internet_Menu_Thang()) {
 						display = false;
 						GameToPlay = GAME_INTERNET;
 						selection = SEL_MULTIPLAYER_GAME;
+					} else {
+						selection = SEL_NONE;
+						display = true;
 					}
 					break;
 
@@ -1261,220 +1223,62 @@ bool Select_Game(bool fade)
 							}
 							break;
 
-						case GAME_NULL_MODEM:
-						case GAME_MODEM:
-							if ( NullModem.Num_Connections() ) {
-								NullModem.Init_Send_Queue();
-
-								if ((GameToPlay == GAME_NULL_MODEM &&
-									ModemGameToPlay == MODEM_NULL_HOST) ||
-									(GameToPlay == GAME_MODEM &&
-									ModemGameToPlay == MODEM_DIALER) ) {
-
-									if ( !Com_Scenario_Dialog() ) {
-										GameToPlay = Select_Serial_Dialog();
-										if (GameToPlay == GAME_NORMAL) {		// user hit Cancel
-											display = true;
-											selection = SEL_NONE;
-										}
-									}
-								} else {
-									if ( !Com_Show_Scenario_Dialog() ) {
-										GameToPlay = Select_Serial_Dialog();
-										if (GameToPlay == GAME_NORMAL) {		// user hit Cancel
-											display = true;
-											selection = SEL_NONE;
-										}
-									}
-								}
-							} else {
-								GameToPlay = Select_MPlayer_Game();
-								if (GameToPlay == GAME_NORMAL) {		// 'Cancel'
-									display = true;
-									selection = SEL_NONE;
-								}
-							}
-							break;
-
-
-
-#ifdef FORCE_WINSOCK
-						/*
-						** Handle being spawned from WChat. Intermnet play based on IPX code now.
-						*/
+						case GAME_UDP:
 						case GAME_INTERNET:
-							CCDebugString ("C&C95 - case GAME_INTERNET:\n");
-							if (Special.IsFromWChat){
-								//MessageBox (NULL, "About to restore focus to C&C95", "C&C95", MB_OK);
-								CCDebugString ("C&C95 - About to give myself focus.\n");
-								SetForegroundWindow ( MainWindow );
-								ShowWindow ( MainWindow, ShowCommand );
-
-								CCDebugString ("C&C95 - About to initialise Winsock.\n");
-								if (Winsock.Init()){
-									CCDebugString ("C&C95 - About to read multiplayer settings.\n");
-									Read_MultiPlayer_Settings ();
-									Server = PlanetWestwoodIsHost;
-
-									CCDebugString ("C&C95 - About to set addresses.\n");
-									Winsock.Set_Host_Address(PlanetWestwoodIPAddress);
-
-									CCDebugString ("C&C95 - About to call Start_Server or Start_Client.\n");
-									if (Server){
-										ModemGameToPlay = INTERNET_HOST;
-										Winsock.Start_Server();
-									}else{
-										ModemGameToPlay = INTERNET_JOIN;
-										Winsock.Start_Client();
-									}
-
-
-//#if (0)
-									/*
-									** Flush out any pending packets from a previous game.
-									*/
-									CCDebugString ("C&C95 - About to flush packet queue.\n");
-									CCDebugString ("C&C95 - Allocating scrap memory.\n");
-									char *temp_buffer = new char[1024];
-
-									CCDebugString ("C&C95 - Creating timer class instance.\n");
-									CountDownTimerClass ptimer;
-
-									CCDebugString ("C&C95 - Entering read loop.\n");
-									while (Winsock.Read(temp_buffer, 1024)){
-
-										CCDebugString ("C&C95 - Discarding a packet.\n");
-										ptimer.Set (30, true);
-										while (ptimer.Time()){};
-										CCDebugString ("C&C95 - Ready to check for more packets.\n");
-
-									}
-									CCDebugString ("C&C95 - About to delete scrap memory.\n");
-									delete temp_buffer;
-//#endif	//(0)
-
-
-
-								}else{
-									CCDebugString ("C&C95 - Winsock failed to initialise.\n");
-									GameToPlay = GAME_NORMAL;
-									selection = SEL_EXIT;
-									Special.IsFromWChat = false;
-									break;
-								}
-
-								CCDebugString ("C&C95 - About to call Init_Network.\n");
-								Init_Network();
-
-								if (DDEServer.Get_MPlayer_Game_Info()){
-									CCDebugString ("C&C95 - About to call Read_Game_Options.\n");
-									Read_Game_Options( NULL );
-								}else{
-									Read_Game_Options( "C&CSPAWN.INI" );
-								}
-
-								if (Server){
-
-									CCDebugString ("C&C95 - About to call Server_Remote_Connect.\n");
-									if (Server_Remote_Connect()){
-										CCDebugString ("C&C95 - Server_Remote_Connect returned success.\n");
-										break;
-									}else{
-										/*
-										** We failed to connect to the other player
-										 *
-										 *   SEND FAILURE PACKET TO WCHAT HERE !!!!!
-										 *
-										*/
-										Winsock.Close();
-										GameToPlay = GAME_NORMAL;
-										selection = SEL_NONE;
-										DDEServer.Delete_MPlayer_Game_Info();	// Make sure we dont go round in an infinite loop
-										//Special.IsFromWChat = false;
-										break;
-									}
-								}else{
-									CCDebugString ("C&C95 - About to call Client_Remote_Connect.\n");
-									if (Client_Remote_Connect()){
-										CCDebugString ("C&C95 - Client_Remote_Connect returned success.\n");
-										break;
-									}else{
-										/*
-										** We failed to connect to the other player
-										 *
-										 *   SEND FAILURE PACKET TO WCHAT HERE !!!!!
-										 *
-										*/
-										Winsock.Close();
-										GameToPlay = GAME_NORMAL;
-										selection = SEL_NONE;
-										DDEServer.Delete_MPlayer_Game_Info();  // Make sure we dont go round in an infinite loop
-										//Special.IsFromWChat = false;
-										break;
-									}
-								}
-
-							}else{
-								GameToPlay = Select_MPlayer_Game();
-								if (GameToPlay == GAME_NORMAL) {		// 'Cancel'
-									display = true;
-									selection = SEL_NONE;
-								}
+						case GAME_WOL:
+							if (!Winsock.Init()) {
+								GameToPlay = GAME_NORMAL;
+								selection = SEL_NONE;
+								display = true;
+								break;
 							}
-							break;
 
-#endif	//FORCE_WINSOCK
+							Read_MultiPlayer_Settings();
+							Server = PlanetWestwoodIsHost;
+							Winsock.Set_Protocol_UDP(InternetTransport != INTERNET_TRANSPORT_TCP);
+							Winsock.Set_Host_Address(PlanetWestwoodIPAddress);
+
+							if (Server) {
+								ModemGameToPlay = INTERNET_HOST;
+								Winsock.Start_Server();
+							} else {
+								ModemGameToPlay = INTERNET_JOIN;
+								Winsock.Start_Client();
+							}
+
+							if (!Init_Network()) {
+								Winsock.Close();
+								GameToPlay = GAME_NORMAL;
+								selection = SEL_NONE;
+								display = true;
+								break;
+							}
+
+							if ((Server && Server_Remote_Connect()) || (!Server && Client_Remote_Connect())) {
+								break;
+							}
+
+							Winsock.Close();
+							GameToPlay = GAME_NORMAL;
+							selection = SEL_NONE;
+							display = true;
+							break;
 
 					}
 
 
-					switch (GameToPlay) {
+						switch (GameToPlay) {
 						/*
-						**	Internet, Modem or Null-Modem
+						**	Modern direct-connect and WOL-style games
 						*/
-						case GAME_MODEM:
-						case GAME_NULL_MODEM:
+						case GAME_UDP:
 						case GAME_INTERNET:
+						case GAME_WOL:
 							Theme.Fade_Out();
 							ScenPlayer = SCEN_PLAYER_2PLAYER;
 							ScenDir = SCEN_DIR_EAST;
 							process = false;
 							Options.ScoreVolume = 0;
-							break;
-
-
-						/*
-						**	Network (IPX): start a new network game.
-						*/
-						case GAME_IPX:
-							/*
-							** Init network system & remote-connect
-							*/
-							if (Init_Network() && Remote_Connect()) {
-#if (0)
-								char seed[80];
-								sprintf (seed, "Seed: %08x\n", Seed);
-								CCDebugString (seed);
-
-								sprintf (seed, "rand: %04x\n", rand());
-								CCDebugString (seed);
-
-								sprintf (seed, "rand: %04x\n", rand());
-								CCDebugString (seed);
-
-								sprintf (seed, "rand: %04x\n", rand());
-								CCDebugString (seed);
-#endif
-								Options.ScoreVolume = 0;
-								ScenPlayer = SCEN_PLAYER_MPLAYER;
-								ScenDir = SCEN_DIR_EAST;
-								process = false;
-								Theme.Fade_Out();
-							} else {						// user hit cancel, or init failed
-								GameToPlay = GAME_NORMAL;
-								display = true;
-								selection = SEL_NONE;
-							}
 							break;
 					}
 #endif
@@ -1625,7 +1429,7 @@ bool Select_Game(bool fade)
 	}
 	CCDebugString ("C&C95 - About to start game initialisation.\n");
 #ifdef FORCE_WINSOCK
-	if (GameToPlay == GAME_INTERNET){
+	if (Is_Online_Game(GameToPlay)){
 		CommProtocol = COMM_PROTOCOL_MULTI_E_COMP;
 		if (!Special.IsFromWChat){
 			FrameSendRate = 5;	//3;
@@ -2343,7 +2147,7 @@ bool Parse_Command_Line(int argc, char *argv[])
 			if (i >= 4) {
 				IsBridge = 1;
 				memset(node, 0xff, 6);
-				BridgeNet = IPXAddressClass(net, node);
+				BridgeNet = UDPAddressClass(net, node);
 			}
 			continue;
 		}
@@ -2357,7 +2161,7 @@ bool Parse_Command_Line(int argc, char *argv[])
 			socket = (unsigned short)(atoi(string + strlen("SOCKET")));
 			socket += 0x4000;
 			if (socket >= 0x4000 && socket < 0x8000) {
-				Ipx.Set_Socket (socket);
+				Udp.Set_Socket (socket);
 			}
 			continue;
 		}

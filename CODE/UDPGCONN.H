@@ -53,7 +53,7 @@
 #define IPXGLOBALCONN_H
 
 
-#include "IPXCONN.H"
+#include "UDPCONN.H"
 
 
 /*
@@ -68,7 +68,7 @@ Connection Manager class, when it calls this class's Receive_Packet function.
 ---------------------------------------------------------------------------*/
 typedef struct {
 	CommHeaderType Header;
-	IPXAddressClass Address;
+	UDPAddressClass Address;
 	unsigned short ProductID;
 } GlobalHeaderType;
 
@@ -76,15 +76,15 @@ typedef struct {
 /*
 ***************************** Class Declaration *****************************
 */
-class IPXGlobalConnClass : public IPXConnClass
+class UDPGlobalConnClass : public UDPConnClass
 {
 	/*
 	---------------------------- Public Interface ----------------------------
 	*/
 	public:
-		using IPXConnClass::Send_Packet;
-		using IPXConnClass::Receive_Packet;
-		using IPXConnClass::Get_Packet;
+		using UDPConnClass::Send_Packet;
+		using UDPConnClass::Receive_Packet;
+		using UDPConnClass::Get_Packet;
 		/*.....................................................................
 		Here are some useful enums:
 		.....................................................................*/
@@ -108,19 +108,19 @@ class IPXGlobalConnClass : public IPXConnClass
 		/*.....................................................................
 		Constructor/destructor.
 		.....................................................................*/
-		IPXGlobalConnClass (int numsend, int numrecieve, int maxlen, 
+		UDPGlobalConnClass (int numsend, int numrecieve, int maxlen, 
 			unsigned short product_id);
-		virtual ~IPXGlobalConnClass () {};
+		virtual ~UDPGlobalConnClass () {};
 
 		/*.....................................................................
 		Send/Receive routines.
 		.....................................................................*/
 		virtual int Send_Packet (void * buf, int buflen, 
-			IPXAddressClass *address, int ack_req);
+			UDPAddressClass *address, int ack_req);
 		virtual int Receive_Packet (void * buf, int buflen,
-			IPXAddressClass *address);
+			UDPAddressClass *address);
 		virtual int Get_Packet (void * buf, int *buflen,
-			IPXAddressClass *address, unsigned short *product_id);
+			UDPAddressClass *address, unsigned short *product_id);
 
 		/*.....................................................................
 		This is for telling the connection it can cross a bridge.

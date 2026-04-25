@@ -1004,38 +1004,8 @@ void Cycle_Wait_Click(void)
 {
 	int counter;
 	int minclicks = 20;
-	unsigned long timingtime = TickCount.Time();
-	SerialPacketType sendpacket;
-	SerialPacketType receivepacket;
-	int packetlen;
-
-
 	Keyboard::Clear();
 	while (minclicks || (!Check_Key() && !ControlQ) ) {
-
-		if (GameToPlay == GAME_NULL_MODEM ||
-			GameToPlay == GAME_MODEM){
-			//GameToPlay == GAME_INTERNET) {
-
-			//
-			// send a timing packet if enough time has gone by.
-			//
-			if ( (TickCount.Time() - timingtime) > PACKET_TIMING_TIMEOUT) {
-				sendpacket.Command = SERIAL_SCORE_SCREEN;
-				sendpacket.ResponseTime = NullModem.Response_Time();
-				sendpacket.ID = ModemGameToPlay;
-
-				NullModem.Send_Message (&sendpacket, sizeof(sendpacket), 0);
-				timingtime = TickCount.Time();
-			}
-
-			if (NullModem.Get_Message (&receivepacket, &packetlen) > 0) {
-				// throw packet away
-				packetlen = packetlen;
-			}
-
-			NullModem.Service();
-		}
 
 		Call_Back_Delay(1);
 		if (minclicks) {

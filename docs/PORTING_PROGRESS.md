@@ -168,9 +168,42 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
        - invalid legacy casts in `IOOBJ.CPP`;
        - stale symbol names such as `_Kbd`, `Get_Key_Num`, and `SoundType`.
   - next concrete porting work:
-     1. port `TCPIP.H/.CPP` and related communications code toward the Red Alert `SOCKETS.H` model;
-     2. reconcile the imported SDL input layer with TD globals/options naming;
-     3. continue the modern-C++ cleanup where the build now points next (`COMQUEUE`, `IOOBJ`, `SPECIAL`, `LOADDLG`, `THEME`).
+      1. port `TCPIP.H/.CPP` and related communications code toward the Red Alert `SOCKETS.H` model;
+      2. reconcile the imported SDL input layer with TD globals/options naming;
+      3. continue the modern-C++ cleanup where the build now points next (`COMQUEUE`, `IOOBJ`, `SPECIAL`, `LOADDLG`, `THEME`).
+- Networking menu/runtime cleanup moved TD toward the Red Alert transport model (2026-04-25):
+  - completed in this checkpoint:
+    - added an explicit `InternetTransportType` enum in the TD gameplay headers (`CODE/SESSION.H`, `CODE/DEFINES.H`) and a corresponding global selector in `CODE/GLOBALS.CPP` / `CODE/EXTERNS.H`;
+    - rewrote `CODE/MPLAYER.CPP` multiplayer transport selection so the live UI now exposes only modern paths:
+      - `UDP Direct`
+      - `TCP Direct`
+      - `Westwood Online`
+      - the old modem/null-modem/IPX menu entries are no longer offered by the in-game selector;
+    - replaced the dead `FORCE_WINSOCK`-guarded internet setup path in `CODE/INIT.CPP` with an always-live SDL/socket-backed startup flow:
+      - selected transport is applied through `Winsock.Set_Protocol_UDP(...)`;
+      - host/join state and remote address are gathered up front and then routed through the existing TD direct-connect/session flow;
+      - the runtime now goes straight into `Init_Network()` plus `Server_Remote_Connect()` / `Client_Remote_Connect()` without reviving the serial/null-modem dialogs;
+    - repurposed `CODE/INTERNET.CPP`'s main-menu internet entry so it now delegates to the new modern selector instead of waiting on the legacy WChat/DDE launcher path.
+    - followed up with a transport-surface cleanup so the active runtime now speaks in RA-style UDP/WOL terms instead of TD's old IPX names:
+      - renamed the live transport classes/files from `IPX*` to `UDP*` (`UDPADDR`, `UDPCONN`, `UDPGCONN`, `UDPMGR`);
+      - updated live includes/usages across TD from `Ipx` / `IPXAddressClass` to `Udp` / `UDPAddressClass`;
+      - added `GAME_WOL` plus `Is_Online_Game(...)` / `Is_Network_Game(...)` helpers in the shared gameplay headers so WOL follows the same online-only behavior gates as TCP direct;
+      - changed `Select_MPlayer_Game()` so the selector now returns distinct `GAME_UDP`, `GAME_INTERNET`, and `GAME_WOL` modes instead of funneling every choice through one generic internet enum value;
+      - rewired `CODE/INIT.CPP` so UDP direct, TCP direct, and WOL all use the same modern Winsock-backed startup path instead of bouncing UDP back through the old LAN/IPX branch;
+      - removed several still-live serial/null-modem maintenance paths from `CODE/CONQUER.CPP`, `CODE/SCORE.CPP`, `CODE/STARTUP.CPP`, and the hot multiplayer queue loop in `CODE/QUEUE.CPP`.
+  - current build result:
+    - `cmake --build build --target tiberian-dawn --parallel 4` succeeds after the networking refactor.
+    - `cmake --build build-asan --target tiberian-dawn -- -j$(nproc)` succeeds after the transport rename/runtime cleanup.
+    - `timeout --foreground 125s bash -lc 'env SDL_RENDER_DRIVER=software ./build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` now runs for the full probe window and only ends when the timeout force-kills the process (`ASAN_STATUS=137`), with no ASan report emitted during the timed run.
+  - current networking state after this pass:
+    - TD now has distinct modern game-mode selections for `UDP Direct`, `TCP Direct`, and `Westwood Online`, and the active runtime follows those game types instead of collapsing them all to one old internet path;
+    - the live transport layer has been renamed over to `UDP*` and the active gameplay code now keys off `Udp` / `GAME_WOL` / `Is_Online_Game(...)` / `Is_Network_Game(...)` rather than the old IPX-facing names;
+    - legacy modem/null-modem/IPX/WChat selection flows are no longer part of the active UI/runtime path;
+    - some serial/null-modem declarations and dead helper code still exist in compatibility headers/stubs, and TD still does not have a full Red Alert-style `WSManagerClass` / `WSClientClass` WOL backend yet.
+  - next concrete porting work:
+    1. finish removing the remaining serial/null-modem declarations and dead helper code from `CONQUER`, `QUEUE`, globals, and public headers now that the live runtime no longer uses them;
+    2. port a real Red Alert-style WOL manager/backend (`WSManagerClass` + client layer) instead of today's mode split riding the direct-connect socket path;
+    3. continue scrubbing the leftover WChat/DDE-era symbols and comments that are no longer used by the active code path.
 - Communications support cleanup continued and the build moved past the old WChat/registry wall on Linux (2026-04-24):
   - completed in this checkpoint:
     - exposed the legacy keyboard globals/helpers that TD gameplay code still expects by restoring the declarations in `CODE/KEY.H` (`_Kbd`, `Check_Key`, `Get_Key`, `Get_Key_Num`, `Check_Key_Num`, `Clear_KeyBuffer`, `KN_To_VK`, `Key_Down`);
@@ -284,7 +317,7 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
     - the current failure mode is now unresolved-link symbols rather than C++ compile errors.
   - current blocker groups exposed by the latest rebuild:
     1. excluded or still-unported legacy multiplayer backends are now the biggest linker gap:
-       - `IPXManagerClass::*` methods from the intentionally excluded `IPX.CPP` / `IPXMGR.CPP` path;
+       - `UDPManagerClass::*` methods from the intentionally excluded `IPX.CPP` / `IPXMGR.CPP` path;
        - `Destroy_Null_Connection(...)`, `Reconnect_Modem()`, and `Shutdown_Modem()` from the still-disabled null-modem path;
        - `Calculate_CRC(...)` still needs to come from the preserved support code or a modernized replacement.
     2. more old template bodies are still missing concrete instantiations now that the linker sees the whole program:
@@ -438,7 +471,7 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
       - `Count_Up_Print(...)`
       - `Send_Data_To_DDE_Server(...)`
       - `CDFileClass::Set_Search_Drives(...)`
-      - `IPXConnClass` connection-name input
+      - `UDPConnClass` connection-name input
       - `FootClass::Debug_Draw_Map(...)`
       - `Open_Movie(...)`
     - converted many literal-only tables and debug/name arrays from `char*` to `char const*`, including tables in:

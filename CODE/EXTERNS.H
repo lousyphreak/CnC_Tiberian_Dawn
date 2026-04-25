@@ -236,6 +236,7 @@ extern int												CurPhoneIdx;
 extern DynamicVectorClass <char *>				InitStrings;
 extern SerialSettingsType							SerialDefaults;
 extern ModemGameType									ModemGameToPlay;
+extern InternetTransportType					InternetTransport;
 extern char const *									DialMethodCheck[ DIAL_METHODS ];
 extern char const *									CallWaitStrings[ CALL_WAIT_STRINGS_NUM ];
 
@@ -271,7 +272,7 @@ extern unsigned char							MPlayerID[MAX_PLAYERS];
 extern HousesType								MPlayerHouses[MAX_PLAYERS];
 extern char										MPlayerNames [MAX_PLAYERS][MPLAYER_NAME_MAX];
 extern MessageListClass						Messages;
-extern IPXAddressClass						MessageAddress;
+extern UDPAddressClass						MessageAddress;
 extern char										LastMessage[MAX_MESSAGE_LENGTH];
 extern int										MPlayerBlitz;
 extern int										MPlayerObiWan;
@@ -310,9 +311,9 @@ extern int										TrapCheckHeap;
 /*
 ** Network (IPX) globals
 */
-extern IPXManagerClass 	 					Ipx;
+extern UDPManagerClass 	 					Udp;
 extern int										IsBridge;
-extern IPXAddressClass						BridgeNet;
+extern UDPAddressClass						BridgeNet;
 extern bool 									NetMaster;
 extern bool 									NetStealth;
 extern bool 									NetProtect;
@@ -320,7 +321,7 @@ extern bool 									NetOpen;
 extern char										MPlayerGameName[MPLAYER_NAME_MAX];
 extern GlobalPacketType						GPacket;
 extern int										GPacketlen;
-extern IPXAddressClass						GAddress;
+extern UDPAddressClass						GAddress;
 extern unsigned short						GProductID;
 extern char *									MetaPacket;
 extern int										MetaSize;

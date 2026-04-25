@@ -32,21 +32,21 @@
  *                  Last Update : July 6, 1995 [BRR]                       *
  *-------------------------------------------------------------------------*
  * Functions:    			                                                   *
- *   IPXGlobalConnClass::IPXGlobalConnClass -- class constructor           *
- *   IPXGlobalConnClass::~IPXGlobalConnClass -- class destructor           *
- *   IPXGlobalConnClass::Send_Packet -- adds a packet to the send queue		*
- *   IPXGlobalConnClass::Receive_Packet -- adds packet to the receive queue*
- *   IPXGlobalConnClass::Get_Packet -- gets a packet from the receive queue*
- *   IPXGlobalConnClass::Send -- sends a packet										*
- *   IPXGlobalConnClass::Service_Receive_Queue -- services recieve queue	*
- *   IPXGlobalConnClass::Set_Bridge -- Sets up connection to cross a bridge*
+ *   UDPGlobalConnClass::UDPGlobalConnClass -- class constructor           *
+ *   UDPGlobalConnClass::~UDPGlobalConnClass -- class destructor           *
+ *   UDPGlobalConnClass::Send_Packet -- adds a packet to the send queue		*
+ *   UDPGlobalConnClass::Receive_Packet -- adds packet to the receive queue*
+ *   UDPGlobalConnClass::Get_Packet -- gets a packet from the receive queue*
+ *   UDPGlobalConnClass::Send -- sends a packet										*
+ *   UDPGlobalConnClass::Service_Receive_Queue -- services recieve queue	*
+ *   UDPGlobalConnClass::Set_Bridge -- Sets up connection to cross a bridge*
 * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "FUNCTION.H"
 
 
 /***************************************************************************
- * IPXGlobalConnClass::IPXGlobalConnClass -- class constructor             *
+ * UDPGlobalConnClass::UDPGlobalConnClass -- class constructor             *
  *                                                                         *
  * This routine chains to the parent constructor, but it adjusts the size	*
  * of the packet by the added bytes in the GlobalHeaderType structure.  	*
@@ -68,9 +68,9 @@
  * HISTORY:                                                                *
  *   12/20/1994 BR : Created.                                              *
  *=========================================================================*/
-IPXGlobalConnClass::IPXGlobalConnClass (int numsend, int numreceive, int maxlen,
+UDPGlobalConnClass::UDPGlobalConnClass (int numsend, int numreceive, int maxlen,
 	unsigned short product_id) :
-	IPXConnClass (numsend, numreceive,
+	UDPConnClass (numsend, numreceive,
 		maxlen + sizeof(GlobalHeaderType) - sizeof(CommHeaderType),
 		GLOBAL_MAGICNUM, 		// magic number for this connection
 		NULL,						// IPX Address (none)
@@ -80,11 +80,11 @@ IPXGlobalConnClass::IPXGlobalConnClass (int numsend, int numreceive, int maxlen,
 	ProductID = product_id;
 	IsBridge = 0;
 
-}	/* end of IPXGlobalConnClass */
+}	/* end of UDPGlobalConnClass */
 
 
 /***************************************************************************
- * IPXGlobalConnClass::Send_Packet -- adds a packet to the send queue		*
+ * UDPGlobalConnClass::Send_Packet -- adds a packet to the send queue		*
  *                                                                         *
  * This routine prefixes the given buffer with a GlobalHeaderType and		*
  * queues the resulting packet into the Send Queue.  The packet's 			*
@@ -106,8 +106,8 @@ IPXGlobalConnClass::IPXGlobalConnClass (int numsend, int numreceive, int maxlen,
  * HISTORY:                                                                *
  *   12/20/1994 BR : Created.                                              *
  *=========================================================================*/
-int IPXGlobalConnClass::Send_Packet (void * buf, int buflen,
-	IPXAddressClass *address, int ack_req)
+int UDPGlobalConnClass::Send_Packet (void * buf, int buflen,
+	UDPAddressClass *address, int ack_req)
 {
 	/*------------------------------------------------------------------------
 	Store the packet's Magic Number
@@ -138,12 +138,12 @@ int IPXGlobalConnClass::Send_Packet (void * buf, int buflen,
 
 	/*------------------------------------------------------------------------
 	Set this packet's destination address.  If no address is specified, use
-	a Broadcast address (which IPXAddressClass's default constructor creates).
+	a Broadcast address (which UDPAddressClass's default constructor creates).
 	------------------------------------------------------------------------*/
 	if (address != NULL) {
 		((GlobalHeaderType *)PacketBuf)->Address = (*address);
 	} else {
-		((GlobalHeaderType *)PacketBuf)->Address = IPXAddressClass();
+		((GlobalHeaderType *)PacketBuf)->Address = UDPAddressClass();
 	}
 
 	/*------------------------------------------------------------------------
@@ -160,7 +160,7 @@ int IPXGlobalConnClass::Send_Packet (void * buf, int buflen,
 
 
 /***************************************************************************
- * IPXGlobalConnClass::Receive_Packet -- adds packet to the receive queue	*
+ * UDPGlobalConnClass::Receive_Packet -- adds packet to the receive queue	*
  *                                                                         *
  * INPUT:                                                                  *
  *		buf		buffer to process (already includes GlobalHeaderType)			*
@@ -177,8 +177,8 @@ int IPXGlobalConnClass::Send_Packet (void * buf, int buflen,
  * HISTORY:                                                                *
  *   12/20/1994 BR : Created.                                              *
  *=========================================================================*/
-int IPXGlobalConnClass::Receive_Packet (void * buf, int buflen,
-	IPXAddressClass *address)
+int UDPGlobalConnClass::Receive_Packet (void * buf, int buflen,
+	UDPAddressClass *address)
 {
 	GlobalHeaderType *packet;				// ptr to this packet
 	SendQueueType *send_entry;				// ptr to send entry header
@@ -251,7 +251,7 @@ int IPXGlobalConnClass::Receive_Packet (void * buf, int buflen,
 
 
 /***************************************************************************
- * IPXGlobalConnClass::Get_Packet -- gets a packet from the receive queue	*
+ * UDPGlobalConnClass::Get_Packet -- gets a packet from the receive queue	*
  *                                                                         *
  * INPUT:                                                                  *
  *		buf			location to store buffer											*
@@ -268,8 +268,8 @@ int IPXGlobalConnClass::Receive_Packet (void * buf, int buflen,
  * HISTORY:                                                                *
  *   12/20/1994 BR : Created.                                              *
  *=========================================================================*/
-int IPXGlobalConnClass::Get_Packet (void * buf, int *buflen,
-	IPXAddressClass *address, unsigned short *product_id)
+int UDPGlobalConnClass::Get_Packet (void * buf, int *buflen,
+	UDPAddressClass *address, unsigned short *product_id)
 {
 	ReceiveQueueType *rec_entry;					// ptr to receive entry header
 	GlobalHeaderType *packet;
@@ -315,7 +315,7 @@ int IPXGlobalConnClass::Get_Packet (void * buf, int *buflen,
 
 
 /***************************************************************************
- * IPXGlobalConnClass::Send -- sends a packet										*
+ * UDPGlobalConnClass::Send -- sends a packet										*
  *                                                                         *
  * This routine gets invoked by NonSequencedConn, when it's processing		*
  * the Send & Receive Queues.  The buffer provided will already have the	*
@@ -334,9 +334,9 @@ int IPXGlobalConnClass::Get_Packet (void * buf, int *buflen,
  * HISTORY:                                                                *
  *   12/20/1994 BR : Created.                                              *
  *=========================================================================*/
-int IPXGlobalConnClass::Send(char *buf, int buflen)
+int UDPGlobalConnClass::Send(char *buf, int buflen)
 {
-	IPXAddressClass *addr;
+	UDPAddressClass *addr;
 	int rc;
 
 	/*------------------------------------------------------------------------
@@ -366,7 +366,7 @@ int IPXGlobalConnClass::Send(char *buf, int buflen)
 
 
 /***************************************************************************
- * IPXGlobalConnClass::Service_Receive_Queue -- services the recieve queue	*
+ * UDPGlobalConnClass::Service_Receive_Queue -- services the recieve queue	*
  *                                                                         *
  * This routine is necessary because the Global Connection has to ACK		*
  * a packet differently from other types of connections; its Send routine	*
@@ -386,7 +386,7 @@ int IPXGlobalConnClass::Send(char *buf, int buflen)
  * HISTORY:                                                                *
  *   12/20/1994 BR : Created.                                              *
  *=========================================================================*/
-int IPXGlobalConnClass::Service_Receive_Queue (void)
+int UDPGlobalConnClass::Service_Receive_Queue (void)
 {
 	GlobalHeaderType ackpacket;					// ACK packet to send
 	ReceiveQueueType *rec_entry;					// ptr to receive entry header
@@ -457,7 +457,7 @@ int IPXGlobalConnClass::Service_Receive_Queue (void)
  * HISTORY:                                                                *
  *   07/06/1995 BRR : Created.                                             *
  *=========================================================================*/
-void IPXGlobalConnClass::Set_Bridge(NetNumType bridge)
+void UDPGlobalConnClass::Set_Bridge(NetNumType bridge)
 {
 	if (Configured) {
 		memcpy (BridgeNet, bridge, 4);

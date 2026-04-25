@@ -2441,11 +2441,33 @@ typedef enum WaypointEnum
 */
 typedef enum GameEnum {
 	GAME_NORMAL,			// not multiplayer
-	GAME_MODEM,				// modem game
-	GAME_NULL_MODEM,		// NULL-modem
-	GAME_IPX,				// IPX Network game
-	GAME_INTERNET			// WInsock game
+	GAME_MODEM,				// legacy modem game
+	GAME_NULL_MODEM,		// legacy NULL-modem
+	GAME_UDP,				// UDP direct game
+	GAME_INTERNET,			// TCP direct game
+	GAME_WOL				// Westwood Online game
 } GameType;
+
+typedef enum InternetTransportEnum {
+	INTERNET_TRANSPORT_UDP,
+	INTERNET_TRANSPORT_TCP,
+	INTERNET_TRANSPORT_WOL
+} InternetTransportType;
+
+inline bool Is_Legacy_Serial_Game(GameType game)
+{
+	return game == GAME_MODEM || game == GAME_NULL_MODEM;
+}
+
+inline bool Is_Online_Game(GameType game)
+{
+	return game == GAME_INTERNET || game == GAME_WOL;
+}
+
+inline bool Is_Network_Game(GameType game)
+{
+	return game == GAME_UDP || Is_Online_Game(game);
+}
 
 
 #define	MPLAYER_BUILD_LEVEL_MAX			7

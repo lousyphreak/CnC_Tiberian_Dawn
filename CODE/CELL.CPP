@@ -1947,7 +1947,7 @@ bool CellClass::Goodie_Check(FootClass * object)
 			/*
 			** Keep track of the number of each type of crate found
 			*/
-			if (GameToPlay == GAME_INTERNET){
+			if (Is_Online_Game(GameToPlay)){
 				object->House->TotalCrates->Increment_Unit_Total(what);
 			}
 

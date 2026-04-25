@@ -65,7 +65,7 @@
  * 					connection, starts IPX listening.  By not placing this 	*
  * 					step in the constructor, the app can control when 			*
  * 					listening actually starts; also, you don't get a bunch	*
- *						of allocations just by declaring an IPXManagerClass		*
+ *						of allocations just by declaring an UDPManagerClass		*
  *						instance.  You have to call Init() for the allocations	*
  *						to occur.																*
  * Connection utilities: Create & manage Private Connections.  Each 			*
@@ -120,9 +120,9 @@
 /*
 ********************************* Includes **********************************
 */
-#include "IPXCONN.H"
-#include "IPXGCONN.H"
-#include "IPXADDR.H"
+#include "UDPCONN.H"
+#include "UDPGCONN.H"
+#include "UDPADDR.H"
 #include "CONNMGR.H"
 
 /*
@@ -151,7 +151,7 @@ extern "C" {
 /*
 ***************************** Class Declaration *****************************
 */
-class IPXManagerClass : public ConnManClass
+class UDPManagerClass : public ConnManClass
 {
 	/*
 	---------------------------- Public Interface ----------------------------
@@ -160,9 +160,9 @@ class IPXManagerClass : public ConnManClass
 		/*.....................................................................
 		Constructor/destructor.
 		.....................................................................*/
-		IPXManagerClass (int glb_maxlen, int pvt_maxlen, int glb_num_packets,
+		UDPManagerClass (int glb_maxlen, int pvt_maxlen, int glb_num_packets,
 			int pvt_num_packets, unsigned short socket, unsigned short product_id);
-		virtual ~IPXManagerClass ();	// stop listening
+		virtual ~UDPManagerClass ();	// stop listening
 
 		/*.....................................................................
 		Initialization routines.
@@ -177,20 +177,20 @@ class IPXManagerClass : public ConnManClass
 		These routines control creation of the "Connections" (data queues) for
 		each remote system.
 		.....................................................................*/
-		bool Create_Connection(int id, char *name, IPXAddressClass *address);
+		bool Create_Connection(int id, char *name, UDPAddressClass *address);
 		bool Delete_Connection(int id);
 		virtual int Num_Connections(void);
 		virtual int Connection_ID(int index);
 		char *Connection_Name(int id);
-		IPXAddressClass * Connection_Address(int id);
+		UDPAddressClass * Connection_Address(int id);
 		virtual int Connection_Index(int id);
 
 		/*.....................................................................
 		This is how the application sends & receives messages.
 		.....................................................................*/
 		int Send_Global_Message (void *buf, int buflen, int ack_req = 0,
-			IPXAddressClass *address = NULL);
-		int Get_Global_Message (void *buf, int *buflen, IPXAddressClass *address,
+			UDPAddressClass *address = NULL);
+		int Get_Global_Message (void *buf, int *buflen, UDPAddressClass *address,
 			unsigned short *product_id);
 
 		virtual int Send_Private_Message (void *buf, int buflen,
@@ -284,9 +284,9 @@ class IPXManagerClass : public ConnManClass
 		/*.....................................................................
 		Array of connection queues
 		.....................................................................*/
-		IPXConnClass * Connection[CONNECT_MAX];			// array of connection object ptrs
+		UDPConnClass * Connection[CONNECT_MAX];			// array of connection object ptrs
 		int NumConnections;						// # connection objects in use
-		IPXGlobalConnClass *GlobalChannel;	// the Global Channel
+		UDPGlobalConnClass *GlobalChannel;	// the Global Channel
 
 		/*.....................................................................
 		Current queue for polling for received packets

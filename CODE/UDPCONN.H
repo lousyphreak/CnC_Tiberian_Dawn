@@ -53,16 +53,16 @@
 #else
 #include "NOSEQCON.H"
 #endif
-#include "IPXADDR.H"
+#include "UDPADDR.H"
 
 
 /*
 ***************************** Class Declaration *****************************
 */
 #ifdef SEQ_NET
-class IPXConnClass : public SequencedConnClass
+class UDPConnClass : public SequencedConnClass
 #else
-class IPXConnClass : public NonSequencedConnClass
+class UDPConnClass : public NonSequencedConnClass
 #endif
 {
 	/*
@@ -85,9 +85,9 @@ class IPXConnClass : public NonSequencedConnClass
 		/*.....................................................................
 		Constructor/destructor.
 		.....................................................................*/
-		IPXConnClass(int numsend, int numrecieve, int maxlen, 
-			unsigned short magicnum, IPXAddressClass *address, int id, char const *name);
-		virtual ~IPXConnClass () {};
+		UDPConnClass(int numsend, int numrecieve, int maxlen, 
+			unsigned short magicnum, UDPAddressClass *address, int id, char const *name);
+		virtual ~UDPConnClass () {};
 
 		/*.....................................................................
 		Initialization.
@@ -117,7 +117,7 @@ class IPXConnClass : public NonSequencedConnClass
 		/*.....................................................................
 		The Destination IPX Address for this connection
 		.....................................................................*/
-		IPXAddressClass Address;
+		UDPAddressClass Address;
 
 		/*.....................................................................
 		The "Immediate" (Bridge) address for this connection, and a flag
@@ -151,7 +151,7 @@ class IPXConnClass : public NonSequencedConnClass
 		.....................................................................*/
 		static int Open_Socket(unsigned short socket);
 		static void Close_Socket(unsigned short socket);
-		static int Send_To(char *buf, int buflen, IPXAddressClass *address, NetNodeType immed);
+		static int Send_To(char *buf, int buflen, UDPAddressClass *address, NetNodeType immed);
 		static int Broadcast(char *buf, int buflen);
 
 		/*.....................................................................
@@ -172,7 +172,7 @@ class IPXConnClass : public NonSequencedConnClass
 		static int PacketLen;
 
 		/*.....................................................................
-		Variables for Listening (created by the IPXManagerClass, and passed
+		Variables for Listening (created by the UDPManagerClass, and passed
 		in via Init).  All IPX connections share these buffers.
 		.....................................................................*/
 		static ECBType *ListenECB;
@@ -180,7 +180,7 @@ class IPXConnClass : public NonSequencedConnClass
 		static char *ListenBuf;
 
 		/*.....................................................................
-		Variables for Sending (created by the IPXManagerClass, and passed
+		Variables for Sending (created by the UDPManagerClass, and passed
 		in via Init).  All IPX connections share these buffers.
 		.....................................................................*/
 		static ECBType *SendECB;

@@ -50,7 +50,7 @@
 /*
 ***************************** Class Declaration *****************************
 */
-class IPXAddressClass
+class UDPAddressClass
 {
 	/*
 	---------------------------- Public Interface ----------------------------
@@ -59,9 +59,9 @@ class IPXAddressClass
 		/*.....................................................................
 		Constructors:
 		.....................................................................*/
-		IPXAddressClass(void);
-		IPXAddressClass(NetNumType net, NetNodeType node);
-		IPXAddressClass(IPXHeaderType *header);
+		UDPAddressClass(void);
+		UDPAddressClass(NetNumType net, NetNodeType node);
+		UDPAddressClass(IPXHeaderType *header);
 
 		/*.....................................................................
 		Set the address from explicit variables, or from the SOURCE values
@@ -84,12 +84,12 @@ class IPXAddressClass
 		/*.....................................................................
 		Overloaded operators:
 		.....................................................................*/
-		int operator == (IPXAddressClass & addr);
-		int operator != (IPXAddressClass & addr);
-		int operator > (IPXAddressClass &addr);
-		int operator < (IPXAddressClass &addr);
-		int operator >= (IPXAddressClass &addr);
-		int operator <= (IPXAddressClass &addr);
+		int operator == (UDPAddressClass & addr);
+		int operator != (UDPAddressClass & addr);
+		int operator > (UDPAddressClass &addr);
+		int operator < (UDPAddressClass &addr);
+		int operator >= (UDPAddressClass &addr);
+		int operator <= (UDPAddressClass &addr);
 	/*
 	-------------------------- Protected Interface ---------------------------
 	*/

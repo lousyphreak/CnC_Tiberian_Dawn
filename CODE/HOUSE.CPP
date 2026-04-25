@@ -3913,11 +3913,11 @@ void HouseClass::MPlayer_Defeated(void)
 		of the Main_Loop() before we detect that the game is over, and we'll
 		end up waiting for frame sync packets from the other machines.
 		---------------------------------------------------------------------*/
-		if (GameToPlay==GAME_IPX || GameToPlay == GAME_INTERNET) {
+		if (Is_Network_Game(GameToPlay)) {
 			i = 0;
-			while (Ipx.Num_Connections() && (i++ < 1000) ) {
-				id = Ipx.Connection_ID(0);
-				Ipx.Delete_Connection(id);
+			while (Udp.Num_Connections() && (i++ < 1000) ) {
+				id = Udp.Connection_ID(0);
+				Udp.Delete_Connection(id);
 			}
 			MPlayerCount = 0;
 		}

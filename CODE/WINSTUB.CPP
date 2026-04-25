@@ -467,42 +467,42 @@ void CCDebugString (char const *string)
 //
 //
 
-//IPXAddressClass::IPXAddressClass(void) {
+//UDPAddressClass::UDPAddressClass(void) {
 //	int i;
 //	i++;
 //}
-//int IPXManagerClass::Num_Connections(void){ return (0); }
-//int IPXManagerClass::Connection_ID( int ) { return (0); }
-//IPXAddressClass * IPXManagerClass::Connection_Address( int ) { return ((IPXAddressClass*)0); }
-//char * IPXManagerClass::Connection_Name( int ) { return ((char*)0); }
-//int IPXAddressClass::Is_Broadcast() { return (0); }
-//int IPXManagerClass::Send_Global_Message( void *, int, int, IPXAddressClass * ) { return (0); }
-//int IPXManagerClass::Service() { return (0); }
-//int IPXManagerClass::Get_Global_Message( void  *, int  *, IPXAddressClass  *, short unsigned  * ) { return (0); }
-//int IPXAddressClass::operator ==( IPXAddressClass  & ) { return (0); }
-//IPXManagerClass::IPXManagerClass( int, int, int, int, short unsigned, short unsigned ) {}
-//IPXManagerClass::~IPXManagerClass() {
+//int UDPManagerClass::Num_Connections(void){ return (0); }
+//int UDPManagerClass::Connection_ID( int ) { return (0); }
+//UDPAddressClass * UDPManagerClass::Connection_Address( int ) { return ((UDPAddressClass*)0); }
+//char * UDPManagerClass::Connection_Name( int ) { return ((char*)0); }
+//int UDPAddressClass::Is_Broadcast() { return (0); }
+//int UDPManagerClass::Send_Global_Message( void *, int, int, UDPAddressClass * ) { return (0); }
+//int UDPManagerClass::Service() { return (0); }
+//int UDPManagerClass::Get_Global_Message( void  *, int  *, UDPAddressClass  *, short unsigned  * ) { return (0); }
+//int UDPAddressClass::operator ==( UDPAddressClass  & ) { return (0); }
+//UDPManagerClass::UDPManagerClass( int, int, int, int, short unsigned, short unsigned ) {}
+//UDPManagerClass::~UDPManagerClass() {
 //	int i;
 //	i++;
 //	}
-//int  IPXManagerClass::Delete_Connection( int ) { return (0); }
-//IPXAddressClass::IPXAddressClass( char unsigned  *, char unsigned  * ){}
-//void  IPXManagerClass::Set_Socket( short unsigned ){}
-//int  IPXManagerClass::Is_IPX() { return (0); }
-//int  IPXManagerClass::Init() { return (0); }
-//void  IPXAddressClass::Get_Address( char unsigned  *, char unsigned  * ){}
-//void  IPXManagerClass::Set_Bridge( char unsigned  * ){}
-//int  IPXManagerClass::Global_Num_Send() { return (0); }
-//void  IPXManagerClass::Set_Timing( long unsigned, long unsigned, long unsigned ){}
-//unsigned long IPXManagerClass::Global_Response_Time() { return (0); }
-//int  IPXManagerClass::Create_Connection( int, char  *, IPXAddressClass  * ) { return (0); }
-//int  IPXAddressClass::operator !=( IPXAddressClass  & ) { return (0); }
-//int  IPXManagerClass::Send_Private_Message( void  *, int, int, int ) { return (0); }
-//int  IPXManagerClass::Get_Private_Message( void  *, int  *, int  * ) { return (0); }
-//int  IPXManagerClass::Connection_Index( int ) { return (0); }
-//void  IPXManagerClass::Reset_Response_Time(){}
-//long unsigned  IPXManagerClass::Response_Time() { return (0); }
-//int  IPXManagerClass::Private_Num_Send( int ) { return (0); }
+//int  UDPManagerClass::Delete_Connection( int ) { return (0); }
+//UDPAddressClass::UDPAddressClass( char unsigned  *, char unsigned  * ){}
+//void  UDPManagerClass::Set_Socket( short unsigned ){}
+//int  UDPManagerClass::Is_IPX() { return (0); }
+//int  UDPManagerClass::Init() { return (0); }
+//void  UDPAddressClass::Get_Address( char unsigned  *, char unsigned  * ){}
+//void  UDPManagerClass::Set_Bridge( char unsigned  * ){}
+//int  UDPManagerClass::Global_Num_Send() { return (0); }
+//void  UDPManagerClass::Set_Timing( long unsigned, long unsigned, long unsigned ){}
+//unsigned long UDPManagerClass::Global_Response_Time() { return (0); }
+//int  UDPManagerClass::Create_Connection( int, char  *, UDPAddressClass  * ) { return (0); }
+//int  UDPAddressClass::operator !=( UDPAddressClass  & ) { return (0); }
+//int  UDPManagerClass::Send_Private_Message( void  *, int, int, int ) { return (0); }
+//int  UDPManagerClass::Get_Private_Message( void  *, int  *, int  * ) { return (0); }
+//int  UDPManagerClass::Connection_Index( int ) { return (0); }
+//void  UDPManagerClass::Reset_Response_Time(){}
+//long unsigned  UDPManagerClass::Response_Time() { return (0); }
+//int  UDPManagerClass::Private_Num_Send( int ) { return (0); }
 
 //_VQAHandle  *  VQA_Alloc(void){ return ((_VQAHandle *)0); }
 //void  VQA_Init( _VQAHandle  *, long ( *)()) {}

@@ -119,10 +119,10 @@
  *			SequencedConnClass   		 	       NonSequencedConnClass			*
  *						|										       |							*
  *						|									          |							*
- *			   IPXConnClass     			        ------------------------			*
+ *			   UDPConnClass     			        ------------------------			*
  *						|							     |                      |			*
  *						|							     |                      |			*
- *		   IPXGlobalConnClass        NullModemConnClass       ModemConnClass	*
+ *		   UDPGlobalConnClass        NullModemConnClass       ModemConnClass	*
  *																									*
  *																									*
  *	ConnectionClass:																			*
@@ -150,7 +150,7 @@
  *					   handles incoming ACK's & resends									*
  *					 * Get_Packet(): gets packet from the receive queue			*
  *																									*
- *	IPXConnClass:																				*
+ *	UDPConnClass:																				*
  *		Provides: * Hardware-dependent IPX interface routines, which allow	*
  *					   Service_Send_Queue() & Service_Receive_Queue() to do		*
  *						their job																*
@@ -159,7 +159,7 @@
  *		Inherits: * Sequenced ACK/Retry logic, Service routines, Queue &		*
  *						PacketBuf, timeout variables										*
  *																									*
- *	IPXGlobalConnClass:																		*
+ *	UDPGlobalConnClass:																		*
  *		Special type of IPX Connection; supports receiving packets from		*
  *		multiple systems at once, and sending packets via Broadcast or			*
  *		to a specific address.																*

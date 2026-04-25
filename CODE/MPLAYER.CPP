@@ -33,7 +33,7 @@
  *                                                                                             *
  *---------------------------------------------------------------------------------------------*
  * Functions:                                                                                  *
- *   Select_MPlayer_Game -- prompts user for NULL-Modem, Modem, or Network game                *
+ *   Select_MPlayer_Game -- prompts user for UDP, TCP direct, or WOL game                      *
  *   Read_MultiPlayer_Settings -- reads multi-player settings from conquer.ini                 *
  *   Write_MultiPlayer_Settings -- writes multi-player settings to conquer.ini                 *
  *   Read_Scenario_Descriptions -- reads multi-player scenario #'s # descriptions              *
@@ -48,19 +48,384 @@
 
 static void Garble_Message(char *buf);
 
-int Choose_Internet_Game(void);
-int Get_Internet_Host_Or_Join(void);
-int Get_IP_Address(void);
-void Show_Internet_Connection_Progress(void);
+static bool Choose_Internet_Game(InternetTransportType& transport);
+static bool Get_Internet_Host_Or_Join(bool& host_game);
+static bool Get_IP_Address(char* address_buffer, bool required);
+static bool Configure_Internet_Game(void);
+
+static bool Choose_Internet_Game(InternetTransportType& transport)
+{
+	int factor = (SeenBuff.Get_Width() == 320) ? 1 : 2;
+	int dialog_w = 180 * factor;
+	int dialog_h = 76 * factor;
+	int dialog_x = (320 * factor - dialog_w) / 2;
+	int dialog_y = (136 * factor - dialog_h) / 2;
+	int dialog_cx = dialog_x + (dialog_w / 2);
+	int margin = 6 * factor;
+	int button_w = 78 * factor;
+	int button_h = 9 * factor;
+	int button_x = dialog_cx - (button_w / 2);
+	int udp_y = dialog_y + 20 * factor;
+	int tcp_y = udp_y + button_h + 2 * factor;
+	int wol_y = tcp_y + button_h + 2 * factor;
+	int cancel_y = wol_y + button_h + margin;
+
+	enum {
+		BUTTON_UDP = 100,
+		BUTTON_TCP,
+		BUTTON_WOL,
+		BUTTON_CANCEL
+	};
+
+	ControlClass* commands = nullptr;
+	TextButtonClass udpbtn(BUTTON_UDP, "UDP Direct", TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
+		button_x, udp_y, button_w, button_h);
+	TextButtonClass tcpbtn(BUTTON_TCP, "TCP Direct", TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
+		button_x, tcp_y, button_w, button_h);
+	TextButtonClass wolbtn(BUTTON_WOL, "Westwood Online", TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
+		button_x, wol_y, button_w, button_h);
+	TextButtonClass cancelbtn(BUTTON_CANCEL, TXT_CANCEL, TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
+		dialog_cx - (60 * factor / 2), cancel_y, 60 * factor, button_h);
+	TextButtonClass* buttons[] = {&udpbtn, &tcpbtn, &wolbtn, &cancelbtn};
+	int current_button = 0;
+	bool display = true;
+
+	commands = &udpbtn;
+	tcpbtn.Add_Tail(*commands);
+	wolbtn.Add_Tail(*commands);
+	cancelbtn.Add_Tail(*commands);
+	buttons[current_button]->Turn_On();
+
+	Set_Logic_Page(SeenBuff);
+	Keyboard::Clear();
+
+	while (true) {
+		if (AllSurfaces.SurfacesRestored) {
+			AllSurfaces.SurfacesRestored = FALSE;
+			display = true;
+		}
+
+		Call_Back();
+
+		if (display) {
+			Hide_Mouse();
+			Load_Title_Screen("HTITLE.PCX", &HidPage, Palette);
+			HidPage.Blit(SeenBuff);
+			Dialog_Box(dialog_x, dialog_y, dialog_w, dialog_h);
+			Draw_Caption(TXT_MULTIPLAYER_GAME, dialog_x, dialog_y, dialog_w);
+			Fancy_Text_Print("Select network transport", dialog_cx, dialog_y + 10 * factor, CC_GREEN, TBLACK,
+				TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW);
+			commands->Flag_List_To_Redraw();
+			Show_Mouse();
+			display = false;
+		}
+
+		KeyNumType input = commands->Input();
+		int selection = 0;
+		bool pressed = false;
+
+		switch (input) {
+			case BUTTON_UDP | KN_BUTTON:
+			case BUTTON_TCP | KN_BUTTON:
+			case BUTTON_WOL | KN_BUTTON:
+			case BUTTON_CANCEL | KN_BUTTON:
+				selection = input & 0x7fff;
+				pressed = true;
+				break;
+
+			case KN_UP:
+				buttons[current_button]->Turn_Off();
+				buttons[current_button]->Flag_To_Redraw();
+				current_button = (current_button + 3) % 4;
+				buttons[current_button]->Turn_On();
+				buttons[current_button]->Flag_To_Redraw();
+				break;
+
+			case KN_DOWN:
+				buttons[current_button]->Turn_Off();
+				buttons[current_button]->Flag_To_Redraw();
+				current_button = (current_button + 1) % 4;
+				buttons[current_button]->Turn_On();
+				buttons[current_button]->Flag_To_Redraw();
+				break;
+
+			case KN_RETURN:
+				selection = buttons[current_button]->ID;
+				pressed = true;
+				break;
+
+			case KN_ESC:
+				selection = BUTTON_CANCEL;
+				pressed = true;
+				break;
+
+			default:
+				break;
+		}
+
+		if (!pressed) {
+			continue;
+		}
+
+		switch (selection) {
+			case BUTTON_UDP:
+				transport = INTERNET_TRANSPORT_UDP;
+				return true;
+
+			case BUTTON_TCP:
+				transport = INTERNET_TRANSPORT_TCP;
+				return true;
+
+			case BUTTON_WOL:
+				transport = INTERNET_TRANSPORT_WOL;
+				return true;
+
+			default:
+				return false;
+		}
+	}
+}
+
+static bool Get_Internet_Host_Or_Join(bool& host_game)
+{
+	int factor = (SeenBuff.Get_Width() == 320) ? 1 : 2;
+	int dialog_w = 168 * factor;
+	int dialog_h = 58 * factor;
+	int dialog_x = (320 * factor - dialog_w) / 2;
+	int dialog_y = (136 * factor - dialog_h) / 2;
+	int dialog_cx = dialog_x + (dialog_w / 2);
+	int button_w = 60 * factor;
+	int button_h = 9 * factor;
+	int host_x = dialog_x + 16 * factor;
+	int join_x = dialog_x + dialog_w - button_w - 16 * factor;
+	int button_y = dialog_y + 26 * factor;
+	int cancel_y = button_y + button_h + 6 * factor;
+
+	enum {
+		BUTTON_HOST = 100,
+		BUTTON_JOIN,
+		BUTTON_CANCEL
+	};
+
+	ControlClass* commands = nullptr;
+	TextButtonClass hostbtn(BUTTON_HOST, "Host", TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
+		host_x, button_y, button_w, button_h);
+	TextButtonClass joinbtn(BUTTON_JOIN, "Join", TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
+		join_x, button_y, button_w, button_h);
+	TextButtonClass cancelbtn(BUTTON_CANCEL, TXT_CANCEL, TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
+		dialog_cx - (60 * factor / 2), cancel_y, 60 * factor, button_h);
+	TextButtonClass* buttons[] = {&hostbtn, &joinbtn, &cancelbtn};
+	int current_button = 0;
+	bool display = true;
+
+	commands = &hostbtn;
+	joinbtn.Add_Tail(*commands);
+	cancelbtn.Add_Tail(*commands);
+	buttons[current_button]->Turn_On();
+
+	Set_Logic_Page(SeenBuff);
+	Keyboard::Clear();
+
+	while (true) {
+		if (AllSurfaces.SurfacesRestored) {
+			AllSurfaces.SurfacesRestored = FALSE;
+			display = true;
+		}
+
+		Call_Back();
+
+		if (display) {
+			Hide_Mouse();
+			Load_Title_Screen("HTITLE.PCX", &HidPage, Palette);
+			HidPage.Blit(SeenBuff);
+			Dialog_Box(dialog_x, dialog_y, dialog_w, dialog_h);
+			Draw_Caption(TXT_INTERNET, dialog_x, dialog_y, dialog_w);
+			Fancy_Text_Print("Create or join a game", dialog_cx, dialog_y + 12 * factor, CC_GREEN, TBLACK,
+				TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW);
+			commands->Flag_List_To_Redraw();
+			Show_Mouse();
+			display = false;
+		}
+
+		KeyNumType input = commands->Input();
+		int selection = 0;
+		bool pressed = false;
+
+		switch (input) {
+			case BUTTON_HOST | KN_BUTTON:
+			case BUTTON_JOIN | KN_BUTTON:
+			case BUTTON_CANCEL | KN_BUTTON:
+				selection = input & 0x7fff;
+				pressed = true;
+				break;
+
+			case KN_LEFT:
+			case KN_UP:
+				buttons[current_button]->Turn_Off();
+				buttons[current_button]->Flag_To_Redraw();
+				current_button = (current_button + 2) % 3;
+				buttons[current_button]->Turn_On();
+				buttons[current_button]->Flag_To_Redraw();
+				break;
+
+			case KN_RIGHT:
+			case KN_DOWN:
+				buttons[current_button]->Turn_Off();
+				buttons[current_button]->Flag_To_Redraw();
+				current_button = (current_button + 1) % 3;
+				buttons[current_button]->Turn_On();
+				buttons[current_button]->Flag_To_Redraw();
+				break;
+
+			case KN_RETURN:
+				selection = buttons[current_button]->ID;
+				pressed = true;
+				break;
+
+			case KN_ESC:
+				selection = BUTTON_CANCEL;
+				pressed = true;
+				break;
+
+			default:
+				break;
+		}
+
+		if (!pressed) {
+			continue;
+		}
+
+		if (selection == BUTTON_HOST) {
+			host_game = true;
+			return true;
+		}
+		if (selection == BUTTON_JOIN) {
+			host_game = false;
+			return true;
+		}
+		return false;
+	}
+}
+
+static bool Get_IP_Address(char* address_buffer, bool required)
+{
+	int factor = (SeenBuff.Get_Width() == 320) ? 1 : 2;
+	int dialog_w = 200 * factor;
+	int dialog_h = 64 * factor;
+	int dialog_x = (320 * factor - dialog_w) / 2;
+	int dialog_y = (136 * factor - dialog_h) / 2;
+	int dialog_cx = dialog_x + (dialog_w / 2);
+	int field_w = 150 * factor;
+	int field_x = dialog_cx - (field_w / 2);
+	int field_y = dialog_y + 24 * factor;
+	int button_w = 45 * factor;
+	int button_h = 9 * factor;
+	int ok_x = dialog_cx - button_w - 5 * factor;
+	int cancel_x = dialog_cx + 5 * factor;
+	int button_y = field_y + 16 * factor;
+
+	enum {
+		BUTTON_OK = 100,
+		BUTTON_CANCEL,
+		BUTTON_ADDRESS
+	};
+
+	ControlClass* commands = nullptr;
+	EditClass address_edt(BUTTON_ADDRESS, address_buffer, IP_ADDRESS_MAX,
+		TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
+		field_x, field_y, field_w, -1, EditClass::ALPHANUMERIC);
+	TextButtonClass okbtn(BUTTON_OK, TXT_OK, TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
+		ok_x, button_y, button_w, button_h);
+	TextButtonClass cancelbtn(BUTTON_CANCEL, TXT_CANCEL, TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
+		cancel_x, button_y, button_w, button_h);
+	bool display = true;
+
+	commands = &okbtn;
+	cancelbtn.Add_Tail(*commands);
+	address_edt.Add_Tail(*commands);
+	address_edt.Set_Focus();
+
+	Set_Logic_Page(SeenBuff);
+	Keyboard::Clear();
+
+	while (true) {
+		if (AllSurfaces.SurfacesRestored) {
+			AllSurfaces.SurfacesRestored = FALSE;
+			display = true;
+		}
+
+		Call_Back();
+
+		if (display) {
+			Hide_Mouse();
+			Load_Title_Screen("HTITLE.PCX", &HidPage, Palette);
+			HidPage.Blit(SeenBuff);
+			Dialog_Box(dialog_x, dialog_y, dialog_w, dialog_h);
+			Draw_Caption(TXT_INTERNET, dialog_x, dialog_y, dialog_w);
+			Fancy_Text_Print("Remote address or host name", dialog_cx, dialog_y + 12 * factor, CC_GREEN, TBLACK,
+				TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW);
+			commands->Flag_List_To_Redraw();
+			Show_Mouse();
+			display = false;
+		}
+
+		KeyNumType input = commands->Input();
+		switch (static_cast<int>(input)) {
+			case KN_RETURN:
+			case BUTTON_OK | KN_BUTTON:
+				strtrim(address_buffer);
+				if (!required || address_buffer[0] != '\0') {
+					return true;
+				}
+				break;
+
+			case KN_ESC:
+			case BUTTON_CANCEL | KN_BUTTON:
+				return false;
+
+			default:
+				break;
+		}
+	}
+}
+
+static bool Configure_Internet_Game(void)
+{
+	bool host_game = true;
+	char address_buffer[IP_ADDRESS_MAX];
+
+	SDL_strlcpy(address_buffer, PlanetWestwoodIPAddress, sizeof(address_buffer));
+
+	if (!Choose_Internet_Game(InternetTransport)) {
+		return false;
+	}
+
+	if (!Get_Internet_Host_Or_Join(host_game)) {
+		return false;
+	}
+
+	if (!Get_IP_Address(address_buffer, !host_game || InternetTransport != INTERNET_TRANSPORT_TCP)) {
+		return false;
+	}
+
+	SDL_strlcpy(PlanetWestwoodIPAddress, address_buffer, sizeof(PlanetWestwoodIPAddress));
+	PlanetWestwoodIsHost = host_game;
+	InternetMaxPlayers = 2;
+	UseVirtualSubnetServer = false;
+	ModemGameToPlay = host_game ? INTERNET_HOST : INTERNET_JOIN;
+	Winsock.Set_Protocol_UDP(InternetTransport != INTERNET_TRANSPORT_TCP);
+
+	return true;
+}
 
 /***********************************************************************************************
- * Select_MPlayer_Game -- prompts user for NULL-Modem, Modem, or Network game                  *
+ * Select_MPlayer_Game -- prompts user for UDP, TCP direct, or WOL game                        *
  *                                                                                             *
  * INPUT:                                                                                      *
  *      none.                                                                                  *
  *                                                                                             *
  * OUTPUT:                                                                                     *
- *      GAME_NORMAL, GAME_MODEM, etc.                                                          *
+ *      GAME_NORMAL, GAME_UDP, GAME_INTERNET, or GAME_WOL.                                     *
  *                                                                                             *
  * WARNINGS:                                                                                   *
  *      none.                                                                                  *
@@ -70,406 +435,22 @@ void Show_Internet_Connection_Progress(void);
  *=============================================================================================*/
 GameType Select_MPlayer_Game (void)
 {
-
-	int factor			= (SeenBuff.Get_Width() == 320) ? 1 : 2;
-	bool	ipx_avail = FALSE;
-	int number_of_buttons;
-	/*........................................................................
-	Dialog & button dimensions
-	........................................................................*/
-	int	d_dialog_w = 190*factor;
-	int	d_dialog_h = 26*4*factor;
-	int 	d_dialog_x = ((320*factor - d_dialog_w) / 2);
-//	d_dialog_y = ((200 - d_dialog_h) / 2),
-	int	d_dialog_y = ((136*factor - d_dialog_h) / 2);
-	int	d_dialog_cx = d_dialog_x + (d_dialog_w / 2);
-
-	int	d_txt6_h = 11 * factor;
-	int	d_margin = 7 *factor;
-
-	int	d_modemserial_w = 80*factor;
-	int	d_modemserial_h = 9*factor;
-	int 	d_modemserial_x = d_dialog_cx - d_modemserial_w / 2;
-	int	d_modemserial_y = d_dialog_y + d_margin + d_txt6_h + d_margin;
-#if (0)
-	int	d_internet_w = 80*factor;
-	int	d_internet_h = 9*factor;
-	int	d_internet_x = d_dialog_cx - d_internet_w / 2;
-	int	d_internet_y = d_modemserial_y + d_modemserial_h + 2*factor;
-#endif	//(0)
-	int 	d_ipx_w = 80*factor;
-	int	d_ipx_h = 9*factor;
-	int	d_ipx_x = d_dialog_cx - d_ipx_w / 2;
-	int 	d_ipx_y = d_modemserial_y + d_modemserial_h + 2*factor;
-//	int 	d_ipx_y = d_internet_y + d_internet_h + 2*factor;
-
-	int	d_cancel_w = 60*factor;
-	int 	d_cancel_h = 9*factor;
-	int	d_cancel_x = d_dialog_cx - d_cancel_w / 2;
-	int	d_cancel_y = d_ipx_y + d_ipx_h + d_margin;
-
-	CountDownTimerClass delay;
-
-	/*........................................................................
-	Button enumerations:
-	........................................................................*/
-	enum {
-		BUTTON_MODEMSERIAL = 100,
-#if	(0)
-		BUTTON_INTERNET,
-#endif	//(0)
-		BUTTON_IPX,
-		BUTTON_CANCEL,
-
-		NUM_OF_BUTTONS = 3,
-	};
-	number_of_buttons = NUM_OF_BUTTONS;
-	/*........................................................................
-	Redraw values: in order from "top" to "bottom" layer of the dialog
-	........................................................................*/
-	typedef enum {
-		REDRAW_NONE = 0,
-		REDRAW_BUTTONS,		// includes map interior & coord values
-		REDRAW_BACKGROUND,	// includes box, map bord, key, coord labels, btns
-		REDRAW_ALL = REDRAW_BACKGROUND
-	} RedrawType;
-	/*........................................................................
-	Dialog variables:
-	........................................................................*/
-	KeyNumType input;								// input from user
-	bool process;									// loop while true
-	RedrawType display;							// true = re-draw everything
-	GameType retval;								// return value
-	int selection;
-	bool pressed;
-	int curbutton;
-	TextButtonClass *buttons[NUM_OF_BUTTONS];
-
-	/*........................................................................
-	Buttons
-	........................................................................*/
-	ControlClass *commands = NULL;				// the button list
-
-	//
-	// If neither IPX or winsock are active then do only the modem serial dialog
-	//
-	if (Ipx.Is_IPX()){
-		ipx_avail = TRUE;
+	if (!Configure_Internet_Game()) {
+		return GAME_NORMAL;
 	}
 
+	switch (InternetTransport) {
+		case INTERNET_TRANSPORT_UDP:
+			return GAME_UDP;
 
-	TextButtonClass modemserialbtn (BUTTON_MODEMSERIAL, TXT_MODEM_SERIAL,
-		TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
-		d_modemserial_x, d_modemserial_y, d_modemserial_w, d_modemserial_h);
-#if (0)
-	TextButtonClass internetbtn (BUTTON_INTERNET, TXT_INTERNET,
-		TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
-		d_internet_x, d_internet_y, d_internet_w, d_internet_h);
-#endif	//(0)
-	TextButtonClass ipxbtn (BUTTON_IPX, TXT_NETWORK,
-		TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
-		d_ipx_x, d_ipx_y, d_ipx_w, d_ipx_h);
+		case INTERNET_TRANSPORT_TCP:
+			return GAME_INTERNET;
 
-	TextButtonClass cancelbtn (BUTTON_CANCEL, TXT_CANCEL,
-		TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
-		d_cancel_x, d_cancel_y, d_cancel_w, d_cancel_h);
-
-	/*
-	------------------------------- Initialize -------------------------------
-	*/
-	Set_Logic_Page(SeenBuff);
-
-	/*
-	............................ Create the list .............................
-	*/
-	commands = &modemserialbtn;
-#if (0)
-	internetbtn.Add_Tail(*commands);
-#endif	//(0)
-	if (ipx_avail){
-		ipxbtn.Add_Tail(*commands);
-	}
-	cancelbtn.Add_Tail(*commands);
-
-	/*
-	......................... Fill array of button ptrs ......................
-	*/
-	curbutton = 0;
-	buttons[0] = &modemserialbtn;
-#if (0)
-	buttons[1] = &internetbtn;
-#endif	//(0)
-	if (ipx_avail){
-		buttons[1] = &ipxbtn;
-		buttons[2] = &cancelbtn;
-	}else{
-		buttons[1] = &cancelbtn;
-		number_of_buttons--;
+		case INTERNET_TRANSPORT_WOL:
+			return GAME_WOL;
 	}
 
-	buttons[curbutton]->Turn_On();
-
-	Keyboard::Clear();
-
-	Fancy_Text_Print(TXT_NONE, 0, 0, CC_GREEN, TBLACK,
-		TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW);
-
-	/*
-	-------------------------- Main Processing Loop --------------------------
-	*/
-	display = REDRAW_ALL;
-	process = true;
-	pressed = false;
-	while (process) {
-		/*
-		** If we have just received input focus again after running in the background then
-		** we need to redraw.
-		*/
-		if (AllSurfaces.SurfacesRestored){
-			AllSurfaces.SurfacesRestored=FALSE;
-			display=REDRAW_ALL;
-		}
-
-		/*
-		........................ Invoke game callback .........................
-		*/
-		Call_Back();
-		/*
-		...................... Refresh display if needed ......................
-		*/
-		if (display) {
-			Hide_Mouse();
-			if (display >= REDRAW_BACKGROUND) {
-				/*
-				..................... Refresh the backdrop ......................
-				*/
-				Load_Title_Screen("HTITLE.PCX", &HidPage, Palette);
-				HidPage.Blit(SeenBuff);
-				/*
-				..................... Draw the background .......................
-				*/
-				Dialog_Box(d_dialog_x, d_dialog_y, d_dialog_w, d_dialog_h);
-				Draw_Caption (TXT_SELECT_MPLAYER_GAME, d_dialog_x, d_dialog_y, d_dialog_w);
-			}
-			/*
-			.......................... Redraw buttons ..........................
-			*/
-			if (display >= REDRAW_BUTTONS) {
-				commands->Flag_List_To_Redraw();
-			}
-			Show_Mouse();
-			display = REDRAW_NONE;
-		}
-
-		/*
-		........................... Get user input ............................
-		*/
-		input = commands->Input();
-
-		/*
-		............................ Process input ............................
-		*/
-		switch (input) {
-			case (BUTTON_MODEMSERIAL | KN_BUTTON):
-				selection = BUTTON_MODEMSERIAL;
-				pressed = true;
-				break;
-
-#if	(0)
-			case (BUTTON_INTERNET | KN_BUTTON):
-				selection = BUTTON_INTERNET;
-				pressed = true;
-				break;
-#endif	//(0)
-
-			case (BUTTON_IPX | KN_BUTTON):
-				selection = BUTTON_IPX;
-				pressed = true;
-				break;
-
-			case (KN_ESC):
-			case (BUTTON_CANCEL | KN_BUTTON):
-				selection = BUTTON_CANCEL;
-				pressed = true;
-				break;
-
-			case KN_UP:
-				buttons[curbutton]->Turn_Off();
-				buttons[curbutton]->Flag_To_Redraw();
-				curbutton--;
-				if (curbutton < 0)
-					curbutton = (number_of_buttons - 1);
-				buttons[curbutton]->Turn_On();
-				buttons[curbutton]->Flag_To_Redraw();
-				break;
-
-			case KN_DOWN:
-				buttons[curbutton]->Turn_Off();
-				buttons[curbutton]->Flag_To_Redraw();
-				curbutton++;
-				if (curbutton > (number_of_buttons - 1) )
-					curbutton = 0;
-				buttons[curbutton]->Turn_On();
-				buttons[curbutton]->Flag_To_Redraw();
-				break;
-
-			case KN_RETURN:
-				selection = curbutton + BUTTON_MODEMSERIAL;
-				if (!ipx_avail) selection--;
-				pressed = true;
-				break;
-
-			default:
-				break;
-		}
-
-		if (pressed) {
-			//
-			// to make sure the selection is correct in case they used the mouse
-			//
-			buttons[curbutton]->Turn_Off();
-			buttons[curbutton]->Flag_To_Redraw();
-			curbutton = selection - BUTTON_MODEMSERIAL;
-			buttons[curbutton]->Turn_On();
-//			buttons[curbutton]->Flag_To_Redraw();
-			buttons[curbutton]->IsPressed = true;
-			buttons[curbutton]->Draw_Me(true);
-
-			switch (selection) {
-				case (BUTTON_MODEMSERIAL):
-
-					//
-					// Pop up the modem/serial/com port dialog
-					//
-					retval = Select_Serial_Dialog();
-
-					if (retval != GAME_NORMAL) {
-						process = false;
-					} else {
-						buttons[curbutton]->IsPressed = false;
-						display = REDRAW_ALL;
-					}
-					break;
-
-#if	(0)
-				case (BUTTON_INTERNET):
-//#define ONLY_FOR_E3
-#ifdef ONLY_FOR_E3
-					Call_Back();
-					Show_Internet_Connection_Progress();		//changed to do nothing
-					Hide_Mouse();
-					Load_Title_Screen("HTITLE.PCX", &HidPage, Palette);
-					HidPage.Blit(SeenBuff);
-					Show_Mouse();
-					Call_Back();
-					CCMessageBox().Process("Error! - Unable to ping KANE.WESTWOOD.COM");
-
-					buttons[curbutton]->IsPressed = false;
-					display = REDRAW_ALL;
-
-
-#endif	//ONLY_FOR_E3
-
-
-#ifdef FORCE_WINSOCK
-					if (Winsock.Init()){
-						Read_MultiPlayer_Settings ();
-						int result = Choose_Internet_Game();
-
-						if (!result){
-							Winsock.Close();
-							buttons[curbutton]->IsPressed = false;
-							display = REDRAW_ALL;
-							break;
-						}
-
-						result = Get_Internet_Host_Or_Join();
-						if (result == 1){
-							Winsock.Close();
-							buttons[curbutton]->IsPressed = false;
-							display = REDRAW_ALL;
-							break;
-						}
-						Server = !result;
-
-						if (Server){
-#if (0)
-							ModemGameToPlay = INTERNET_HOST;
-							Winsock.Start_Server();
-#else
-							result = Get_IP_Address();
-							if (!result){
-								Winsock.Close();
-								buttons[curbutton]->IsPressed = false;
-								display = REDRAW_ALL;
-								break;
-							}
-							Winsock.Set_Host_Address(PlanetWestwoodIPAddress);
-							Winsock.Start_Server();
-#endif
-
-						}else{
-							ModemGameToPlay = INTERNET_JOIN;
-							result = Get_IP_Address();
-							if (!result){
-								Winsock.Close();
-								buttons[curbutton]->IsPressed = false;
-								display = REDRAW_ALL;
-								break;
-							}
-							Winsock.Set_Host_Address(PlanetWestwoodIPAddress);
-							Winsock.Start_Client();
-						}
-
-						//CountDownTimerClass connect_timeout;
-						//connect_timeout.Set(15*60);
-
-						////Show_Internet_Connection_Progress();
-
-						if (!Winsock.Get_Connected()){
-							Winsock.Close();
-							return(GAME_NORMAL);
-						}
-
-						SerialSettingsType *settings;
-						settings = &SerialDefaults;
-						Init_Null_Modem(settings);
-						if (Server){
-							if (Com_Scenario_Dialog()){
-								return (GAME_INTERNET);
-							}else{
-								Winsock.Close();
-								return (GAME_NORMAL);
-							}
-						}else{
-							if (Com_Show_Scenario_Dialog()){
-								return (GAME_INTERNET);
-							}else{
-								Winsock.Close();
-								return (GAME_NORMAL);
-							}
-						}
-					}
-#endif //FORCE_WINSOCK
-					break;
-
-#endif	//(0)
-
-				case (BUTTON_IPX):
-					retval = GAME_IPX;
-					process = false;
-					break;
-
-				case (BUTTON_CANCEL):
-					retval = GAME_NORMAL;
-					process = false;
-					break;
-			}
-
-			pressed = false;
-		}
-	}
-	return(retval);
+	return GAME_NORMAL;
 }
 
 

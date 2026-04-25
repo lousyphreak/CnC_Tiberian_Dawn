@@ -617,17 +617,7 @@ int main(int argc, char *argv[])
 
 			Free(buffer);
 
-			CCDebugString ("C&C95 - Checking availability of C&CSPAWN.INI packet from WChat.\n");
-			if (DDEServer.Get_MPlayer_Game_Info()){
-				CCDebugString ("C&C95 - C&CSPAWN.INI packet available.\n");
-				Check_From_WChat(NULL);
-			}else{
-				CCDebugString ("C&C95 - C&CSPAWN.INI packet not arrived yet.\n");
-				//Check_From_WChat("C&CSPAWN.INI");
-				//if (Special.IsFromWChat){
-				//	DDEServer.Disable();
-				//}
-			}
+			CCDebugString ("C&C95 - Skipping legacy WChat startup packet path.\n");
 
 			/*
 			**	If the intro is being run for the first time, then don't
@@ -715,9 +705,6 @@ int main(int argc, char *argv[])
 void __cdecl Prog_End(void)
 {
 #ifndef DEMO
-	if (GameToPlay == GAME_MODEM || GameToPlay == GAME_NULL_MODEM) {
-		NullModem.Change_IRQ_Priority(0);
-	}
 #endif
 	CCDebugString ("C&C95 - About to call Sound_End.\n");
 	Sound_End();
@@ -824,7 +811,7 @@ void Read_Setup_Options(char *config_data)
 	if (socket > 0) {
 		socket += 0x4000;
 		if (socket >= 0x4000 && socket < 0x8000) {
-			Ipx.Set_Socket(socket);
+			Udp.Set_Socket(socket);
 		}
 	}
 
@@ -863,7 +850,7 @@ void Read_Setup_Options(char *config_data)
 		if (i >= 4) {
 			IsBridge = 1;
 			memset(node, 0xff, 6);
-			BridgeNet = IPXAddressClass(net, node);
+			BridgeNet = UDPAddressClass(net, node);
 		}
 	}
 }

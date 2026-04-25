@@ -2697,7 +2697,7 @@ void TechnoClass::Record_The_Kill(TechnoClass * source)
 				House->BuildingsLost++;
 			}
 			if (source){
-				if (GameToPlay == GAME_INTERNET){
+				if (Is_Online_Game(GameToPlay)){
 					source->House->DestroyedBuildings->Increment_Unit_Total( ((BuildingClass*)this)->Class->Type );
 				}
 				source->House->BuildingsKilled[Owner()]++;
@@ -2716,7 +2716,7 @@ void TechnoClass::Record_The_Kill(TechnoClass * source)
 		case RTTI_AIRCRAFT:
 			House->UnitsLost++;
 			if (source){
-				if (GameToPlay == GAME_INTERNET){
+				if (Is_Online_Game(GameToPlay)){
 					source->House->DestroyedAircraft->Increment_Unit_Total( ((AircraftClass*)this)->Class->Type );
 				}
 				source->House->UnitsKilled[Owner()]++;
@@ -2734,7 +2734,7 @@ void TechnoClass::Record_The_Kill(TechnoClass * source)
 		case RTTI_INFANTRY:
 			House->UnitsLost++;
 			if (source){
-				if (GameToPlay == GAME_INTERNET){
+				if (Is_Online_Game(GameToPlay)){
 					source->House->DestroyedInfantry->Increment_Unit_Total( ((InfantryClass*)this)->Class->Type );
 				}
 				source->House->UnitsKilled[Owner()]++;
@@ -2752,7 +2752,7 @@ void TechnoClass::Record_The_Kill(TechnoClass * source)
 		case RTTI_UNIT:
 			House->UnitsLost++;
 			if (source){
-				if (GameToPlay == GAME_INTERNET){
+				if (Is_Online_Game(GameToPlay)){
 					source->House->DestroyedUnits->Increment_Unit_Total( ((UnitClass*)this)->Class->Type );
 				}
 				source->House->UnitsKilled[Owner()]++;

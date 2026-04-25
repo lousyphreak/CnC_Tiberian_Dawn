@@ -78,3 +78,7 @@ _Last updated: 2026-04-25_
   - ASan caught this in both infantry and vehicle movement once gameplay was running.
 - TD's shadow/remap neighbor walk needs explicit modern bounds checks:
   - `DisplayClass::Cell_Shadow(...)` and `DisplayClass::Map_Cell(...)` must guard against off-map and edge-adjacent cells using `MAP_CELL_TOTAL` / explicit edge tests before doing pointer arithmetic on neighboring cells.
+- TD networking is now split around modern RA-style game modes even though the full RA WOL backend is not finished yet:
+  - `Select_MPlayer_Game()` now returns distinct `GAME_UDP`, `GAME_INTERNET`, and `GAME_WOL` modes instead of routing every choice through one generic internet mode;
+  - the active transport surface has been renamed from `IPX*` to `UDP*` (`Udp`, `UDPAddressClass`, `UDPManagerClass`, etc.), and gameplay code should use `Is_Network_Game(...)` / `Is_Online_Game(...)` helpers instead of hard-coding old IPX/internet checks;
+  - the old serial/null-modem menu path is no longer part of the live startup flow, but some compatibility declarations/stubs still remain and should be removed only after the last active call sites are gone.

@@ -478,6 +478,7 @@ DynamicVectorClass <char *> InitStrings;
 SerialSettingsType SerialDefaults;		// serial port default settings
 
 ModemGameType ModemGameToPlay;			// type of modem play Dialer, answerer, null
+InternetTransportType InternetTransport = INTERNET_TRANSPORT_UDP;
 
 char const *DialMethodCheck[ DIAL_METHODS ] = {
 	"T",
@@ -616,7 +617,7 @@ char MPlayerNames [MAX_PLAYERS][MPLAYER_NAME_MAX];
 ** sent (for the computer's messages).
 */
 MessageListClass Messages;
-IPXAddressClass MessageAddress;
+UDPAddressClass MessageAddress;
 char LastMessage[MAX_MESSAGE_LENGTH];
 
 
@@ -802,13 +803,13 @@ int TrapCheckHeap = 0;						// start checking the Heap
 ** connections.  Declaring this class doesn't perform any allocations;
 ** the class itself is 140 bytes.
 */
-IPXManagerClass Ipx (
+UDPManagerClass Udp (
 	sizeof (GlobalPacketType),						// size of Global Channel packets
 	((546 - sizeof(CommHeaderType)) / sizeof(EventClass) ) * sizeof(EventClass),
 	10, 													// # entries in Global Queue
 	8, 													// # entries in Private Queues
 	VIRGIN_SOCKET, 									// Socket ID #
-	IPXGlobalConnClass::COMMAND_AND_CONQUER);	// Product ID #
+	UDPGlobalConnClass::COMMAND_AND_CONQUER);	// Product ID #
 
 
 //#if(TIMING_FIX)
@@ -834,7 +835,7 @@ int NewMaxAheadFrame2;
 ** if this address should be used.
 */
 int IsBridge = 0;
-IPXAddressClass BridgeNet;
+UDPAddressClass BridgeNet;
 
 
 /***************************************************************************
@@ -870,7 +871,7 @@ char MPlayerGameName[MPLAYER_NAME_MAX];
 */
 GlobalPacketType GPacket;				// Global Channel packet
 int GPacketlen;							// length of incoming packet
-IPXAddressClass GAddress;				// address of sender
+UDPAddressClass GAddress;				// address of sender
 unsigned short GProductID;				// sender's Product ID
 
 
