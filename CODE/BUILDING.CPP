@@ -1127,14 +1127,14 @@ void BuildingClass::AI(void)
 		/*
 		**	Possibly start repair process if the building is below half strength.
 		*/
-		int ratio = 0x0040;
+		unsigned ratio = 0x0040;
 		if (Scenario > 6) ratio = 0x0080;
 		if (Scenario > 10) ratio = 0x00C0;
 		if (Class->IsRepairable && Health_Ratio() <= ratio) {
 			if (House->Available_Money() >= REPAIR_THRESHHOLD) {
 				Repair(1);
 			} else {
-				if (IsTickedOff && Scenario > 2 && Random_Pick(0, 50) < Scenario && !Trigger) {
+				if (IsTickedOff && Scenario > 2 && Random_Pick(0, 50) < static_cast<int>(Scenario) && !Trigger) {
 					Sell_Back(1);
 				}
 			}
@@ -1552,6 +1552,7 @@ ResultType BuildingClass::Take_Damage(int & damage, int distance, WarheadType wa
 				break;
 
 			case RESULT_NONE:
+			case RESULT_LIGHT:
 				break;
 		}
 
@@ -1701,8 +1702,8 @@ void BuildingClass::operator delete(void *ptr)
  *   08/07/1995 JLB : Fixed act like value to match expected value.                            *
  *=============================================================================================*/
 BuildingClass::BuildingClass(StructType type, HousesType house) :
-	Class(&BuildingTypeClass::As_Reference(type)),
-	TechnoClass(house)
+	TechnoClass(house),
+	Class(&BuildingTypeClass::As_Reference(type))
 {
 	PlacementDelay = 0;
 	LastStrength = 0;
@@ -3006,7 +3007,7 @@ void BuildingClass::Read_INI(char *buffer)
 void BuildingClass::Write_INI(char *buffer)
 {
 	int			index;
-	char			uname[10];
+	char			uname[16];
 	char			buf[127];
 	char			*tbuffer;		// Accumulation buffer of unit IDs.
 
@@ -3029,8 +3030,8 @@ void BuildingClass::Write_INI(char *buffer)
 		building = Buildings.Ptr(index);
 		if (!building->IsInLimbo) {
 
-			sprintf(uname, "%03d", index);
-			sprintf(buf, "%s,%s,%d,%u,%d,%s",
+			snprintf(uname, sizeof(uname), "%03d", index);
+			snprintf(buf, sizeof(buf), "%s,%s,%d,%u,%d,%s",
 				building->House->Class->IniName,
 				building->Class->IniName,
 				building->Health_Ratio(),
@@ -3232,6 +3233,9 @@ bool BuildingClass::Captured(HouseClass * newowner)
 
 			case HOUSE_BAD:
 				Speak(VOX_NOD_CAPTURED);
+				break;
+
+			default:
 				break;
 		}
 
@@ -3447,7 +3451,7 @@ MoveType BuildingClass::Can_Enter_Cell(CELL cell, FacingType) const
 bool BuildingClass::Can_Demolish(void) const
 {
 	Validate();
-	if (Class->Get_Buildup_Data() && BState != BSTATE_CONSTRUCTION && !Mission != MISSION_DECONSTRUCTION && Mission != MISSION_CONSTRUCTION) {
+	if (Class->Get_Buildup_Data() && BState != BSTATE_CONSTRUCTION && Mission != MISSION_DECONSTRUCTION && Mission != MISSION_CONSTRUCTION) {
 		if (*this == STRUCT_REFINERY && Is_Something_Attached()) return(false);
 		return(true);
 	}
@@ -3969,6 +3973,8 @@ int BuildingClass::Mission_Attack(void)
 
 			case FIRE_REARM:
 			case FIRE_BUSY:
+			case FIRE_MOVING:
+			case FIRE_ROTATING:
 				return(1);
 
 			case FIRE_CLOAKED:
@@ -3978,6 +3984,9 @@ int BuildingClass::Mission_Attack(void)
 			case FIRE_OK:
 				Fire_At(TarCom, 0);
 				return(1);
+
+			default:
+				break;
 		}
 	}
 	return(TICKS_PER_SECOND);
@@ -4818,6 +4827,9 @@ void BuildingClass::Detach_All(bool all)
 				fnum = House->SpecialFactory;
 				break;
 
+			default:
+				break;
+
 		}
 
 		/*
@@ -4905,8 +4917,6 @@ CELL BuildingClass::Find_Exit_Cell(TechnoClass const * techno) const
 {
 	CELL const *ptr;
 	CELL origin = Coord_Cell(Coord);
-	bool found = false;
-
 	ptr = Class->ExitList;
 	if (ptr) {
 		while (*ptr != REFRESH_EOL) {

@@ -146,8 +146,7 @@ void TabClass::Draw_Credits_Tab(void)
 void TabClass::Hilite_Tab(int tab)
 {
 	int xpos = 0;
-	int text = TXT_TAB_BUTTON_CONTROLS;
-	tab = tab;
+	(void)tab;
 
 	CC_Draw_Shape(TabShape, 1 , xpos, 0, WINDOW_MAIN, SHAPE_NORMAL);
 	Fancy_Text_Print(TXT_TAB_BUTTON_CONTROLS, 80, 0, 11, TBLACK, TPF_GREEN12|TPF_CENTER | TPF_USE_GRAD_PAL);

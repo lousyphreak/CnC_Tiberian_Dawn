@@ -161,7 +161,6 @@ bool Expansion_Dialog(void)
 	}
 
 	Set_Logic_Page(SeenBuff);
-	bool recalc = true;
 	bool display = true;
 	bool process = true;
 	bool okval = true;
@@ -196,7 +195,7 @@ bool Expansion_Dialog(void)
 		}
 
 		KeyNumType input = buttons->Input();
-		switch (input) {
+		switch (static_cast<int>(input)) {
 			case KN_RETURN:
 			case 200|KN_BUTTON:
 			{
@@ -309,7 +308,6 @@ bool Bonus_Dialog(void)
 	/*
 	**	Add in all the expansion scenarios.
 	*/
-	char * sbuffer = (char*)_ShapeBuffer;
 	int gdi_scen_names[3]={
 		TXT_BONUS_MISSION_1,
 		TXT_BONUS_MISSION_2,
@@ -357,7 +355,6 @@ bool Bonus_Dialog(void)
 	}
 
 	Set_Logic_Page(SeenBuff);
-	bool recalc = true;
 	bool display = true;
 	bool process = true;
 	bool okval = true;
@@ -392,7 +389,7 @@ bool Bonus_Dialog(void)
 		}
 
 		KeyNumType input = buttons->Input();
-		switch (input) {
+		switch (static_cast<int>(input)) {
 			case KN_RETURN:
 			case 200|KN_BUTTON:
 			{

@@ -105,12 +105,9 @@ int CCMessageBox::Process(const char *msg, const char *b1txt, const char *b2txt,
 	**	characters for each.
 	*/
 	Fancy_Text_Print(TXT_NONE, 0, 0, TBLACK, TBLACK, TPF_6PT_GRAD|TPF_NOSHADOW);
-	char b1char, b2char, b3char;	// 1st char of each string
 	int bwidth, bheight;				// button width and height
 	int numbuttons = 0;
 	if (b1txt) {
-		b1char = toupper(b1txt[0]);
-
 		/*
 		**	Build the button list.
 		*/
@@ -119,12 +116,10 @@ int CCMessageBox::Process(const char *msg, const char *b1txt, const char *b2txt,
 
 		if (b2txt) {
 			numbuttons = 2;
-			b2char = toupper(b2txt[0]);
 			bwidth = MAX((String_Pixel_Width( b2txt ) + (8*factor)), bwidth);
 
 			if (b3txt) {
 				numbuttons = 3;
-				b3char = toupper(b3txt[0]);
 			}
 
 		} else {
@@ -298,7 +293,7 @@ int CCMessageBox::Process(const char *msg, const char *b1txt, const char *b2txt,
 			**	Fetch and process input.
 			*/
 			input = buttonlist->Input();
-			switch (input) {
+			switch (static_cast<int>(input)) {
 				case (BUTTON_1|BUTTON_FLAG):
 					selection = realval[0];
 					pressed = true;

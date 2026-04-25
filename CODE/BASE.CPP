@@ -136,7 +136,7 @@ int BaseNodeClass::operator > (BaseNodeClass const & )
 void BaseClass::Read_INI(char *buffer)
 {
 	char buf[128];
-	char uname[10];
+	char uname[12];
 	BaseNodeClass node;						// node to add to list
 
 	/*
@@ -163,7 +163,7 @@ void BaseClass::Read_INI(char *buffer)
 		/*
 		** Get an INI entry
 		*/
-		sprintf(uname,"%03d",i);
+		snprintf(uname, sizeof(uname), "%03d", i);
 		WWGetPrivateProfileString(INI_Name(), uname, NULL, buf, sizeof(buf)-1, buffer);
 
 		/*
@@ -207,7 +207,7 @@ void BaseClass::Read_INI(char *buffer)
 void BaseClass::Write_INI(char *buffer)
 {
 	char buf[128];
-	char uname[10];
+	char uname[12];
 
 	/*
 	**	Clear out all existing teamtype data from the INI file.
@@ -225,7 +225,7 @@ void BaseClass::Write_INI(char *buffer)
 	**	Write each entry into the INI
 	*/
 	for (int i = 0; i < Nodes.Count(); i++) {
-		sprintf(uname,"%03d",i);
+		snprintf(uname, sizeof(uname), "%03d", i);
 		sprintf(buf,"%s,%d",
 			BuildingTypeClass::As_Reference(Nodes[i].Type).IniName,
 			Nodes[i].Coord);

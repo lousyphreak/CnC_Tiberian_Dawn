@@ -274,9 +274,6 @@ void SidebarClass::Init_IO(void)
 	/*
 	** Add the sidebar's buttons only if we're not in editor mode.
 	*/
-	int buttonspacing = (SideBarWidth - (ButtonOneWidth + ButtonTwoWidth + ButtonThreeWidth)) / 4;
-
-
 	if (!Debug_Map) {
 		/*
 		** Set the button widths based on the string that goes in them.
@@ -299,8 +296,6 @@ void SidebarClass::Init_IO(void)
 		** find the spacing between buttons by getting remaining width
 		** and dividing it between the buttons.
 		*/
-		int buttonspacing = (SideBarWidth - (Repair.Width + Upgrade.Width + Zoom.Width)) / 4;
-
 		Repair.IsSticky = true;
 		Repair.ID = BUTTON_REPAIR;
 		Repair.X = 484;
@@ -950,10 +945,7 @@ bool SidebarClass::Activate(int control)
 	bool old = IsSidebarActive;
 
 		int sidex 		= SeenBuff.Get_Width() - SideBarWidth;
-		int sidey 		= Map.RadY + Map.RadHeight;
-		int topheight	= 13;
 		int sidewidth  = SeenBuff.Get_Width() - sidex;
-		int sideheight = SeenBuff.Get_Height() - sidey;
 
 	if (PlaybackGame)
 		return (old);
@@ -1229,7 +1221,6 @@ void SidebarClass::StripClass::Init_Theater(TheaterType theater)
 			"ATOM",
 			"BOMB"
 		};
-		int factor = Get_Resolution_Factor();
 		char	fullname[_MAX_FNAME+_MAX_EXT];
 		char buffer[_MAX_FNAME];
 		void const * cameo_ptr;
@@ -1746,7 +1737,7 @@ void SidebarClass::StripClass::Draw_It(bool complete)
 			**	Fetch the shape number for the object type located at this current working
 			**	slot. This shape pointer is used to draw the underlying graphic there.
 			*/
-			if ((unsigned)index < BuildableCount) {
+			if (index >= 0 && index < BuildableCount) {
 				ObjectTypeClass const * obj = NULL;
 				int spc  = 0;
 

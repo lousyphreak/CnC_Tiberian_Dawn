@@ -766,7 +766,7 @@ void Code_All_Pointers(void)
 	**	Currently-selected objects.
 	*/
 	for (i = 0; i < CurrentObject.Count(); i++) {
-		CurrentObject[i] = (ObjectClass *)CurrentObject[i]->As_Target();
+		CurrentObject[i] = reinterpret_cast<ObjectClass*>(static_cast<uintptr_t>(CurrentObject[i]->As_Target()));
 	}
 
 	/*
@@ -858,6 +858,9 @@ void Decode_All_Pointers(void)
 		case HOUSE_JP:
 			ScenPlayer = SCEN_PLAYER_JP;
 			break;
+
+		default:
+			break;
 	}
 	Check_Ptr(PlayerPtr,__FILE__,__LINE__);
 
@@ -867,7 +870,7 @@ void Decode_All_Pointers(void)
 	**	Currently-selected objects.
 	*/
 	for (i = 0; i < CurrentObject.Count(); i++) {
-		CurrentObject[i] = As_Object((TARGET)CurrentObject[i]);
+		CurrentObject[i] = As_Object(static_cast<TARGET>(reinterpret_cast<uintptr_t>(CurrentObject[i])));
 		Check_Ptr(CurrentObject[i],__FILE__,__LINE__);
 	}
 
@@ -1180,6 +1183,9 @@ TechnoTypeClass const * Target_To_TechnoType(TARGET target)
 
 		case KIND_BUILDING:
 			return(&BuildingTypeClass::As_Reference((StructType)Target_Value(target)));
+
+		default:
+			break;
 	}
 	return(NULL);
 }

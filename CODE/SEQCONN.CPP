@@ -476,9 +476,9 @@ if (packet_hdr->Code == PACKET_DATA_NOACK) {
 			/*..................................................................
 			Perform error detection, based on either MaxRetries or Timeout
 			..................................................................*/
-			if (MaxRetries != -1 && send_entry->SendCount > MaxRetries)
+			if (MaxRetries != static_cast<unsigned long>(-1) && send_entry->SendCount > MaxRetries)
 				return(false);
-			if (Timeout != -1 && send_entry->LastTime - 
+			if (Timeout != static_cast<unsigned long>(-1) && send_entry->LastTime - 
 				send_entry->FirstTime > Timeout)
 				return(false);
 

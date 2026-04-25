@@ -83,6 +83,7 @@ void VisualControlsClass::Process(void)
 	enum {
 		NUM_OF_BUTTONS = 6,
 	};
+	const int title_count = static_cast<int>(sizeof(_titles)/sizeof(_titles[0]));
 
 	/*
 	**	Variables.
@@ -233,7 +234,7 @@ void VisualControlsClass::Process(void)
 			/*
 			**	Draw the titles.
 			*/
-			for (int i = 0; i < (sizeof(_titles)/sizeof(_titles[0])); i++) {
+			for (int i = 0; i < title_count; i++) {
 				Fancy_Text_Print(_titles[i], Slider_X-8, Text_Y + (i*Slider_Y_Spacing),
 					CC_GREEN, TBLACK, TPF_6PT_GRAD|TPF_RIGHT|TPF_NOSHADOW| ((curbutton == i) ? TPF_BRIGHT_COLOR : TPF_USE_GRAD_PAL));
 			}
@@ -246,7 +247,7 @@ void VisualControlsClass::Process(void)
 		**	Get and process player input.
 		*/
 		KeyNumType input = optionsbtn.Input();
-		switch (input) {
+		switch (static_cast<int>(input)) {
 			case (BUTTON_BRIGHTNESS | KN_BUTTON):
 				Options.Set_Brightness(brightness.Get_Value());
 				break;
@@ -421,4 +422,3 @@ void VisualControlsClass::Process(void)
 		}
 	}
 }
-

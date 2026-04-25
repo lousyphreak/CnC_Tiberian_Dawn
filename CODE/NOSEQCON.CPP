@@ -612,12 +612,12 @@ int NonSequencedConnClass::Service_Send_Queue (void)
 			/*..................................................................
 			Perform error detection, based on either MaxRetries or Timeout
 			..................................................................*/
-			if (MaxRetries != -1 && send_entry->SendCount > MaxRetries) {
+			if (MaxRetries != static_cast<unsigned long>(-1) && send_entry->SendCount > MaxRetries) {
 // Smart_Printf( "Max Retries!!! %d !!! \n", MaxRetries );
 				bad_conn = 1;
 			}
 
-			if (Timeout != -1 &&
+			if (Timeout != static_cast<unsigned long>(-1) &&
 				(send_entry->LastTime - send_entry->FirstTime) > Timeout) {
 // Smart_Printf( "Timed out!!! Time %d, Timeout %d, buflen %d !!! \n",
 //	(send_entry->LastTime - send_entry->FirstTime), Timeout,

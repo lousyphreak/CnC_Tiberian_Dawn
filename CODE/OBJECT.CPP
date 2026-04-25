@@ -825,7 +825,6 @@ bool ObjectClass::Render(bool forced)
 {
 	int	x,y;
 	COORDINATE	coord = Render_Coord();
-	CELL	cell = Coord_Cell(coord);
 
 	if (Debug_Map || Debug_Unshroud || ((forced || IsToDisplay) && IsDown && !IsInLimbo)) {
 		IsToDisplay = false;

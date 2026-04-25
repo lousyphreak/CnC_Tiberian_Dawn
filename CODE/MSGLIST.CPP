@@ -539,10 +539,11 @@ int MessageListClass::Manage (void)
 	------------------------------------------------------------------------*/
 	txtlabel = MessageList;
 	while (txtlabel) {
+		int32_t const now = TickCount.Time();
 		/*.....................................................................
 		If this message's time is up, remove it from the list
 		.....................................................................*/
-		if (txtlabel->UserData != 0 && TickCount.Time() > txtlabel->UserData) {
+		if (txtlabel->UserData != 0 && now >= 0 && static_cast<unsigned long>(now) > txtlabel->UserData) {
 			/*..................................................................
 			If we're about to delete the edit message, clear our edit message
 			values.
@@ -805,4 +806,3 @@ void MessageListClass::Set_Width(int width)
 		}
 	}
 }
-

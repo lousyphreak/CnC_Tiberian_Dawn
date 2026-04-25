@@ -1119,8 +1119,8 @@ CELL DisplayClass::Click_Cell_Calc(int x, int y)
 	y -= TacPixelY;
 	y = Pixel_To_Lepton(y);
 
-	if ((unsigned)x < TacLeptonWidth &&
-		(unsigned)y < TacLeptonHeight) {
+	if (x >= 0 && x < TacLeptonWidth &&
+		y >= 0 && y < TacLeptonHeight) {
 
 		COORDINATE tcoord = XY_Coord(Pixel_To_Lepton(Lepton_To_Pixel(Coord_X(TacticalCoord))), Pixel_To_Lepton(Lepton_To_Pixel(Coord_Y(TacticalCoord))));
 
@@ -1654,12 +1654,12 @@ bool DisplayClass::Coord_To_Pixel(COORDINATE coord, int &x, int &y)
 		int xoff = Pixel_To_Lepton(Lepton_To_Pixel(Coord_X(coord)));
 
 		xoff = (xoff+EDGE_ZONE) - xtac;
-		if ((unsigned)xoff <= TacLeptonWidth + EDGE_ZONE*2) {
+		if (xoff >= 0 && xoff <= TacLeptonWidth + EDGE_ZONE*2) {
 			int ytac = Pixel_To_Lepton(Lepton_To_Pixel(Coord_Y(TacticalCoord)));
 			int yoff = Pixel_To_Lepton(Lepton_To_Pixel(Coord_Y(coord)));
 
 			yoff = (yoff+EDGE_ZONE) - ytac;
-			if ((unsigned)yoff <= TacLeptonHeight + EDGE_ZONE*2) {
+			if (yoff >= 0 && yoff <= TacLeptonHeight + EDGE_ZONE*2) {
 				x = Lepton_To_Pixel(xoff)-CELL_PIXEL_W*2;
 				y = Lepton_To_Pixel(yoff)-CELL_PIXEL_H*2;
 				return(true);
@@ -2281,7 +2281,7 @@ ObjectClass * DisplayClass::Next_Object(ObjectClass * object)
 	if (!object) {
 		foundmatch = true;
 	}
-	for (unsigned uindex = 0; uindex < Layer[LAYER_GROUND].Count(); uindex++) {
+	for (int uindex = 0; uindex < Layer[LAYER_GROUND].Count(); uindex++) {
 		ObjectClass * obj = Layer[LAYER_GROUND][uindex];
 
 		/*
@@ -2369,7 +2369,7 @@ COORDINATE DisplayClass::Pixel_To_Coord(int x, int y)
 	**	If pixel coordinate is over the tactical map, then translate it into a coordinate
 	**	value. If not, then just return with NULL.
 	*/
-	if ((unsigned)x < TacLeptonWidth && (unsigned)y < TacLeptonHeight) {
+	if (x >= 0 && x < TacLeptonWidth && y >= 0 && y < TacLeptonHeight) {
 		return(Coord_Add(TacticalCoord, XY_Coord(x, y)));
 	}
 	return(0);
@@ -2509,7 +2509,8 @@ CELL DisplayClass::Calculated_Cell(SourceType dir, HousesType house)
 			case SOURCE_BEACH: {
 				CELL	cells[MAP_CELL_W];
 				CELL	alternate[MAP_CELL_W];
-				unsigned	counter=0;
+				const int max_cells = static_cast<int>(sizeof(cells) / sizeof(cells[0]));
+				int	counter=0;
 
 				for (x = 0; x < MapCellWidth; x++) {
 					CELL	newcell = 0;
@@ -2535,7 +2536,7 @@ CELL DisplayClass::Calculated_Cell(SourceType dir, HousesType house)
 						!(*this)[newcell-(MAP_CELL_W*2)].Cell_Techno()) {
 
 						cells[counter++] = newcell;
-						if (counter >= (sizeof(cells) / sizeof(cells[0]))) {
+						if (counter >= max_cells) {
 							break;
 						}
 					}
@@ -3185,6 +3186,9 @@ void DisplayClass::Mouse_Left_Up(bool shadow, ObjectClass * object, ActionType a
 								text = TXT_ENEMY_STRUCTURE;
 							}
 							break;
+
+						default:
+							break;
 					}
 				}
 			}
@@ -3307,7 +3311,6 @@ void DisplayClass::Mouse_Left_Release(CELL cell, int x, int y, ObjectClass * obj
 				**	process, is necessary since multiple objects could be selected and each
 				**	might perform a different action when the click occurs.
 				*/
-				bool doflash = true;
 				AllowVoice = true;
 				for (int index = 0; index < CurrentObject.Count(); index++) {
 					ObjectClass * tobject = CurrentObject[index];
@@ -3572,7 +3575,8 @@ void DisplayClass::Compute_Start_Pos(void)
 	**	Set our TacticalCell
 	*/
 	Set_Tactical_Position(Cell_Coord(XY_Cell(x, y)));
-	for (int index = 0; index < sizeof(Views)/sizeof(Views[0]); index++) {
+	const int view_count = static_cast<int>(sizeof(Views) / sizeof(Views[0]));
+	for (int index = 0; index < view_count; index++) {
 		Views[index] = Coord_Cell(TacticalCoord);
 	}
 }
@@ -3694,8 +3698,10 @@ bool DisplayClass::In_View(CELL cell)
 	COORDINATE coord = Cell_Coord(cell) & 0xFF00FF00L;
 	COORDINATE tcoord = TacticalCoord & 0xFF00FF00L;
 
-	if ((unsigned)(Coord_X(coord) - Coord_X(tcoord)) > TacLeptonWidth+255) return(false);
-	if ((unsigned)(Coord_Y(coord) - Coord_Y(tcoord)) > TacLeptonHeight+255) return(false);
+	int const xdiff = Coord_X(coord) - Coord_X(tcoord);
+	int const ydiff = Coord_Y(coord) - Coord_Y(tcoord);
+	if (xdiff < 0 || xdiff > TacLeptonWidth+255) return(false);
+	if (ydiff < 0 || ydiff > TacLeptonHeight+255) return(false);
 	return(true);
 
 #ifdef OBSOLETE

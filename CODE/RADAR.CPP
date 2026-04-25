@@ -77,8 +77,6 @@ void const * RadarClass::RadarAnim = NULL;
 
 static bool FullRedraw = false;
 
-#define _MAX_NAME 13
-
 static GraphicBufferClass _IconStage(3,3);
 static GraphicBufferClass _TileStage(24,24);
 
@@ -382,7 +380,7 @@ void RadarClass::Draw_It(bool forced)
 					/*
 					**	Render all pixels in the "to redraw" stack.
 					*/
-					for (int index = 0; index < PixelPtr; index++) {
+					for (unsigned index = 0; index < PixelPtr; index++) {
 						CELL cell = PixelStack[index];
 					  	if (Cell_On_Radar(cell)) {
 							(*this)[cell].IsPlot = false;
@@ -918,11 +916,11 @@ int RadarClass::Click_In_Radar(int &ptr_x, int &ptr_y, bool change)
 
 	x -= (RadX + RadOffX);
 	y -= (RadY + RadOffY);
-	if ((unsigned)x < RadIWidth && (unsigned)y < RadIHeight) {
+	if (x >= 0 && x < RadIWidth && y >= 0 && y < RadIHeight) {
 		x -= BaseX;
 		y -= BaseY;
 
-		if ((unsigned)x < RadarWidth && (unsigned)y < RadarHeight) {
+		if (x >= 0 && x < static_cast<int>(RadarWidth) && y >= 0 && y < static_cast<int>(RadarHeight)) {
 			x = RadarX + (x / ZoomFactor);
 			y = RadarY + (y / ZoomFactor);
 			if (change) {
@@ -1596,7 +1594,8 @@ void RadarClass::Set_Radar_Position(CELL cell)
 	newy 		= oldy + MapCellY;
 	newcell	= XY_Cell(newx, newy);
 
-	if (RadarCell != newcell) {
+	unsigned const new_radar_cell = static_cast<unsigned>(newcell);
+	if (RadarCell != new_radar_cell) {
 	   int forced = FALSE;
 		int xmod = newx;
 		int ymod = newy;
@@ -1606,7 +1605,7 @@ void RadarClass::Set_Radar_Position(CELL cell)
 
 		RadarX 		= newx;
 		RadarY 		= newy;
-		RadarCell 	= newcell;
+		RadarCell 	= new_radar_cell;
 
 		if (Map.IsSidebarActive&& Map.IsRadarActive) {
 			int radw = RadarCellWidth-ABS(radx);			// Replicable width.
@@ -1615,7 +1614,7 @@ void RadarClass::Set_Radar_Position(CELL cell)
 			if (radw < 1) forced = true;
 			if (radh < 1) forced = true;
 
-			if (!forced && (radw != RadarWidth || radh != RadarHeight)) {
+			if (!forced && (radw != static_cast<int>(RadarWidth) || radh != static_cast<int>(RadarHeight))) {
 				/*
 				** Blit the section that is actually overlapping.
 				*/
@@ -1666,7 +1665,7 @@ void RadarClass::Set_Radar_Position(CELL cell)
 						max = radx;
 					}
 					for (int x = min; x < max; x++ ) {
-						for (int y = 0; y < RadarCellHeight; y++ ) {
+						for (unsigned y = 0; y < RadarCellHeight; y++ ) {
 							Radar_Pixel(XY_Cell(newx + x, newy + y));
 						}
 					}
@@ -1682,7 +1681,7 @@ void RadarClass::Set_Radar_Position(CELL cell)
 						max = rady;
 					}
 					for (int y = min; y < max; y++ ) {
-						for ( int x = 0; x < RadarCellWidth; x++ ) {
+						for (unsigned x = 0; x < RadarCellWidth; x++ ) {
 							Radar_Pixel(XY_Cell(newx + x, newy + y));
 						}
 					}

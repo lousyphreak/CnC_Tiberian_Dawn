@@ -3526,7 +3526,7 @@ void UnitClass::Read_INI(char *buffer)
 void UnitClass::Write_INI(char *buffer)
 {
 	int	index;
-	char	uname[10];
+	char	uname[12];
 	char	buf[128];
 	char	*tbuffer;		// Accumulation buffer of unit IDs.
 
@@ -3549,7 +3549,7 @@ void UnitClass::Write_INI(char *buffer)
 		unit = Units.Ptr(index);
 		if (!unit->IsInLimbo && unit->IsActive) {
 
-			sprintf(uname, "%03d", index);
+			snprintf(uname, sizeof(uname), "%03d", index);
 			sprintf(buf, "%s,%s,%d,%u,%d,%s,%s",
 				unit->House->Class->IniName,
 				unit->Class->IniName,
@@ -3606,8 +3606,6 @@ void UnitClass::Exit_Repair(void)
 		}
 	}
 	if (found) {
-		DirType	dir = Direction(cell);
-
 		Assign_Mission(MISSION_MOVE);
 		Assign_Destination(::As_Target(cell));
 	}

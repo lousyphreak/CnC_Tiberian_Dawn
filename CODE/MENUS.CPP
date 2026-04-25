@@ -803,7 +803,7 @@ int Main_Menu(unsigned long timeout)
 		**	Get and process player input.
 		*/
 		input = commands->Input();
-		switch (input) {
+		switch (static_cast<int>(input)) {
 #ifdef NEWMENU
 			case (BUTTON_EXPAND | KN_BUTTON):
 				retval = (input & 0x7FFF) - BUTTON_EXPAND;

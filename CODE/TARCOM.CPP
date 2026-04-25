@@ -153,6 +153,9 @@ void TarComClass::AI(void)
 				IsFiring = false;
 				Do_Uncloak();
 				break;
+
+			default:
+				break;
 		}
 	}
 
@@ -179,5 +182,4 @@ void TarComClass::AI(void)
 		}
 	}
 }
-
 

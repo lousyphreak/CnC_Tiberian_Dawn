@@ -482,7 +482,6 @@ bool Read_Scenario_Ini(char *root, bool fresh)
 		memset(_ShapeBuffer, '\0', _ShapeBufferSize);
 		CCFileClass("MISSION.INI").Read(_ShapeBuffer, _ShapeBufferSize);
 
-		char * buffer = (char *)Add_Long_To_Pointer(_ShapeBuffer, strlen(_ShapeBuffer));
 		char * work = &BriefingText[0];
 		int index = 1;
 
@@ -986,11 +985,11 @@ static void Create_Units(void)
 	For the current BuildLevel, find the max allowable index into the tables
 	------------------------------------------------------------------------*/
 	for (i = 0; i < NUM_UNIT_CATEGORIES; i++) {
-		if (BuildLevel >= utable[i].MinLevel)
+		if (static_cast<int>(BuildLevel) >= utable[i].MinLevel)
 			u_limit = i;
 	}
 	for (i = 0; i < NUM_INFANTRY_CATEGORIES; i++) {
-		if (BuildLevel >= utable[i].MinLevel)
+		if (static_cast<int>(BuildLevel) >= itable[i].MinLevel)
 			i_limit = i;
 	}
 
@@ -1644,6 +1643,9 @@ static CELL Clip_Move(CELL cell, FacingType facing, int dist)
 		case FACING_NW:
 			x -= dist;
 			y -= dist;
+			break;
+
+		default:
 			break;
 	}
 

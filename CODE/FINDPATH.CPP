@@ -729,8 +729,6 @@ top_of_list:
 				**	the edge of the blocking object in both CLOCKwise and
 				**	COUNTERCLOCKwise fashions.
 				*/
-				int follow_len = maxlen + (maxlen >> 1);
-
 				Debug_Draw_Map("Follow left edge", startcell,next,true);
 				Mem_Copy(&path, &pleft, sizeof(PathType));
 				pleft.Command 	= &moves_left[0];
@@ -739,10 +737,6 @@ top_of_list:
 				Mem_Copy(path.Overlap, pleft.Overlap, sizeof(LeftOverlap));
 				left = Follow_Edge(startcell, next, &pleft, COUNTERCLOCK, direction, threat, threat_stage, sizeof(moves_left), threshhold);
 //				left = Follow_Edge(startcell, next, &pleft, COUNTERCLOCK, direction, threat, threat_stage, follow_len, threshhold);
-
-				if (left) {
-					follow_len = MIN(maxlen, pleft.Length + (pleft.Length >> 1));
-				}
 
 				/*
 				** If we are in debug mode then let us know how well our left path
@@ -936,7 +930,6 @@ bool FootClass::Follow_Edge(CELL start, CELL target, PathType *path, FacingType 
 	int			forceout = false;
 	FacingType	firstdir = (FacingType)-1;
 	CELL			firstcell = -1;
-	bool			stepped_off_line = false;
 	startx 	= Cell_X(start);
 	starty	= Cell_Y(start);
 	targetx  = Cell_X(target);

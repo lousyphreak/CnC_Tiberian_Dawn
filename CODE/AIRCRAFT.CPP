@@ -221,8 +221,9 @@ void AircraftClass::operator delete(void *ptr)
  *   07/26/1994 JLB : Created.                                                                 *
  *=============================================================================================*/
 AircraftClass::AircraftClass(AircraftType classid, HousesType house) :
-	Class(&AircraftTypeClass::As_Reference(classid)),
-	FootClass(house)
+	FootClass(house),
+	FlyClass(),
+	Class(&AircraftTypeClass::As_Reference(classid))
 {
 	/*
 	**	For two shooters, clear out the second shot flag -- it will be set the first time
@@ -524,7 +525,7 @@ void AircraftClass::Read_INI(char *buffer)
 void AircraftClass::Write_INI(char *buffer)
 {
 	int	index;
-	char	uname[10];
+	char	uname[12];
 	char	buf[128];
 	char	*tbuffer;		// Accumulation buffer of unit IDs.
 
@@ -547,7 +548,7 @@ void AircraftClass::Write_INI(char *buffer)
 		unit = Aircraft.Ptr(index);
 		if (!unit->IsInLimbo) {
 
-			sprintf(uname, "%03d", index);
+			snprintf(uname, sizeof(uname), "%03d", index);
 			sprintf(buf, "%s,%s,%d,%u,%d,%s",
 				unit->House->Class->IniName,
 				unit->Class->IniName,
@@ -714,7 +715,7 @@ void AircraftClass::AI(void)
 			Mark();
 		}
 	}
-	if (Physics(Coord, PrimaryFacing) != RESULT_NONE) {
+	if (Physics(Coord, PrimaryFacing) != IMPACT_NONE) {
 		Mark();
 	}
 
@@ -2560,7 +2561,7 @@ RadioMessageType AircraftClass::Receive_Message(RadioClass * from, RadioMessageT
 					*/
 					if (Transmit_Message(RADIO_NEED_TO_MOVE, from) == RADIO_ROGER) {
 						CELL cell;
-						DirType dir = Desired_Load_Dir(from, cell);
+						Desired_Load_Dir(from, cell);
 
 						/*
 						**	If no adjacent free cells are detected, then passenger loading
@@ -2862,7 +2863,6 @@ bool AircraftClass::Cell_Seems_Ok(CELL cell, bool strict) const
 	**	are, then don't consider the location as valid.
 	*/
 	TARGET astarget = ::As_Target(cell);
-	bool ok = true;
 	for (int index = 0; index < Aircraft.Count(); index++) {
 		AircraftClass * air = Aircraft.Ptr(index);
 		if (air && (strict || air != this) && !air->IsInLimbo) {

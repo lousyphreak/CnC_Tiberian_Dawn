@@ -136,6 +136,35 @@
 #include "FUNCTION.H"
 
 
+namespace {
+
+template <typename T>
+T* Encode_Target_As_Pointer(TARGET target)
+{
+	return reinterpret_cast<T*>(static_cast<uintptr_t>(target));
+}
+
+template <typename T>
+TARGET Decode_Target_From_Pointer(T* pointer)
+{
+	return static_cast<TARGET>(reinterpret_cast<uintptr_t>(pointer));
+}
+
+template <typename T>
+T* Encode_Index_As_Pointer(int index)
+{
+	return reinterpret_cast<T*>(static_cast<uintptr_t>(index));
+}
+
+template <typename T>
+int Decode_Index_From_Pointer(T* pointer)
+{
+	return static_cast<int>(reinterpret_cast<uintptr_t>(pointer));
+}
+
+}
+
+
 /***********************************************************************************************
  * TeamTypeClass::Load -- Loads from a save game file.                                         *
  *                                                                                             *
@@ -198,7 +227,7 @@ void TeamTypeClass::Code_Pointers(void)
 	-------------------------- Code the Class array --------------------------
 	*/
 	for (int i = 0; i < ClassCount; i++) {
-		Class[i] = (TechnoTypeClass *)TechnoType_To_Target(Class[i]);
+		Class[i] = Encode_Target_As_Pointer<TechnoTypeClass>(TechnoType_To_Target(Class[i]));
 	}
 }
 
@@ -227,7 +256,7 @@ void TeamTypeClass::Decode_Pointers(void)
 	------------------------- Decode the Class array -------------------------
 	*/
 	for (int i = 0; i < ClassCount; i++) {
-		Class[i] =  Target_To_TechnoType((TARGET)Class[i]);
+		Class[i] = Target_To_TechnoType(Decode_Target_From_Pointer(Class[i]));
 		Check_Ptr((void *)Class[i],__FILE__,__LINE__);
 	}
 }
@@ -297,14 +326,14 @@ void TeamClass::Code_Pointers(void)
 	-------------------- Code Class & House for this team --------------------
 	*/
 	cls = Class;
-	((TeamTypeClass *&)Class) = (TeamTypeClass *)cls->As_Target();
-	((HouseClass *&)House) = (HouseClass *)House->Class->House;
+	((TeamTypeClass *&)Class) = Encode_Target_As_Pointer<TeamTypeClass>(cls->As_Target());
+	((HouseClass *&)House) = reinterpret_cast<HouseClass *>(static_cast<uintptr_t>(House->Class->House));
 
 	/*
 	--------------------------- Code the 'Member' ----------------------------
 	*/
 	if (Member) {
-		Member = (FootClass *)Member->As_Target();
+		Member = Encode_Target_As_Pointer<FootClass>(Member->As_Target());
 	}
 }
 
@@ -332,7 +361,7 @@ void TeamClass::Decode_Pointers(void)
 	/*
 	------------------- Decode Class & House for this team -------------------
 	*/
-	((TeamTypeClass *&)Class) = As_TeamType((TARGET)Class);
+	((TeamTypeClass *&)Class) = As_TeamType(Decode_Target_From_Pointer(Class));
 	Check_Ptr((void *)Class,__FILE__,__LINE__);
 	((HouseClass *&)House) = HouseClass::As_Pointer(static_cast<HousesType>(reinterpret_cast<uintptr_t>(House)));
 	Check_Ptr((void *)House,__FILE__,__LINE__);
@@ -341,17 +370,17 @@ void TeamClass::Decode_Pointers(void)
 	-------------------------- Decode the 'Member' ---------------------------
 	*/
 	if (Member) {
-		switch (Target_Kind((TARGET)Member)) {
+		switch (Target_Kind(Decode_Target_From_Pointer(Member))) {
 			case KIND_INFANTRY:
-				Member = As_Infantry((TARGET)Member);
+				Member = As_Infantry(Decode_Target_From_Pointer(Member));
 				break;
 
 			case KIND_UNIT:
-				Member = As_Unit((TARGET)Member);
+				Member = As_Unit(Decode_Target_From_Pointer(Member));
 				break;
 
 			case KIND_AIRCRAFT:
-				Member = As_Aircraft((TARGET)Member);
+				Member = As_Aircraft(Decode_Target_From_Pointer(Member));
 				break;
 
 			default:
@@ -434,7 +463,7 @@ bool TriggerClass::Save(FileClass & file)
 void TriggerClass::Code_Pointers(void)
 {
 	if (Team) {
-		Team = (TeamTypeClass *)Team->As_Target();
+		Team = Encode_Target_As_Pointer<TeamTypeClass>(Team->As_Target());
 	}
 }
 
@@ -460,7 +489,7 @@ void TriggerClass::Code_Pointers(void)
 void TriggerClass::Decode_Pointers(void)
 {
 	if (Team) {
-		Team = As_TeamType((TARGET)Team);
+		Team = As_TeamType(Decode_Target_From_Pointer(Team));
 		Check_Ptr((void *)Team,__FILE__,__LINE__);
 	}
 }
@@ -638,7 +667,7 @@ void AnimClass::Code_Pointers(void)
 	----------------------------- Code 'Object' ------------------------------
 	*/
 	if (Object) {
-		Object = (ObjectClass *)Object->As_Target();
+		Object = Encode_Target_As_Pointer<ObjectClass>(Object->As_Target());
 	}
 
 	/*
@@ -679,7 +708,7 @@ void AnimClass::Decode_Pointers(void)
 	---------------------------- Decode 'Object' -----------------------------
 	*/
 	if (Object) {
-		Object = As_Object((TARGET)Object);
+		Object = As_Object(Decode_Target_From_Pointer(Object));
 		Check_Ptr((void *)Object,__FILE__,__LINE__);
 	}
 
@@ -752,7 +781,7 @@ void BuildingClass::Code_Pointers(void)
 	/*
 	------------------------------ Code 'Class' ------------------------------
 	*/
-	((BuildingTypeClass const *&)Class) = (BuildingTypeClass *)Class->Type;
+	((BuildingTypeClass const *&)Class) = reinterpret_cast<BuildingTypeClass *>(static_cast<uintptr_t>(Class->Type));
 
 	/*------------------------------------------------------------------------
 	Code the Factory value; there's not target conversion routine for factories, 
@@ -760,7 +789,7 @@ void BuildingClass::Code_Pointers(void)
 	it's converted back
 	------------------------------------------------------------------------*/
 	if (Factory) {
-		Factory = (FactoryClass *)(Factories.ID(Factory) + 1);
+		Factory = Encode_Index_As_Pointer<FactoryClass>(Factories.ID(Factory) + 1);
 	}
 
 	/*
@@ -800,7 +829,7 @@ void BuildingClass::Decode_Pointers(void)
 	Decode the Factory value, subtracting off the '1' we added when coding it
 	------------------------------------------------------------------------*/
 	if (Factory) {
-		Factory = Factories.Raw_Ptr((int)Factory - 1);
+		Factory = Factories.Raw_Ptr(Decode_Index_From_Pointer(Factory) - 1);
 		Check_Ptr((void *)Factory,__FILE__,__LINE__);
 	}
 
@@ -878,7 +907,7 @@ void BulletClass::Code_Pointers(void)
 	----------------------------- Code 'Payback' -----------------------------
 	*/
 	if (Payback)
-		Payback = (TechnoClass *)Payback->As_Target();
+		Payback = Encode_Target_As_Pointer<TechnoClass>(Payback->As_Target());
 
 	/*
 	---------------------------- Chain to parent -----------------------------
@@ -919,7 +948,7 @@ void BulletClass::Decode_Pointers(void)
 	---------------------------- Decode 'Payback' ----------------------------
 	*/
 	if (Payback) {
-		Payback = As_Techno((TARGET)Payback);
+		Payback = As_Techno(Decode_Target_From_Pointer(Payback));
 		Check_Ptr((void *)Payback,__FILE__,__LINE__);
 	}
 
@@ -1594,10 +1623,10 @@ bool FactoryClass::Save(FileClass & file)
 void FactoryClass::Code_Pointers(void)
 {
 	if (Object) {
-		Object = (TechnoClass *)Object->As_Target();
+		Object = Encode_Target_As_Pointer<TechnoClass>(Object->As_Target());
 	}
 
-	((HouseClass *&)House) = (HouseClass *)House->Class->House;
+	((HouseClass *&)House) = reinterpret_cast<HouseClass *>(static_cast<uintptr_t>(House->Class->House));
 
 	StageClass::Code_Pointers();
 }
@@ -1624,7 +1653,7 @@ void FactoryClass::Code_Pointers(void)
 void FactoryClass::Decode_Pointers(void)
 {
 	if (Object) {
-		Object = As_Techno((TARGET)Object);
+		Object = As_Techno(Decode_Target_From_Pointer(Object));
 		Check_Ptr((void *)Object,__FILE__,__LINE__);
 	}
 
@@ -1743,7 +1772,7 @@ void LayerClass::Code_Pointers(void)
 
 	for (int i = 0; i < Count(); i++) {
 		obj = (*this)[i];
-		(*this)[i] = (ObjectClass *)(obj->As_Target());
+		(*this)[i] = Encode_Target_As_Pointer<ObjectClass>(obj->As_Target());
 	}
 }
 
@@ -1771,8 +1800,8 @@ void LayerClass::Decode_Pointers(void)
 	TARGET target;
 
 	for (int i = 0; i < Count(); i++) {
-		target = (TARGET)(*this)[i];
-		(*this)[i] = (ObjectClass *)As_Object(target);
+		target = Decode_Target_From_Pointer((*this)[i]);
+		(*this)[i] = As_Object(target);
 		Check_Ptr((*this)[i],__FILE__,__LINE__);
 	}
 }
@@ -2233,10 +2262,10 @@ void DriveClass::Decode_Pointers(void)
 void FootClass::Code_Pointers(void)
 {
 	if (Team)
-		Team = (TeamClass *)Team->As_Target();
+		Team = Encode_Target_As_Pointer<TeamClass>(Team->As_Target());
 
 	if (Member) {
-		Member = (FootClass *)Member->As_Target();
+		Member = Encode_Target_As_Pointer<FootClass>(Member->As_Target());
 	}
 
 	TechnoClass::Code_Pointers();
@@ -2264,12 +2293,12 @@ void FootClass::Code_Pointers(void)
 void FootClass::Decode_Pointers(void)
 {
 	if (Team) {
-		Team = As_Team((TARGET)Team);
+		Team = As_Team(Decode_Target_From_Pointer(Team));
 		Check_Ptr((void *)Team,__FILE__,__LINE__);
 	}
 
 	if (Member) {
-		Member = (FootClass *)As_Techno((TARGET)Member);
+		Member = static_cast<FootClass *>(As_Techno(Decode_Target_From_Pointer(Member)));
 		Check_Ptr((void *)Member,__FILE__,__LINE__);
 	}
 
@@ -2303,7 +2332,7 @@ void RadioClass::Code_Pointers(void)
 	------------------------------ Code 'Radio' ------------------------------
 	*/
 	if (Radio) {
-		Radio = (RadioClass *)Radio->As_Target();
+		Radio = Encode_Target_As_Pointer<RadioClass>(Radio->As_Target());
 	}
 
 	MissionClass::Code_Pointers();
@@ -2334,7 +2363,7 @@ void RadioClass::Decode_Pointers(void)
 	----------------------------- Decode 'Radio' -----------------------------
 	*/
 	if (Radio) {
-		Radio = As_Techno((TARGET)Radio);
+		Radio = As_Techno(Decode_Target_From_Pointer(Radio));
 		Check_Ptr((void *)Radio,__FILE__,__LINE__);
 	}
 
@@ -2487,7 +2516,7 @@ void CargoClass::Code_Pointers(void)
 	---------------------------- Code 'CargoHold' ----------------------------
 	*/
 	if (CargoHold) {
-		CargoHold = (FootClass *)CargoHold->As_Target();
+		CargoHold = Encode_Target_As_Pointer<FootClass>(CargoHold->As_Target());
 	}
 }
 
@@ -2516,7 +2545,7 @@ void CargoClass::Decode_Pointers(void)
 	--------------------------- Decode 'CargoHold' ---------------------------
 	*/
 	if (CargoHold) {
-		CargoHold = (FootClass *)As_Techno((TARGET)CargoHold);
+		CargoHold = static_cast<FootClass *>(As_Techno(Decode_Target_From_Pointer(CargoHold)));
 		Check_Ptr((void *)CargoHold,__FILE__,__LINE__);
 	}
 }
@@ -2595,11 +2624,11 @@ void MissionClass::Decode_Pointers(void)
 void ObjectClass::Code_Pointers(void)
 {
 	if (Next) {
-		Next = (ObjectClass *)Next->As_Target();
+		Next = Encode_Target_As_Pointer<ObjectClass>(Next->As_Target());
 	}
 
 	if (Trigger) {
-		Trigger = (TriggerClass *)Trigger->As_Target();
+		Trigger = Encode_Target_As_Pointer<TriggerClass>(Trigger->As_Target());
 	}
 }
 
@@ -2625,12 +2654,12 @@ void ObjectClass::Code_Pointers(void)
 void ObjectClass::Decode_Pointers(void)
 {
 	if (Next) {
-		Next = As_Object((TARGET)Next);
+		Next = As_Object(Decode_Target_From_Pointer(Next));
 		Check_Ptr((void *)Next,__FILE__,__LINE__);
 	}
 
 	if (Trigger) {
-		Trigger = As_Trigger((TARGET)Trigger);
+		Trigger = As_Trigger(Decode_Target_From_Pointer(Trigger));
 		Check_Ptr((void *)Trigger,__FILE__,__LINE__);
 	}
 }

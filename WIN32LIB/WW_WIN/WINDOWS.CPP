@@ -470,7 +470,7 @@ void Window_Print(char const string[], ...)
 			}
 		}
 
-		switch(c) {
+		switch(static_cast<unsigned char>(c)) {
 
 #if(FALSE)
 	// these are the positions of foreign language characters
@@ -546,7 +546,7 @@ void Window_Print(char const string[], ...)
 			/*
 			**	Move cursor to start of next line.
 			*/
-			case KA_RETURN:
+			case (KA_RETURN & 0xff):
 				Flush_Line();
 				ScrollCounter++;
 				WinCx = 0;
@@ -583,7 +583,7 @@ void Window_Print(char const string[], ...)
 			/*
 			**	Move cursor to next column.
 			*/
-			case KA_TAB:
+			case (KA_TAB & 0xff):
 				Flush_Line();
 				WPos = ((WPos + 8) & 0xFFF8) - 1;
 				if (WPos >= WindowColumns) {
@@ -627,7 +627,7 @@ void Window_Print(char const string[], ...)
 			**	next character is a extended value 1-127, but 128 is added
 			** for a value 129-255
 			*/
-			case KA_EXTEND:
+			case (KA_EXTEND & 0xff):
 				c = 127;
 
 			// NOTE: this falls thru to the default case DO NOT MOVE!!!!!

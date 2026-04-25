@@ -222,14 +222,8 @@ void MapClass::Init_Cells(void)
 	Free_Cells();
 	Alloc_Cells();
 #else
-	memset(&Map[0], 0, sizeof(CellClass) * (MAP_CELL_TOTAL/2));
-	memset(&Map[MAP_CELL_TOTAL/2], 0, sizeof(CellClass) * (MAP_CELL_TOTAL/2));
 	for (int index = 0; index < MAP_CELL_TOTAL; index++) {
-		Map[index].Overlay = OVERLAY_NONE;
-		Map[index].Smudge = SMUDGE_NONE;
-		Map[index].TType = TEMPLATE_NONE;
-		Map[index].Owner = HOUSE_NONE;
-		Map[index].InfType = HOUSE_NONE;
+		Map[index] = CellClass();
 	}
 #endif
 }
@@ -800,13 +794,15 @@ void MapClass::Logic(void)
 	*/
 	int subcount = 30;
 	int index = TiberiumScan;
+	int const tiberium_growth_capacity = sizeof(TiberiumGrowth) / sizeof(TiberiumGrowth[0]);
+	int const tiberium_spread_capacity = sizeof(TiberiumSpread) / sizeof(TiberiumSpread[0]);
 	for (; index < MAP_CELL_TOTAL; index++) {
 		CELL cell = index;
 		if (!IsForwardScan) cell = (MAP_CELL_TOTAL-1) - index;
 		CellClass *ptr = &(*this)[cell];
 
 		if (Special.IsTGrowth && ptr->Land_Type() == LAND_TIBERIUM && ptr->OverlayData < 11) {
-			if (TiberiumGrowthCount < sizeof(TiberiumGrowth)/sizeof(TiberiumGrowth[0])) {
+			if (TiberiumGrowthCount < tiberium_growth_capacity) {
 				TiberiumGrowth[TiberiumGrowthCount++] = cell;
 			} else {
 				TiberiumGrowth[Random_Pick(0, TiberiumGrowthCount-1)] = cell;
@@ -818,13 +814,13 @@ void MapClass::Logic(void)
 		*/
 		TerrainClass * terrain = ptr->Cell_Terrain();
 		if (Special.IsTSpread &&
-			(ptr->Land_Type() == LAND_TIBERIUM && ptr->OverlayData > 6) ||
-			(terrain && terrain->Class->IsTiberiumSpawn)) {
+			((ptr->Land_Type() == LAND_TIBERIUM && ptr->OverlayData > 6) ||
+			(terrain && terrain->Class->IsTiberiumSpawn))) {
 
 			int tries = 1;
 			if (terrain) tries = 3;
 			for (int i = 0; i < tries; i++) {
-				if (TiberiumSpreadCount < sizeof(TiberiumSpread)/sizeof(TiberiumSpread[0])) {
+				if (TiberiumSpreadCount < tiberium_spread_capacity) {
 					TiberiumSpread[TiberiumSpreadCount++] = cell;
 				} else {
 					TiberiumSpread[Random_Pick(0, TiberiumSpreadCount-1)] = cell;
@@ -1078,11 +1074,11 @@ if (BlubCell->Overlapper[1]) {
 		obj = (*this)[cell].Cell_Occupier();
 		if (obj) {
 			if (
-				((unsigned int)obj & 0xff000000) ||
-				((unsigned int)obj->Next & 0xff000000) ||
-				((unsigned int)obj->Trigger & 0xff000000) ||
+				((reinterpret_cast<uintptr_t>(obj) & ~static_cast<uintptr_t>(0x00FFFFFFu)) != 0) ||
+				((reinterpret_cast<uintptr_t>(obj->Next) & ~static_cast<uintptr_t>(0x00FFFFFFu)) != 0) ||
+				((reinterpret_cast<uintptr_t>(obj->Trigger) & ~static_cast<uintptr_t>(0x00FFFFFFu)) != 0) ||
 				obj->IsInLimbo ||
-				((unsigned int)Coord_Cell(obj->Coord) > 4095)
+				(static_cast<unsigned int>(Coord_Cell(obj->Coord)) > 4095U)
 				)
 				return (false);
 		}
@@ -1094,11 +1090,11 @@ if (BlubCell->Overlapper[1]) {
 			obj = (*this)[cell].Overlapper[i];
 			if (obj) {
 				if (
-					((unsigned int)obj & 0xff000000) ||
-					((unsigned int)obj->Next & 0xff000000) ||
-					((unsigned int)obj->Trigger & 0xff000000) ||
+					((reinterpret_cast<uintptr_t>(obj) & ~static_cast<uintptr_t>(0x00FFFFFFu)) != 0) ||
+					((reinterpret_cast<uintptr_t>(obj->Next) & ~static_cast<uintptr_t>(0x00FFFFFFu)) != 0) ||
+					((reinterpret_cast<uintptr_t>(obj->Trigger) & ~static_cast<uintptr_t>(0x00FFFFFFu)) != 0) ||
 					obj->IsInLimbo ||
-					((unsigned int)Coord_Cell(obj->Coord) > 4095)
+					(static_cast<unsigned int>(Coord_Cell(obj->Coord)) > 4095U)
 					)
 					return (false);
 			}
@@ -1136,7 +1132,8 @@ ObjectClass * MapClass::Close_Object(COORDINATE coord) const
 	**	closest object (within reason) to the specified coordinate.
 	*/
 	static int _offsets[] = {0, -1, 1, -MAP_CELL_W, MAP_CELL_W, MAP_CELL_W-1, MAP_CELL_W+1, -(MAP_CELL_W-1), -(MAP_CELL_W+1)};
-	for (int index = 0; index < (sizeof(_offsets) / sizeof(_offsets[0])); index++) {
+	int const offset_count = sizeof(_offsets) / sizeof(_offsets[0]);
+	for (int index = 0; index < offset_count; index++) {
 
 		/*
 		**	Examine the cell for close object. Make sure that the cell actually is a

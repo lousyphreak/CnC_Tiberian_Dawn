@@ -239,8 +239,8 @@ InfantryClass::InfantryClass(void) : Class(0) {};		// Default constructor does n
  *   09/01/1994 JLB : Created.                                                                 *
  *=============================================================================================*/
 InfantryClass::InfantryClass(InfantryType classid, HousesType house) :
-	Class(&InfantryTypeClass::As_Reference(classid)),
-	FootClass(house)
+	FootClass(house),
+	Class(&InfantryTypeClass::As_Reference(classid))
 {
 
 	/*
@@ -494,6 +494,9 @@ ResultType InfantryClass::Take_Damage(int & damage, int distance, WarheadType wa
 			case WARHEAD_FOOT:
 				Sound_Effect(sound, Coord);
 				Do_Action(DO_KICK_DEATH,true);
+				break;
+
+			default:
 				break;
 		}
 
@@ -969,7 +972,7 @@ void InfantryClass::Assign_Target(TARGET target)
 	*/
 	if (!Target_Legal(NavCom) && Class->IsCapture && Class->Primary == WEAPON_NONE) {
 		BuildingClass const * building = As_Building(target);
-		if (building && building->Class->IsCaptureable && (GameToPlay != GAME_NORMAL || *building != STRUCT_EYE && Scenario < 13)) {
+		if (building && building->Class->IsCaptureable && (GameToPlay != GAME_NORMAL || (*building != STRUCT_EYE && Scenario < 13))) {
 			Assign_Destination(target);
 		}
 	}
@@ -1149,6 +1152,9 @@ void InfantryClass::AI(void)
 				}
 			}
 #endif
+			break;
+
+		default:
 			break;
 	}
 
@@ -1752,8 +1758,6 @@ short const * InfantryClass::Overlap_List(void) const
 FireErrorType InfantryClass::Can_Fire(TARGET target, int which) const
 {
 	Validate();
-	WeaponTypeClass const * weapon = (which == 0) ? &Weapons[Class->Primary] : &Weapons[Class->Secondary];
-
 #ifdef BOXING
 	/*
 	** If in hand-to-hand, and we're currently playing a got-hit animation,
@@ -2977,7 +2981,7 @@ void InfantryClass::Read_INI(char *buffer)
 void InfantryClass::Write_INI(char *buffer)
 {
 	int			index;
-	char			uname[10];
+	char			uname[16];
 	char			buf[128];
 	char			*tbuffer;		// Accumulation buffer of infantry IDs.
 
@@ -3000,8 +3004,8 @@ void InfantryClass::Write_INI(char *buffer)
 		infantry = Infantry.Ptr(index);
 		if (!infantry->IsInLimbo) {
 
-			sprintf(uname, "%03d", index);
-			sprintf(buf, "%s,%s,%d,%u,%d,%s,%d,%s",
+			snprintf(uname, sizeof(uname), "%03d", index);
+			snprintf(buf, sizeof(buf), "%s,%s,%d,%u,%d,%s,%d,%s",
 					infantry->House->Class->IniName,
 					infantry->Class->IniName,
 					infantry->Health_Ratio(),

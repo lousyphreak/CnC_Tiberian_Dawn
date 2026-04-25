@@ -154,8 +154,8 @@ static JoinEventType Get_Join_Responses(JoinStateType *joinstate, ListClass *gam
 	ColorListClass *playerlist, int join_index);
 static int Net_New_Dialog(void);
 static JoinEventType Get_NewGame_Responses(ColorListClass *playerlist);
-static int Net_Fake_New_Dialog(void);
-static int Net_Fake_Join_Dialog(void);
+static int Net_Fake_New_Dialog(void) __attribute__((unused));
+static int Net_Fake_Join_Dialog(void) __attribute__((unused));
 
 ConnManClass *Current_Network_Manager(void)
 {
@@ -1338,7 +1338,7 @@ static int Net_Join_Dialog(void)
 		/*
 		---------------------------- Process input ----------------------------
 		*/
-		switch (input) {
+		switch (static_cast<int>(input)) {
 			/*------------------------------------------------------------------
 			User clicks on a color button:
 			- If we've joined a game, don't allow a new color selection
@@ -1954,9 +1954,9 @@ static int Net_Join_Dialog(void)
 		a chance to get to the other system.  If he doesn't get our ACK, he'll
 		be waiting the whole time we load MIX files.
 		---------------------------------------------------------------------*/
-		i = MAX(Current_Global_Response_Time() * 2, 60);
+		const unsigned long wait_time = static_cast<unsigned long>(MAX(Current_Global_Response_Time() * 2, 60));
 		starttime = TickCount.Time();
-		while (TickCount.Time() - starttime < i) {
+		while (TickCount.Time() - starttime < wait_time) {
 			NetMgr.Service();
 		}
 	}
@@ -3227,7 +3227,7 @@ static int Net_New_Dialog(void)
 		/*
 		---------------------------- Process input ----------------------------
 		*/
-		switch (input) {
+		switch (static_cast<int>(input)) {
 			/*------------------------------------------------------------------
 			New Scenario selected.
 			------------------------------------------------------------------*/
@@ -4034,7 +4034,7 @@ unsigned long Compute_Name_CRC(char *name)
 	strcpy (buf, name);
 	strupr (buf);
 
-	for (i = 0; i < strlen(buf); i++) {
+	for (i = 0; buf[i] != '\0'; i++) {
 		Add_CRC (&crc, (unsigned long)buf[i]);
 	}
 
@@ -4276,7 +4276,6 @@ static int Net_Fake_New_Dialog(void)
 	KeyNumType input;
 
 	char credbuf[CREDITSBUF_MAX];			// for credit edit box
-	int old_cred;								// old value in credits buffer
 	int transmit;								// 1 = re-transmit new game options
 
 	long ok_timer = 0;						// for timing OK button
@@ -4338,8 +4337,6 @@ static int Net_Fake_New_Dialog(void)
 	*/
 
 	sprintf(credbuf, "%d", MPlayerCredits);
-	old_cred = MPlayerCredits;
-
 	/*........................................................................
 	Init other scenario parameters
 	........................................................................*/
@@ -4468,7 +4465,7 @@ static int Net_Fake_New_Dialog(void)
 		/*
 		---------------------------- Process input ----------------------------
 		*/
-		switch (input) {
+		switch (static_cast<int>(input)) {
 
 			/*------------------------------------------------------------------
 			CANCEL: send a SIGN_OFF, bail out with error code
@@ -4803,9 +4800,6 @@ static int Net_Fake_Join_Dialog(void)
 	int d_dialog_y = ((200*factor - d_dialog_h) / 2);				// centered y-coord
 	int d_dialog_cx = d_dialog_x + (d_dialog_w / 2);		// center x-coord
 
-	int d_margin1=10;
-	int d_txt6_h=15;
-
 	int d_gamelist_w = 160*factor;
 	int d_gamelist_h = 27*factor;
 	int d_gamelist_x = 500*factor;  //230*factor;	//Off screen
@@ -4875,13 +4869,11 @@ static int Net_Fake_Join_Dialog(void)
 	KeyNumType input;
 
 	JoinStateType joinstate = JOIN_NOTHING;	// current "state" of this dialog
-	char namebuf[MPLAYER_NAME_MAX] = {0};		// buffer for player's name
 	int game_index = -1;						// index of currently-selected game
 	int join_index = -1;						// index of game we're joining
 	int rc = 0;									// -1 = user cancelled, 1 = New
 	JoinEventType event;						// event from incoming packet
 	int i,j;										// loop counter
-	int parms_received;						// 1 = game options received
 
 	unsigned char tmp_id[MAX_PLAYERS];	// temp storage for sorting player ID's
 	int min_index;								// for sorting player ID's
@@ -5037,7 +5029,7 @@ static int Net_Fake_Join_Dialog(void)
 		/*
 		---------------------------- Process input ----------------------------
 		*/
-		switch (input) {
+		switch (static_cast<int>(input)) {
 
 			/*------------------------------------------------------------------
 			CANCEL: send a SIGN_OFF
@@ -5119,7 +5111,6 @@ static int Net_Fake_Join_Dialog(void)
 				if (joinstate == JOIN_NOTHING && Games.Count()!=0){
 					gamelist.Set_Selected_Index(0);
 					join_index = gamelist.Current_Index();
-					parms_received = 0;
 					if (Request_To_Join (MPlayerName, join_index, &playerlist, MPlayerHouse,
 						MPlayerColorIdx)) {
 						joinstate = JOIN_WAIT_CONFIRM;
@@ -5221,7 +5212,6 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 		If the game options have changed, print them.
 		.....................................................................*/
 		if (event == EV_GAME_OPTIONS) {
-			parms_received = 1;
 			display = REDRAW_MESSAGE;
 		} else
 
@@ -5435,9 +5425,9 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 		a chance to get to the other system.  If he doesn't get our ACK, he'll
 		be waiting the whole time we load MIX files.
 		---------------------------------------------------------------------*/
-		i = MAX(Current_Global_Response_Time() * 2, 120);
+		const unsigned long wait_time = static_cast<unsigned long>(MAX(Current_Global_Response_Time() * 2, 120));
 		starttime = TickCount.Time();
-		while (TickCount.Time() - starttime < i) {
+		while (TickCount.Time() - starttime < wait_time) {
 			NetMgr.Service();
 		}
 	}

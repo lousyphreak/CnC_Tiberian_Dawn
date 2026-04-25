@@ -246,14 +246,11 @@ void Map_Selection(void)
 	static char const _regpal[]={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
 	GraphicBufferClass backpage(20*6,8);
 
-	unsigned char *grey2palette    = new unsigned char[768];
-	unsigned char *progresspalette = new unsigned char[768];
+	unsigned char *grey2palette;
+	unsigned char *progresspalette;
 
 
 	Keyboard::Clear();
-	oldfont = Set_Font(ScoreFontPtr);
-	Set_Font_Palette(_regpal);
-	Set_Palette(BlackPalette);
 
 	scenario = Scenario + ((house == HOUSE_GOOD) ? 0 : 14);
 	if (house == HOUSE_GOOD) {
@@ -266,6 +263,12 @@ void Map_Selection(void)
 
 	// Check if they're even entitled to map selection this time
 	if (CountryArray[scenario].Choices[ScenDir]==0) return;
+
+	grey2palette = new unsigned char[768];
+	progresspalette = new unsigned char[768];
+	oldfont = Set_Font(ScoreFontPtr);
+	Set_Font_Palette(_regpal);
+	Set_Palette(BlackPalette);
 
 	Theme.Queue_Song(THEME_MAP1);
 	PseudoSeenBuff = new GraphicBufferClass(320,200,(void*)NULL);
@@ -529,7 +532,7 @@ void Map_Selection(void)
 	Bit_It_In_Scale(0, 0, 320, 200, &SysMemPage, PseudoSeenBuff , &SeenBuff,1,1);
 	backpage.Blit(SysMemPage, 0,0, xcoord,11, 20*6,8);
 	if (!lastscenario) Call_Back_Delay(85);
-//	Set_Font(oldfont);
+	Set_Font(oldfont);
 #ifdef FRENCH
 	PseudoSeenBuff->Fill_Rect(xcoord,12,xcoord+6*16+10,20,BLACK);
 	TextPrintBuffer->Fill_Rect(2*xcoord,2*12,2*(xcoord+6*16+10),2*20,BLACK);
@@ -669,8 +672,6 @@ void Map_Selection(void)
 	** selection is made?
 	*/
 	int done = 0;
-	int framecounter = 0;
-
 	if (house == HOUSE_GOOD) {
 		Load_Uncompress(CCFileClass(lastscenario ? "CLICK_EB.CPS" : "CLICK_E.CPS"), SysMemPage, SysMemPage);
 	} else {
@@ -794,8 +795,8 @@ void Map_Selection(void)
 	Theme.Queue_Song(THEME_NONE);
 	Fade_Palette_To(BlackPalette, FADE_PALETTE_MEDIUM, NULL);
 	delete europe;
-	delete progresspalette;
-	delete grey2palette;
+	delete [] progresspalette;
+	delete [] grey2palette;
 	delete TextPrintBuffer;
 	TextPrintBuffer = NULL;
 	BlitList.Clear();
@@ -818,7 +819,7 @@ void Map_Selection(void)
  *=========================================================================*/
 void Print_Statistics(int country, int xpos, int ypos)
 {
-	int index,newx;
+	int newx;
 	void *oldfont;
 	static int const _gdistatnames[]={
 		TXT_MAP_GDISTAT0,
@@ -1143,7 +1144,7 @@ void Cycle_Call_Back_Delay(int time, unsigned char *pal)
 	int i;
 
 	while (time--) {
-		_counter = (++_counter & 3);
+	_counter = (_counter + 1) & 3;
 
 		if (!(_counter & 3) ) {
 			r = pal[249*3+0];
@@ -1208,7 +1209,7 @@ void Bit_It_In_Scale(int x, int y, int w, int h, GraphicBufferClass *src, Graphi
 {
 	short int	 *xindex,*yindex;
 	int			 n;
-	unsigned int i,j,k,m,j1;
+	int			 i,j,k,m,j1;
 	short			 ScaleBuffer[320+200];
 
 	xindex = (short int *) ScaleBuffer;

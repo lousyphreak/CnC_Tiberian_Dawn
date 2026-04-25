@@ -90,10 +90,8 @@ bool Do_Reinforcements(TeamTypeClass *teamtype)
 	bool airtransport = false;				// Transport can fly in?
 	bool watertransport = false;			// Transport needs a beach to land at?
 	bool onlytransport = true;				// Just transport is in reinforcement?
-	bool hastransport = false;				// Group comes with transport?
 	for (int index=0; index < teamtype->ClassCount; index++) {
 		if (teamtype->Class[index]->IsTransporter || teamtype->Class[index]->What_Am_I() == RTTI_AIRCRAFTTYPE) {
-			hastransport = true;
 			if (teamtype->Class[index]->What_Am_I() == RTTI_AIRCRAFTTYPE) {
 				airtransport = true;
 			} else {

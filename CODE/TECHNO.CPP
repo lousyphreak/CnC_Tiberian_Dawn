@@ -456,8 +456,8 @@ void TechnoClass::Debug_Dump(MonoClass *mono) const
  *   12/09/1994 JLB : Created.                                                                 *
  *=============================================================================================*/
 TechnoClass::TechnoClass(void) :
-	TarCom(TARGET_NONE),
-	House(0)
+	House(0),
+	TarCom(TARGET_NONE)
 {
 	Arm = 0;
 	Ammo = -1;
@@ -784,7 +784,7 @@ TechnoClass::TechnoClass(HousesType house) :
 	/*
 	**	There is a chance that a vehicle will be a "lemon".
 	*/
-	if (Random_Pick(0, 255) < House->Class->Lemon) {
+	if (Random_Pick(0U, 255U) < House->Class->Lemon) {
 		IsALemon = true;
 	}
 }
@@ -864,7 +864,7 @@ void TechnoClass::Draw_It(int x, int y, WindowNumberType window)
 	Clear_Redraw_Flag();
 	if (IsSelected || Special.IsBarOn) {
 		GraphicViewPortClass draw_window(	LogicPage->Get_Graphic_Buffer(),
-														WindowList[window][WINDOWX] << 3 + LogicPage->Get_XPos(),
+														(WindowList[window][WINDOWX] << 3) + LogicPage->Get_XPos(),
 														WindowList[window][WINDOWY] + LogicPage->Get_YPos(),
 														WindowList[window][WINDOWWIDTH] << 3,
 														WindowList[window][WINDOWHEIGHT]);
@@ -1614,7 +1614,6 @@ void TechnoClass::AI(void)
 			}
 		} else {
 
-			VisualType pre = Visual_Character(true);
 			CloakingDevice.Graphic_Logic();
 			switch (Cloak) {
 
@@ -1680,6 +1679,9 @@ void TechnoClass::AI(void)
 								Scatter(0, true);
 							}
 							break;
+
+						default:
+							break;
 					}
 					break;
 
@@ -1691,6 +1693,9 @@ void TechnoClass::AI(void)
 					if (IsOwnedByPlayer) {
 						Mark(MARK_CHANGE);
 					}
+					break;
+
+				default:
 					break;
 			}
 		}
@@ -2210,7 +2215,6 @@ ActionType TechnoClass::What_Action(ObjectClass * object) const
 		/*
 		**	If firing is possible and legal, then return this action potential.
 		*/
-		bool control = Keyboard::Down(KN_LCTRL) || Keyboard::Down(KN_RCTRL);
 		if (IsOwnedByPlayer && (ctrldown || !House->Is_Ally(object)) && (ctrldown || object->Class_Of().IsLegalTarget || (Special.IsTreeTarget && object->What_Am_I() == RTTI_TERRAIN))) {
 			if (Can_Player_Move() || In_Range(object, 0)) {
 				return(ACTION_ATTACK);

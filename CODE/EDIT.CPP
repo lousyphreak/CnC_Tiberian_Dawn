@@ -260,7 +260,7 @@ int EditClass::Action(unsigned flags, KeyNumType & key)
 			** Allow numeric keypad presses to map to ascii numbers
 			*/
 			if ((key & WWKEY_VK_BIT) && ascii >='0' && ascii <= '9'){
-				key &= ~WWKEY_VK_BIT;
+				key = static_cast<KeyNumType>(key & ~WWKEY_VK_BIT);
 
 				if ( (!(flags & LEFTRELEASE)) && (!(flags & RIGHTRELEASE))){
 					if (Handle_Key (ascii) ) {
@@ -339,6 +339,11 @@ void EditClass::Draw_Background(void)
  *=============================================================================================*/
 void EditClass::Draw_Text(char const * text)
 {
+	size_t const text_length = strlen(text);
+	size_t const max_length = MaxLength > 0 ? static_cast<size_t>(MaxLength) : 0;
+	uint32_t const cursor_width = String_Pixel_Width("_");
+	int const available_width = Width - 2;
+
 	if (FontPtr == GradFont6Ptr) {
 		TextPrintType flags;
 
@@ -350,15 +355,15 @@ void EditClass::Draw_Text(char const * text)
 
 		Conquer_Clip_Text_Print(text, X+1, Y+1, Color, TBLACK, TextFlags | flags, Width-2);
 
-		if (Has_Focus() && strlen(text) < MaxLength &&
-				(String_Pixel_Width(text) + String_Pixel_Width ("_") < Width-2) ) {
+		if (Has_Focus() && text_length < max_length &&
+				available_width > 0 && (String_Pixel_Width(text) + cursor_width < static_cast<uint32_t>(available_width)) ) {
 			Conquer_Clip_Text_Print( "_", X+1+String_Pixel_Width(text), Y+1, Color, TBLACK, TextFlags | flags);
 		}
 	} else {
 		Conquer_Clip_Text_Print(text, X+1, Y+1, Has_Focus() ? BLUE : WHITE, TBLACK, TextFlags, Width-2);
 
-		if (Has_Focus() && strlen(text) < MaxLength &&
-				(String_Pixel_Width(text) + String_Pixel_Width ("_") < Width-2) ) {
+		if (Has_Focus() && text_length < max_length &&
+				available_width > 0 && (String_Pixel_Width(text) + cursor_width < static_cast<uint32_t>(available_width)) ) {
 			Conquer_Clip_Text_Print("_",X+1+String_Pixel_Width(text),Y+1,BLUE,TBLACK, TextFlags);
 		}
 	}
@@ -425,7 +430,9 @@ bool EditClass::Handle_Key(KeyASCIIType ascii)
 			/*
 			**	Don't add a character if the length is greater than edit width.
 			*/
-			if ((String_Pixel_Width(String) + Char_Pixel_Width(ascii) ) >= (Width-2)) {
+			int const available_width = Width - 2;
+			if (available_width <= 0 ||
+				(String_Pixel_Width(String) + Char_Pixel_Width(ascii) ) >= static_cast<uint32_t>(available_width)) {
 				break;
 			}
 

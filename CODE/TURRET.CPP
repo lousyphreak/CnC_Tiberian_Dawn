@@ -251,8 +251,6 @@ void TurretClass::AI(void)
 BulletClass * TurretClass::Fire_At(TARGET target, int which)
 {
 	BulletClass * bullet = NULL;
-	WeaponTypeClass const * weapon = (which == 0) ? &Weapons[Class->Primary] : &Weapons[Class->Secondary];
-
 	if (Can_Fire(target, which) == FIRE_OK) {
 		bullet = DriveClass::Fire_At(target, which);
 
@@ -426,6 +424,9 @@ COORDINATE TurretClass::Fire_Coord(int which) const
 		case UNIT_BUGGY:
 			coord = Coord_Move(coord, DIR_N, 0x0030);
 			dist = 0x0030;
+			break;
+
+		default:
 			break;
 	}
 

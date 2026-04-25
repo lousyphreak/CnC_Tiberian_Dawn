@@ -290,8 +290,8 @@ void DriveClass::Overrun_Square(CELL cell, bool threaten)
  *   07/13/1994 JLB : Created.                                                                 *
  *=============================================================================================*/
 DriveClass::DriveClass(UnitType classid, HousesType house) :
-	Class(&UnitTypeClass::As_Reference(classid)),
-	FootClass(house)
+	FootClass(house),
+	Class(&UnitTypeClass::As_Reference(classid))
 {
 	/*
 	**	For two shooters, clear out the second shot flag -- it will be set the first time
@@ -419,7 +419,8 @@ COORDINATE DriveClass::Smooth_Turn(COORDINATE adj, DirType *dir)
 	DirType	workdir = *dir;
 	int	x,y;
 	int   temp;
-	TrackControlType flags = TrackControl[TrackNumber].Flag;
+	int const track_number = static_cast<unsigned char>(TrackNumber);
+	TrackControlType flags = TrackControl[track_number].Flag;
 
 	x = Coord_X(adj);
 	y = Coord_Y(adj);
@@ -612,7 +613,8 @@ bool DriveClass::While_Moving(void)
 		FacingType		nextface;		// Next facing queued in path.
 		bool				adj;				// Is a turn coming up?
 
-		track = &TrackControl[TrackNumber];
+		int const track_number = static_cast<unsigned char>(TrackNumber);
+		track = &TrackControl[track_number];
 		if (IsOnShortTrack) {
 			tracknum = track->StartTrack;
 		} else {
@@ -642,9 +644,10 @@ bool DriveClass::While_Moving(void)
 
 			actual -= PIXEL_LEPTON_W;
 
-			offset = ptr[TrackIndex].Offset;
+			int const track_index = static_cast<unsigned char>(TrackIndex);
+			offset = ptr[track_index].Offset;
 			if (offset || !TrackIndex) {
-				dir = ptr[TrackIndex].Facing;
+				dir = ptr[track_index].Facing;
 				Coord = Smooth_Turn(offset, &dir);
 
 				PrimaryFacing.Set(dir);
@@ -712,6 +715,9 @@ bool DriveClass::While_Moving(void)
 									Map[Coord_Cell(c)].Incoming(0, true);
 									Special.IsScatter = old;
 								}
+								break;
+
+							default:
 								break;
 						}
 					}
@@ -1113,13 +1119,14 @@ bool DriveClass::Start_Of_Move(void)
 			if (nextface == FACING_NONE) nextface = facing;
 
 			IsOnShortTrack = false;
-			TrackNumber = facing * FACING_COUNT + nextface;
-			if (TrackControl[TrackNumber].Track == 0) {
+			int const track_number = facing * FACING_COUNT + nextface;
+			TrackNumber = track_number;
+			if (TrackControl[track_number].Track == 0) {
 				Path[0] = FACING_NONE;
 				TrackNumber = -1;
 				return(true);
 			} else {
-				if (TrackControl[TrackNumber].Flag & F_D) {
+				if (TrackControl[track_number].Flag & F_D) {
 					/*
 					**	If the middle cell of a two cell track contains a crate,
 					**	the check for goodies before movement starts.
@@ -1529,7 +1536,8 @@ void DriveClass::Mark_Track(COORDINATE headto, MarkType type)
 			** If we have not passed the per cell process point we need
 			** to deal with it.
 			*/
-			int tracknum = TrackControl[TrackNumber].Track;
+			int const track_number = static_cast<unsigned char>(TrackNumber);
+			int tracknum = TrackControl[track_number].Track;
 			if (tracknum) {
 				TrackType const * ptr = RawTracks[tracknum - 1].Track;
 				int cellidx = RawTracks[tracknum - 1].Cell;

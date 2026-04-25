@@ -770,7 +770,7 @@ void Uninit_Game(void)
 	Map.ShadowPage = NULL;
 	Map.Free_Cells();
 
-	delete [] SpeechBuffer;
+	delete [] static_cast<char *>(SpeechBuffer);
 
 	CCFileClass::Clear_Search_Drives();
 	MixFileClass::Free_All();
@@ -1289,8 +1289,9 @@ bool Select_Game(bool fade)
 							break;
 						}
 
-					}
-
+						default:
+							break;
+						}
 
 						switch (GameToPlay) {
 						/*
@@ -1304,6 +1305,9 @@ bool Select_Game(bool fade)
 							ScenDir = SCEN_DIR_EAST;
 							process = false;
 							Options.ScoreVolume = 0;
+							break;
+
+						default:
 							break;
 					}
 #endif
@@ -1894,7 +1898,6 @@ bool Parse_Command_Line(int argc, char *argv[])
 
 	for (int index = 1; index < argc; index++) {
 		char * string;		// Pointer to argument.
-		long code = 0;
 
 		if (argv[index] != NULL && stricmp(argv[index], "-gamedata") == 0) {
 			if (index + 1 < argc) {

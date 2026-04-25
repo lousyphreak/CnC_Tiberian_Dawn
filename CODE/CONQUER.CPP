@@ -338,6 +338,9 @@ void Main_Game(int argc, char *argv[])
 					Shutdown_Network();
 					Winsock.Close();
 					break;
+
+				default:
+					break;
 			}
 		}
 
@@ -420,12 +423,12 @@ void Keyboard_Process(KeyNumType &input)
 	** Use WWKEY values because KN values have WWKEY_VK_BIT or'd in with them
 	** and we need WWKEY_VK_BIT to still be set if it is.
 	*/
-	KeyNumType plain = input & ~(WWKEY_SHIFT_BIT|WWKEY_ALT_BIT|WWKEY_CTRL_BIT);
+	KeyNumType plain = static_cast<KeyNumType>(input & ~(WWKEY_SHIFT_BIT|WWKEY_ALT_BIT|WWKEY_CTRL_BIT));
 
 #ifdef CHEAT_KEYS
 
 	if (Debug_Flag) {
-		switch (input) {
+		switch (static_cast<int>(input)) {
 			case (int)KN_M|(int)KN_SHIFT_BIT:
 			case (int)KN_M|(int)KN_ALT_BIT:
 			case (int)KN_M|(int)KN_CTRL_BIT:
@@ -2111,7 +2114,7 @@ int Load_Interpolated_Palettes(char const *filename, BOOL add)
 {
 	int	num_palettes=0;
 	int	i;
-	int 	start_palette;
+	size_t start_palette;
 
 	PalettesRead = FALSE;
 	CCFileClass	file(filename);
@@ -2119,12 +2122,12 @@ int Load_Interpolated_Palettes(char const *filename, BOOL add)
 //	RawFileClass	*palette_file;
 
 	if (!add){
-		for (i=0 ; i<ARRAY_SIZE(InterpolatedPalettes) ; i++){
-			InterpolatedPalettes[i]=NULL;
+		for (size_t palette_index = 0; palette_index < ARRAY_SIZE(InterpolatedPalettes); ++palette_index) {
+			InterpolatedPalettes[palette_index] = NULL;
 		}
-		start_palette=0;
+		start_palette = 0;
 	} else {
-		for (start_palette=0 ; start_palette< ARRAY_SIZE(InterpolatedPalettes) ; start_palette++){
+		for (start_palette = 0; start_palette < ARRAY_SIZE(InterpolatedPalettes); ++start_palette) {
 			if (!InterpolatedPalettes[start_palette]) break;
 		}
 	}
@@ -2136,13 +2139,13 @@ int Load_Interpolated_Palettes(char const *filename, BOOL add)
 		file.Read(&num_palettes , 4);
 
 		for (i=0 ; i<num_palettes ; i++){
-			InterpolatedPalettes[i+start_palette] = (unsigned char *)malloc (65536);
-			memset (InterpolatedPalettes[i+start_palette],0,65536);
+			InterpolatedPalettes[static_cast<size_t>(i) + start_palette] = (unsigned char *)malloc (65536);
+			memset (InterpolatedPalettes[static_cast<size_t>(i) + start_palette],0,65536);
 			for (int y=0 ; y<256 ;y++){
-				file.Read (InterpolatedPalettes[i+start_palette] + y*256 , y+1);
+				file.Read (InterpolatedPalettes[static_cast<size_t>(i) + start_palette] + y*256 , y+1);
 			}
 
-			Rebuild_Interpolated_Palette(InterpolatedPalettes[i+start_palette]);
+			Rebuild_Interpolated_Palette(InterpolatedPalettes[static_cast<size_t>(i) + start_palette]);
 		}
 
 		PalettesRead = TRUE;
@@ -2155,7 +2158,7 @@ int Load_Interpolated_Palettes(char const *filename, BOOL add)
 
 void Free_Interpolated_Palettes(void)
 {
-	for (int i=0 ; i<ARRAY_SIZE(InterpolatedPalettes) ; i++){
+	for (size_t i = 0; i < ARRAY_SIZE(InterpolatedPalettes); ++i) {
 		if (InterpolatedPalettes[i]){
 			free(InterpolatedPalettes[i]);
 			InterpolatedPalettes[i]=NULL;
@@ -2586,9 +2589,9 @@ void CC_Draw_Shape(void const * shapefile, int shapenum, int x, int y, WindowNum
 			Get_Key();
 		}
 
-		if (built_frame) {
-			GraphicViewPortClass draw_window(LogicPage->Get_Graphic_Buffer(),
-														WindowList[window][WINDOWX] << 3 + LogicPage->Get_XPos(),
+			if (built_frame) {
+				GraphicViewPortClass draw_window(LogicPage->Get_Graphic_Buffer(),
+														(WindowList[window][WINDOWX] << 3) + LogicPage->Get_XPos(),
 														WindowList[window][WINDOWY] + LogicPage->Get_YPos(),
 														WindowList[window][WINDOWWIDTH] << 3,
 														WindowList[window][WINDOWHEIGHT]);
@@ -2677,6 +2680,9 @@ TechnoTypeClass const * Fetch_Techno_Type(RTTIType type, int id)
 		case RTTI_AIRCRAFTTYPE:
 		case RTTI_AIRCRAFT:
 			return(&AircraftTypeClass::As_Reference((AircraftType)id));
+
+		default:
+			break;
 	}
 	return(NULL);
 }
@@ -2907,6 +2913,9 @@ void Handle_Team(int team, int action)
 							Unselect_All();
 						}
 						break;
+
+					default:
+						break;
 				}
 			}
 			for (index = 0; index < Units.Count(); index++) {
@@ -3132,6 +3141,15 @@ void Dump_Heap_Pointers( void )
 	char *ptr, *lptr, *nptr, *cptr, *dptr, *wlptr, *nlptr, *aptr, *clptr;
 	int numallocs, numfrees, sizefree;
 	static char _freeorused[2][5] = { "FREE", "USED" };
+	auto read_heap_int32 = [](char* value_ptr) -> int32_t {
+		return *reinterpret_cast<int32_t *>(value_ptr);
+	};
+	auto read_heap_ptr = [&](char* value_ptr) -> char* {
+		return reinterpret_cast<char*>(static_cast<uintptr_t>(static_cast<uint32_t>(read_heap_int32(value_ptr))));
+	};
+	auto pointer_too_large = [](char* value_ptr) -> bool {
+		return (reinterpret_cast<uintptr_t>(value_ptr) & static_cast<uintptr_t>(0xFF000000u)) != 0;
+	};
 
 
 	ptr = (char *)__nheapbeg;
@@ -3146,18 +3164,18 @@ void Dump_Heap_Pointers( void )
 			Hex_Dump_Data( ptr, 0x30);
 		}
 
-		dptr = (char *)*(int *)(ptr + 0x0c);
+		dptr = read_heap_ptr(ptr + 0x0c);
 
-		sizefree = *(int *)(ptr + 0x14);
-		numallocs = *(int *)(ptr + 0x18);
-		numfrees = *(int *)(ptr + 0x1c);
+		sizefree = read_heap_int32(ptr + 0x14);
+		numallocs = read_heap_int32(ptr + 0x18);
+		numfrees = read_heap_int32(ptr + 0x1c);
 
-		cptr = (char *)*(int *)(ptr + 0x24);
-		lptr = (char *)*(int *)(ptr + 0x28);
+		cptr = read_heap_ptr(ptr + 0x24);
+		lptr = read_heap_ptr(ptr + 0x28);
 
-		if ( ((int)cptr & 0xff000000) ||
-			((int)dptr & 0xff000000) ||
-			((int)lptr & 0xff000000) ) {
+		if (pointer_too_large(cptr) ||
+			pointer_too_large(dptr) ||
+			pointer_too_large(lptr)) {
 			Error_In_Heap_Pointers( "local free heap ptrs too large" );
 		}
 
@@ -3169,9 +3187,9 @@ void Dump_Heap_Pointers( void )
 			}
 		}
 
-		nptr = (char *)*(int *)(ptr + 8);		// next block
+		nptr = read_heap_ptr(ptr + 8);		// next block
 
-		if ( ((int)nptr & 0xFF000000) ) {
+		if (pointer_too_large(nptr)) {
 			Error_In_Heap_Pointers( "next block ptr too large" );
 		}
 
@@ -3201,7 +3219,7 @@ void Dump_Heap_Pointers( void )
 
 					aptr += ((*(int *)(aptr)) & 0xfffffffe);
 
-					if ( ((int)aptr & 0xff000000) ) {
+					if (pointer_too_large(aptr)) {
 						Error_In_Heap_Pointers( "next alloc block ptr way too large" );
 					}
 
@@ -3229,7 +3247,7 @@ void Dump_Heap_Pointers( void )
 					Hex_Dump_Data( wlptr, 0x10);
 				}
 
-				nlptr = (char *)*(int *)(wlptr + 8);
+				nlptr = read_heap_ptr(wlptr + 8);
 
 				if ( !(*((int *)(wlptr))) ) {		// allocated
 					aptr = (wlptr + 0x0c);
@@ -3269,7 +3287,7 @@ void Dump_Heap_Pointers( void )
 
 					aptr += ((*(int *)(aptr)) & 0xfffffffe);
 
-					if ( ((int)aptr & 0xff000000) ) {
+					if (pointer_too_large(aptr)) {
 						Error_In_Heap_Pointers( "next alloc block ptr way too large" );
 					}
 
@@ -3311,7 +3329,7 @@ void Dump_Heap_Pointers( void )
 
 					aptr += ((*(int *)(aptr)) & 0xfffffffe);
 
-					if ( ((int)aptr & 0xff000000) ) {
+					if (pointer_too_large(aptr)) {
 						Error_In_Heap_Pointers( "next alloc block ptr way too large" );
 					}
 
@@ -3472,8 +3490,6 @@ bool Force_CD_Available(int cd)
 {
 #ifndef DEMO
 	static int _last = -1;
-	int open_failed;
-	int file;
 #endif
 	static char _palette[768];
 	static char _hold[256];
@@ -3484,11 +3500,6 @@ bool Force_CD_Available(int cd)
 		"COVERT"
 	};
 
-	int	drive;
-
-	char		volume_name[100];
-	unsigned	filename_length;
-	unsigned	misc_dword;
 	int new_cd_drive = 0;
 	int cd_index;
 	char buffer[128];

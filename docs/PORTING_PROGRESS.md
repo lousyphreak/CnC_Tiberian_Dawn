@@ -8,6 +8,43 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
 
 ## Current status
 
+- Warning cleanup is now complete for the active SDL3/CMake build surface (2026-04-25):
+  - completed in this checkpoint:
+    - finished the remaining GCC/Linux warning cleanup without suppressing diagnostics, covering the last portability/correctness tails across gameplay, UI, save/load, movie/runtime, queue/network, and shared container code;
+    - fixed the remaining 64-bit pointer-width warnings in save/load, queue, map validation, movie I/O, and related debug/runtime code by switching the active paths to `uintptr_t`/fixed-width conversions instead of `int`/`unsigned long` casts;
+    - removed the last high-volume warning families from the active build:
+      - signed/unsigned comparison mismatches
+      - subset-enum switch warnings in bitmask-driven UI/input flows
+      - narrowing / char-subscript issues in byte-oriented gameplay tables
+      - constructor reorder warnings
+      - `sprintf(...)` overflow/format-width mismatches
+      - `delete[] void*`, mismatched delete, and class-wide `memset(...)` on non-trivial objects
+      - stale locals / helper functions that no longer affect the active SDL3 path
+    - replaced whole-object zeroing in live class types such as `CellClass` / `EventClass` with explicit reset/value-initialization logic so the warning cleanup also removed a few real modern-C++ correctness hazards instead of only cosmetic diagnostics;
+    - confirmed the last warning-heavy files were cleaned end-to-end, including:
+      - `CODE/CONQUER.CPP`
+      - `CODE/QUEUE.CPP`
+      - `CODE/MAP.CPP`
+      - `CODE/SAVELOAD.CPP`
+      - `CODE/WINSTUB.CPP`
+      - `CODE/BUILDING.CPP`
+      - `CODE/DISPLAY.CPP`
+      - `CODE/DRIVE.CPP`
+      - `CODE/TECHNO.CPP`
+      - `CODE/NETDLG.CPP`
+      - `CODE/MAPSEL.CPP`
+      - `CODE/SIDEBAR.CPP`
+  - validation result:
+    - `cmake --build build --parallel 4 --clean-first` succeeds with `0` project warnings.
+    - `cmake --build build-asan --parallel 4 --clean-first` succeeds with `0` project warnings.
+    - `timeout --foreground 125s bash -lc './build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` still fails in the previously known invalid-vptr/raw-object-layout gameplay path:
+      - `UNIT.CPP` / `UNIT.H` invalid-vptr access on an `AbstractClass` object;
+      - eventual crash in `LogicClass::AI()` / `ClassV08`.
+    - this checkpoint did **not** introduce a new sanitizer failure; it only proved the warning cleanup can be completed independently of the older runtime object-layout problem.
+  - remaining follow-up from this sweep:
+    - keep the warning baseline at `0` in both normal and ASan clean builds as future porting work lands;
+    - treat the remaining ASan/runtime crash as a separate raw-object/save/object-layout modernization track rather than reopening warning-cleanup work.
+
 - Sprite corruption affecting menu and in-game shape rendering was traced to the big-shape cache handoff in `CC_Draw_Shape()` (2026-04-25):
   - completed in this checkpoint:
     - traced the shared shape path through `CONQUER.CPP::CC_Draw_Shape()`, `KEYFRAME.CPP::Build_Frame(...)`, and `KEYFBUFF.CPP::Buffer_Frame_To_Page(...)`;
@@ -683,27 +720,9 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
       - `CODE/INIT.CPP`
     - fixed another wrapper-layer portability bug by routing `FreeLibrary(...)` through the correct `SDL_SharedObject*` type before calling `SDL_UnloadObject(...)`
     - reduced a large block of intentional subset-enum warnings by making those partial switches explicit in the highest-volume gameplay/UI sites, using `default:` or integer-switched subset handling where that matched the existing behavior
-  - current clean-build warning baseline:
-    - latest authoritative clean rebuild: `cmake --build build --clean-first -j2`
-    - warning count reduced from about `11,935` initial warnings / `2,687` unique sites to `1,174` warnings / `919` unique sites
-    - `-Wwrite-strings` was reduced from `551` warnings to `0`
-  - current dominant remaining warning groups after this checkpoint:
-    1. `-Wswitch` on intentional subset enum handling in gameplay/UI control flow
-    2. `-Wnarrowing` in coordinate/pathing/numeric-heavy code
-    3. `-Wsign-compare` in older loops and size/count comparisons
-    4. smaller tails from `unused-variable`, format-width/overflow checks, reorder warnings, and a few old pointer-cast assumptions
-  - highest remaining warning concentrations after the latest clean rebuild:
-    - `CODE/COORD.CPP`
-    - `CODE/VECTOR.CPP`
-    - `CODE/CONQUER.CPP`
-    - `CODE/HOUSE.CPP`
-    - `CODE/SCORE.CPP`
-    - `CODE/BUILDING.CPP`
-    - `CODE/NETDLG.CPP`
-  - next focus:
-    - continue collapsing `-Wswitch` by auditing the remaining intentional subset switches and converting them to explicit integer-switch or exhaustive handling where appropriate
-    - fix narrowing/sign-compare warnings in coordinate/pathing-heavy files with explicit, size-correct types instead of implicit conversions
-    - clean up the remaining format/overflow sites such as fixed-width `sprintf(...)` cases once the switch/numeric warning counts are under control
+  - later outcome:
+    - this partial-warning checkpoint has now been followed by a full warning-completion pass at the top of this file;
+    - the active SDL3/CMake build surface now reaches `0` project warnings in both the normal and ASan clean builds.
       - `WIN32LIB/INCLUDE/GBUFFER.H`
     - flushed the queued hidden-page -> seen-page present at the end of `CODE/GSCREEN.CPP` `Blit_Display()`;
     - made SDL surface self-blits overlap-safe in `SDL3_COMPAT/wrappers/sdl_draw.cpp` by copying overlapped source rectangles through scratch storage before writing the destination rows.

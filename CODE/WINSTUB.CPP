@@ -628,7 +628,7 @@ void Load_Title_Screen(char const *name, GraphicViewPortClass *video_page, unsig
 	GraphicBufferClass *load_buffer;
 
 
-	load_buffer = Read_PCX_File (name, (char*)palette, NULL, 0);
+	load_buffer = Read_PCX_File (const_cast<char *>(name), reinterpret_cast<char *>(palette), NULL, 0);
 
 	if (load_buffer){
 		load_buffer->Blit(*video_page);
@@ -677,10 +677,10 @@ void Load_Title_Screen(char const *name, GraphicViewPortClass *video_page, unsig
 
 GraphicBufferClass* Read_PCX_File(char* name, char* palette, void *Buff, long Size)
 {
-	unsigned					i, j;
+	int						i, j;
 	unsigned					rle;
 	unsigned					color;
-	unsigned					scan_pos;
+	int						scan_pos;
 	char						*file_ptr;
 	int						width;
 	int						height;
@@ -734,8 +734,12 @@ GraphicBufferClass* Read_PCX_File(char* name, char* palette, void *Buff, long Si
 			}
       	}
 
-		if ( i == width ) rle = READ_CHAR ();
-		if ( rle > 192 )  rle = READ_CHAR ();
+		if ( i == width ) {
+			rle = READ_CHAR ();
+		}
+		if ( rle > 192 ) {
+			rle = READ_CHAR ();
+		}
 
 	} else {
 
@@ -754,7 +758,7 @@ GraphicBufferClass* Read_PCX_File(char* name, char* palette, void *Buff, long Si
 	}
 
 	if ( palette ) {
-		file_handle.Seek (- (256 * sizeof ( RGB )) , SEEK_END );
+		file_handle.Seek(-static_cast<int32_t>(256 * sizeof(RGB)), SEEK_END);
 		file_handle.Read (palette , 256L * sizeof ( RGB ));
 
 		pal = ( RGB * ) palette;

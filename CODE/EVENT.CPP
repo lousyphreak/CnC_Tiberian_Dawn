@@ -586,6 +586,9 @@ CCDebugString ("C&C95 - Primary building packet received\n");
 							((FootClass *)techno)->Team->Remove((FootClass *)techno);
 						}
 						break;
+
+					default:
+						break;
 				}
 
 				if (object) {

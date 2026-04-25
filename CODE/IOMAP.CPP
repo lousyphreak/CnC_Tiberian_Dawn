@@ -69,6 +69,23 @@
 #include "FUNCTION.H"
 
 
+namespace {
+
+template <typename T>
+T* Encode_Target_As_Pointer(TARGET target)
+{
+	return reinterpret_cast<T*>(static_cast<uintptr_t>(target));
+}
+
+template <typename T>
+TARGET Decode_Target_From_Pointer(T* pointer)
+{
+	return static_cast<TARGET>(reinterpret_cast<uintptr_t>(pointer));
+}
+
+}
+
+
 /***********************************************************************************************
  * CellClass::Should_Save -- Should the cell be written to disk?                               *
  *                                                                                             *
@@ -197,26 +214,26 @@ bool CellClass::Save(FileClass & file)
 void CellClass::Code_Pointers(void)
 {
 	if (Cell_Occupier()) {
-		OccupierPtr = (ObjectClass *)OccupierPtr->As_Target();
+		OccupierPtr = Encode_Target_As_Pointer<ObjectClass>(OccupierPtr->As_Target());
 	}
 
 	if (Overlapper[0]) {
-		Overlapper[0] = (ObjectClass *)Overlapper[0]->As_Target();
+		Overlapper[0] = Encode_Target_As_Pointer<ObjectClass>(Overlapper[0]->As_Target());
 	}
 
 	if (Overlapper[1]) {
-		Overlapper[1] = (ObjectClass *)Overlapper[1]->As_Target();
+		Overlapper[1] = Encode_Target_As_Pointer<ObjectClass>(Overlapper[1]->As_Target());
 	}
 
 	if (Overlapper[2]) {
-		Overlapper[2] = (ObjectClass *)Overlapper[2]->As_Target();
+		Overlapper[2] = Encode_Target_As_Pointer<ObjectClass>(Overlapper[2]->As_Target());
 	}
 
 	/*
 	------------------------ Convert trigger pointer -------------------------
 	*/
 	if (IsTrigger) {
-		CellTriggers[Cell_Number()] = (TriggerClass *)CellTriggers[Cell_Number()]->As_Target();
+		CellTriggers[Cell_Number()] = Encode_Target_As_Pointer<TriggerClass>(CellTriggers[Cell_Number()]->As_Target());
 	}
 }
 
@@ -242,22 +259,22 @@ void CellClass::Code_Pointers(void)
 void CellClass::Decode_Pointers(void)
 {
 	if (OccupierPtr) {
-		OccupierPtr = As_Object((TARGET)OccupierPtr);
+		OccupierPtr = As_Object(Decode_Target_From_Pointer(OccupierPtr));
 		Check_Ptr((void *)OccupierPtr,__FILE__,__LINE__);
 	}
 
 	if (Overlapper[0]) {
-		Overlapper[0] = As_Object((TARGET)Overlapper[0]);
+		Overlapper[0] = As_Object(Decode_Target_From_Pointer(Overlapper[0]));
 		Check_Ptr((void *)Overlapper[0],__FILE__,__LINE__);
 	}
 
 	if (Overlapper[1]) {
-		Overlapper[1] = As_Object((TARGET)Overlapper[1]);
+		Overlapper[1] = As_Object(Decode_Target_From_Pointer(Overlapper[1]));
 		Check_Ptr((void *)Overlapper[1],__FILE__,__LINE__);
 	}
 
 	if (Overlapper[2]) {
-		Overlapper[2] = As_Object((TARGET)Overlapper[2]);
+		Overlapper[2] = As_Object(Decode_Target_From_Pointer(Overlapper[2]));
 		Check_Ptr((void *)Overlapper[2],__FILE__,__LINE__);
 	}
 
@@ -265,7 +282,7 @@ void CellClass::Decode_Pointers(void)
 	**	Convert trigger pointer.
 	*/
 	if (IsTrigger) {
-		CellTriggers[Cell_Number()] = As_Trigger( (TARGET)CellTriggers[Cell_Number()] );
+		CellTriggers[Cell_Number()] = As_Trigger(Decode_Target_From_Pointer(CellTriggers[Cell_Number()]));
 		Check_Ptr((void *)CellTriggers[Cell_Number()],__FILE__,__LINE__);
 	}
 }
@@ -299,7 +316,7 @@ bool MouseClass::Load(FileClass & file)
 {
 	unsigned count;
 	CELL cell = 0;
-	int index;
+	unsigned index;
 //	int rc;
 //	int i;
 //	int j;
@@ -886,7 +903,7 @@ void DisplayClass::Code_Pointers(void)
 	**	Code PendingObjectPtr.
 	*/
 	if (PendingObjectPtr) {
-		PendingObjectPtr = (ObjectClass *)PendingObjectPtr->As_Target();
+		PendingObjectPtr = Encode_Target_As_Pointer<ObjectClass>(PendingObjectPtr->As_Target());
 	}
 
 	/*
@@ -924,7 +941,7 @@ void DisplayClass::Decode_Pointers(void)
 	**	either.  These have to be done as last-minute fixups.
 	*/
 	if (PendingObjectPtr) {
-		PendingObjectPtr = As_Object((TARGET)PendingObjectPtr);
+		PendingObjectPtr = As_Object(Decode_Target_From_Pointer(PendingObjectPtr));
 		Check_Ptr((void *)PendingObjectPtr,__FILE__,__LINE__);
 	}
 

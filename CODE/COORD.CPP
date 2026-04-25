@@ -90,7 +90,7 @@ short const * Coord_Spillage_List(COORDINATE coord, int maxsize)
 //;	01 = below axis
 //;	10 = above axis
 //;	11 = undefined
-	static char const _SpillTable[16]	= {8,6,2,-1,0,7,1,-1,4,5,3,-1,-1,-1,-1,-1};
+	static int8_t const _SpillTable[16] = {8, 6, 2, -1, 0, 7, 1, -1, 4, 5, 3, -1, -1, -1, -1, -1};
 	int	index=0;
 	int	x,y;
 
@@ -149,7 +149,7 @@ short const * Coord_Spillage_List(COORDINATE coord, int maxsize)
 	if (x > posval) index |= 0x02;			// Spilling East.
 	if (x < -posval) index |= 0x01;			// Spilling West.
 
-	return(&_MoveSpillage[_SpillTable[index]][0]);
+	return(&_MoveSpillage[static_cast<int>(_SpillTable[index])][0]);
 }
 
 
@@ -226,8 +226,8 @@ extern int calcy(signed short, short distance);
 
 void Move_Point(short &x, short &y, DirType dir, unsigned short distance)
 {
-//	static char const CosTable[256] = {
-	static char const CosTable[256] = {
+//	static uint8_t const CosTable[256] = {
+	static uint8_t const CosTable[256] = {
 		0x00,0x03,0x06,0x09,0x0c,0x0f,0x12,0x15,
 		0x18,0x1b,0x1e,0x21,0x24,0x27,0x2a,0x2d,
 		0x30,0x33,0x36,0x39,0x3b,0x3e,0x41,0x43,
@@ -265,8 +265,8 @@ void Move_Point(short &x, short &y, DirType dir, unsigned short distance)
 		0xe8,0xeb,0xee,0xf1,0xf4,0xf7,0xfa,0xfd,
 	};
 
-//	static char const SinTable[256] = {
-	static char const SinTable[256] = {
+//	static uint8_t const SinTable[256] = {
+	static uint8_t const SinTable[256] = {
 		0x7f,0x7e,0x7e,0x7e,0x7e,0x7e,0x7d,0x7d,
 		0x7c,0x7b,0x7b,0x7a,0x79,0x78,0x77,0x76,
 		0x75,0x74,0x72,0x71,0x70,0x6e,0x6c,0x6b,
@@ -305,8 +305,8 @@ void Move_Point(short &x, short &y, DirType dir, unsigned short distance)
 	};
 	distance = distance;		// Keep LINT quiet.
 
-	x += calcx(CosTable[dir], distance);
+	x += calcx(static_cast<int8_t>(CosTable[dir]), distance);
 
-	y += calcy(SinTable[dir], distance);
+	y += calcy(static_cast<int8_t>(SinTable[dir]), distance);
 
 }

@@ -145,7 +145,9 @@ int ToggleClass::Action(unsigned flags, KeyNumType &key)
 	**	graphic updating.
 	*/
 	if (!flags) {
-		if ((unsigned)(Get_Mouse_X() - X) < Width && (unsigned)(Get_Mouse_Y() - Y) < Height ) {
+		int const mouse_x = Get_Mouse_X() - X;
+		int const mouse_y = Get_Mouse_Y() - Y;
+		if (mouse_x >= 0 && mouse_x < Width && mouse_y >= 0 && mouse_y < Height) {
 			if (!IsPressed) {
 				IsPressed = true;
 				Flag_To_Redraw();
@@ -195,5 +197,4 @@ int ToggleClass::Action(unsigned flags, KeyNumType &key)
 	*/
 	return(ControlClass::Action(flags, key));
 }	
-
 

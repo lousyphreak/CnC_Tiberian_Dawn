@@ -47,6 +47,7 @@
 #include	"FUNCTION.H"
 #include "VECTOR.H"
 #include	<stdio.h>
+#include <stdint.h>
 
 /*
 **	The following template function can be located here ONLY if all the instatiations are
@@ -167,7 +168,7 @@ VectorClass<T> & VectorClass<T>::operator =(VectorClass<T> const & vector)
 		Vector = new T[VectorMax];
 		if (Vector) {
 			IsAllocated = true;
-			for (int index = 0; index < VectorMax; index++) {
+			for (unsigned index = 0; index < VectorMax; ++index) {
 				Vector[index] = vector[index];
 			}
 		}
@@ -199,7 +200,7 @@ template<class T>
 int VectorClass<T>::operator == (VectorClass<T> const & vector) const
 {
 	if (VectorMax == vector.Length()) {
-		for (int index = 0; index < VectorMax; index++) {
+		for (unsigned index = 0; index < VectorMax; ++index) {
 			if (Vector[index] != vector[index]) {
 				return(false);
 			}
@@ -231,7 +232,7 @@ int VectorClass<T>::operator == (VectorClass<T> const & vector) const
 template<class T>
 inline int VectorClass<T>::ID(T const * ptr)
 {
-	return(((unsigned long)ptr - (unsigned long)&(*this)[0]) / sizeof(T));
+	return(static_cast<int>((reinterpret_cast<uintptr_t>(ptr) - reinterpret_cast<uintptr_t>(&(*this)[0])) / sizeof(T)));
 }
 
 
@@ -254,9 +255,9 @@ inline int VectorClass<T>::ID(T const * ptr)
 template<class T>
 int VectorClass<T>::ID(T const & object)
 {
-	for (int index = 0; index < VectorMax; index++) {
+	for (unsigned index = 0; index < VectorMax; ++index) {
 		if ((*this)[index] == object) {
-			return(index);
+			return(static_cast<int>(index));
 		}
 	}
 	return(-1);
@@ -340,8 +341,8 @@ int VectorClass<T>::Resize(unsigned newsize, T const * array)
 			**	presumes that there is a functional assignment operator for each
 			**	of the objects in the vector.
 			*/
-			int copycount = (newsize < VectorMax) ? newsize : VectorMax;
-			for (int index = 0; index < copycount; index++) {
+			unsigned copycount = (newsize < VectorMax) ? newsize : VectorMax;
+			for (unsigned index = 0; index < copycount; ++index) {
 				newptr[index] = Vector[index];
 			}
 
@@ -427,7 +428,7 @@ template<class T>
 int DynamicVectorClass<T>::Resize(unsigned newsize, T const * array)
 {
 	if (VectorClass<T>::Resize(newsize, array)) {
-		if (Length() < ActiveCount) ActiveCount = Length();
+		if (static_cast<int>(this->Length()) < ActiveCount) ActiveCount = static_cast<int>(this->Length());
 		return(true);
 	}
 	return(false);
@@ -482,9 +483,9 @@ int DynamicVectorClass<T>::ID(T const & object)
 template<class T>
 int DynamicVectorClass<T>::Add(T const & object)
 {
-	if (ActiveCount >= Length()) {
+	if (ActiveCount >= static_cast<int>(this->Length())) {
 		if ((this->IsAllocated || !this->VectorMax) && GrowthStep > 0) {
-			if (!Resize(Length() + GrowthStep)) {
+			if (!Resize(this->Length() + static_cast<unsigned>(GrowthStep))) {
 
 				/*
 				**	Failure to increase the size of the vector is an error condition.
@@ -513,9 +514,9 @@ int DynamicVectorClass<T>::Add(T const & object)
 template<class T>
 int DynamicVectorClass<T>::Add_Head(T const & object)
 {
-	if (ActiveCount >= Length()) {
+	if (ActiveCount >= static_cast<int>(this->Length())) {
 		if ((this->IsAllocated || !this->VectorMax) && GrowthStep > 0) {
-			if (!Resize(Length() + GrowthStep)) {
+			if (!Resize(this->Length() + static_cast<unsigned>(GrowthStep))) {
 
 				/*
 				**	Failure to increase the size of the vector is an error condition.
@@ -566,7 +567,7 @@ template<class T>
 int DynamicVectorClass<T>::Delete(T const & object)
 {
 	int index = ID(object);
-	if (index >= 0 && static_cast<unsigned>(index) < ActiveCount) {
+	if (index >= 0 && static_cast<unsigned>(index) < static_cast<unsigned>(ActiveCount)) {
 		ActiveCount--;
 		for (int i = index; i < ActiveCount; i++) {
 			(*this)[i] = (*this)[i+1];
@@ -597,7 +598,7 @@ int DynamicVectorClass<T>::Delete(T const & object)
 template<class T>
 int DynamicVectorClass<T>::Delete(int index)
 {
-	if ((unsigned)index < ActiveCount) {
+	if (index >= 0 && static_cast<unsigned>(index) < static_cast<unsigned>(ActiveCount)) {
 		ActiveCount--;
 
 		/*
@@ -752,8 +753,8 @@ int BooleanVectorClass::Resize(unsigned size)
 		**	clearing of the bits is required.
 		*/
 		BitCount = size;
-		if (success && oldsize < size) {
-			for (int index = oldsize; index < size; index++) {
+		if (success && oldsize < static_cast<int>(size)) {
+			for (unsigned index = static_cast<unsigned>(oldsize); index < size; ++index) {
 				(*this)[index] = 0;
 			}
 		}
@@ -867,7 +868,7 @@ void BooleanVectorClass::Fixup(int index) const
 	**	If the requested index value is illegal, then force the index
 	**	to be -1. This is the default non-index value.
 	*/
-	if ((unsigned)index >= BitCount) {
+	if (index < 0 || static_cast<unsigned>(index) >= static_cast<unsigned>(BitCount)) {
 		index = -1;
 	}
 

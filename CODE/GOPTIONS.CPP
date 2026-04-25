@@ -95,6 +95,7 @@ void GameOptionsClass::Process(void)
 		{BUTTON_RESUME,	TXT_RESUME_MISSION,  	true},
 		{BUTTON_RESTATE,	TXT_RESTATE_MISSION,		false},
 	};
+	enum { BUTTON_COUNT = sizeof(_constants) / sizeof(_constants[0]) };
 
 	/*
 	**	Variables.
@@ -104,7 +105,7 @@ void GameOptionsClass::Process(void)
 	bool pressed;
 	int curbutton = 6;
 	int y;
-	TextButtonClass *buttonsel[sizeof(_constants)/sizeof(_constants[0])];
+	TextButtonClass *buttonsel[BUTTON_COUNT];
 
 	Set_Logic_Page(SeenBuff);
 
@@ -114,7 +115,7 @@ void GameOptionsClass::Process(void)
 	int maxwidth = 0;
 	int resfactor = (SeenBuff.Get_Width() == 320) ? 1 : 2;
 
-	for (int index = 0; index < sizeof(_constants)/sizeof(_constants[0]); index++ ) {
+	for (int index = 0; index < BUTTON_COUNT; index++ ) {
 		int text = _constants[index].Text;
 		buttonsel[index] = NULL;
 
@@ -280,7 +281,7 @@ void GameOptionsClass::Process(void)
 		/*
 		**	Process Input.
 		*/
-		switch (input) {
+		switch ((int)input) {
 			case (BUTTON_RESTATE | KN_BUTTON):
 				selection = BUTTON_RESTATE;
 				pressed = true;
@@ -379,8 +380,8 @@ void GameOptionsClass::Process(void)
 					if (!Restate_Mission(ScenarioName, TXT_VIDEO, TXT_OPTIONS)) {
 #endif
 						BreakoutAllowed = true;
-						char buffer[25];
-						sprintf(buffer, "%s.VQA", BriefMovie);
+						char buffer[sizeof(BriefMovie) + sizeof(".VQA")];
+						snprintf(buffer, sizeof(buffer), "%s.VQA", BriefMovie);
 						if (CCFileClass(buffer).Is_Available()) {
 							Play_Movie(BriefMovie);
 						} else {

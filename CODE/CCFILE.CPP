@@ -120,9 +120,9 @@ CCFileClass::CCFileClass(char const *filename) :
 	CDFileClass(),
 	FromDisk(false),
 	Pointer(0),
+	Start(0),
 	Position(0),
-	Length(0),
-	Start(0)
+	Length(0)
 {
 	Set_Name(filename);
 }
@@ -505,12 +505,12 @@ bool Set_Search_Drives(char const *)
 
 int Open_File(char const *file_name, int mode)
 {
-	for (int index = 0; index < sizeof(Handles)/sizeof(Handles[0]); index++) {
+	for (size_t index = 0; index < sizeof(Handles) / sizeof(Handles[0]); ++index) {
 		if (!Handles[index].Is_Open()) {
 			Handles[index].Set_Name(file_name);
 			if (Handles[index].Open(mode)) {
 //			if (Handles[index].Open(file_name, mode)) {
-				return(index);
+				return(static_cast<int>(index));
 			}
 			break;
 		}

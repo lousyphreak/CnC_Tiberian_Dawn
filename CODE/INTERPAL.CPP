@@ -324,8 +324,6 @@ void Interpolate_2X_Scale( GraphicBufferClass *source, GraphicViewPortClass *des
 {
 	unsigned char	*src_ptr;
 	unsigned char	*dest_ptr;
-	unsigned char	*last_dest_ptr;
-	unsigned char	*end_of_source;
 	int	src_width;
 	int	dest_width;
 //	int	width_counter;
@@ -381,14 +379,12 @@ void Interpolate_2X_Scale( GraphicBufferClass *source, GraphicViewPortClass *des
 	//
 	src_ptr = (unsigned char *) source->Get_Offset();
 	dest_ptr = (unsigned char *) dest->Get_Offset();
-	end_of_source = src_ptr + ( source->Get_Width() * source->Get_Height() );
 
 	//
 	// Get width of source and dest buffers.
 	//
 	src_width = source->Get_Width();
 	dest_width = 2*(dest->Get_Width() + dest->Get_XAdd() + dest->Get_Pitch());
-	last_dest_ptr = dest_ptr;
 
 	/*
 	** Call the appropriate assembly language copy routine
@@ -452,6 +448,4 @@ void Interpolate_2X_Scale( GraphicBufferClass *source, GraphicViewPortClass *des
 
 }
 #endif
-
-
 

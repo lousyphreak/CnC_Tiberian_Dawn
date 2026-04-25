@@ -126,7 +126,6 @@ int LoadOptionsClass::Process(void)
 	int d_list_y 		= d_dialog_y + d_margin + d_txt8_h + d_margin;
 
 	int d_edit_w 		= d_dialog_w - (d_margin * 2);
-	int d_edit_h 		= 13 * factor;
 	int d_edit_x 		= d_dialog_x + d_margin;
 	int d_edit_y 		= d_list_y + d_list_h - (30 * factor) + d_margin + d_txt8_h;
 
@@ -407,13 +406,16 @@ int LoadOptionsClass::Process(void)
 				case WWDELETE:
 					input = (KeyNumType)(BUTTON_DELETE|KN_BUTTON);
 					break;
+
+				default:
+					break;
 			}
 		}
 
 		/*
 		**	Process input.
 		*/
-		switch (input) {
+		switch (static_cast<int>(input)) {
 			/*
 			** Load: if load fails, present a message, and stay in the dialog
 			** to allow the user to try another game

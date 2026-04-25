@@ -309,7 +309,7 @@ bool OverlayClass::Mark(MarkType mark)
 								*/
 								static FacingType _face[4] = {FACING_N, FACING_E, FACING_S, FACING_W};
 
-								for (int index = 0; index < (sizeof(_face)/sizeof(_face[0])); index++) {
+								for (size_t index = 0; index < (sizeof(_face) / sizeof(_face[0])); ++index) {
 									cellptr->Adjacent_Cell(_face[index]).Concrete_Calc();
 								}
 							}

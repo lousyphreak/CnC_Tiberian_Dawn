@@ -111,8 +111,8 @@ bool Start_Scenario(char *root, bool briefing)
 
 #ifdef NEWMENU
 
-		char buffer[25];
-		sprintf(buffer, "%s.VQA", BriefMovie);
+		char buffer[sizeof(BriefMovie) + sizeof(".VQA")];
+		snprintf(buffer, sizeof(buffer), "%s.VQA", BriefMovie);
 		CCFileClass file(buffer);
 
 		if (GameToPlay == GAME_NORMAL && !file.Is_Available()) {
@@ -688,10 +688,10 @@ bool Restate_Mission(char const * name, int button1, int button2)
 		*/
 		bool brief = true;
 #ifdef NEWMENU
-		char buffer[25];
-		char buffer1[25];
-		sprintf(buffer, "%s.VQA", BriefMovie);
-		sprintf(buffer1, "%s.VQA", ActionMovie);
+		char buffer[sizeof(BriefMovie) + sizeof(".VQA")];
+		char buffer1[sizeof(ActionMovie) + sizeof(".VQA")];
+		snprintf(buffer, sizeof(buffer), "%s.VQA", BriefMovie);
+		snprintf(buffer1, sizeof(buffer1), "%s.VQA", ActionMovie);
 		CCFileClass file1(buffer);
 		CCFileClass file2(buffer1);
 		if (!file1.Is_Available() && !file2.Is_Available()) {

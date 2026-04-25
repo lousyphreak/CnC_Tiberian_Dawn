@@ -113,7 +113,7 @@ void GDI_Ending(void)
  *=============================================================================================*/
 void Nod_Ending(void)
 {
-	static char const _tanpal[]={0x0,0xED,0xED,0x2C,0x2C,0xFB,0xFB,0xFD,0xFD,0x0,0x0,0x0,0x0,0x0,0x52,0x0};
+	static uint8_t const _tanpal[]={0x0,0xED,0xED,0x2C,0x2C,0xFB,0xFB,0xFD,0xFD,0x0,0x0,0x0,0x0,0x0,0x52,0x0};
 
 	char fname[12];
 #ifdef NOT_FOR_WIN95
@@ -136,7 +136,7 @@ void Nod_Ending(void)
 
 	CCFileClass satsel_palette("SATSEL.PAL");
 	CCFileClass satsel_image("SATSEL.CPS");
-	void * localpal = Load_Alloc_Data(satsel_palette);
+	char * localpal = static_cast<char *>(Load_Alloc_Data(satsel_palette));
 	Load_Uncompress(satsel_image, SysMemPage, SysMemPage);
 #ifdef NOT_FOR_WIN95
 	memcpy(satpic, HidPage.Get_Buffer(), 64000);

@@ -285,8 +285,6 @@ void TeamClass::AI(void)
 	Validate();
 	int	desired		= 0;
 	int	old_under	= IsUnderStrength;
-	int	old_full		= IsFullStrength;
-
 	/*
 	** If the team has been suspended then we need to check if its time for
 	** us to reactivate the team.  If not, no team logic will be processed
@@ -456,7 +454,7 @@ void TeamClass::AI(void)
 	**	Try to recruit members if there is room to do so for this team.
 	**	Only try to recruit members for a non player controlled team.
 	*/
-	if (!IsMoving || (!IsFullStrength && Class->IsReinforcable) && !House->IsHuman) {
+	if ((!IsMoving || (!IsFullStrength && Class->IsReinforcable)) && !House->IsHuman) {
 		for (int index = 0; index < Class->ClassCount; index++) {
 			if (Quantity[index] < Class->DesiredNum[index]) {
 				Recruit(index);
@@ -591,6 +589,9 @@ void TeamClass::AI(void)
 				CurrentMission = mission->Argument-1;
 				IsNextMission = true;
 				break;
+
+			default:
+				break;
 		}
 
 		/*
@@ -609,6 +610,9 @@ void TeamClass::AI(void)
 				if (TimeOut.Expired()) {
 					IsNextMission = true;
 				}
+				break;
+
+			default:
 				break;
 		}
 
@@ -1493,7 +1497,6 @@ void TeamClass::Suspend_Teams(int priority)
 		**	destroyed. The team members are then free to be reassigned.
 		*/
 		if (team && team->Class->RecruitPriority < priority) {
-			FootClass * unit = team->Member;
 			while (team->Member) {
 				team->Remove(team->Member);
 			}

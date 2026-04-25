@@ -173,15 +173,16 @@ void Explosion_Damage(COORDINATE coord, unsigned strength, TechnoClass * source,
 		** the overlappers, and this causes multiplayer games to go out of sync.
 		*/
 		object = cellptr->Cell_Occupier();
-		while (object) {
+	const int object_capacity = static_cast<int>(sizeof(objects) / sizeof(objects[0]));
+	while (object) {
 			if (!object->IsToDamage && object != source) {
 				object->IsToDamage = true;
 				objects[count++] = object;
-				if (count >= (sizeof(objects)/sizeof(objects[0]))) break;
+				if (count >= object_capacity) break;
 			}
 			object = object->Next;
 		}
- 		if (count >= (sizeof(objects)/sizeof(objects[0]))) break;
+ 		if (count >= object_capacity) break;
 	}
 
 	/*

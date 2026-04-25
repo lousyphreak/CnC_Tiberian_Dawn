@@ -77,20 +77,20 @@ void LogicClass::Debug_Dump(MonoClass *mono) const
 
 	mono->Set_Cursor(21, 9);
 	mono->Print(
-		"ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿\r"
-		"³Units.....³   ³Frame Rate:      Avg:      Frame:        ³\r"
-		"³Infantry..³   ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´\r"
-		"³Aircraft..³   ³                                         ³\r"
-		"³Buildings.³   ³                                         ³\r"
-		"³Terrain...³   Ã                                         ´\r"
-		"³Bullets...³   ³                                         ³\r"
-		"³Anims.....³   ³                                         ³\r"
-		"³Teams.....³   Ã                                        Ä´\r"
-		"³Triggers..³   ³                                         ³\r"
-		"³Factories.³   ³                                         ³\r"
-		"³          ³   Ã                                         ´\r"
-		"³          ³   ³                                         ³\r"
-		"ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄ´Spare CPU TimeÃÄÄÄÄÄÄÄÄÄÄÄÄÙ\r");
+		"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿\r"
+		"ï¿½Units.....ï¿½   ï¿½Frame Rate:      Avg:      Frame:        ï¿½\r"
+		"ï¿½Infantry..ï¿½   ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä´\r"
+		"ï¿½Aircraft..ï¿½   ï¿½                                         ï¿½\r"
+		"ï¿½Buildings.ï¿½   ï¿½                                         ï¿½\r"
+		"ï¿½Terrain...ï¿½   ï¿½                                         ï¿½\r"
+		"ï¿½Bullets...ï¿½   ï¿½                                         ï¿½\r"
+		"ï¿½Anims.....ï¿½   ï¿½                                         ï¿½\r"
+		"ï¿½Teams.....ï¿½   ï¿½                                        Ä´\r"
+		"ï¿½Triggers..ï¿½   ï¿½                                         ï¿½\r"
+		"ï¿½Factories.ï¿½   ï¿½                                         ï¿½\r"
+		"ï¿½          ï¿½   ï¿½                                         ï¿½\r"
+		"ï¿½          ï¿½   ï¿½                                         ï¿½\r"
+		"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä´Spare CPU Timeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\r");
 
 	_framecounter++;
 	mono->Set_Cursor(70, 10);mono->Printf("%ld", Frame);
@@ -129,7 +129,7 @@ void LogicClass::Debug_Dump(MonoClass *mono) const
 	*/
 	for (int column = 0; column < RECORDCOUNT; column++) {
 		for (int row = 1; row < RECORDHEIGHT; row += 2) {
-			static char _barchar[4] = {' ', 220, 0, 219};
+			static uint8_t const _barchar[4] = {' ', 220, 0, 219};
 			char str[2];
 			int index = 0;
 
@@ -137,7 +137,7 @@ void LogicClass::Debug_Dump(MonoClass *mono) const
 			index |= (_record[column].Graphic >= row+1) ? 0x02: 0x00;
 
 			str[1] = '\0';
-			str[0] = _barchar[index];
+			str[0] = static_cast<char>(_barchar[index]);
 			mono->Text_Print(str, 37+column, 21-(row/2));
 		}
 	}
@@ -271,5 +271,4 @@ void LogicClass::AI(void)
 
 //	Heap_Dump_Check( "After House AI" );
 }
-
 

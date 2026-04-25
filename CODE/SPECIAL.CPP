@@ -71,7 +71,8 @@ void Special_Dialog(void)
 	buttons = &ok;
 	cancel.Add(*buttons);
 
-	for (int index = 0; index < sizeof(_options)/sizeof(_options[0]); index++) {
+	const int option_count = static_cast<int>(sizeof(_options)/sizeof(_options[0]));
+	for (int index = 0; index < option_count; index++) {
 		_options[index].Button = new CheckBoxClass(100+index, OPTION_X+7, OPTION_Y+20+(index*10));
 		if (_options[index].Button) {
 			_options[index].Button->Add(*buttons);
@@ -142,7 +143,6 @@ void Special_Dialog(void)
 
 	Map.Override_Mouse_Shape(MOUSE_NORMAL);
 	Set_Logic_Page(SeenBuff);
-	bool recalc = true;
 	bool display = true;
 	bool process = true;
 	while (process) {
@@ -171,7 +171,7 @@ void Special_Dialog(void)
 			Dialog_Box(OPTION_X, OPTION_Y, OPTION_WIDTH, OPTION_HEIGHT);
 			Draw_Caption(TXT_SPECIAL_OPTIONS, OPTION_X, OPTION_Y, OPTION_WIDTH);
 
-			for (int option_index = 0; option_index < (int)(sizeof(_options)/sizeof(_options[0])); option_index++) {
+			for (int option_index = 0; option_index < option_count; option_index++) {
 				Fancy_Text_Print(_options[option_index].Description, _options[option_index].Button->X+10, _options[option_index].Button->Y, CC_GREEN, TBLACK, TPF_6PT_GRAD|TPF_USE_GRAD_PAL|TPF_NOSHADOW);
 			}
 			buttons->Draw_All();
@@ -179,11 +179,11 @@ void Special_Dialog(void)
 		}
 
 		KeyNumType input = buttons->Input();
-		switch (input) {
+		switch (static_cast<int>(input)) {
 			case KN_ESC:
 			case 200|KN_BUTTON:
 				process = false;
-				for (int option_index = 0; option_index < (int)(sizeof(_options)/sizeof(_options[0])); option_index++) {
+				for (int option_index = 0; option_index < option_count; option_index++) {
 					switch (_options[option_index].Description) {
 						case TXT_SEPARATE_HELIPAD:
 							oldspecial.IsSeparate = _options[option_index].Setting;
@@ -250,7 +250,7 @@ void Special_Dialog(void)
 
 			default:
 				int option_index = (input & ~KN_BUTTON) - 100;
-				if ((unsigned)option_index < sizeof(_options)/sizeof(_options[0])) {
+				if (option_index >= 0 && option_index < option_count) {
 					_options[option_index].Setting = (_options[option_index].Setting == false);
 					if (_options[option_index].Setting) {
 						_options[option_index].Button->Turn_On();
@@ -267,7 +267,5 @@ void Special_Dialog(void)
 	Map.Flag_To_Redraw(true);
 	Map.Render();
 }
-
-
 
 

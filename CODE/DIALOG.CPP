@@ -379,7 +379,8 @@ void Simple_Text_Print(char const *text, unsigned x, unsigned y, unsigned fore, 
 		tempstr = new char [strlen (text)+1];
 		char *tempptr = tempstr;
 
-		for ( int i=0 ; i<strlen(text)+1 ; i++ ) {
+		size_t const text_length = strlen(text) + 1;
+		for (size_t i = 0; i < text_length; i++) {
 			if (text[i] != -1){
 				*tempptr = text[i];
 				tempptr++;
@@ -559,7 +560,8 @@ void Simple_Text_Print(char const *text, unsigned x, unsigned y, unsigned fore, 
 				break;
 		}
 
-		if ((unsigned)x < SeenBuff.Get_Width() && (unsigned)y < SeenBuff.Get_Height()) {
+		if (x < static_cast<unsigned>(SeenBuff.Get_Width()) &&
+			y < static_cast<unsigned>(SeenBuff.Get_Height())) {
 			LogicPage->Print(tempstr, x, y, fore, back);
 		}
 	}
@@ -781,7 +783,7 @@ void Conquer_Clip_Text_Print(char const *text, unsigned x, unsigned y, unsigned 
 			*/
 			if (ptr) {
 				if (tabs) {
-					while (offset > *tabs) {
+					while (static_cast<int>(offset) > *tabs) {
 						tabs++;
 					}
 					offset = *tabs;

@@ -54,6 +54,20 @@
 #include "CCDDE.H"
 
 
+namespace {
+
+HWND Decode_Window_Handle(char *buffer, uintptr_t default_value)
+{
+	char key_string[32];
+
+	snprintf(key_string, sizeof(key_string), "%llu", static_cast<unsigned long long>(default_value));
+	WWGetPrivateProfileString("Internet", "HWND", key_string, key_string, sizeof(key_string), buffer);
+	return reinterpret_cast<HWND>(static_cast<uintptr_t>(strtoull(key_string, NULL, 10)));
+}
+
+}
+
+
 
 /***************************************************************************
 ** Internet specific globals
@@ -283,9 +297,9 @@ int Read_Game_Options(char *name)
 	PlanetWestwoodGameID = WWGetPrivateProfileInt("Internet", "GameID", 0, buffer);
 	PlanetWestwoodStartTime = WWGetPrivateProfileInt ("Internet", "StartTime", 0, buffer);
 #ifdef WIN32
-	WChatHWND = (HWND) WWGetPrivateProfileInt("Internet", "HWND", (int)FindWindow("OWL_Window", "Westwood Chat"), buffer);
+	WChatHWND = Decode_Window_Handle(buffer, reinterpret_cast<uintptr_t>(FindWindow("OWL_Window", "Westwood Chat")));
 #else
-	WChatHWND = (HWND)WWGetPrivateProfileInt("Internet", "HWND", 0, buffer);
+	WChatHWND = Decode_Window_Handle(buffer, 0);
 #endif
 
 	InternetMaxPlayers = WWGetPrivateProfileInt("Internet", "MaxPlayers", 2, buffer);
@@ -698,4 +712,3 @@ GameType Do_The_Internet_Menu_Thang(void)
 
 
 }
-

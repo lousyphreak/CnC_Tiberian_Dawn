@@ -125,11 +125,21 @@ PacketClass::PacketClass(char *curbuf)
 	//
 	while (remaining_size > 0) {
 		FieldClass *field = new FieldClass;
+		struct FieldHeaderType {
+			char ID[4];
+			unsigned short DataType;
+			unsigned short Size;
+		} header;
 
 		//
 		// Copy the adjusted header into the buffer and then advance the buffer
 		//
-		memcpy(field, curbuf, FIELD_HEADER_SIZE);
+		memcpy(&header, curbuf, FIELD_HEADER_SIZE);
+		memcpy(field->ID, header.ID, sizeof(field->ID));
+		field->DataType = header.DataType;
+		field->Size = header.Size;
+		field->Data = NULL;
+		field->Next = NULL;
 		curbuf += FIELD_HEADER_SIZE;
 		remaining_size   -= FIELD_HEADER_SIZE;
 

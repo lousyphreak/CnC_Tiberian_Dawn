@@ -160,7 +160,7 @@ void SmudgeClass::operator delete(void *ptr)
 SmudgeClass::SmudgeClass(SmudgeType type, COORDINATE pos, HousesType house) :
 	Class(&SmudgeTypeClass::As_Reference(type))
 {
-	if (pos != -1) {
+	if (pos != static_cast<COORDINATE>(-1)) {
 		ToOwn = house;
 		if (!Unlimbo(pos)) {
 			delete this;

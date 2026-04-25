@@ -478,7 +478,7 @@ bool ThemeClass::Is_Allowed(ThemeType index) const
 //		(index == THEME_MAP1 && ScenarioInit) ||
 		((Special.IsVariation && _themes[index].Variation && index != THEME_WIN1) &&
 #ifndef DEMO
-		(GameToPlay != GAME_NORMAL || _themes[index].Scenario <= Scenario) &&
+		(GameToPlay != GAME_NORMAL || _themes[index].Scenario <= static_cast<int>(Scenario)) &&
 #endif
 		(index != THEME_J1 || Special.IsJurassic))));
 }

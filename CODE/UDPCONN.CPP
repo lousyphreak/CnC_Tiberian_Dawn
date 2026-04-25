@@ -533,16 +533,9 @@ void UDPConnClass::Close_Socket(unsigned short socket)
 int UDPConnClass::Send_To(char *buf, int buflen, UDPAddressClass *address,
 	NetNodeType immed)
 {
-
-	void *hdr_ptr;
-	void *buf_ptr;
-	unsigned long hdr_val;
-	unsigned long buf_val;
 	NetNumType net;
 	NetNodeType node;
 	int rc;
-
-	unsigned short target_mask;
 
 	unsigned char	send_address[6];
 

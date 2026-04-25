@@ -719,12 +719,11 @@ void CommQueueClass::Mono_Debug_Print(int refresh)
 	static int send_col[] = {1,14,28};			// coords of send queue columns
 	static int receive_col[] = {40,54,68};		// coords of recv queue columns
 	int row,col;										// current row,col for printing
-	int num;												// max # items to print
 
 	struct CommHdr {									// this mirrors the CommHeaderType
-		unsigned short MagicNumber;
-		unsigned char Code;
-		unsigned long PacketID;
+		uint16_t MagicNumber;
+		uint8_t Code;
+		uint32_t PacketID;
 	} *hdr;
 
 	/*------------------------------------------------------------------------
@@ -770,11 +769,6 @@ void CommQueueClass::Mono_Debug_Print(int refresh)
 	/*------------------------------------------------------------------------
 	Print Send Queue items
 	------------------------------------------------------------------------*/
-	if (MaxSend <= 48) {
-		num = MaxSend;
-	} else {
-		num = 48;
-	}
 	col = 0;
 	row = 0;
 	for (i = 0; i < MaxSend; i++) {
@@ -799,11 +793,6 @@ void CommQueueClass::Mono_Debug_Print(int refresh)
 	/*------------------------------------------------------------------------
 	Print Receive Queue items
 	------------------------------------------------------------------------*/
-	if (MaxReceive <= 48) {
-		num = MaxSend;
-	} else {
-		num = 48;
-	}
 	col = 0;
 	row = 0;
 	for (i = 0; i < MaxReceive; i++) {
@@ -856,9 +845,9 @@ void CommQueueClass::Mono_Debug_Print2(int refresh)
 	int val;
 
 	struct CommHdr {									// this mirrors the CommHeaderType
-		unsigned short MagicNumber;
-		unsigned char Code;
-		unsigned long PacketID;
+		uint16_t MagicNumber;
+		uint8_t Code;
+		uint32_t PacketID;
 	} *hdr;
 
 	/*------------------------------------------------------------------------
@@ -908,7 +897,7 @@ void CommQueueClass::Mono_Debug_Print2(int refresh)
 			hdr = (CommHdr *)SendQueue[i].Buffer;
 			hdr->MagicNumber = hdr->MagicNumber;
 			hdr->Code = hdr->Code;
-			sprintf(txt,"%4d %2d %-5s  ",
+			sprintf(txt,"%4u %2lu %-5s  ",
 				hdr->PacketID,
 				SendQueue[i].SendCount,
 				ConnectionClass::Command_Name(hdr->Code));
@@ -962,7 +951,7 @@ void CommQueueClass::Mono_Debug_Print2(int refresh)
 			hdr = (CommHdr *)ReceiveQueue[i].Buffer;
 			hdr->MagicNumber = hdr->MagicNumber;
 			hdr->Code = hdr->Code;
-			sprintf(txt,"%4d %2d %-5s  ",
+			sprintf(txt,"%4u %2u %-5s  ",
 				hdr->PacketID,
 				ReceiveQueue[i].IsRead,
 				ConnectionClass::Command_Name(hdr->Code));

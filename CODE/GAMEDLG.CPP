@@ -70,8 +70,6 @@ void GameControlsClass::Process(void)
 
 	int	d_txt6_h		= 7 * factor;									// ht of 6-pt text
 	int	d_margin1	= 5 * factor;									// large margin
-	int	d_margin2	= 2 * factor;									// small margin
-
 	int	d_speed_w	= d_dialog_w - (20 * factor);
 	int	d_speed_h	= 6 * factor;
 	int	d_speed_x	= d_dialog_x + (10 * factor);
@@ -265,7 +263,7 @@ void GameControlsClass::Process(void)
 		/*
 		**	Process input.
 		*/
-		switch (input) {
+		switch (static_cast<int>(input)) {
 			case (BUTTON_SPEED | KN_BUTTON):
 				curbutton = (BUTTON_SPEED - BUTTON_FIRST);
 				refresh = true;

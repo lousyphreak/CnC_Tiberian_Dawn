@@ -2062,7 +2062,6 @@ ProdFailType HouseClass::Begin_Production(RTTIType type, int id)
 	Validate();
 	int * factory = 0;
 	int result = true;
-	bool initial_start = false;
 	FactoryClass * fptr;
 	TechnoTypeClass const * tech = Fetch_Techno_Type(type, id);
 
@@ -2090,6 +2089,9 @@ ProdFailType HouseClass::Begin_Production(RTTIType type, int id)
 		case RTTI_SPECIAL:
 			factory = &SpecialFactory;
 			break;
+
+		default:
+			break;
 	}
 
 	/*
@@ -2110,7 +2112,6 @@ ProdFailType HouseClass::Begin_Production(RTTIType type, int id)
 		if (!fptr) return(PROD_CANT);
 		*factory = Factories.ID(fptr);
 		result = (tech) ? fptr->Set(*tech, *this) : fptr->Set(id, *this);
-		initial_start = true;
 	}
 
 	if (result) {
@@ -2174,6 +2175,9 @@ ProdFailType HouseClass::Suspend_Production(RTTIType type)
 
 		case RTTI_SPECIAL:
 			factory = &SpecialFactory;
+			break;
+
+		default:
 			break;
 	}
 
@@ -2258,6 +2262,9 @@ ProdFailType HouseClass::Abandon_Production(RTTIType type)
 
 		case RTTI_SPECIAL:
 			factory = &SpecialFactory;
+			break;
+
+		default:
 			break;
 	}
 
@@ -2476,6 +2483,9 @@ bool HouseClass::Place_Special_Blast(SpecialWeaponType id, CELL cell)
 				IsRecalcNeeded = true;
 			}
 			break;
+
+		default:
+			break;
 	}
 	return(true);
 }
@@ -2533,6 +2543,9 @@ bool HouseClass::Place_Object(RTTIType type, CELL cell)
 			if (BuildingFactory != -1) {
 				factory = Factories.Raw_Ptr(BuildingFactory);
 			}
+			break;
+
+		default:
 			break;
 	}
 
@@ -3388,6 +3401,9 @@ TechnoTypeClass const * HouseClass::Suggest_New_Object(RTTIType objecttype) cons
 				}
 			}
 			break;
+
+		default:
+			break;
 	}
 	return(techno);
 }
@@ -4227,6 +4243,9 @@ void HouseClass::Init_Data(PlayerColorType color, HousesType house, int credits)
 			RemapTable = RemapBlue;
 			((unsigned char &)Class->Color) = 203;
 			((unsigned char &)Class->BrightColor) = 201;
+			break;
+
+		default:
 			break;
 	}
 }

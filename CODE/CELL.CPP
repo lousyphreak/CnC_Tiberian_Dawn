@@ -395,7 +395,7 @@ void CellClass::Redraw_Objects(bool forced)
 		/*
 		**	Flag any overlapping object in this cell to be redrawn.
 		*/
-		for (int index = 0; index < sizeof(Overlapper)/sizeof(Overlapper[0]); index++) {
+		for (size_t index = 0; index < sizeof(Overlapper) / sizeof(Overlapper[0]); ++index) {
 			if (Overlapper[index]) {
 				Overlapper[index]->Mark(MARK_CHANGE);
 			}
@@ -691,7 +691,7 @@ void CellClass::Overlap_Down(ObjectClass * object)
 	ObjectClass **ptr = 0;
 
 	if (!object) return;
-	for (int index = 0; index < sizeof(Overlapper)/sizeof(Overlapper[0]); index++) {
+	for (size_t index = 0; index < sizeof(Overlapper) / sizeof(Overlapper[0]); ++index) {
 		if (Overlapper[index] == object) return;
 		if (!Overlapper[index]) ptr = &Overlapper[index];
 	}
@@ -744,7 +744,7 @@ void CellClass::Overlap_Down(ObjectClass * object)
 void CellClass::Overlap_Up(ObjectClass *object)
 {
 	Validate();
-	for (int index = 0; index < sizeof(Overlapper)/sizeof(Overlapper[0]); index++) {
+	for (size_t index = 0; index < sizeof(Overlapper) / sizeof(Overlapper[0]); ++index) {
 		if (Overlapper[index] == object) {
 			Overlapper[index] = 0;
 			break;
@@ -1113,7 +1113,8 @@ void CellClass::Concrete_Calc(void)
 	**	depends on whether this is for an even or odd column.
 	*/
 	index = 0;
-	for (int i = 0; i < (sizeof(_even)/sizeof(_even[0])); i++) {
+	const int adjacent_count = static_cast<int>(sizeof(_even) / sizeof(_even[0]));
+	for (int i = 0; i < adjacent_count; ++i) {
 		CellClass & cellptr = Adjacent_Cell(*ptr++);
 
 //		if ((cellptr->IsConcrete) ||
@@ -1798,8 +1799,6 @@ long CellClass::Tiberium_Adjust(bool pregame)
 			** (Skip those cells which aren't on the map)
 			*/
 			for (FacingType face = FACING_FIRST; face < FACING_COUNT; face++) {
-				CELL cell = Cell_Number() + AdjacentCell[face];
-
 				CellClass & adj = Adjacent_Cell(face);
 
 				if (adj.Overlay != OVERLAY_NONE &&

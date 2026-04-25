@@ -157,7 +157,7 @@ static void Send_FrameSync(ConnManClass *net, int cmd_count);
 static RetcodeType Process_Receive_Packet(ConnManClass *net,
 	char *multi_packet_buf, int id, int packetlen, long *their_frame,
 	unsigned short *their_sent, unsigned short *their_recv);
-static RetcodeType Process_Serial_Packet(char *multi_packet_buf,
+[[maybe_unused]] static RetcodeType Process_Serial_Packet(char *multi_packet_buf,
 	int first_time);
 static int Can_Advance(ConnManClass *net, int max_ahead, long *their_frame,
 	unsigned short *their_sent, unsigned short *their_recv);
@@ -176,12 +176,12 @@ static int Build_Send_Packet(void *buf, int bufsize, int frame_delay,
 	int num_cmds, int cap);
 static int Breakup_Receive_Packet(void *buf, int bufsize );
 #endif	//DEMO
-int Add_Uncompressed_Events(void *buf, int bufsize, int frame_delay, int size,
+static int Add_Uncompressed_Events(void *buf, int bufsize, int frame_delay, int size,
 	int cap);
-int Add_Compressed_Events(void *buf, int bufsize, int frame_delay, int size,
+static int Add_Compressed_Events(void *buf, int bufsize, int frame_delay, int size,
 	int cap);
-int Extract_Uncompressed_Events(void *buf, int bufsize);
-int Extract_Compressed_Events(void *buf, int bufsize);
+static int Extract_Uncompressed_Events(void *buf, int bufsize);
+static int Extract_Compressed_Events(void *buf, int bufsize);
 
 //...........................................................................
 // DoList management:
@@ -341,6 +341,9 @@ void Queue_AI(void)
 			case GAME_INTERNET:
 			case GAME_WOL:
 				Queue_AI_Multiplayer();
+				break;
+
+			default:
 				break;
 		}
 	}
@@ -555,7 +558,6 @@ static void Queue_AI_Multiplayer(void)
 	//........................................................................
 	int i;
 	RetcodeType rc;
-	int reconnect_dlg = 0;				// 1 = the reconnect dialog is displayed
 
 	//------------------------------------------------------------------------
 	//	Initialize the packet buffer pointer & its max size
@@ -801,7 +803,6 @@ static RetcodeType Wait_For_Players(int first_time, ConnManClass *net,
 	//........................................................................
 	// Variables for sending, receiving & parsing packets:
 	//........................................................................
-	EventClass *event;					// event ptr for parsing incoming packets
 	int packetlen;							// size of meta-packet sent, & received
 	int id;									// id of other player
 	int messages_this_loop;				// to limit # messages processed each loop
@@ -918,11 +919,6 @@ static RetcodeType Wait_For_Players(int first_time, ConnManClass *net,
 			/*..................................................................
 			Get an event ptr to the incoming message
 			..................................................................*/
-			event = (EventClass *)multi_packet_buf;
-
-			//------------------------------------------------------------------
-			//	Process the incoming packet
-			//------------------------------------------------------------------
 			rc = Process_Receive_Packet(net, multi_packet_buf, id, packetlen,
 				their_frame, their_sent, their_recv);
 			//..................................................................
@@ -1274,12 +1270,14 @@ CCDebugString (flip);
  *=========================================================================*/
 static int Process_Send_Period(ConnManClass *net)
 {
+	const unsigned long aligned_frame = ((static_cast<unsigned long>(Frame) + (FrameSendRate - 1)) /
+		FrameSendRate) * FrameSendRate;
+
 	//------------------------------------------------------------------------
 	// If the current frame # is not an even multiple of 'FrameSendRate', then
 	// it's not time to send a packet; just return.
 	//------------------------------------------------------------------------
-	if (Frame != (((Frame + (FrameSendRate - 1)) /
-		FrameSendRate) * FrameSendRate) ) {
+	if (static_cast<unsigned long>(Frame) != aligned_frame) {
 
 		net->Service();
 
@@ -1458,7 +1456,12 @@ static void Send_FrameSync(ConnManClass *net, int cmd_count)
 	// scenario-based CRC rather than a game-state-based CRC, to let the
 	// games compare scenario CRC's on startup.
 	//------------------------------------------------------------------------
-	memset (&packet, 0, sizeof(EventClass));
+	packet.Type = EventClass::EMPTY;
+	packet.Frame = 0;
+	packet.ID = 0;
+	packet.IsExecuted = 0;
+	packet.MPlayerID = 0;
+	memset(&packet.Data, 0, sizeof(packet.Data));
 	packet.Type = EventClass::FRAMESYNC;
 	if (CommProtocol == COMM_PROTOCOL_MULTI_E_COMP) {
 		packet.Frame = ((Frame + MPlayerMaxAhead + (FrameSendRate - 1)) /
@@ -1633,7 +1636,7 @@ static RetcodeType Process_Receive_Packet(ConnManClass *net,
  * HISTORY:                                                                *
  *   11/21/1995 BRR : Created.                                             *
  *=========================================================================*/
-static RetcodeType Process_Serial_Packet(char *multi_packet_buf,
+[[maybe_unused]] static RetcodeType Process_Serial_Packet(char *multi_packet_buf,
 	int first_time)
 {
 	SerialPacketType 	*serial_packet;		// for parsing serial packets
@@ -2225,7 +2228,12 @@ static int Add_Compressed_Events(void *buf, int bufsize, int frame_delay,
 	//------------------------------------------------------------------------
 	// clear previous event
 	//------------------------------------------------------------------------
-	memset (&prevevent, 0, sizeof(EventClass));
+	prevevent.Type = EventClass::EMPTY;
+	prevevent.Frame = 0;
+	prevevent.ID = 0;
+	prevevent.IsExecuted = 0;
+	prevevent.MPlayerID = 0;
+	memset(&prevevent.Data, 0, sizeof(prevevent.Data));
 
 	//------------------------------------------------------------------------
 	// Loop until there are no more events, we've processed our max # of
@@ -2509,11 +2517,12 @@ static int Extract_Uncompressed_Events(void *buf, int bufsize)
 	int pos = 0;
 	int leftover = bufsize;
 	EventClass *event;
+	const int event_size = static_cast<int>(sizeof(EventClass));
 
 	//------------------------------------------------------------------------
 	// Loop until there are no more events in the packet
 	//------------------------------------------------------------------------
-	while (leftover >= sizeof(EventClass) ) {
+	while (leftover >= event_size ) {
 		event = (EventClass *)(((char *)buf) + pos);
 
 		//.....................................................................
@@ -2536,8 +2545,8 @@ static int Extract_Uncompressed_Events(void *buf, int bufsize)
 		//.....................................................................
 		// Point to the next position in the buffer; decrement our 'leftover'
 		//.....................................................................
-		pos += sizeof(EventClass);
-		leftover -= sizeof(EventClass);
+		pos += event_size;
+		leftover -= event_size;
 	}
 
 	return (count);
@@ -2574,7 +2583,12 @@ static int Extract_Compressed_Events(void *buf, int bufsize)
 	//------------------------------------------------------------------------
 	// Clear work event structure
 	//------------------------------------------------------------------------
-	memset (&eventdata, 0, sizeof(EventClass));
+	eventdata.Type = EventClass::EMPTY;
+	eventdata.Frame = 0;
+	eventdata.ID = 0;
+	eventdata.IsExecuted = 0;
+	eventdata.MPlayerID = 0;
+	memset(&eventdata.Data, 0, sizeof(eventdata.Data));
 
 	//------------------------------------------------------------------------
 	// Assume the first event is a FRAMEINFO event
@@ -2586,7 +2600,7 @@ static int Extract_Compressed_Events(void *buf, int bufsize)
 		size_of(EventClass, Data.FrameInfo)) - sizeof(EventClass::EventType);
 	event = (EventClass *)(((char *)buf) + pos);
 
-	while (leftover >= (datasize + sizeof(EventClass::EventType)) ) {
+	while (leftover >= (datasize + static_cast<int>(sizeof(EventClass::EventType))) ) {
 		//.....................................................................
 		// add event to the DoList, only if it's not a FRAMESYNC
 		// (but FRAMEINFO's do get added.)
@@ -3370,7 +3384,7 @@ void Print_CRCs(EventClass *ev)
 	}
 
 	for (i = 0; i < 32; i++) {
-		fprintf(fp,"CRC[%d]=%x\n",i,CRC[i]);
+		fprintf(fp,"CRC[%d]=%lx\n",i,CRC[i]);
 	}
 
 
@@ -3924,13 +3938,23 @@ static void Init_Queue_Mono(ConnManClass *net)
 		MonoClass::Enable();
 
 	if (net->Num_Connections() > 0) {
+		static char *debug_event_names[EventClass::LAST_EVENT];
+		static bool debug_event_names_initialized = false;
+
+		if (!debug_event_names_initialized) {
+			for (int event_index = 0; event_index < EventClass::LAST_EVENT; ++event_index) {
+				debug_event_names[event_index] = const_cast<char *>(EventClass::EventNames[event_index]);
+			}
+			debug_event_names_initialized = true;
+		}
+
 		//.....................................................................
 		//	Network mono debugging screen
 		//.....................................................................
 		if (NetMonoMode==0) {
 			if (Frame==0 || NewMonoMode) {
 				net->Configure_Debug (0, sizeof (CommHeaderType),
-					sizeof(EventClass::EventType), EventClass::EventNames, 0);
+					sizeof(EventClass::EventType), debug_event_names, 0);
 				net->Mono_Debug_Print (0,1);
 				NewMonoMode = 0;
 			}
@@ -4115,7 +4139,7 @@ void Dump_Packet_Too_Late_Stuff(EventClass *event)
 
 	fprintf(fp,"----------- My data: ------------------\n");
 	fprintf(fp,"Frame:%d\n",Frame);
-	fprintf(fp,"MaxAhead:%d\n",MPlayerMaxAhead);
+	fprintf(fp,"MaxAhead:%lu\n",MPlayerMaxAhead);
 
 	fclose(fp);
 }

@@ -235,7 +235,7 @@ unsigned long ConnectionClass::Time (void)
  * HISTORY:                                                                * 
  *   05/31/1995 BRR : Created.                                             * 
  *=========================================================================*/
-char *ConnectionClass::Command_Name(int command)
+char const *ConnectionClass::Command_Name(int command)
 {
 	if (command >= 0 && command < PACKET_COUNT) {
 		return(Commands[command]);

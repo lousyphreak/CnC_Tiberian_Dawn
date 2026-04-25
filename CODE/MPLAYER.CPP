@@ -124,7 +124,7 @@ static bool Choose_Internet_Game(InternetTransportType& transport)
 		int selection = 0;
 		bool pressed = false;
 
-		switch (input) {
+		switch ((int)input) {
 			case BUTTON_UDP | KN_BUTTON:
 			case BUTTON_TCP | KN_BUTTON:
 			case BUTTON_WOL | KN_BUTTON:
@@ -251,7 +251,7 @@ static bool Get_Internet_Host_Or_Join(bool& host_game)
 		int selection = 0;
 		bool pressed = false;
 
-		switch (input) {
+		switch ((int)input) {
 			case BUTTON_HOST | KN_BUTTON:
 			case BUTTON_JOIN | KN_BUTTON:
 			case BUTTON_CANCEL | KN_BUTTON:
@@ -793,7 +793,7 @@ void Read_MultiPlayer_Settings (void)
 		sscanf(buf,"%x",&TrapCoord);
 
 		WWGetPrivateProfileString ("SyncBug","this","0",buf,80,buffer);
-		sscanf(buf,"%x",&TrapThis);
+		TrapThis = reinterpret_cast<void *>(static_cast<uintptr_t>(strtoull(buf, NULL, 16)));
 
 		WWGetPrivateProfileString ("SyncBug","Cell","0",buf,80,buffer);
 		cell = atoi(buf);
@@ -824,7 +824,7 @@ void Write_MultiPlayer_Settings (void)
 	char * buffer;			// INI staging buffer pointer.
 	CCFileClass file;
 	int i;
-	char entrytext[4];
+	char entrytext[12];
 	char buf[128];							// buffer for parsing INI entry
 
 	/*------------------------------------------------------------------------
@@ -910,7 +910,7 @@ void Write_MultiPlayer_Settings (void)
 			PhoneBook[i]->Settings.InitStringIndex,
 			PhoneBook[i]->Settings.CallWaitStringIndex,
 			PhoneBook[i]->Settings.CallWaitString);
-		sprintf( entrytext, "%03d", i );
+		snprintf(entrytext, sizeof(entrytext), "%03d", i);
 		WWWritePrivateProfileString ("PhoneBook", entrytext, buf, buffer);
 	}
 
@@ -943,7 +943,7 @@ void Read_Scenario_Descriptions (void)
 	char *buffer;							// INI staging buffer pointer.
 	CCFileClass file;
 	int i;
-	char fname[20];
+	char fname[_MAX_FNAME+_MAX_EXT+sizeof(".INI")];
 
 	/*------------------------------------------------------------------------
 	Clear the scenario description lists
@@ -958,7 +958,7 @@ void Read_Scenario_Descriptions (void)
 	for (i = 0; i < 100; i++) {
 		Set_Scenario_Name(ScenarioName, i, SCEN_PLAYER_MPLAYER,
 			SCEN_DIR_EAST, SCEN_VAR_A);
-		sprintf(fname,"%s.INI",ScenarioName);
+		snprintf(fname, sizeof(fname), "%s.INI", ScenarioName);
 		file.Set_Name (fname);
 
 		if (file.Is_Available()) {
@@ -983,7 +983,7 @@ void Read_Scenario_Descriptions (void)
 		.....................................................................*/
 		Set_Scenario_Name(ScenarioName, MPlayerFilenum[i], SCEN_PLAYER_MPLAYER,
 			SCEN_DIR_EAST, SCEN_VAR_A);
-		sprintf(fname,"%s.INI",ScenarioName);
+		snprintf(fname, sizeof(fname), "%s.INI", ScenarioName);
 		file.Set_Name (fname);
 		file.Read(buffer, _ShapeBufferSize-1);
 		file.Close();
@@ -1222,7 +1222,6 @@ int Surrender_Dialog(void)
 	int d_dialog_y = ((200*factor - d_dialog_h) / 2);				// centered y-coord
 	int d_dialog_cx = d_dialog_x + (d_dialog_w / 2);		// coord of x-center
 
-	int d_txt6_h = 6*factor+1;												// ht of 6-pt text
 	int d_margin = 5*factor;												// margin width/height
 	int d_topmargin = 20*factor;											// top margin
 
@@ -1351,7 +1350,7 @@ int Surrender_Dialog(void)
 		/*
 		............................ Process input ............................
 		*/
-		switch (input) {
+		switch ((int)input) {
 			case (KN_RETURN):
 			case (BUTTON_OK | KN_BUTTON):
 				retcode = 1;

@@ -127,3 +127,15 @@ _Last updated: 2026-04-25_
   - `XYP_COORD(...)` and target masks must avoid signed left shifts because negative pixel offsets are valid in TD weapon/animation code;
   - save/load and object serialization still have larger ABI hazards beyond this pass: cached vtable slots, raw whole-object writes, selected-object pointer coding, and remaining host-width fields must be reviewed before savegames can be considered portable.
 - TD support-wrapper defaults should not retain Red Alert branding/storage names where they affect user-visible title text, icon paths, or persistent browser/cache/config names; function names may remain `RA_*` temporarily where they are inherited wrapper API names.
+- For warning work, only a full clean rebuild is authoritative:
+  - incremental rebuilds can make the warning count look artificially low because they only recompile touched translation units;
+  - use `cmake --build <build-dir> --clean-first` when claiming the repository-wide warning baseline.
+- Many TD UI/input switches intentionally handle button-bitmask values that do not fit the plain `KeyNumType` enumerator range:
+  - when those paths are switching on combined button/key values, `switch (static_cast<int>(input))` is the safe modern form;
+  - this preserves the old behavior without pretending the bit-packed values are valid plain enum members.
+- Pointer-width cleanup rules are now stricter for the modern TD port:
+  - save/load, queue, movie, map-validation, and debug helper paths must use `uintptr_t` / `intptr_t` for pointer encoding or comparison;
+  - do not route those paths back through `int`, `unsigned int`, or Linux `unsigned long` just to match old source spelling.
+- Whole-object `memset(...)` is no longer acceptable on live TD class types in the active SDL3 build:
+  - `CellClass`, `EventClass`, and similar non-trivial types need explicit reset/value-initialization logic instead;
+  - this is not only about warnings: it avoids silently invalid object-state assumptions in modern C++ builds and sanitizers.

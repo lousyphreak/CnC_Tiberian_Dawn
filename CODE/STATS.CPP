@@ -161,8 +161,7 @@ void Send_Statistics_Packet(void)
 	HouseClass	*player;
 	static int	packet_size;
 	int			index;
-	bool			packet_later = false;	// Should the packet be sent later
-	void			*packet;
+	char			*packet;
 
 	static char	field_player_handle[5] 				= { "NAM?" };
 	static char	field_player_team[5] 				= { "SID?" };
@@ -259,11 +258,11 @@ void Send_Statistics_Packet(void)
 		/*
 		** Scenario
 		*/
-		char fname[128];
+		char fname[_MAX_FNAME+_MAX_EXT+sizeof(".INI")];
 		char namebuffer[40];
 		char *abuffer = (char *)_ShapeBuffer;
 		memset(abuffer, '\0', _ShapeBufferSize);
-		sprintf(fname,"%s.INI",ScenarioName);
+		snprintf(fname, sizeof(fname), "%s.INI", ScenarioName);
 		CCFileClass fileo;
 		fileo.Set_Name (fname);
 		fileo.Read(abuffer, _ShapeBufferSize-1);
@@ -607,7 +606,7 @@ void Send_Statistics_Packet(void)
 		/*
 		** Send the packet we calculated earlier when the disconnect occurred
 		*/
-		packet = PacketLater;
+		packet = static_cast<char *>(PacketLater);
 		PacketLater = NULL;
 	}
 

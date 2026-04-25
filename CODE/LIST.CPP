@@ -864,7 +864,7 @@ GadgetClass * ListClass::Remove(void)
  *=============================================================================================*/
 void ListClass::Set_Selected_Index(int index)
 { 
-   if ((unsigned)index < List.Count()) {
+   if (index >= 0 && index < List.Count()) {
 		SelectedIndex = index; 
 		Flag_To_Redraw();
 		if (SelectedIndex < CurrentTopIndex) {
