@@ -54,7 +54,6 @@
 
 /*= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =*/
 
-#pragma pack(push, 4)
 #include "win32_compat.h"
 #include	"SDLAUDIOBACKEND.H"
 #include	<WWSTD.H>
@@ -525,4 +524,3 @@ void Audio_Mem_Set(void const *ptr, uint8_t value, intptr_t size)
 		*temp++ = value;
 	}
 }
-#pragma pack(pop)

@@ -58,7 +58,6 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 extern	void Colour_Debug (int32_t call_number);
-#pragma pack(push, 4)
 
 #include "ra_messagebox.h"
 #include "win32_compat.h"
@@ -77,9 +76,7 @@ extern	void Colour_Debug (int32_t call_number);
 #include	<FILE.H>
 #include	<TIMER.H>
 #include	<math.h>
-#pragma pack(push, 1)
 #include	"AUDIO.H"
-#pragma pack(pop)
 AudioBackendBuffer *	DumpBuffer = NULL;
 
 /*
@@ -2074,6 +2071,3 @@ void Stop_Primary_Sound_Buffer (void)
 	}
 
 }
-
-
-#pragma pack(pop)

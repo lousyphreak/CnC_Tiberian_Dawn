@@ -38,10 +38,10 @@ _Last updated: 2026-04-25_
 - That wrapper split needs one more rule after the legacy-cleanup pass:
   - active TD code should call the modern helper names directly (`WWFS_MakePath`, `WWFS_SplitPath`, `WWFS_GlobDirectory`, `WWFS_GetPathInfo`) instead of reviving DOS-named entry points just because the old code spelled them that way;
   - once the live call sites are gone, delete the DOS-named wrapper aliases instead of keeping them around as permanent compatibility clutter.
-- The `#pragma pack(push, 8)` / `#pragma pack(pop)` guards around `#include <SDL3/SDL.h>` in `SDL3_COMPAT/wrappers/win32_compat.h` and `SDL3_COMPAT/wrappers/sdl_fs.h` are required:
-  - some preserved TD/Win32LIB headers still change struct packing before including the SDL compatibility wrappers;
-  - without those local pack guards, SDL headers inherit the wrong packing and fail their own compile-time alignment assertions;
-  - these pragmas are therefore functional ABI guards, not obsolete compiler noise.
+- The active SDL3 build now has a stronger packing rule:
+  - no `#pragma pack(push, ...)` / `#pragma pack(pop)` region should span any `#include`;
+  - the last include-boundary leaks were the file-scope pack blocks in `WIN32LIB/AUDIO/SOUNDINT.CPP` and `WIN32LIB/AUDIO/SOUNDIO.CPP`, plus a temporary packed include of `AUDIO.H` inside `SOUNDIO.CPP`;
+  - after removing those callers, `SDL3_COMPAT/wrappers/win32_compat.h` and `SDL3_COMPAT/wrappers/sdl_fs.h` no longer need local `#pragma pack` guards around `#include <SDL3/SDL.h>`.
 - The current ASan shutdown baseline after the legacy-cleanup pass is:
   - TD-owned `WWMouseClass` cursor/shadow buffers must all be released, including `EraseBuffer`;
   - after fixing that leak, the remaining timed-run LeakSanitizer output comes from the host graphics / DBus stack (`libnvidia-glcore`, `libdbus-1`) during shutdown rather than from TD-owned allocations.

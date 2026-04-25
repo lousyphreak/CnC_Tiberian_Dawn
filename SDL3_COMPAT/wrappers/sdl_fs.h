@@ -1,9 +1,7 @@
 #ifndef RA_SDL_FS_H
 #define RA_SDL_FS_H
 
-#pragma pack(push, 8)
 #include <SDL3/SDL.h>
-#pragma pack(pop)
 
 #include <cerrno>
 #include <climits>

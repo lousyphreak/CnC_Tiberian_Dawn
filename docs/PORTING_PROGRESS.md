@@ -8,6 +8,17 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
 
 ## Current status
 
+- `#pragma pack` cleanup removed the remaining include-boundary packing leaks from the active SDL3 build surface (2026-04-25):
+  - completed in this checkpoint:
+    - removed file-scope packing blocks from `WIN32LIB/AUDIO/SOUNDINT.CPP` and `WIN32LIB/AUDIO/SOUNDIO.CPP` so their `#include` stacks now compile at the translation unit's normal alignment
+    - removed the temporary `#pragma pack` wrapper around `#include "AUDIO.H"` in `WIN32LIB/AUDIO/SOUNDIO.CPP`; `AUDIO.H` now relies only on its own local struct-level packing
+    - removed the SDL include guards from `SDL3_COMPAT/wrappers/win32_compat.h` and `SDL3_COMPAT/wrappers/sdl_fs.h` after eliminating the last callers that were still including those wrappers while a non-default pack state was active
+    - audited `CODE/`, `WIN32LIB/`, and `SDL3_COMPAT/` so no remaining `#pragma pack(push, ...)` / `#pragma pack(pop)` region spans any `#include`
+  - validation result:
+    - `cmake --build build --target tiberian-dawn --parallel 4` succeeds after the cleanup
+    - `cmake --build build-asan --target tiberian-dawn --parallel 4` also succeeds
+    - `timeout --foreground 125s bash -lc './build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` still reaches the timeout window, and the only LeakSanitizer output remains in the host graphics / DBus stack (`libnvidia-glcore`, `libdbus-1`) rather than in TD-owned code
+
 - Legacy compiler/OS cleanup pass removed the remaining active Watcom/DOS portability glue from the SDL3 build surface (2026-04-25):
   - completed in this checkpoint:
     - removed the remaining live calling-convention/compiler keywords from active TD sources and headers:
@@ -44,9 +55,6 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
     - cleaned dead inline-assembly / DOS fallback blocks out of the touched sources (`CODE/COORD.CPP`, `CODE/CDFILE.CPP`, `WIN32LIB/MONO/MONO.CPP`) so the active tree no longer needs those preserved snippets as reference
     - fixed the shutdown leak exposed by the required ASan runtime probe by freeing `WWMouseClass::EraseBuffer` in `WIN32LIB/KEYBOARD/MOUSE.CPP`
     - modernized `CODE/JSHELL.H` bitwise enum helpers to `constexpr`, which avoids the old Watcom-style generic operators breaking `<filesystem>` on modern libstdc++
-  - important portability note discovered in this checkpoint:
-    - the `#pragma pack(push, 8)` / `#pragma pack(pop)` wrappers around `#include <SDL3/SDL.h>` in `SDL3_COMPAT/wrappers/win32_compat.h` and `SDL3_COMPAT/wrappers/sdl_fs.h` are still required
-    - removing those include guards lets legacy packed headers leak into SDL headers and triggers SDL compile-time alignment assertions, so these pack pragmas are functional compatibility guards, not obsolete compiler clutter
   - validation result:
     - `cmake --build build --target tiberian-dawn --parallel 4` succeeds after the cleanup
     - `cmake --build build-asan --target tiberian-dawn --parallel 4` also succeeds

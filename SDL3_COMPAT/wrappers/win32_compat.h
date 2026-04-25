@@ -1,8 +1,6 @@
 #pragma once
 
-#pragma pack(push, 8)
 #include <SDL3/SDL.h>
-#pragma pack(pop)
 
 #if defined(_WIN32)
 #include <io.h>
