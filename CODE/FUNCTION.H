@@ -240,7 +240,7 @@ int32_t Get_Sample_Type(void);
 inline CELL Coord_XCell(COORDINATE coord) {return (CELL)(*(((unsigned char*)&coord)+1));}
 inline CELL Coord_YCell(COORDINATE coord) {return (CELL)(*(((unsigned char*)&coord)+3));}
 //inline CELL Coord_Cell(COORD coord){return (CELL)(((*(((unsigned short *)&coord)+1) & 0xFF00) >> 2) | *(((unsigned char *)&coord)+1));}
-CELL Coord_Cell(COORDINATE coord);
+inline CELL Coord_Cell(COORDINATE coord) {return (CELL)(((Coord_YCell(coord)) << 6) | Coord_XCell(coord));}
 int32_t Desired_Facing8(int32_t x1, int32_t y1, int32_t x2, int32_t y2);
 int32_t Desired_Facing256(int32_t x1, int32_t y1, int32_t x2, int32_t y2);
 #ifdef __WATCOMC__

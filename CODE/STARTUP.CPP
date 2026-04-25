@@ -40,6 +40,7 @@
 
 #include	"FUNCTION.H"
 #include  "CCDDE.H"
+#include "ra_messagebox.h"
 
 bool Read_Private_Config_Struct(char *profile, NewConfigType *config);
 void Delete_Swap_Files(void);
@@ -109,13 +110,13 @@ void CD_Test(void)
  *   03/20/1995 JLB : Created.                                                                 *
  *=============================================================================================*/
 
-HINSTANCE	ProgramInstance;
+HANDLE	ProgramInstance;
 extern BOOL CC95AlreadyRunning;
 void Move_Point(short &x, short &y, register DirType dir, unsigned short distance);
 
 void Check_Use_Compressed_Shapes (void);
 
-int PASCAL WinMain ( HINSTANCE instance , HINSTANCE , char * command_line , int command_show )
+int main(int argc, char *argv[])
 {
 // Heap_Dump_Check( "first thing in main" );
 //	malloc(1);
@@ -143,18 +144,8 @@ int PASCAL WinMain ( HINSTANCE instance , HINSTANCE , char * command_line , int 
 	if (CC95AlreadyRunning) {	//Set in the DDEServer constructor
 		//MessageBox (NULL, "Error - attempt to restart C&C95 when already running.", "Command & Conquer", MB_ICONEXCLAMATION|MB_OK);
 
-		HWND ccwindow;
-    	ccwindow = FindWindow ("Command & Conquer", "Command & Conquer");
-    	if (ccwindow){
-    		SetForegroundWindow ( ccwindow );
-    		ShowWindow ( ccwindow, SW_RESTORE );
-    	}
-
 		return (EXIT_SUCCESS);
 	}
-
-
-	DDSCAPS	surface_capabilities;
 
 	if (Ram_Free(MEM_NORMAL) < 5000000) {
 #ifdef GERMAN
@@ -177,10 +168,10 @@ int PASCAL WinMain ( HINSTANCE instance , HINSTANCE , char * command_line , int 
 	//Free(test_buffer);
 
 
-	int		argc;				//Command line argument count
-	unsigned	command_scan;
-	char		command_char;
-	char *	argv[20];		//Pointers to command line arguments
+	HANDLE	instance = NULL;
+	int		command_show = SW_SHOWMAXIMIZED;
+	int		startup_argc;				// Command line argument count
+	char *	startup_argv[20];		// Pointers to command line arguments
 	char		path_to_exe[280];
 
 	ProgramInstance = instance;
@@ -188,45 +179,18 @@ int PASCAL WinMain ( HINSTANCE instance , HINSTANCE , char * command_line , int 
 	/*
 	** Get the full path to the .EXE
 	*/
-	GetModuleFileName (instance, &path_to_exe[0], 280);
+	const char *base_path = SDL_GetBasePath();
+	snprintf(path_to_exe, sizeof(path_to_exe), "%s", (base_path != NULL) ? base_path : "./");
 
 	/*
 	** First argument is supposed to be a pointer to the .EXE that is running
 	**
 	*/
-	argc=1;							//Set argument count to 1
-	argv[0]=&path_to_exe[0];	//Set 1st command line argument to point to full path
-
-	/*
-	** Get pointers to command line arguments just like if we were in DOS
-	**
-	** The command line we get is cr/zero? terminated.
-	**
-	*/
-
-	command_scan=0;
-
-	do {
-		/*
-		** Scan for non-space character on command line
-		*/
-		do {
-			command_char = *( command_line+command_scan++ );
-		} while ( command_char==' ' );
-
-		if ( command_char!=0 && command_char != 13 ){
-			argv[argc++]=command_line+command_scan-1;
-
-			/*
-			** Scan for space character on command line
-			*/
-			do {
-				command_char = *( command_line+command_scan++ );
-			} while ( command_char!=' ' && command_char != 0 && command_char!=13 );
-		*( command_line+command_scan-1 ) = 0;
-		}
-
-	} while ( command_char != 0 && command_char != 13 && argc<20 );
+	startup_argc = 1;
+	startup_argv[0] = &path_to_exe[0];
+	for (int argument_index = 1; argument_index < argc && startup_argc < 20; ++argument_index) {
+		startup_argv[startup_argc++] = argv[argument_index];
+	}
 
 
 
@@ -245,15 +209,13 @@ int PASCAL WinMain ( HINSTANCE instance , HINSTANCE , char * command_line , int 
 	*/
 	char drive[_MAX_DRIVE];
 	char path[_MAX_PATH];
-	unsigned drivecount;
-	_splitpath(argv[0], drive, path, NULL, NULL);
+	_splitpath(startup_argv[0], drive, path, NULL, NULL);
 	if (!drive[0]) {
 		drive[0] = ('A' + olddrive)-1;
 	}
 	if (!path[0]) {
 		strcpy(path, ".");
 	}
-	_dos_setdrive(toupper((drive[0])-'A')+1, &drivecount);
 	if (path[strlen(path)-1] == '\\') {
 		path[strlen(path)-1] = '\0';
 	}
@@ -262,21 +224,21 @@ int PASCAL WinMain ( HINSTANCE instance , HINSTANCE , char * command_line , int 
 #ifdef JAPANESE
 	ForceEnglish = false;
 #endif
-	if (Parse_Command_Line(argc, argv)) {
+	if (Parse_Command_Line(startup_argc, startup_argv)) {
 
 
 		WindowsTimer = new WinTimerClass(60,FALSE);
 
 		int time_test = WindowsTimer->Get_System_Tick_Count();
-		Sleep (1000);
+		SDL_Delay(1000);
 		if (WindowsTimer->Get_System_Tick_Count() == time_test){
 #ifdef FRENCH
-			MessageBox(0, "Error - L'horloge syst�me n'a pas pu s'initialiser en raison de l'instabilit� du syt�me. Vous devez red�marrer Windows.",  "Command & Conquer" , MB_OK|MB_ICONSTOP);
+			RA_ShowMessageBox("Error - L'horloge syst�me n'a pas pu s'initialiser en raison de l'instabilit� du syt�me. Vous devez red�marrer Windows.", "Command & Conquer", SDL_MESSAGEBOX_ERROR);
 #else
 #ifdef	GERMAN
-			MessageBox(0, "Fehler - das Timer-System konnte aufgrund einer Instabilit�t des Systems nicht initialisiert werden. Bitte starten Sie Windows neu.", "Command & Conquer", MB_OK|MB_ICONSTOP);
+			RA_ShowMessageBox("Fehler - das Timer-System konnte aufgrund einer Instabilit�t des Systems nicht initialisiert werden. Bitte starten Sie Windows neu.", "Command & Conquer", SDL_MESSAGEBOX_ERROR);
 #else
-			MessageBox(0, "Error - Timer system failed to start due to system instability. You need to restart Windows.", "Command & Conquer", MB_OK|MB_ICONSTOP);
+			RA_ShowMessageBox("Error - Timer system failed to start due to system instability. You need to restart Windows.", "Command & Conquer", SDL_MESSAGEBOX_ERROR);
 #endif	//GERMAN
 #endif	//FRENCH
 			return(EXIT_FAILURE);
@@ -309,7 +271,7 @@ int PASCAL WinMain ( HINSTANCE instance , HINSTANCE , char * command_line , int 
 #ifdef GERMAN
 			char	disk_space_message [512];
 			sprintf (disk_space_message, "Nicht genug Festplattenplatz f�r Command & Conquer.\nSie brauchen %d MByte freien Platz auf der Festplatte.", (INIT_FREE_DISK_SPACE) / (1024 * 1024));
-			MessageBox(NULL, disk_space_message, "Command & Conquer", MB_ICONEXCLAMATION|MB_OK);
+			RA_ShowMessageBox(disk_space_message, "Command & Conquer", SDL_MESSAGEBOX_WARNING);
 			if ( WindowsTimer )
 				delete WindowsTimer;
 			return (EXIT_FAILURE);
@@ -317,14 +279,13 @@ int PASCAL WinMain ( HINSTANCE instance , HINSTANCE , char * command_line , int 
 #ifdef FRENCH
 			char	disk_space_message [512];
 			sprintf (disk_space_message, "Espace disque insuffisant pour lancer Command & Conquer.\nVous devez disposer de %d Mo d'espace disponsible sur disque dur.", (INIT_FREE_DISK_SPACE) / (1024 * 1024));
-			MessageBox(NULL, disk_space_message, "Command & Conquer", MB_ICONEXCLAMATION|MB_OK);
+			RA_ShowMessageBox(disk_space_message, "Command & Conquer", SDL_MESSAGEBOX_WARNING);
 			if ( WindowsTimer )
 				delete WindowsTimer;
 			return (EXIT_FAILURE);
 #endif
 #if !(FRENCH | GERMAN)
-			int reply = MessageBox(NULL, "Warning - you are critically low on free disk space for virtual memory and save games. Do you want to play C&C anyway?", "Command & Conquer", MB_ICONQUESTION|MB_YESNO);
-			if (reply == IDNO){
+			if (!RA_ShowConfirmationMessageBox("Warning - you are critically low on free disk space for virtual memory and save games. Do you want to play C&C anyway?", "Command & Conquer", SDL_MESSAGEBOX_WARNING)){
 
 				if ( WindowsTimer )
 					delete WindowsTimer;
@@ -379,7 +340,7 @@ int PASCAL WinMain ( HINSTANCE instance , HINSTANCE , char * command_line , int 
 
 			if (!video_success){
 				CCDebugString ("C&C95 - Failed to set video mode.\n");
-				MessageBox(MainWindow, Text_String(TXT_UNABLE_TO_SET_VIDEO_MODE), "Command & Conquer", MB_ICONEXCLAMATION|MB_OK);
+				RA_ShowMessageBox(Text_String(TXT_UNABLE_TO_SET_VIDEO_MODE), "Command & Conquer", SDL_MESSAGEBOX_ERROR);
 				if (WindowsTimer) delete WindowsTimer;
 				if (Palette) delete [] Palette;
 				return (EXIT_FAILURE);
@@ -394,22 +355,6 @@ int PASCAL WinMain ( HINSTANCE instance , HINSTANCE , char * command_line , int 
 				VisiblePage.Init( ScreenWidth , ScreenHeight , NULL , 0 , (GBC_Enum)(GBC_VISIBLE | GBC_VIDEOMEM));
 
 				/*
-				** Check that we really got a video memory page. Failure is fatal.
-				*/
-				memset (&surface_capabilities, 0, sizeof(surface_capabilities));
-				VisiblePage.Get_DD_Surface()->GetCaps(&surface_capabilities);
-				if (surface_capabilities.dwCaps & DDSCAPS_SYSTEMMEMORY){
-					/*
-					** Aaaarrgghh!
-					*/
-					CCDebugString ("C&C95 - Unable to allocate primary surface.\n");
-					MessageBox(MainWindow, Text_String(TXT_UNABLE_TO_ALLOCATE_PRIMARY_VIDEO_BUFFER), "Command & Conquer", MB_ICONEXCLAMATION|MB_OK);
-					if (WindowsTimer) delete WindowsTimer;
-					if (Palette) delete [] Palette;
-					return (EXIT_FAILURE);
-				}
-
-				/*
 				** If we have enough left then put the hidpage in video memory unless...
 				**
 				** If there is no blitter then we will get better performance with a system
@@ -418,37 +363,16 @@ int PASCAL WinMain ( HINSTANCE instance , HINSTANCE , char * command_line , int 
 				** Use a system memory page if the user has specified it via the ccsetup program.
 				*/
 				CCDebugString ("C&C95 - Allocating back buffer ");
-				long video_memory = Get_Free_Video_Memory();
-				unsigned video_capabilities = Get_Video_Hardware_Capabilities();
-				if (video_memory < ScreenWidth*ScreenHeight ||
-						(! (video_capabilities & VIDEO_BLITTER)) ||
-						(video_capabilities & VIDEO_NO_HARDWARE_ASSIST) ||
+				uint32_t video_memory = VideoDrawObject ? VideoDrawObject->GetTotalVideoMemory() : 0;
+				if (video_memory < (uint32_t)(ScreenWidth * ScreenHeight) ||
 						!VideoBackBufferAllowed){
 					CCDebugString ("in system memory.\n");
 					HiddenPage.Init (ScreenWidth , ScreenHeight , NULL , 0 , (GBC_Enum)0);
 				} else {
-					//HiddenPage.Init (ScreenWidth , ScreenHeight , NULL , 0 , (GBC_Enum)0);
 					CCDebugString ("in video memory.\n");
 					HiddenPage.Init (ScreenWidth , ScreenHeight , NULL , 0 , (GBC_Enum)GBC_VIDEOMEM);
-
-					/*
-					** Make sure we really got a video memory hid page. If we didnt then things
-					** will run very slowly.
-					*/
-					memset (&surface_capabilities, 0, sizeof(surface_capabilities));
-					HiddenPage.Get_DD_Surface()->GetCaps(&surface_capabilities);
-					if (surface_capabilities.dwCaps & DDSCAPS_SYSTEMMEMORY){
-						/*
-						** Oh dear, big trub. This must be an IBM Aptiva or something similarly cruddy.
-						** We must redo the Hidden Page as system memory.
-						*/
-						AllSurfaces.Remove_DD_Surface(HiddenPage.Get_DD_Surface());  // Remove the old surface from the AllSurfaces list
-						HiddenPage.Get_DD_Surface()->Release();
-						HiddenPage.Init (ScreenWidth , ScreenHeight , NULL , 0 , (GBC_Enum)0);
-					}else{
-						VisiblePage.Attach_DD_Surface(&HiddenPage);
-					}
 				}
+				VisiblePage.Attach_Surface(&HiddenPage);
 			}
 
 			ScreenHeight = 400;
@@ -547,7 +471,7 @@ int PASCAL WinMain ( HINSTANCE instance , HINSTANCE , char * command_line , int 
 			Memory_Error_Exit = Print_Error_End_Exit;
 
 			CCDebugString ("C&C95 - Entering main game.\n");
-			Main_Game(argc, argv);
+			Main_Game(startup_argc, startup_argv);
 
 			VisiblePage.Clear();
 			HiddenPage.Clear();
@@ -557,12 +481,13 @@ int PASCAL WinMain ( HINSTANCE instance , HINSTANCE , char * command_line , int 
 
 			CCDebugString ("C&C95 - About to exit.\n");
 			ReadyToQuit = 1;
-
-			PostMessage(MainWindow, WM_DESTROY, 0, 0);
-			do
-			{
-				Keyboard::Check();
-			}while (ReadyToQuit == 1);
+			Prog_End();
+			Invalidate_Cached_Icons();
+			VisiblePage.Un_Init();
+			HiddenPage.Un_Init();
+			AllSurfaces.Release();
+			Reset_Video_Mode();
+			ReadyToQuit = 2;
 
 			CCDebugString ("C&C95 - Returned from final message loop.\n");
 			//Prog_End();
@@ -731,7 +656,6 @@ void Read_Setup_Options( RawFileClass *config_file )
 		config_file->Read (buffer, config_file->Size());
 
 		VideoBackBufferAllowed = WWGetPrivateProfileInt ("Options", "VideoBackBuffer", 1, buffer);
-		AllowHardwareBlitFills = WWGetPrivateProfileInt ("Options", "HardwareFills", 1, buffer);
 		ScreenHeight = WWGetPrivateProfileInt ("Options", "Resolution", 0, buffer) ? 480 : 400;
 		IsV107 = WWGetPrivateProfileInt ("Options", "Compatibility", 0, buffer);
 

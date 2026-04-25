@@ -34,6 +34,7 @@ using LRESULT = intptr_t;
 using MCIDEVICEID = UINT;
 using ATOM = WORD;
 using HANDLE = void*;
+using HINSTANCE = HANDLE;
 using HGDIOBJ = void*;
 using LPVOID = void*;
 using LPCVOID = const void*;
@@ -95,6 +96,9 @@ using DWORD_PTR = uintptr_t;
 #endif
 
 constexpr UINT WM_USER = 0x0400U;
+constexpr INT SW_SHOWMAXIMIZED = 3;
+constexpr INT SW_MINIMIZE = 6;
+constexpr INT SW_RESTORE = 9;
 
 constexpr DWORD GENERIC_READ = 0x80000000U;
 constexpr DWORD GENERIC_WRITE = 0x40000000U;

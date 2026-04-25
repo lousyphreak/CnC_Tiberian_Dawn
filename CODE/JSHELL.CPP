@@ -67,13 +67,13 @@
  *=============================================================================================*/
 void * Small_Icon(void const * iconptr, int iconnum)
 {
-	static unsigned char _icon[9];
+	static uint8_t _icon[9];
 	IControl_Type const * iptr = (IControl_Type const *)iconptr;
-	unsigned char * data;
+	uint8_t * data;
 
 	if (iconptr) {
-		iconnum = iptr->Map[iconnum];
-		data = &iptr->Icons[iconnum*(24*24)];
+		iconnum = ((char *)((char *)iptr + iptr->Map))[iconnum];
+		data = &((uint8_t *)((uint8_t *)iptr + iptr->Icons))[iconnum*(24*24)];
 
 		for (int index = 0; index < 9; index++) {
 			int _offsets[9] = {
@@ -425,5 +425,4 @@ void *Conquer_Build_Translucent_Table(void const *palette, TLucentType const *co
 	}
 	return(buffer);
 }
-
 

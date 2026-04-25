@@ -352,7 +352,7 @@ void Map_Selection(void)
 	Set_Palette(grey2palette);
 	SysMemPage.Blit(*PseudoSeenBuff);
 	Call_Back_Delay(4);
-	for (i = 1; i < Get_Animation_Frame_Count(greyearth2); i++) {
+	for (int i = 1; i < Get_Animation_Frame_Count(greyearth2); i++) {
 		Animate_Frame(greyearth2,*PseudoSeenBuff,i);
 		Call_Back_Delay(4);
 	}
@@ -925,7 +925,7 @@ void Print_Statistics(int country, int xpos, int ypos)
 		Alloc_Object(new ScorePrintClass(_countryname[GDIStats[country].nameindex],xpos,ypos,_greenpal));
 		Call_Back_Delay(strlen(Text_String(_countryname[GDIStats[country].nameindex]))*3);
 		ypos += 16;
-		for (index = 0; index < 7; index ++) {
+		for (int index = 0; index < 7; index ++) {
 			Alloc_Object(new ScorePrintClass(_gdistatnames[index],xpos,ypos,_greenpal));
 			Call_Back_Delay(strlen(Text_String(_gdistatnames[index]+3)));
 			newx = xpos + 6*strlen(Text_String(_gdistatnames[index]));
@@ -965,7 +965,7 @@ void Print_Statistics(int country, int xpos, int ypos)
 		Alloc_Object(new ScorePrintClass(_countryname[NodStats[country].nameindex],xpos,ypos,_greenpal));
 		Call_Back_Delay(strlen(Text_String(_countryname[NodStats[country].nameindex]))*3);
 		ypos += 16;
-		for (index = 0; index < 9; index ++) {
+		for (int index = 0; index < 9; index ++) {
 			Alloc_Object(new ScorePrintClass(_nodstatnames[index],xpos,ypos,_greenpal));
 			Call_Back_Delay(strlen(Text_String(_nodstatnames[index]+3)));
 			newx = xpos + 6*strlen(Text_String(_nodstatnames[index]));
@@ -1273,4 +1273,3 @@ void Bit_It_In(int x, int y, int w, int h, GraphicBufferClass *src, GraphicBuffe
 {
 	Bit_It_In_Scale (x, y, w, h,  src, dest, NULL , delay,  dagger);
 }
-

@@ -44,6 +44,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "FUNCTION.H"
+#include "SEQCONN.H"
 
 
 /***************************************************************************
@@ -214,8 +215,8 @@ int SequencedConnClass::Send_Packet (void * buf, int buflen, int ack_req)
 int SequencedConnClass::Receive_Packet (void * buf, int buflen)
 {
 	CommHeaderType *packet;					// ptr to this packet
-	SendQueueType *send_entry;				// ptr to send entry header
-	ReceiveQueueType *rec_entry;			// ptr to receive entry header
+	CommQueueSendType *send_entry;				// ptr to send entry header
+	CommQueueReceiveType *rec_entry;			// ptr to receive entry header
 	CommHeaderType *entry_data;			// ptr to queue entry data
 	int save_packet = 1;						// 0 = this is a resend, or 
 													//  out-of-order packet
@@ -344,7 +345,7 @@ printf("ACK received (%d)\n",packet->PacketID);
  *=========================================================================*/
 int SequencedConnClass::Get_Packet (void * buf, int *buflen)
 {
-	ReceiveQueueType *rec_entry;					// ptr to receive entry header
+	CommQueueReceiveType *rec_entry;					// ptr to receive entry header
 	int packetlen;										// size of received packet
 
 	/*
@@ -393,7 +394,7 @@ int SequencedConnClass::Get_Packet (void * buf, int *buflen)
  *=========================================================================*/
 int SequencedConnClass::Service_Send_Queue (void)
 {
-	SendQueueType *send_entry;						// ptr to send queue entry
+	CommQueueSendType *send_entry;						// ptr to send queue entry
 	CommHeaderType *packet_hdr;					// packet header
 	unsigned long curtime;							// current time
 
@@ -506,7 +507,7 @@ if (packet_hdr->Code == PACKET_DATA_NOACK) {
 int SequencedConnClass::Service_Receive_Queue (void)
 {
 	CommHeaderType ackpacket;						// ACK packet to send
-	ReceiveQueueType *rec_entry;					// ptr to receive entry header
+	CommQueueReceiveType *rec_entry;					// ptr to receive entry header
 	CommHeaderType *packet_hdr;					// packet header
 
 	/*------------------------------------------------------------------------
@@ -558,4 +559,3 @@ printf(">>>Unqueueing Send packet #%d<<<\n",packet_hdr->PacketID);
 
 	return(true);
 }
-

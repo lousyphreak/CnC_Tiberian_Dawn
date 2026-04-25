@@ -391,6 +391,18 @@ typedef enum ThreatType {
 inline ThreatType operator |(ThreatType, ThreatType);
 inline ThreatType operator &(ThreatType, ThreatType);
 inline ThreatType operator ~(ThreatType);
+inline ThreatType operator |(ThreatType lhs, ThreatType rhs)
+{
+	return (ThreatType)((int)lhs | (int)rhs);
+}
+inline ThreatType operator &(ThreatType lhs, ThreatType rhs)
+{
+	return (ThreatType)((int)lhs & (int)rhs);
+}
+inline ThreatType operator ~(ThreatType value)
+{
+	return (ThreatType)(~(int)value);
+}
 
 #define THREAT_GROUND	(THREAT_VEHICLES|THREAT_BUILDINGS|THREAT_INFANTRY)
 
@@ -1846,6 +1858,18 @@ typedef enum TextPrintType {
 inline TextPrintType operator |(TextPrintType, TextPrintType);
 inline TextPrintType operator &(TextPrintType, TextPrintType);
 inline TextPrintType operator ~(TextPrintType);
+inline TextPrintType operator |(TextPrintType lhs, TextPrintType rhs)
+{
+	return (TextPrintType)((int)lhs | (int)rhs);
+}
+inline TextPrintType operator &(TextPrintType lhs, TextPrintType rhs)
+{
+	return (TextPrintType)((int)lhs & (int)rhs);
+}
+inline TextPrintType operator ~(TextPrintType value)
+{
+	return (TextPrintType)(~(int)value);
+}
 
 
 /**********************************************************************
@@ -2766,6 +2790,36 @@ typedef enum OptionControlType {
 #define TOTAL_CRATE_TYPES 15
 
 #define size_of(typ,id) sizeof(((typ*)0)->id)
+
+template<typename T>
+inline T Post_Increment_Enum(T & value, int count)
+{
+	T old = value;
+	int next = (int)value + 1;
+	value = (next >= count) ? (T)count : (T)next;
+	return(old);
+}
+
+inline ThemeType operator++(ThemeType & value, int) { return(Post_Increment_Enum(value, THEME_COUNT)); }
+inline HousesType operator++(HousesType & value, int) { return(Post_Increment_Enum(value, HOUSE_COUNT)); }
+inline ScenarioPlayerType operator++(ScenarioPlayerType & value, int) { return(Post_Increment_Enum(value, SCEN_PLAYER_COUNT)); }
+inline ScenarioDirType operator++(ScenarioDirType & value, int) { return(Post_Increment_Enum(value, SCEN_DIR_COUNT)); }
+inline ScenarioVarType operator++(ScenarioVarType & value, int) { return(Post_Increment_Enum(value, SCEN_VAR_COUNT)); }
+inline LayerType operator++(LayerType & value, int) { return(Post_Increment_Enum(value, LAYER_COUNT)); }
+inline BulletType operator++(BulletType & value, int) { return(Post_Increment_Enum(value, BULLET_COUNT)); }
+inline StructType operator++(StructType & value, int) { return(Post_Increment_Enum(value, STRUCT_COUNT)); }
+inline OverlayType operator++(OverlayType & value, int) { return(Post_Increment_Enum(value, OVERLAY_COUNT)); }
+inline InfantryType operator++(InfantryType & value, int) { return(Post_Increment_Enum(value, INFANTRY_COUNT)); }
+inline UnitType operator++(UnitType & value, int) { return(Post_Increment_Enum(value, UNIT_COUNT)); }
+inline AircraftType operator++(AircraftType & value, int) { return(Post_Increment_Enum(value, AIRCRAFT_COUNT)); }
+inline TemplateType operator++(TemplateType & value, int) { return(Post_Increment_Enum(value, TEMPLATE_COUNT)); }
+inline TerrainType operator++(TerrainType & value, int) { return(Post_Increment_Enum(value, TERRAIN_COUNT)); }
+inline SmudgeType operator++(SmudgeType & value, int) { return(Post_Increment_Enum(value, SMUDGE_COUNT)); }
+inline AnimType operator++(AnimType & value, int) { return(Post_Increment_Enum(value, ANIM_COUNT)); }
+inline DoType operator++(DoType & value, int) { return(Post_Increment_Enum(value, DO_COUNT)); }
+inline TheaterType operator++(TheaterType & value, int) { return(Post_Increment_Enum(value, THEATER_COUNT)); }
+inline BSizeType operator++(BSizeType & value, int) { return(Post_Increment_Enum(value, BSIZE_COUNT)); }
+inline FacingType operator++(FacingType & value, int) { return(Post_Increment_Enum(value, FACING_COUNT)); }
 
 
 #endif

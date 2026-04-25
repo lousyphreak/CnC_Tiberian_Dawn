@@ -127,7 +127,6 @@ enum {
 
 
 extern unsigned long 	PlanetWestwoodGameID;
-extern HINSTANCE		ProgramInstance;
 extern unsigned long 	PlanetWestwoodStartTime;
 
 extern "C" char	CPUType;
@@ -383,24 +382,21 @@ void Send_Statistics_Packet(void)
 		/*
 		** Memory
 		*/
-		MEMORYSTATUS	mem_info;
-		mem_info.dwLength=sizeof(mem_info);
-		GlobalMemoryStatus(&mem_info);
-		stats.Add_Field (FIELD_MEMORY, (long)mem_info.dwTotalPhys);
+		const int total_ram_mb = SDL_GetSystemRAM();
+		const uint64_t total_ram = total_ram_mb > 0 ? static_cast<uint64_t>(total_ram_mb) * 1024ULL * 1024ULL : 0ULL;
+		stats.Add_Field(FIELD_MEMORY, (unsigned long)total_ram);
 
 		/*
 		** Video memory
 		*/
-		DDCAPS	video_capabilities;
-		long		video_memory;
+		uint32_t video_memory;
 
-		if (DirectDrawObject){
-			video_capabilities.dwSize = sizeof (video_capabilities);
-			if (DD_OK == DirectDrawObject->GetCaps (&video_capabilities , NULL)){
-				video_memory = video_capabilities.dwVidMemTotal;
-				video_memory += 1024*1024 -1;
+		if (VideoDrawObject) {
+			video_memory = VideoDrawObject->GetTotalVideoMemory();
+			if (video_memory) {
+				video_memory += 1024 * 1024 - 1;
 				video_memory &= 0xfff00000;
-				stats.Add_Field (FIELD_VIDEO_MEMORY, (long) video_memory);
+				stats.Add_Field(FIELD_VIDEO_MEMORY, (unsigned long)video_memory);
 			}
 		}
 
@@ -415,23 +411,18 @@ void Send_Statistics_Packet(void)
 		*/
 		char	version[128];
 		sprintf (version, "%d%s", Version_Number(), VersionText);
-		stats.Add_Field (FIELD_GAME_VERSION, version);
+		stats.Add_Field(FIELD_GAME_VERSION, version);
 
 		char path_to_exe[280];
-		FILETIME write_time;		//File time is 64 bits
+		const char *base_path = SDL_GetBasePath();
+		snprintf(path_to_exe, sizeof(path_to_exe), "%s", (base_path != NULL) ? base_path : "./");
 
-		GetModuleFileName (ProgramInstance, path_to_exe, 280);
-		RawFileClass file;
-		file.Set_Name(path_to_exe);
-		file.Open();
-		HANDLE handle = file.Get_File_Handle();
-
-		if (handle != INVALID_HANDLE_VALUE){
-			if (GetFileTime (handle, NULL, NULL, &write_time)){
-				write_time.dwLowDateTime = htonl (write_time.dwLowDateTime);
-				write_time.dwHighDateTime = htonl (write_time.dwHighDateTime);
-				stats.Add_Field (FIELD_GAME_BUILD_DATE, (void*)&write_time, sizeof (write_time));
-			}
+		SDL_PathInfo path_info;
+		if (SDL_GetPathInfo(path_to_exe, &path_info)) {
+			FILETIME write_time;
+			write_time.dwLowDateTime = htonl((uint32_t)((uint64_t)path_info.modify_time & 0xFFFFFFFF));
+			write_time.dwHighDateTime = htonl((uint32_t)((uint64_t)path_info.modify_time >> 32));
+			stats.Add_Field(FIELD_GAME_BUILD_DATE, (void *)&write_time, sizeof(write_time));
 		}
 
 		/*
@@ -673,4 +664,3 @@ extern void Register_Game_End_Time(void)
 	GameEndTime = GameTimer.Time();
 	GameTimerInUse = false;
 }
-

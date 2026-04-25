@@ -486,10 +486,27 @@ BOOL SetForegroundWindow(HWND window)
     return 1;
 }
 
-BOOL ShowWindow(HWND window, INT)
+BOOL ShowWindow(HWND window, INT command_show)
 {
     if (window == nullptr || window->sdl_window == nullptr) {
         return 0;
+    }
+
+    switch (command_show) {
+    case SW_MINIMIZE:
+        SDL_MinimizeWindow(window->sdl_window);
+        break;
+
+    case SW_SHOWMAXIMIZED:
+        SDL_MaximizeWindow(window->sdl_window);
+        break;
+
+    case SW_RESTORE:
+        SDL_RestoreWindow(window->sdl_window);
+        break;
+
+    default:
+        break;
     }
 
     SDL_ShowWindow(window->sdl_window);

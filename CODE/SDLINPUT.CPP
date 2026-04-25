@@ -384,10 +384,7 @@ void handle_translated_mouse_motion(int x, int y, uint32_t button_state_mask)
 
 int scale_relative_mouse_delta(int delta)
 {
-	if (delta < 0) {
-		return -(Options.Get_Mouse_Acceleration() * -delta);
-	}
-	return(Options.Get_Mouse_Acceleration() * delta);
+	return delta;
 }
 
 void handle_relative_mouse_motion(int x, int y, int xrel, int yrel, uint32_t button_state_mask)

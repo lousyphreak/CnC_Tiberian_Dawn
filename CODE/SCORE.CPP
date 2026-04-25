@@ -654,7 +654,7 @@ void ScoreClass::Presentation(void)
 	}
 
 	HouseClass *houses[3];
-	for (index = 0; index < 3; index++) {
+	for (int index = 0; index < 3; index++) {
 		houses[index] =(HouseClass::As_Pointer((HousesType)(HOUSE_GOOD+index)));
 	}
 
@@ -899,7 +899,8 @@ void ScoreClass::Presentation(void)
 	*/
 	if(hallfame[NUMFAMENAMES-1].score >= total)
 								hallfame[NUMFAMENAMES-1].score = 0;
-	for (index = 0; index < NUMFAMENAMES; index++) {
+	int hall_of_fame_index = NUMFAMENAMES;
+	for (int index = 0; index < NUMFAMENAMES; index++) {
 		if (total > hallfame[index].score) {
 			if (index < (NUMFAMENAMES-1)) for (i = (NUMFAMENAMES-1); i > index; i--) hallfame[i] = hallfame[i-1];
 			hallfame[index].score = total;
@@ -908,6 +909,7 @@ void ScoreClass::Presentation(void)
 			//hallfame[index].name[0] = 0;	// blank out the name
 			memset (hallfame[index].name, ' ', sizeof (hallfame[index].name) -1);
 			hallfame[index].name[sizeof (hallfame[index].name)-1] = 0;
+			hall_of_fame_index = index;
 			break;
 		}
 	}
@@ -941,8 +943,8 @@ void ScoreClass::Presentation(void)
 	** If the player's on the hall of fame, have him enter his name now
 	*/
 	Keyboard::Clear();
-	if (index < NUMFAMENAMES) {
-		Input_Name(hallfame[index].name, HALLFAME_X, HALLFAME_Y + (index*8), _bluepal);
+	if (hall_of_fame_index < NUMFAMENAMES) {
+		Input_Name(hallfame[hall_of_fame_index].name, HALLFAME_X, HALLFAME_Y + (hall_of_fame_index*8), _bluepal);
 
 		file.Open(WRITE);
 		for (i = 0; i < NUMFAMENAMES; i++) {
@@ -1157,7 +1159,7 @@ void ScoreClass::Do_Nod_Buildings_Graph(void)
 		if (!Check_Key()) Call_Back_Delay(1);
 	}
 
-	i = MAX(GBKilled, NBKilled);
+	int i = MAX(GBKilled, NBKilled);
 	i = MAX(i, CBKilled);
 
 	for (int q = 0; q <= i; q++) {
@@ -2313,4 +2315,3 @@ static long CCWrite_Row(CCFileClass &lbmhandle, unsigned char *buffer)
 	return(chunksize);
 }
 #endif
-

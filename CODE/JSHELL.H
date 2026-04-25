@@ -120,6 +120,18 @@ template<class T> inline T operator ~(T t1)
 inline ShapeFlags_Type operator |(ShapeFlags_Type, ShapeFlags_Type);
 inline ShapeFlags_Type operator &(ShapeFlags_Type, ShapeFlags_Type);
 inline ShapeFlags_Type operator ~(ShapeFlags_Type);
+inline ShapeFlags_Type operator |(ShapeFlags_Type lhs, ShapeFlags_Type rhs)
+{
+	return (ShapeFlags_Type)((int)lhs | (int)rhs);
+}
+inline ShapeFlags_Type operator &(ShapeFlags_Type lhs, ShapeFlags_Type rhs)
+{
+	return (ShapeFlags_Type)((int)lhs & (int)rhs);
+}
+inline ShapeFlags_Type operator ~(ShapeFlags_Type value)
+{
+	return (ShapeFlags_Type)(~(int)value);
+}
 
 
 void Set_Bit(void * array, int bit, int value);
@@ -179,7 +191,17 @@ int First_False_Bit(void const * array);
 	"add	eax,ebx"
 #endif
 
-extern int Bound(int original, int min, int max);
+inline int Bound(int original, int min, int max)
+{
+	if (min > max) {
+		const int temp = min;
+		min = max;
+		max = temp;
+	}
+	if (original < min) return min;
+	if (original > max) return max;
+	return original;
+}
 #ifdef __WATCOMC__
 #pragma aux Bound parm [eax] [ebx] [ecx] \
 	modify [eax] \
@@ -214,7 +236,14 @@ extern unsigned Bound(unsigned original, unsigned min, unsigned max);
 #endif
 
 
-unsigned Fixed_To_Cardinal(unsigned base, unsigned fixed);
+inline unsigned Fixed_To_Cardinal(unsigned base, unsigned fixed)
+{
+	const uint64_t temp = ((uint64_t)base * (uint64_t)fixed) + 0x80ULL;
+	if (temp & 0xFFFFFFFFFF000000ULL) {
+		return 0x00FFFFFFU;
+	}
+	return (unsigned)(temp >> 8);
+}
 #ifdef __WATCOMC__
 #pragma aux Fixed_To_Cardinal parm [eax] [edx] \
 	modify [edx] \
@@ -229,7 +258,13 @@ unsigned Fixed_To_Cardinal(unsigned base, unsigned fixed);
 #endif
 
 
-unsigned Cardinal_To_Fixed(unsigned base, unsigned cardinal);
+inline unsigned Cardinal_To_Fixed(unsigned base, unsigned cardinal)
+{
+	if (base == 0) {
+		return 0xFFFFU;
+	}
+	return (unsigned)(((uint64_t)cardinal << 8) / (uint64_t)base);
+}
 #ifdef __WATCOMC__
 #pragma aux Cardinal_To_Fixed parm [ebx] [eax] \
 	modify [edx] \

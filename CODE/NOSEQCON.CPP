@@ -686,5 +686,3 @@ int NonSequencedConnClass::Service_Receive_Queue (void)
 
 	return(true);
 }
-
-

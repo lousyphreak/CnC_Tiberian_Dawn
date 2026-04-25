@@ -41,8 +41,12 @@
 
 #include	"FUNCTION.H"
 #include "TCPIP.H"
+#include "SDLINPUT.H"
 
 void output(short,short)
+{}
+
+void Shake_Screen(int32_t)
 {}
 
 bool InDebugger = false;
@@ -123,6 +127,7 @@ extern	void VQA_ResumeAudio(void);
 
 
 ThemeType OldTheme = THEME_NONE;
+extern BOOL InMovie;
 
 
 /***********************************************************************************************
@@ -183,17 +188,10 @@ void Focus_Restore(void)
 void Check_For_Focus_Loss(void)
 {
 	static BOOL	focus_last_time = 1;
-			 MSG	msg;
 
 	if ( !GameInFocus ){
 		Focus_Loss();
-		while( PeekMessage( &msg, NULL, 0, 0, PM_NOREMOVE | PM_NOYIELD ) ){
-	  		if( !GetMessage( &msg, NULL, 0, 0 ) ){
-				return;
-			}
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
+		SDL_GameInput_Pump();
 	}
 
 	if (!focus_last_time && GameInFocus){
@@ -203,159 +201,50 @@ void Check_For_Focus_Loss(void)
 		cd.Set(60*1);
 
 		do {
-			while (PeekMessage( &msg, NULL, 0, 0, PM_NOREMOVE )) {
-	  			if( !GetMessage( &msg, NULL, 0, 0 ) ){
-					return;
-				}
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
+			SDL_GameInput_Pump();
+			if (AllDone) return;
+			if (cd.Time()) {
+				SDL_GameInput_Delay(1);
 			}
 
 		} while(cd.Time());
 		VQA_ResumeAudio();
-		//AllSurfaces.Restore_Surfaces();
-		//VisiblePage.Clear();
-		//HiddenPage.Clear();
-		//Map.Flag_To_Redraw(true);
-		PostMessage (MainWindow, CCFocusMessage,0,0);
+		Start_Primary_Sound_Buffer(TRUE);
+		if (!InMovie){
+			Theme.Queue_Song(OldTheme);
+			OldTheme = THEME_NONE;
+		}
+		Focus_Restore();
 	}
 
 	focus_last_time = GameInFocus;
 
 }
 
-
-
-extern BOOL InMovie;
-
-long FAR PASCAL _export Windows_Procedure (HWND hwnd, UINT message, UINT wParam, LONG lParam)
+void Main_Window_Destroy(void)
 {
-
-	int	low_param = LOWORD(wParam);
-
-	if (message == CCFocusMessage){
-		Start_Primary_Sound_Buffer(TRUE);
-		if (!InMovie){
-			Theme.Queue_Song(OldTheme);
-			OldTheme = THEME_NONE;
-		}
-		return(0);
+	Prog_End();
+	Invalidate_Cached_Icons();
+	VisiblePage.Un_Init();
+	HiddenPage.Un_Init();
+	AllSurfaces.Release();
+	if (!InDebugger) {
+		Reset_Video_Mode();
 	}
-
-
-	switch ( message ){
-
-		case WM_MOUSEMOVE:
-		case WM_SYSKEYDOWN:
-		case WM_SYSKEYUP:
-		case WM_KEYDOWN:
-		case WM_KEYUP:
-		case WM_LBUTTONDOWN:
-		case WM_LBUTTONUP:
-		case WM_LBUTTONDBLCLK:
-		case WM_MBUTTONDOWN:
-		case WM_MBUTTONUP:
-		case WM_MBUTTONDBLCLK:
-		case WM_RBUTTONDOWN:
-		case WM_RBUTTONUP:
-		case WM_RBUTTONDBLCLK:
-	 		Kbd.Message_Handler(hwnd, message, wParam, lParam);
-			return(0);
-
-		case WM_DESTROY:
-			CCDebugString ("C&C95 - WM_DESTROY message received.\n");
-			CCDebugString ("C&C95 - About to call Prog_End.\n");
-			Prog_End();
-			CCDebugString ("C&C95 - About to Invalidate_Cached_Icons.\n");
-			Invalidate_Cached_Icons();
-			CCDebugString ("C&C95 - About to release the video surfaces.\n");
-			VisiblePage.Un_Init();
-			HiddenPage.Un_Init();
-			AllSurfaces.Release();
-			if (!InDebugger){
-				CCDebugString ("C&C95 - About to reset the video mode.\n");
-				Reset_Video_Mode();
-			}
-			CCDebugString ("C&C95 - About to stop the profiler.\n");
-			Stop_Profiler();
-			CCDebugString ("C&C95 - Posting the quit message.\n");
-			PostQuitMessage( 0 );
-			/*
-			** If we are shutting down gracefully than flag that the message loop has finished.
-			** If this is a forced shutdown (ReadyToQuit == 0) then try and close down everything
-			** before we exit.
-			*/
-			if (ReadyToQuit){
-				CCDebugString ("C&C95 - We are now ready to quit.\n");
-				ReadyToQuit = 2;
-			}else{
-				CCDebugString ("C&C95 - Emergency shutdown.\n");
-				CCDebugString ("C&C95 - Shut down the network stuff.\n");
+	if (MainWindow != NULL) {
+		RA_DestroyWindow(MainWindow);
+		MainWindow = NULL;
+	}
+	AllDone = TRUE;
+	if (ReadyToQuit) {
+		ReadyToQuit = 2;
+	} else {
 #ifndef DEMO
-				Shutdown_Network();
+		Shutdown_Network();
 #endif
-				CCDebugString ("C&C95 - Kill the Winsock stuff.\n");
-				if (Winsock.Get_Connected()) Winsock.Close();
-				CCDebugString ("C&C95 - Call ExitProcess.\n");
-				ExitProcess(0);
-			}
-			CCDebugString ("C&C95 - Clean & ready to quit.\n");
-			return(0);
-
-		case WM_ACTIVATEAPP:
-			GameInFocus=(BOOL)wParam;
-			if (!GameInFocus) {
-				Focus_Loss();
-			}
-			AllSurfaces.Set_Surface_Focus (GameInFocus);
-			AllSurfaces.Restore_Surfaces();
-//			if (GameInFocus){
-//				Restore_Cached_Icons();
-//				Map.Flag_To_Redraw(true);
-//				Start_Primary_Sound_Buffer(TRUE);
-//				if (WWMouse) WWMouse->Set_Cursor_Clip();
-//			}
-			return(0);
-#if (0)
-		case WM_ACTIVATE:
-			if (low_param == WA_INACTIVE){
-				GameInFocus = FALSE;
-				Focus_Loss();
-			}
-			return(0);
-#endif //(0)
-
-		case WM_SYSCOMMAND:
-			switch ( wParam ) {
-
-				case SC_CLOSE:
-					/*
-					** Windows sent us a close message. Probably in response to Alt-F4. Ignore it by
-					** pretending to handle the message and returning 0;
-					*/
-					return (0);
-
-				case SC_SCREENSAVE:
-					/*
-					** Windoze is about to start the screen saver. If we just return without passing
-					** this message to DefWindowProc then the screen saver will not be allowed to start.
-					*/
-					return (0);
-			}
-			break;
-
-#ifdef FORCE_WINSOCK
-		case WM_ACCEPT:
-		case WM_HOSTBYADDRESS:
-		case WM_HOSTBYNAME:
-		case WM_ASYNCEVENT:
-		case WM_UDPASYNCEVENT:
-	 		Winsock.Message_Handler(hwnd, message, wParam, lParam);
-			return (0);
-#endif	//FORCE_WINSOCK
+		if (Winsock.Get_Connected()) Winsock.Close();
+		exit(0);
 	}
-
-	return (DefWindowProc (hwnd, message, wParam, lParam));
 }
 
 
@@ -388,51 +277,14 @@ int ShowCommand;
 void Create_Main_Window ( HANDLE instance ,int command_show , int width , int height )
 
 {
-	HWND        	hwnd ;
-	WNDCLASS    	wndclass ;
-	//
-	// Register the window class
-	//
+	RAWindow *hwnd;
 
-	wndclass.style         = CS_HREDRAW | CS_VREDRAW ;
-	wndclass.lpfnWndProc   = Windows_Procedure ;
-	wndclass.cbClsExtra    = 0 ;
-	wndclass.cbWndExtra    = 0 ;
-	wndclass.hInstance     = instance ;
-	wndclass.hIcon         = LoadIcon (instance, MAKEINTRESOURCE(CC_ICON)) ;
-	wndclass.hCursor       = NULL;
-	wndclass.hbrBackground = NULL;
-	wndclass.lpszMenuName  = "Command & Conquer";	//NULL
-	wndclass.lpszClassName = "Command & Conquer";
-
-	RegisterClass (&wndclass) ;
-
-
-	//
-	// Create our main window
-	//
-	hwnd = CreateWindowEx (
-							WS_EX_TOPMOST,
-							"Command & Conquer",
-							"Command & Conquer",
-							WS_POPUP | WS_MAXIMIZE,
-							0,
-							0,
-							width,
-							height,
-							NULL,
-							NULL,
-							instance,
-							NULL );
-
-	ShowWindow (hwnd, command_show );
+	(void)instance;
+	hwnd = RA_CreateWindow("Command & Conquer", width, height, SDL_WINDOW_RESIZABLE);
+	ShowWindow(hwnd, command_show);
 	ShowCommand = command_show;
-	UpdateWindow (hwnd);
-	SetFocus (hwnd);
-	MainWindow=hwnd;			//Save the handle to our main window
+	MainWindow = hwnd;			//Save the handle to our main window
 	hInstance = instance;
-
-	CCFocusMessage = RegisterWindowMessage ("CC_GOT_FOCUS");
 
 	Audio_Focus_Loss_Function = &Focus_Loss;
 	Misc_Focus_Loss_Function = &Focus_Loss;
@@ -442,32 +294,16 @@ void Create_Main_Window ( HANDLE instance ,int command_show , int width , int he
 
 void Window_Dialog_Box(HANDLE  hinst, LPCTSTR  lpszTemplate, HWND  hwndOwner, DLGPROC  dlgprc)
 {
-	MSG					msg;
+	(void)hinst;
+	(void)lpszTemplate;
+	(void)hwndOwner;
+	(void)dlgprc;
 	/*
 	** Get rid of the Westwood mouse cursor because we are showing a
 	** dialog box and we want to have the right windows cursor showing
 	** for it.
 	*/
 	Hide_Mouse();
-	ShowCursor(TRUE);
-
-	/*
-	** Pop up the dialog box and then run a standard message handler
-	** until the dialog box is closed.
-	*/
-
-	DialogBox(hinst, lpszTemplate, hwndOwner, dlgprc);
-	while (GetMessage(&msg, NULL, 0, 0) && !AllDone) {
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
-	}
-
-	/*
-	** Restore the westwood mouse cursor and get rid of the windows one
-	** because it is now time to restore back to the westwood way of
-	** doing things.
-	*/
-	ShowCursor(FALSE);
 	Show_Mouse();
 }
 
@@ -734,10 +570,8 @@ void Memory_Error_Handler(void)
 	Set_Palette(GamePalette);
 	while (Get_Mouse_State()){Show_Mouse();};
 	CCMessageBox().Process("Error - out of memory.", "Abort", false);
-	Prog_End();
-	Invalidate_Cached_Icons();
-	PostQuitMessage( 0 );
-	ExitProcess(0);
+	ReadyToQuit = 1;
+	Main_Window_Destroy();
 }
 
 
@@ -918,4 +752,3 @@ GraphicBufferClass* Read_PCX_File(char* name, char* palette, void *Buff, long Si
 	file_handle.Close();
 	return pic;
 }
-

@@ -246,6 +246,56 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
     3. save/load modernization is not finished yet:
        - the first `IOOBJ.CPP` pointer-to-enum decode fixes are in, but more serialization code should be reviewed with the same 32-bit/64-bit care as the build keeps moving.
   - next concrete porting work:
-    1. fix `CODE/JSHELL.CPP` against the imported support-layer icon structure used by the SDL/Win32LIB path;
-    2. continue the local `index`/scope cleanup in `CODE/LAYER.CPP` and whichever gameplay files appear next;
-    3. keep checking save/load decode code for pointer-sized assumptions as more of `IOOBJ.CPP` and adjacent serialization files come into view.
+     1. fix `CODE/JSHELL.CPP` against the imported support-layer icon structure used by the SDL/Win32LIB path;
+     2. continue the local `index`/scope cleanup in `CODE/LAYER.CPP` and whichever gameplay files appear next;
+     3. keep checking save/load decode code for pointer-sized assumptions as more of `IOOBJ.CPP` and adjacent serialization files come into view.
+- Startup/window bring-up and missing helper restoration pushed the build to the final link stage (2026-04-25):
+  - completed in this checkpoint:
+    - fixed another long run of strict modern-C++ scope/constness failures in gameplay code:
+      - `CODE/SEQCONN.CPP`
+      - `CODE/NOSEQCON.CPP`
+      - `CODE/STATS.CPP`
+      - `CODE/STARTUP.CPP`
+      - `CODE/TARGET.CPP`
+      - `CODE/TECHNO.CPP`
+      - `CODE/THEME.CPP`
+      - `CODE/UNIT.CPP`
+    - restored the packet/field string interface to accept modern const data, following the Red Alert porting direction instead of casting string literals through mutable pointers:
+      - `CODE/PACKET.H`
+      - `CODE/PACKET.CPP`
+      - `CODE/FIELD.H`
+      - `CODE/FIELD.CPP`
+    - removed another stale startup-only option/config dependency that no longer exists in the SDL path:
+      - dropped the dead `AllowHardwareBlitFills` read from `CODE/STARTUP.CPP`;
+      - moved the stats hardware/build-date collection in `CODE/STATS.CPP` from DirectDraw/Win32 file handles to SDL-backed RAM/video/path info.
+    - replaced the old Win32 entry/window shell with the first SDL-safe startup path:
+      - `CODE/STARTUP.CPP` now enters through `main(int, char**)` instead of `WinMain(...)`;
+      - `CODE/WINSTUB.CPP` now uses the SDL input pump and `RA_CreateWindow` / `RA_DestroyWindow` path for focus loss, window creation, and shutdown instead of raw Win32 messages;
+      - shutdown/memory-error handling no longer depends on `PostMessage`, `PostQuitMessage`, `ExitProcess`, or other missing Win32 message-loop APIs.
+    - restored several missing helper/operator/template definitions that the original Watcom/ASM build used implicitly:
+      - bitwise enum helpers in `CODE/DEFINES.H`, `CODE/JSHELL.H`, and `CODE/GADGET.H`;
+      - portable `Bound`, `Cardinal_To_Fixed`, and `Fixed_To_Cardinal` helpers in `CODE/JSHELL.H`;
+      - inline `Coord_Cell(...)` in `CODE/FUNCTION.H` / `CODE/REAL.H`;
+      - first explicit template instantiations in `CODE/VECTOR.CPP` for types that now reach link.
+    - added a temporary SDL-port bring-up stub for screen shake in `CODE/WINSTUB.CPP` so missing legacy support code no longer blocks the build.
+  - current build result:
+    - the project now compiles every translation unit in the `tiberian-dawn` target and reaches the final executable link step;
+    - the previous source-level blockers in `SEQCONN`, `NOSEQCON`, `STATS`, `STARTUP`, `TARGET`, `TECHNO`, `THEME`, `UNIT`, and `WINSTUB` are cleared;
+    - the current failure mode is now unresolved-link symbols rather than C++ compile errors.
+  - current blocker groups exposed by the latest rebuild:
+    1. excluded or still-unported legacy multiplayer backends are now the biggest linker gap:
+       - `IPXManagerClass::*` methods from the intentionally excluded `IPX.CPP` / `IPXMGR.CPP` path;
+       - `Destroy_Null_Connection(...)`, `Reconnect_Modem()`, and `Shutdown_Modem()` from the still-disabled null-modem path;
+       - `Calculate_CRC(...)` still needs to come from the preserved support code or a modernized replacement.
+    2. more old template bodies are still missing concrete instantiations now that the linker sees the whole program:
+       - `DynamicVectorClass<NodeNameTag*>`
+       - `DynamicVectorClass<ObjectClass*>`
+       - `TFixedIHeapClass<...>::Save(...)` for several save/load heaps.
+    3. a smaller set of preserved legacy helpers still needs non-ASM/non-Win32 implementations or wiring:
+       - `strtrim`
+       - `Fat_Put_Pixel`
+       - any remaining fixed-point / heap / utility routines that were formerly satisfied by omitted assembly or Watcom-era object files.
+  - next concrete porting work:
+    1. decide which excluded legacy backends should be stubbed for first-playable Linux bring-up versus ported properly now (`IPX`, null-modem, CRC helpers);
+    2. continue the explicit template-instantiation or header-definition cleanup for vector/heap/save-load templates now that link-time gaps are visible;
+    3. replace the last assembly-era utility holdouts (`strtrim`, `Fat_Put_Pixel`, related helpers) with SDL/C++ implementations.
