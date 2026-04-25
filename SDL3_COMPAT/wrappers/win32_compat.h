@@ -63,38 +63,6 @@ using DLGPROC = INT_PTR (*)(HWND, UINT, WPARAM, LPARAM);
 
 using DWORD_PTR = uintptr_t;
 
-#ifndef __cdecl
-#define __cdecl
-#endif
-
-#ifndef __stdcall
-#define __stdcall
-#endif
-
-#ifndef WINAPI
-#define WINAPI
-#endif
-
-#ifndef CALLBACK
-#define CALLBACK
-#endif
-
-#ifndef APIENTRY
-#define APIENTRY
-#endif
-
-#ifndef FAR
-#define FAR
-#endif
-
-#ifndef PASCAL
-#define PASCAL
-#endif
-
-#ifndef _export
-#define _export
-#endif
-
 constexpr UINT WM_USER = 0x0400U;
 constexpr INT SW_SHOWMAXIMIZED = 3;
 constexpr INT SW_MINIMIZE = 6;
@@ -118,9 +86,7 @@ constexpr DWORD INFINITE = 0xFFFFFFFFU;
 constexpr UINT DRIVE_NO_ROOT_DIR = 1U;
 constexpr UINT DRIVE_FIXED = 3U;
 
-#ifndef INVALID_HANDLE_VALUE
-#define INVALID_HANDLE_VALUE reinterpret_cast<HANDLE>(static_cast<intptr_t>(-1))
-#endif
+inline HANDLE INVALID_HANDLE_VALUE = reinterpret_cast<HANDLE>(static_cast<intptr_t>(-1));
 
 struct POINT {
     LONG x;

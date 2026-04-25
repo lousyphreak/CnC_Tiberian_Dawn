@@ -356,13 +356,13 @@ char const * ThemeClass::Theme_File_Name(ThemeType theme)
 	static char name[_MAX_FNAME+_MAX_EXT];
 
 	if (_themes[theme].Variation && Special.IsVariation) {
-		_makepath(name, NULL, NULL, _themes[theme].Name, ".VAR");
+		WWFS_MakePath(name, NULL, NULL, _themes[theme].Name, ".VAR");
 		CCFileClass file(name);
 		if (file.Is_Available()) {
 			return((char const *)(&name[0]));
 		}
 	}
-	_makepath(name, NULL, NULL, _themes[theme].Name, ".AUD");
+	WWFS_MakePath(name, NULL, NULL, _themes[theme].Name, ".AUD");
 	return((char const *)(&name[0]));
 }
 

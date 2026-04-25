@@ -72,7 +72,7 @@ int IPX_Broadcast_Packet(unsigned char *buf, int buflen)
 }
 
 extern "C"{
-	extern void __cdecl Int3(void);
+	extern void Int3(void);
 }
 
 int IPX_Get_Local_Target(unsigned char *dest_network, unsigned char *dest_node,

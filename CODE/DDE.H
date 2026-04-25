@@ -64,6 +64,7 @@ class	Instance_Class {
 	---------------------------- Public Interface ----------------------------
 	*/
 	public:
+		using CallbackProc = BOOL (*)(LPBYTE, long);
 
 		/*.....................................................................
 		Constructor:
@@ -91,7 +92,7 @@ class	Instance_Class {
 		- sets up DNS for the server and registers a user callback to handle
 		  incoming data
 		.....................................................................*/
-		BOOL	Register_Server( BOOL CALLBACK (*)(LPBYTE, long));
+		BOOL	Register_Server(CallbackProc);
 
 		/*.....................................................................
 		Does a trial connect to the remote server.
@@ -121,19 +122,12 @@ class	Instance_Class {
 		/*.....................................................................
 		User callback - called upon receipt of incoming data (static member!)
 		.....................................................................*/
-		static BOOL CALLBACK	(*callback) (
-
-			LPBYTE pointer,		// pointer to received data
-			long length				// if >0 length of received data
-										// if <0
-										//	-1 == client connect detected
-										// -2 == client disconnect detected
-			);
+		static CallbackProc callback;
 
 		/*.....................................................................
 		DDE callback, called when DDEML has an event for us
 		.....................................................................*/
-		static HDDEDATA CALLBACK dde_callback(
+		static HDDEDATA dde_callback(
 
 			UINT  uType,		// transaction type
 			UINT  uFmt,			// clipboard data format

@@ -866,7 +866,7 @@ void TerrainTypeClass::Init(TheaterType theater)
 				/*
 				**	Load in the appropriate object shape data.
 				*/
-				_makepath(fullname, NULL, NULL, terrain.IniName, Theaters[theater].Suffix);
+				WWFS_MakePath(fullname, NULL, NULL, terrain.IniName, Theaters[theater].Suffix);
 				((void const *&)terrain.ImageData) = MixFileClass::Retrieve(fullname);
 
 				IsTheaterShape = true;

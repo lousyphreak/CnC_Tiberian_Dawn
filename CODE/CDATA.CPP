@@ -2606,7 +2606,7 @@ void TemplateTypeClass::Init(TheaterType theater)
 
 			((void const *&)tplate.ImageData) = NULL;
 			if (tplate.Theater & (1<<theater)) {
-				_makepath(fullname, NULL, NULL, tplate.IniName, Theaters[theater].Suffix);
+				WWFS_MakePath(fullname, NULL, NULL, tplate.IniName, Theaters[theater].Suffix);
 				ptr = MixFileClass::Retrieve(fullname);
 				((void const *&)tplate.ImageData) = ptr;
 				Register_Icon_Set((void*)ptr,TRUE);		//Register icon set for video memory caching

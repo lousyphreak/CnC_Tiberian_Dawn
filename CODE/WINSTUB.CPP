@@ -76,7 +76,7 @@ bool ReadyToQuit = false;
  *   08/19/1993 SKB : Split drawshp.asm into several modules.              *
  *   05/25/1994 BR : Converted to 32-bit                                   *
  *=========================================================================*/
-int __cdecl Extract_Shape_Count(VOID const *buffer)
+int Extract_Shape_Count(VOID const *buffer)
 {
 	ShapeBlock_Type *block = (ShapeBlock_Type *)buffer;
 
@@ -103,7 +103,7 @@ int __cdecl Extract_Shape_Count(VOID const *buffer)
  *   08/19/1993 SKB : Split drawshp.asm into several modules.              *
  *   05/25/1994 BR : Converted to 32-bit                                   *
  *=========================================================================*/
-VOID * __cdecl Extract_Shape(VOID const *buffer, int shape)
+VOID * Extract_Shape(VOID const *buffer, int shape)
 {
 	ShapeBlock_Type *block = (ShapeBlock_Type*) buffer;
 	long offset;			// Offset of shape data, from start of block
@@ -360,7 +360,6 @@ int	DebugColour=1;
 
 
 extern "C" void Set_Palette_Register(int number,int red ,int green ,int blue);
-#pragma off (unreferenced)
 void Colour_Debug (int call_number)
 {
 	//#if 0
@@ -376,13 +375,6 @@ void Colour_Debug (int call_number)
 	//}
 	//#endif
 }
-
-#pragma on (unreferenced)
-
-
-
-
-
 BOOL Any_Locked (void)
 {
 	if (SeenBuff.Get_LockCount() ||
@@ -533,7 +525,7 @@ bool				VQPaletteChange = false;
 
 
 extern "C"{
-	void __cdecl SetPalette(unsigned char *palette,long numbytes,unsigned long slowpal);
+	void SetPalette(unsigned char *palette,long numbytes,unsigned long slowpal);
 }
 
 
@@ -560,7 +552,7 @@ void Check_VQ_Palette_Set(void)
 
 
 
-void __cdecl SetPalette(unsigned char *palette,long,unsigned long)
+void SetPalette(unsigned char *palette,long,unsigned long)
 {
 	for (int i=0 ; i<256*3 ; i++){
 		*(palette+i)&=63;

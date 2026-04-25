@@ -2415,7 +2415,7 @@ void AnimTypeClass::One_Time(void)
 	for (index = ANIM_FIRST; index < ANIM_COUNT; index++) {
 		char fullname[_MAX_FNAME+_MAX_EXT];
 
-		_makepath(fullname, NULL, NULL, As_Reference(index).IniName, ".SHP");
+		WWFS_MakePath(fullname, NULL, NULL, As_Reference(index).IniName, ".SHP");
 
 		RawFileClass file(fullname);
 		if (file.Is_Available()) {

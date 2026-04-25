@@ -90,12 +90,12 @@ int calcy(signed short factor, short distance)
 	return -Approx_Multiply_Shift7(factor, distance);
 }
 
-void* __cdecl Conquer_Build_Fading_Table(void const* palette, void* dest, int color, int frac)
+void* Conquer_Build_Fading_Table(void const* palette, void* dest, int color, int frac)
 {
 	return Build_Fading_Table(palette, dest, color, frac);
 }
 
-void __cdecl Fat_Put_Pixel(int x, int y, int color, int size, GraphicViewPortClass& page)
+void Fat_Put_Pixel(int x, int y, int color, int size, GraphicViewPortClass& page)
 {
 	if (size <= 0 || x < 0 || y < 0 || x >= page.Get_Width() || y >= page.Get_Height()) {
 		return;
@@ -146,7 +146,7 @@ void Hex_Dump_Data(char* buffer, int length)
 	}
 }
 
-extern "C" bool __cdecl Detect_MMX_Availability(void)
+extern "C" bool Detect_MMX_Availability(void)
 {
 #if defined(__MMX__) || defined(_M_IX86_FP) || defined(__x86_64__) || defined(_M_X64)
 	return true;
@@ -155,11 +155,11 @@ extern "C" bool __cdecl Detect_MMX_Availability(void)
 #endif
 }
 
-extern "C" void __cdecl Init_MMX(void)
+extern "C" void Init_MMX(void)
 {
 }
 
-long __cdecl Get_EAX(void)
+long Get_EAX(void)
 {
 	return 0;
 }

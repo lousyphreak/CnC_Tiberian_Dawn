@@ -1100,7 +1100,7 @@ void SidebarClass::StripClass::One_Time(int )
 		} else {
 			sprintf(buffer, "%sICON", _file[lp]);
 		}
-		_makepath(fullname, NULL, NULL, buffer, ".SHP");
+		WWFS_MakePath(fullname, NULL, NULL, buffer, ".SHP");
 		SpecialShapes[lp] = MixFileClass::Retrieve(fullname);
 	}
 
@@ -1240,7 +1240,7 @@ void SidebarClass::StripClass::Init_Theater(TheaterType theater)
 			} else {
 				sprintf(buffer, "%sICON", _file[lp]);
 			}
-			_makepath(fullname, NULL, NULL, buffer, Theaters[theater].Suffix);
+			WWFS_MakePath(fullname, NULL, NULL, buffer, Theaters[theater].Suffix);
 			cameo_ptr = MixFileClass::Retrieve(fullname);
 			if (cameo_ptr){
 				SpecialShapes[lp] = cameo_ptr;

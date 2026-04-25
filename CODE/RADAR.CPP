@@ -343,7 +343,7 @@ void RadarClass::Draw_It(bool forced)
 		if (Special.IsJurassic && AreThingiesEnabled) {
 			strcpy(name, "RADAR.JP");
 		} else {
-			_makepath(name, NULL, NULL, "RADAR", HouseTypeClass::As_Reference(PlayerPtr->ActLike).Suffix);
+			WWFS_MakePath(name, NULL, NULL, "RADAR", HouseTypeClass::As_Reference(PlayerPtr->ActLike).Suffix);
 		}
 		RadarAnim = Hires_Retrieve(name);
 		_house = PlayerPtr->ActLike;
@@ -1111,7 +1111,6 @@ void RadarClass::Cell_XY_To_Radar_Pixel(int cellx, int celly, int &x, int &y)
  *   05/22/1991 JLB : Created.                                                                 *
  *   11/17/1995 PWG : Created.                                                                 *
  *=============================================================================================*/
-#pragma argsused
 void RadarClass::Radar_Cursor(int forced)
 {
 	static int				_last_pos = -1;

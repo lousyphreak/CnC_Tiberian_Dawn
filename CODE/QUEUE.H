@@ -48,10 +48,6 @@
 #include	"TARGET.H"
 #include	"DEFINES.H"
 
-#ifdef __WATCOMC__
-#pragma warn -inl
-#endif
-
 /*
 **	This class implements a classic FIFO queue (also known as - standing in line). Objects 
 **	are added to the end (tail) of the line. Objects are removed from the start (first) of 

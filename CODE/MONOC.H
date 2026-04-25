@@ -175,7 +175,7 @@ class MonoClass {
 		static int Enabled;
 };
 
-//extern int cdecl Mono_Printf(int string, ...);
+//extern int Mono_Printf(int string, ...);
 
 
 void Mono_Set_Cursor(int x, int y);
@@ -188,4 +188,3 @@ int Mono_X(void);
 int Mono_Y(void);
 
 #endif
-

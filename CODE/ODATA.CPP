@@ -910,9 +910,9 @@ void OverlayTypeClass::Init(TheaterType theater)
 			char fullname[_MAX_FNAME+_MAX_EXT];	// Fully constructed iconset name.
 
 			if (overlay.IsTheater) {
-				_makepath(fullname, NULL, NULL, overlay.IniName, Theaters[theater].Suffix);
+				WWFS_MakePath(fullname, NULL, NULL, overlay.IniName, Theaters[theater].Suffix);
 			} else {
-				_makepath(fullname, NULL, NULL, overlay.IniName, ".SHP");
+				WWFS_MakePath(fullname, NULL, NULL, overlay.IniName, ".SHP");
 			}
 			((void const *&)overlay.ImageData) = MixFileClass::Retrieve(fullname);
 

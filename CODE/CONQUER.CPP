@@ -62,6 +62,9 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include	"FUNCTION.H"
+
+#include <climits>
+#include <filesystem>
 #include	"CONNMGR.H"
 #include  "TCPIP.H"
 #include	<stdlib.h>
@@ -1719,7 +1722,7 @@ void Cleanup_VQ_Threading(void)
 	}
 }
 
-unsigned long __stdcall Thread_Read(void *file)
+unsigned long Thread_Read(void *file)
 {
 	int bytes_to_read;
 	int left_to_read;
@@ -2207,8 +2210,8 @@ void Play_Movie(char const * name, ThemeType theme, bool clrscrn)
 		char fullname[_MAX_FNAME+_MAX_EXT];
 		char palname [_MAX_FNAME+_MAX_EXT];
 
-		_makepath(fullname, NULL, NULL, name, ".VQA");
-		_makepath(palname , NULL, NULL, name, ".VQP");
+		WWFS_MakePath(fullname, NULL, NULL, name, ".VQA");
+		WWFS_MakePath(palname , NULL, NULL, name, ".VQP");
 		#ifdef CHEAT_KEYS
 			Mono_Set_Cursor(0, 0);Mono_Printf("[%s]", fullname);
 		#endif
@@ -2377,7 +2380,7 @@ char const * Fading_Table_Name(char const * base, TheaterType theater)
 	char root[_MAX_FNAME];
 
 	sprintf(root, "%1.1s%s", Theaters[theater].Root, base);
-	_makepath(_buffer, NULL, NULL, root, ".MRF");
+	WWFS_MakePath(_buffer, NULL, NULL, root, ".MRF");
 	return(_buffer);
 }
 
@@ -2565,7 +2568,6 @@ void CC_Texture_Fill (void const *shapefile, int shapenum, int xpos, int ypos, i
  * HISTORY:                                                                                    *
  *   02/21/1995 JLB : Created.                                                                 *
  *=============================================================================================*/
-#pragma off(unreferenced)
 void CC_Draw_Shape(void const * shapefile, int shapenum, int x, int y, WindowNumberType window, ShapeFlags_Type flags, void const * fadingdata, void const * ghostdata)
 {
 #if(TRUE)
@@ -3696,13 +3698,23 @@ bool Force_CD_Available(int cd)
  *=========================================================================*/
 unsigned long Disk_Space_Available(void)
 {
-	struct diskfree_t diskdata;
-	unsigned drive;
+	std::error_code error;
+	const std::filesystem::path current_path = std::filesystem::current_path(error);
+	if (error) {
+		return(0);
+	}
 
-	_dos_getdrive(&drive);
-	_dos_getdiskfree(drive, &diskdata);
+	const std::filesystem::space_info space_info = std::filesystem::space(current_path, error);
+	if (error) {
+		return(0);
+	}
 
-	return(diskdata.avail_clusters * diskdata.sectors_per_cluster * diskdata.bytes_per_sector);
+	const unsigned long long available = static_cast<unsigned long long>(space_info.available);
+	if (available > static_cast<unsigned long long>(ULONG_MAX)) {
+		return(ULONG_MAX);
+	}
+
+	return(static_cast<unsigned long>(available));
 }
 
 

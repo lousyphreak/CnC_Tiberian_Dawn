@@ -218,35 +218,6 @@ void MonoClass::Draw_Box(int32_t x, int32_t y, int32_t w, int32_t h, char attrib
  *=============================================================================================*/
 void MonoClass::Set_Cursor(int32_t x, int32_t y)
 {
-#if(0)
-	int32_t	pos = (y*COLUMNS)+x;
-
-	if (!Enabled) return;
-
-	X = (char)(x%COLUMNS);
-	Y = (char)(y%LINES);
-
-	if (Page == 0) {
-		_DX = CONTROL_PORT;
-		_AX = (int16_t)(0x0E|(pos&0xFF00));
-		asm {
-			out	dx,al
-			inc	dx
-			mov	al,ah
-			out	dx,al
-		}
-
-		_DX = CONTROL_PORT;
-		_AX = (int16_t)(0x0F|(pos<<8));
-		asm {
-			out	dx,al
-			inc	dx
-			mov	al,ah
-			out	dx,al
-		}
-
-	}
-#else
 	int32_t	pos = (y*COLUMNS)+x;
 
 	if (!Enabled) return;
@@ -260,7 +231,6 @@ void MonoClass::Set_Cursor(int32_t x, int32_t y)
 		output(CONTROL_PORT,
 			(int16_t)0x0F|(int16_t)(pos<<8));
 	}
-#endif
 }
 
 
@@ -709,5 +679,4 @@ void Mono_Scroll(int32_t )
 void Mono_View_Page(int32_t )
 {
 }
-
 

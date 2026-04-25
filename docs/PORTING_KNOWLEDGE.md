@@ -35,6 +35,16 @@ _Last updated: 2026-04-25_
 - The compatibility wrapper split is now established and should stay consistent:
   - `SDL3_COMPAT/wrappers/sdl_fs.*` is the right home for DOS-style path, glob, drive, and disk helpers (`_makepath`, `_dos_findfirst`, `_dos_getdiskfree`, `find_t`, `diskfree_t`);
   - `SDL3_COMPAT/wrappers/win32_compat.*` is the right home for Win32-ish system/string helpers (`MEMORYSTATUS`, `GlobalMemoryStatus`, `stricmp`, `strupr`, byte-order helpers, `WM_USER`).
+- That wrapper split needs one more rule after the legacy-cleanup pass:
+  - active TD code should call the modern helper names directly (`WWFS_MakePath`, `WWFS_SplitPath`, `WWFS_GlobDirectory`, `WWFS_GetPathInfo`) instead of reviving DOS-named entry points just because the old code spelled them that way;
+  - once the live call sites are gone, delete the DOS-named wrapper aliases instead of keeping them around as permanent compatibility clutter.
+- The `#pragma pack(push, 8)` / `#pragma pack(pop)` guards around `#include <SDL3/SDL.h>` in `SDL3_COMPAT/wrappers/win32_compat.h` and `SDL3_COMPAT/wrappers/sdl_fs.h` are required:
+  - some preserved TD/Win32LIB headers still change struct packing before including the SDL compatibility wrappers;
+  - without those local pack guards, SDL headers inherit the wrong packing and fail their own compile-time alignment assertions;
+  - these pragmas are therefore functional ABI guards, not obsolete compiler noise.
+- The current ASan shutdown baseline after the legacy-cleanup pass is:
+  - TD-owned `WWMouseClass` cursor/shadow buffers must all be released, including `EraseBuffer`;
+  - after fixing that leak, the remaining timed-run LeakSanitizer output comes from the host graphics / DBus stack (`libnvidia-glcore`, `libdbus-1`) during shutdown rather than from TD-owned allocations.
 - After adding those wrappers, the build moved past the earlier non-network DOS helper failures. The next dominant blockers are:
   - `CODE/RAWFILE.CPP`, which still needs a full SDL/`RawFileClass` alignment and still references old DOS open/create flags and TD-local globals;
   - modern-C++ correctness failures like `++` / `--` on `bool` and overloaded-name collisions (`index`) in older game code;

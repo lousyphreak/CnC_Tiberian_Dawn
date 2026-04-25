@@ -1597,7 +1597,7 @@ void UnitTypeClass::One_Time(void)
 			} else {
 				sprintf(buffer, "%sICON", uclass.IniName);
 			}
-			_makepath(fullname, NULL, NULL, buffer, ".SHP");
+			WWFS_MakePath(fullname, NULL, NULL, buffer, ".SHP");
 			((void const *&)uclass.CameoData) = MixFileClass::Retrieve(fullname);
 		}
 
@@ -1605,7 +1605,7 @@ void UnitTypeClass::One_Time(void)
 		**	Fetch a pointer to the unit's shape data.
 		*/
 		if (!uclass.IsPieceOfEight || (Special.IsJurassic && AreThingiesEnabled) ) {
-			_makepath(fullname, NULL, NULL, uclass.IniName, ".SHP");
+			WWFS_MakePath(fullname, NULL, NULL, uclass.IniName, ".SHP");
 			ptr = MixFileClass::Retrieve(fullname);
 		} else {
 			ptr = NULL;
@@ -1669,7 +1669,7 @@ void UnitTypeClass::Init(TheaterType theater)
 
 				if (uclass.IsBuildable) {
 					sprintf(buffer, "%sICNH", uclass.IniName);
-					_makepath(fullname, NULL, NULL, buffer, Theaters[theater].Suffix);
+					WWFS_MakePath(fullname, NULL, NULL, buffer, Theaters[theater].Suffix);
 					cameo_ptr = MixFileClass::Retrieve(fullname);
 					if (cameo_ptr){
 						((void const *&)uclass.CameoData) = cameo_ptr;

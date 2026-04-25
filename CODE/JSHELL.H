@@ -99,15 +99,15 @@ template<class T> inline T operator --(T & a, int)
 	a = (T)((int)a - (int)1);
 	return(aa);
 }
-template<class T> inline T operator |(T t1, T t2)
+template<class T> constexpr inline T operator |(T t1, T t2)
 {
 	return((T)((int)t1 | (int)t2));
 }
-template<class T> inline T operator &(T t1, T t2)
+template<class T> constexpr inline T operator &(T t1, T t2)
 {
 	return((T)((int)t1 & (int)t2));
 }
-template<class T> inline T operator ~(T t1)
+template<class T> constexpr inline T operator ~(T t1)
 {
 	return((T)(~(int)t1));
 }
@@ -135,61 +135,12 @@ inline ShapeFlags_Type operator ~(ShapeFlags_Type value)
 
 
 void Set_Bit(void * array, int bit, int value);
-#ifdef __WATCOMC__
-#pragma aux Set_Bit parm [esi] [ecx] [eax] \
-	modify [esi ebx] = 			\
-	"mov	ebx,ecx"					\
-	"shr	ebx,5"					\
-	"and	ecx,01Fh"				\
-	"btr	[esi+ebx*4],ecx"		\
-	"or	eax,eax"					\
-	"jz	ok"						\
-	"bts	[esi+ebx*4],ecx"		\
-	"ok:"
-#endif
 
 int Get_Bit(void const * array, int bit);
-#ifdef __WATCOMC__
-#pragma aux Get_Bit parm [esi] [eax] \
-	modify [esi ebx] \
-	value [eax]		= 				\
-	"mov	ebx,eax"					\
-	"shr	ebx,5"					\
-	"and	eax,01Fh"				\
-	"bt	[esi+ebx*4],eax"		\
-	"setc	al"
-#endif
 
 int First_True_Bit(void const * array);
-#ifdef __WATCOMC__
-#pragma aux First_True_Bit parm [esi] \
-	modify [esi ebx] \
-	value [eax]		= 				\
-	"mov	eax,-32"					\
-	"again:"							\
-	"add	eax,32"					\
-	"mov	ebx,[esi]"				\
-	"add	esi,4"					\
-	"bsf	ebx,ebx"					\
-	"jz	again"					\
-	"add	eax,ebx"
-#endif
 
 int First_False_Bit(void const * array);
-#ifdef __WATCOMC__
-#pragma aux First_False_Bit parm [esi] \
-	modify [esi ebx] \
-	value [eax]		= 				\
-	"mov	eax,-32"					\
-	"again:"							\
-	"add	eax,32"					\
-	"mov	ebx,[esi]"				\
-	"not	ebx"						\
-	"add	esi,4"					\
-	"bsf	ebx,ebx"					\
-	"jz	again"					\
-	"add	eax,ebx"
-#endif
 
 inline int Bound(int original, int min, int max)
 {
@@ -202,40 +153,6 @@ inline int Bound(int original, int min, int max)
 	if (original > max) return max;
 	return original;
 }
-#ifdef __WATCOMC__
-#pragma aux Bound parm [eax] [ebx] [ecx] \
-	modify [eax] \
-	value [eax]		= 				\
-	"cmp	ebx,ecx"					\
-	"jl	okorder"					\
-	"xchg	ebx,ecx"					\
-	"okorder: cmp	eax,ebx"		\
-	"jg	okmin"					\
-	"mov	eax,ebx"					\
-	"okmin: cmp	eax,ecx"			\
-	"jl	okmax"					\
-	"mov	eax,ecx"					\
-	"okmax:"
-#endif
-
-#ifdef NEVER
-extern unsigned Bound(unsigned original, unsigned min, unsigned max);
-#pragma aux Bound parm [eax] [ebx] [ecx] \
-	modify [eax] \
-	value [eax]		= 				\
-	"cmp	ebx,ecx"					\
-	"jb	okorder"					\
-	"xchg	ebx,ecx"					\
-	"okorder: cmp	eax,ebx"		\
-	"ja	okmin"					\
-	"mov	eax,ebx"					\
-	"okmin: cmp	eax,ecx"			\
-	"jb	okmax"					\
-	"mov	eax,ecx"					\
-	"okmax:"
-#endif
-
-
 inline unsigned Fixed_To_Cardinal(unsigned base, unsigned fixed)
 {
 	const uint64_t temp = ((uint64_t)base * (uint64_t)fixed) + 0x80ULL;
@@ -244,20 +161,6 @@ inline unsigned Fixed_To_Cardinal(unsigned base, unsigned fixed)
 	}
 	return (unsigned)(temp >> 8);
 }
-#ifdef __WATCOMC__
-#pragma aux Fixed_To_Cardinal parm [eax] [edx] \
-	modify [edx] \
-	value [eax]		= 				\
-	"mul	edx"						\
-	"add	eax,080h"				\
-	"test	eax,0FF000000h"		\
-	"jz	ok"						\
-	"mov	eax,000FFFFFFh"		\
-	"ok:"								\
-	"shr	eax,8"
-#endif
-
-
 inline unsigned Cardinal_To_Fixed(unsigned base, unsigned cardinal)
 {
 	if (base == 0) {
@@ -265,16 +168,5 @@ inline unsigned Cardinal_To_Fixed(unsigned base, unsigned cardinal)
 	}
 	return (unsigned)(((uint64_t)cardinal << 8) / (uint64_t)base);
 }
-#ifdef __WATCOMC__
-#pragma aux Cardinal_To_Fixed parm [ebx] [eax] \
-	modify [edx] \
-	value [eax]		= 				\
-	"or	ebx,ebx"					\
-	"jz	fini"						\
-	"shl	eax,8"					\
-	"xor	edx,edx"					\
-	"div	ebx"						\
-	"fini:"
-#endif
 
 #endif

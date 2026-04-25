@@ -19,6 +19,8 @@
 /* $Header:   F:\projects\c&c\vcs\code\wwalloc.h_v   2.18   16 Oct 1995 16:47:52   JOE_BOSTIC  $ */
 
 
+#include <cstdint>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -52,17 +54,16 @@ MemoryFlagType operator ~(MemoryFlagType);
 
 
 /* Prototypes for functions defined in this file */
-void * __cdecl Alloc(unsigned long bytes_to_alloc, MemoryFlagType flags);
-void __cdecl Free(void const *pointer);
-void * __cdecl Resize_Alloc(void const *original_ptr, unsigned long new_size_in_bytes);
-long __cdecl Ram_Free(MemoryFlagType flag);
-long __cdecl Total_Ram_Free(MemoryFlagType flag);
-long __cdecl Heap_Size(MemoryFlagType flag);
+void *Alloc(uint32_t bytes_to_alloc, MemoryFlagType flags);
+void Free(void const *pointer);
+void *Resize_Alloc(void const *original_ptr, uint32_t new_size_in_bytes);
+int32_t Ram_Free(MemoryFlagType flag);
+int32_t Total_Ram_Free(MemoryFlagType flag);
+int32_t Heap_Size(MemoryFlagType flag);
 
-extern unsigned long __cdecl MinRam;		// Record of least memory at worst case.
-extern unsigned long __cdecl MaxRam;		// Record of total allocated at worst case.
+extern uint32_t MinRam;		// Record of least memory at worst case.
+extern uint32_t MaxRam;		// Record of total allocated at worst case.
 
 #ifdef __cplusplus
 }
 #endif
-

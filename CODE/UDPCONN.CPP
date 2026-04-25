@@ -530,7 +530,6 @@ void UDPConnClass::Close_Socket(unsigned short socket)
  * HISTORY:                                                                *
  *   12/16/1994 BR : Created.                                              *
  *=========================================================================*/
-#pragma off (unreferenced)
 int UDPConnClass::Send_To(char *buf, int buflen, UDPAddressClass *address,
 	NetNodeType immed)
 {
@@ -623,8 +622,6 @@ CCDebugString (tempbuf);
 
 
 }
-#pragma on (unreferenced)
-
 /***************************************************************************
  * UDPConnClass::Broadcast -- broadcasts the given packet						*
  *                                                                         *

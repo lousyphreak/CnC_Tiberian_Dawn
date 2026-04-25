@@ -592,7 +592,7 @@ void BulletTypeClass::One_Time(void)
 		char	fullname[_MAX_FNAME+_MAX_EXT];
 
 		if (!bullet.IsInvisible) {
-			_makepath(fullname, NULL, NULL, bullet.IniName, ".SHP");
+			WWFS_MakePath(fullname, NULL, NULL, bullet.IniName, ".SHP");
 
 			RawFileClass file(fullname);
 

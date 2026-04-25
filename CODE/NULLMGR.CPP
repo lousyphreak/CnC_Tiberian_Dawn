@@ -199,7 +199,6 @@ NullModemClass::~NullModemClass ()
  *   12/20/1994 BR : Created.                                              *
  *=========================================================================*/
 //int NullModemClass::Init (int port, int irq, int baud, char parity, int wordlen, int stopbits)
-#pragma off (unreferenced)
 int NullModemClass::Init (int port, int ,char *dev_name, int baud, char parity, int wordlen, int stopbits, int flowcontrol)
 {
 	int com;

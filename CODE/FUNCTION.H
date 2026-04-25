@@ -165,9 +165,6 @@ class ConnManClass;
 **	If the following define is enabled, then the memory checking code
 **	will be disabled.
 */
-#define NOMEMCHECK
-
-#include	"WATCOM.H"
 #define FILE_H
 #define WWMEM_H
 #define RAWFILE_H
@@ -177,18 +174,6 @@ class ConnManClass;
 #include	"JSHELL.H"
 
 #define	_MAX_NAME	_MAX_FNAME
-
-#ifdef _pascal
-#undef	_pascal
-#endif
-#ifdef pascal
-#undef	pascal
-#endif
-
-#define pascal
-#define _pascal
-
-
 
 // Should be part of WWLIB.H. This is used in JSHELL.CPP.
 typedef struct {
@@ -246,16 +231,6 @@ inline CELL Coord_YCell(COORDINATE coord) {return (CELL)(*(((unsigned char*)&coo
 inline CELL Coord_Cell(COORDINATE coord) {return (CELL)(((Coord_YCell(coord)) << 6) | Coord_XCell(coord));}
 int32_t Desired_Facing8(int32_t x1, int32_t y1, int32_t x2, int32_t y2);
 int32_t Desired_Facing256(int32_t x1, int32_t y1, int32_t x2, int32_t y2);
-#ifdef __WATCOMC__
-#pragma aux Coord_Cell parm [eax] \
-	modify [ebx] \
-	value [ax]		= 				\
-	"mov	ebx,eax"					\
-	"shr	eax,010h"				\
-	"xor	al,al"					\
-	"shr	eax,2"					\
-	"or	al,bh"
-#endif
 
 
 #include  "UTRACKER.H"
@@ -431,7 +406,7 @@ void Increase_Palette_Luminance(unsigned char *InterpolationPalette ,	int RedPer
 extern "C"{
 	extern unsigned char PaletteInterpolationTable[SIZE_OF_PALETTE][SIZE_OF_PALETTE];
 	extern unsigned char *InterpolationPalette;
-	void __cdecl Asm_Create_Palette_Interpolation_Table(void);
+	void Asm_Create_Palette_Interpolation_Table(void);
 }
 
 
@@ -473,7 +448,7 @@ int Format_Window_String(char * string, int maxlinelen, int & width, int & heigh
 extern void Dialog_Box(int x, int y, int w, int h);
 void Conquer_Clip_Text_Print(char const *, unsigned x, unsigned y, unsigned fore, unsigned back=(unsigned)TBLACK, TextPrintType flag=TPF_8POINT|TPF_DROPSHADOW, unsigned width=-1, int const * tabs=0);
 void Draw_Box(int x, int y, int w, int h, BoxStyleEnum up, bool filled);
-int __cdecl Dialog_Message(char *errormsg, ...);
+int Dialog_Message(char *errormsg, ...);
 void Window_Box(WindowNumberType window, BoxStyleEnum style);
 void Fancy_Text_Print(char const *text, unsigned x, unsigned y, unsigned fore, unsigned back, TextPrintType flag, ...);
 void Fancy_Text_Print(int text, unsigned x, unsigned y, unsigned fore, unsigned back, TextPrintType flag, ...);
@@ -541,12 +516,12 @@ void *Build_Translucent_Table(void const *palette, TLucentType const *control, i
 void *Conquer_Build_Translucent_Table(void const *palette, TLucentType const *control, int count, void *buffer);
 
 /*
-**	KEYFBUFF.ASM
+**	KEYFBUFF.CPP
 */
 #ifdef __cplusplus
 extern "C" {
 #endif
-long __cdecl Buffer_Frame_To_Page(int x, int y, int w, int h, void *Buffer, GraphicViewPortClass &view, int flags, ...);
+long Buffer_Frame_To_Page(int x, int y, int w, int h, void *Buffer, GraphicViewPortClass &view, int flags, ...);
 #ifdef __cplusplus
 }
 #endif
@@ -703,16 +678,16 @@ void Window_Dialog_Box(HANDLE  hinst, LPCTSTR  lpszTemplate, HWND  hwndOwner, DL
 void Special_Dialog(void);
 
 /*
-**	SUPPORT.ASM
+**	PORTSUPP.CPP
 */
 #ifdef	__cplusplus
 extern "C" {
 #endif
-void __cdecl Remove_From_List(void **list, int *index, void * ptr);
-void * __cdecl Conquer_Build_Fading_Table(void const *palette, void *dest, int color, int frac);
-void __cdecl Fat_Put_Pixel(int x, int y, int color, int size, GraphicViewPortClass &);
-extern "C" void __cdecl strtrim(char *buffer);
-long __cdecl Get_EAX( void );
+void Remove_From_List(void **list, int *index, void * ptr);
+void *Conquer_Build_Fading_Table(void const *palette, void *dest, int color, int frac);
+void Fat_Put_Pixel(int x, int y, int color, int size, GraphicViewPortClass &);
+extern "C" void strtrim(char *buffer);
+long Get_EAX(void);
 #ifdef	__cplusplus
 }
 #endif
@@ -873,28 +848,6 @@ extern int Load_Interpolated_Palettes(char const *filename, BOOL add=FALSE);
  *   05/27/1994 JLB : Created.                                                                 *
  *=============================================================================================*/
 int Distance_Coord(COORDINATE coord1, COORDINATE coord2);
-#ifdef __WATCOMC__
-#pragma aux Distance_Coord parm [eax] [ebx] \
-	modify [edx ebx] \
-	value [eax]		= 				\
-	"mov	dx,ax"			\
-	"sub	dx,bx"			\
-	"jg	okx"				\
-	"neg	dx"				\
-	"okx:"					\
-	"shr	eax,16"			\
-	"shr	ebx,16"			\
-	"sub	ax,bx"			\
-	"jg	oky"				\
-	"neg	ax"				\
-	"oky:"					\
-	"cmp	ax,dx"			\
-	"jg	ok"				\
-	"xchg	ax,dx"			\
-	"ok:"						\
-	"shr	dx,1"				\
-	"add	ax,dx"
-#endif
 
 inline int Distance(COORDINATE coord1, COORDINATE coord2)
 {
@@ -965,13 +918,6 @@ inline CELL CellClass::Cell_Number(void) const
 {
 	return(Map.ID(this));
 }
-#if(0)
-#ifndef NOMEMCHECK
-#define NO_INTERCEPT
-#include	"MEMCHECK.H"
-#endif
-#endif
-
 void WWDOS_Shutdown(void);
 
 #endif

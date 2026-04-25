@@ -104,6 +104,8 @@ WWMouseClass::~WWMouseClass()
 
 	if (MouseCursor) delete[] MouseCursor;
 	if (MouseBuffer) delete[] MouseBuffer;
+	if (EraseBuffer) delete[] EraseBuffer;
+	_Mouse = NULL;
 	/*
 	** Free up the windows mouse pointer movement
 	*/

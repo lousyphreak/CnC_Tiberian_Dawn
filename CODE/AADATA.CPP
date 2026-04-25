@@ -451,13 +451,13 @@ void AircraftTypeClass::One_Time(void)
 		} else {
 			sprintf(buffer, "%sICON", uclass.IniName);
 		}
-		_makepath(fullname, NULL, NULL, buffer, ".SHP");
+		WWFS_MakePath(fullname, NULL, NULL, buffer, ".SHP");
 		((void const *&)uclass.CameoData) = MixFileClass::Retrieve(fullname);
 
 		/*
 		**	Generic shape for all houses load method.
 		*/
-		_makepath(fullname, NULL, NULL, uclass.IniName, ".SHP");
+		WWFS_MakePath(fullname, NULL, NULL, uclass.IniName, ".SHP");
 		((void const *&)uclass.ImageData) = MixFileClass::Retrieve(fullname);
 	}
 
@@ -757,7 +757,7 @@ void AircraftTypeClass::Init(TheaterType theater)
 				((void const *&)uclass.CameoData) = NULL;
 
 				sprintf(buffer, "%.4sICNH", uclass.IniName);
-				_makepath (fullname, NULL, NULL, buffer, Theaters[theater].Suffix);
+				WWFS_MakePath(fullname, NULL, NULL, buffer, Theaters[theater].Suffix);
 				cameo_ptr = MixFileClass::Retrieve(fullname);
 				if (cameo_ptr){
 					((void const *&)uclass.CameoData) = cameo_ptr;

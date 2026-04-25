@@ -231,7 +231,6 @@ bool AnimClass::Render(bool forced)
  *   09/24/1994 JLB : Created.                                                                 *
  *   05/19/1995 JLB : Added white translucent effect.                                          *
  *=============================================================================================*/
-#pragma off (unreferenced)
 void AnimClass::Draw_It(int x, int y, WindowNumberType window)
 {
 	Validate();

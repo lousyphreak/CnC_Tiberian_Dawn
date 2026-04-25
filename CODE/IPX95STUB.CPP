@@ -203,12 +203,12 @@ bool Is_Local_Source(IPXHeaderType const& header)
 
 }
 
-extern "C" BOOL __stdcall IPX_Initialise(void)
+extern "C" BOOL IPX_Initialise(void)
 {
 	return Ensure_Backend_Initialised() ? 1 : 0;
 }
 
-extern "C" BOOL __stdcall IPX_Get_Outstanding_Buffer95(unsigned char *buffer)
+extern "C" BOOL IPX_Get_Outstanding_Buffer95(unsigned char *buffer)
 {
 	if (IpxSocket == INVALID_SOCKET_HANDLE || buffer == NULL) {
 		return 0;
@@ -241,29 +241,29 @@ extern "C" BOOL __stdcall IPX_Get_Outstanding_Buffer95(unsigned char *buffer)
 	}
 }
 
-extern "C" void __stdcall IPX_Shut_Down95(void)
+extern "C" void IPX_Shut_Down95(void)
 {
 	Close_Ipx_Socket();
 }
 
-extern "C" int __stdcall IPX_Send_Packet95(unsigned char *, unsigned char *buffer, int buffer_length, unsigned char* net, unsigned char* node)
+extern "C" int IPX_Send_Packet95(unsigned char *, unsigned char *buffer, int buffer_length, unsigned char* net, unsigned char* node)
 {
 	return Send_Ipx_Frame(net, node, buffer, buffer_length);
 }
 
-extern "C" int __stdcall IPX_Broadcast_Packet95(unsigned char *buffer, int buffer_length)
+extern "C" int IPX_Broadcast_Packet95(unsigned char *buffer, int buffer_length)
 {
 	unsigned char broadcast_net[4] = {0xff, 0xff, 0xff, 0xff};
 	unsigned char broadcast_node[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 	return Send_Ipx_Frame(broadcast_net, broadcast_node, buffer, buffer_length);
 }
 
-extern "C" BOOL __stdcall IPX_Start_Listening95(void)
+extern "C" BOOL IPX_Start_Listening95(void)
 {
 	return IpxSocket != INVALID_SOCKET_HANDLE;
 }
 
-extern "C" int __stdcall IPX_Open_Socket95(int socket_number)
+extern "C" int IPX_Open_Socket95(int socket_number)
 {
 	SocketAddress bind_address;
 
@@ -300,17 +300,17 @@ extern "C" int __stdcall IPX_Open_Socket95(int socket_number)
 	return 0;
 }
 
-extern "C" void __stdcall IPX_Close_Socket95(int)
+extern "C" void IPX_Close_Socket95(int)
 {
 	Close_Ipx_Socket();
 }
 
-extern "C" int __stdcall IPX_Get_Connection_Number95(void)
+extern "C" int IPX_Get_Connection_Number95(void)
 {
 	return BackendInitialised ? 1 : 0;
 }
 
-extern "C" int __stdcall IPX_Get_Local_Target95(unsigned char *, unsigned char *node, unsigned short, unsigned char *immediate)
+extern "C" int IPX_Get_Local_Target95(unsigned char *, unsigned char *node, unsigned short, unsigned char *immediate)
 {
 	if (node != NULL && immediate != NULL) {
 		memcpy(immediate, node, 6);

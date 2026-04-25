@@ -85,7 +85,7 @@ static inline uint8_t Sample_Predator_Pixel(const uint8_t* view_base,
 
 }
 
-long __cdecl Buffer_Frame_To_Page(int x,
+long Buffer_Frame_To_Page(int x,
 	int y,
 	int w,
 	int h,

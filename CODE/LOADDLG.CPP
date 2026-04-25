@@ -701,7 +701,7 @@ int LoadOptionsClass::Num_From_Ext(char *fname)
 {
 	char ext[_MAX_EXT];
 
-	_splitpath(fname, NULL, NULL, NULL, ext);
+	WWFS_SplitPath(fname, NULL, NULL, NULL, ext);
 	int num = atoi(ext + 1);		// skip the '.'
 	return(num);
 }

@@ -54,13 +54,13 @@ char CDFileClass::RawPath[512];
 
 
 
-int __cdecl Is_Disk_Inserted(int disk)
+int Is_Disk_Inserted(int disk)
 {
-	struct find_t fb;
-	char	scan[] = "?:\\*.*";
+	SDL_PathInfo info;
+	char root[] = "A:\\";
 
-	scan[0] = 'A' + disk;
-	return(_dos_findfirst(scan, _A_SUBDIR, &fb) == 0);
+	root[0] = static_cast<char>('A' + disk);
+	return(WWFS_GetPathInfo(root, &info) && info.type == SDL_PATHTYPE_DIRECTORY);
 }
 
 
@@ -179,7 +179,12 @@ int CDFileClass::Set_Search_Drives(char const * pathlist)
 		strcat (RawPath, pathlist);
 	}
 
-	char const * ptr = strtok(pathlist, ";");
+	char * path_buffer = strdup(pathlist);
+	if (path_buffer == NULL) {
+		return(0);
+	}
+
+	char * ptr = strtok(path_buffer, ";");
 	while (ptr) {
 		if (strlen(ptr)){
 
@@ -234,6 +239,7 @@ int CDFileClass::Set_Search_Drives(char const * pathlist)
 		*/
 		ptr = strtok(NULL, ";");
 	}
+	free(path_buffer);
 	if (!found) return(1);
 	if (empty) return(2);
 	return(0);
@@ -471,38 +477,7 @@ int CDFileClass::Open(char const *filename, int rights)
 }
 
 
-#ifdef NEVER
-/* Get the drive letters if the CD's online */
-WORD __cdecl GetCDDrive(VOID)
-{
-	_ES = FP_SEG(&cdDrive[0]);
-	_BX = FP_OFF(&cdDrive[0]);
-	_AX = 0x150d;
-	geninterrupt(0x2F);
-	return((WORD)(*cdDrive));
-}
-#endif
-
 int Get_CD_Drive(void)
 {
-#ifdef NEVER
-	for (int index = 0; index < 26; index++) {
-		union REGS regs;
-
-		regs.w.ax = 0x150B;
-		regs.w.bx = 0;
-		regs.w.cx = index;
-		int386(0x2F, &regs, &regs);
-		if (regs.w.bx == 0xADAD) {
-			return(index);
-		}
-	}
-	return(0);
-#else
-
-//	GetCDClass temp;
-//	return(temp.GetCDDrive());
 	return (0);
-#endif
-
 }

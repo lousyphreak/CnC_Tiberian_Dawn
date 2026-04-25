@@ -61,8 +61,8 @@ void Read_Setup_Options(char *config_data);
 bool VideoBackBufferAllowed = true;
 
 extern "C"{
-	bool __cdecl Detect_MMX_Availability(void);
-	void __cdecl Init_MMX(void);
+	bool Detect_MMX_Availability(void);
+	void Init_MMX(void);
 }
 
 namespace
@@ -131,7 +131,7 @@ std::string executable_directory_path(const char* executable_path)
 	char path[_MAX_PATH];
 	char working_directory[_MAX_PATH];
 
-	_splitpath(executable_path, drive, path, NULL, NULL);
+	WWFS_SplitPath(executable_path, drive, path, NULL, NULL);
 	if (!path[0]) {
 		std::strcpy(path, ".");
 	}
@@ -698,7 +698,7 @@ int main(int argc, char *argv[])
  * HISTORY:                                                                                    *
  *   03/20/1995 JLB : Created.                                                                 *
  *=============================================================================================*/
-void __cdecl Prog_End(void)
+void Prog_End(void)
 {
 #ifndef DEMO
 #endif
@@ -743,12 +743,14 @@ void __cdecl Prog_End(void)
  *=============================================================================================*/
 void Delete_Swap_Files(void)
 {
-	struct find_t ff;		// for _dos_findfirst
+	int swap_count = 0;
+	char** swap_files = WWFS_GlobDirectory(".", "*.SWP", SDL_GLOB_CASEINSENSITIVE, &swap_count);
 
-	if (!_dos_findfirst("*.SWP", _A_NORMAL, &ff)) {
-		do {
-			unlink(ff.name);
-		} while(!_dos_findnext(&ff));
+	if (swap_files != NULL) {
+		for (int index = 0; index < swap_count; ++index) {
+			WWFS_RemovePath(swap_files[index]);
+		}
+		SDL_free(swap_files);
 	}
 }
 

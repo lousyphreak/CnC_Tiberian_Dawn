@@ -45,19 +45,19 @@
 
 BOOL	InterpolationPaletteChanged = FALSE;
 extern "C" {
-extern void __cdecl Asm_Interpolate (unsigned char* src_ptr ,
+extern void Asm_Interpolate (unsigned char* src_ptr ,
 						 						unsigned char* dest_ptr ,
 												int				lines ,
 												int				src_width ,
 												int				dest_width);
 
-extern void __cdecl Asm_Interpolate_Line_Double (unsigned char* src_ptr ,
+extern void Asm_Interpolate_Line_Double (unsigned char* src_ptr ,
 						 						unsigned char* dest_ptr ,
 												int				lines ,
 												int				src_width ,
 												int				dest_width);
 
-extern void __cdecl Asm_Interpolate_Line_Interpolate (unsigned char* src_ptr ,
+extern void Asm_Interpolate_Line_Interpolate (unsigned char* src_ptr ,
 						 						unsigned char* dest_ptr ,
 												int				lines ,
 												int				src_width ,

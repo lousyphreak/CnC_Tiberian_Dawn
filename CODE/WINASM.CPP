@@ -51,7 +51,7 @@ extern "C" void Stop_Execution(void)
 {
 }
 
-extern "C" void __cdecl Asm_Create_Palette_Interpolation_Table(void)
+extern "C" void Asm_Create_Palette_Interpolation_Table(void)
 {
 	int first_r;
 	int first_g;
@@ -104,7 +104,7 @@ extern "C" void __cdecl Asm_Create_Palette_Interpolation_Table(void)
 	}
 }
 
-extern "C" void __cdecl Asm_Interpolate(uint8_t* src_ptr, uint8_t* dest_ptr, int lines, int source_width, int dest_width)
+extern "C" void Asm_Interpolate(uint8_t* src_ptr, uint8_t* dest_ptr, int lines, int source_width, int dest_width)
 {
 	const int row_bytes = dest_width / 2;
 
@@ -116,7 +116,7 @@ extern "C" void __cdecl Asm_Interpolate(uint8_t* src_ptr, uint8_t* dest_ptr, int
 	}
 }
 
-extern "C" void __cdecl Asm_Interpolate_Line_Double(uint8_t* src_ptr, uint8_t* dest_ptr, int lines, int source_width, int dest_width)
+extern "C" void Asm_Interpolate_Line_Double(uint8_t* src_ptr, uint8_t* dest_ptr, int lines, int source_width, int dest_width)
 {
 	const int row_bytes = dest_width / 2;
 
@@ -128,7 +128,7 @@ extern "C" void __cdecl Asm_Interpolate_Line_Double(uint8_t* src_ptr, uint8_t* d
 	}
 }
 
-extern "C" void __cdecl Asm_Interpolate_Line_Interpolate(uint8_t* src_ptr, uint8_t* dest_ptr, int source_lines, int source_width, int dest_width)
+extern "C" void Asm_Interpolate_Line_Interpolate(uint8_t* src_ptr, uint8_t* dest_ptr, int source_lines, int source_width, int dest_width)
 {
 	const int row_bytes = dest_width / 2;
 	uint8_t* last_line = TopLine;

@@ -8,6 +8,52 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
 
 ## Current status
 
+- Legacy compiler/OS cleanup pass removed the remaining active Watcom/DOS portability glue from the SDL3 build surface (2026-04-25):
+  - completed in this checkpoint:
+    - removed the remaining live calling-convention/compiler keywords from active TD sources and headers:
+      - `__cdecl`
+      - `__stdcall`
+      - `_pascal`
+      - `register`
+    - removed obsolete compiler-specific pragmas from the active build path:
+      - `#pragma aux`
+      - `#pragma argsused`
+      - `#pragma warn`
+      - `#pragma off/on (unreferenced)`
+    - deleted dead legacy support files that were no longer referenced by the SDL3/CMake build:
+      - `CODE/WATCOM.H`
+      - `CODE/MEMCHECK.H`
+      - `CODE/DPMI.H`
+      - `CODE/DPMI.CPP`
+      - `CODE/COORDA.ASM`
+      - `CODE/IPXREAL.ASM`
+      - `CODE/IPXPROT.ASM`
+      - `CODE/KEYFBUFF.ASM`
+      - `CODE/MMX.ASM`
+      - `CODE/PAGFAULT.ASM`
+      - `CODE/SUPPORT.ASM`
+      - `CODE/TXTPRNT.ASM`
+      - `CODE/WINASM.ASM`
+    - replaced the last active DOS-named filesystem/path call sites in TD with the SDL-backed helper layer or standard C++ equivalents:
+      - `_makepath` -> `WWFS_MakePath`
+      - `_splitpath` -> `WWFS_SplitPath`
+      - `_dos_findfirst` / `_dos_findnext` startup scans -> `WWFS_GlobDirectory`
+      - `_dos_getdrive` / `_dos_getdiskfree` free-space query -> `std::filesystem::space`
+      - `CDFILE` disk-present probing -> `WWFS_GetPathInfo`
+    - removed the now-unused `_makepath` / `_splitpath` compatibility entry points from `SDL3_COMPAT/wrappers/sdl_fs.*` after the live code stopped depending on them
+    - cleaned dead inline-assembly / DOS fallback blocks out of the touched sources (`CODE/COORD.CPP`, `CODE/CDFILE.CPP`, `WIN32LIB/MONO/MONO.CPP`) so the active tree no longer needs those preserved snippets as reference
+    - fixed the shutdown leak exposed by the required ASan runtime probe by freeing `WWMouseClass::EraseBuffer` in `WIN32LIB/KEYBOARD/MOUSE.CPP`
+    - modernized `CODE/JSHELL.H` bitwise enum helpers to `constexpr`, which avoids the old Watcom-style generic operators breaking `<filesystem>` on modern libstdc++
+  - important portability note discovered in this checkpoint:
+    - the `#pragma pack(push, 8)` / `#pragma pack(pop)` wrappers around `#include <SDL3/SDL.h>` in `SDL3_COMPAT/wrappers/win32_compat.h` and `SDL3_COMPAT/wrappers/sdl_fs.h` are still required
+    - removing those include guards lets legacy packed headers leak into SDL headers and triggers SDL compile-time alignment assertions, so these pack pragmas are functional compatibility guards, not obsolete compiler clutter
+  - validation result:
+    - `cmake --build build --target tiberian-dawn --parallel 4` succeeds after the cleanup
+    - `cmake --build build-asan --target tiberian-dawn --parallel 4` also succeeds
+    - `timeout --foreground 125s bash -lc './build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` now runs for the full probe window; the in-project `WWMouseClass` leak is gone, and the remaining LeakSanitizer report comes from the system graphics / DBus stack (`libnvidia-glcore`, `libdbus-1`) during shutdown rather than from TD-owned allocations
+  - remaining follow-up from this sweep:
+    - `CODE/IPX.CPP` still contains a large dormant `NOT_FOR_WIN95` real-mode IPX implementation behind dead compile-time guards; it no longer affects the active SDL3 build, but it should be removed in a later cleanup pass once the modern UDP/WOL path is considered final
+
 - Initial modern-build bring-up started (2026-04-24):
   - repo state at start:
     - this repository only contains `CODE/` and `TOOLS/`; it does not yet contain the shared `WIN32LIB` support layer or SDL compatibility wrappers that the Red Alert SDL3 port already uses;
@@ -194,7 +240,7 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
   - current build result:
     - `cmake --build build --target tiberian-dawn --parallel 4` succeeds after the networking refactor.
     - `cmake --build build-asan --target tiberian-dawn -- -j$(nproc)` succeeds after the transport rename/runtime cleanup.
-    - `timeout --foreground 125s bash -lc 'env SDL_RENDER_DRIVER=software ./build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` now runs for the full probe window and only ends when the timeout force-kills the process (`ASAN_STATUS=137`), with no ASan report emitted during the timed run.
+    - `timeout --foreground 125s bash -lc './build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` now runs for the full probe window and only ends when the timeout force-kills the process (`ASAN_STATUS=137`), with no ASan report emitted during the timed run.
   - current networking state after this pass:
     - TD now has distinct modern game-mode selections for `UDP Direct`, `TCP Direct`, and `Westwood Online`, and the active runtime follows those game types instead of collapsing them all to one old internet path;
     - the live transport layer has been renamed over to `UDP*` and the active gameplay code now keys off `Udp` / `GAME_WOL` / `Is_Online_Game(...)` / `Is_Network_Game(...)` rather than the old IPX-facing names;
@@ -226,7 +272,7 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
   - current build result:
     - `cmake --build build --target tiberian-dawn --parallel 4` succeeds with the new backend files added.
     - `cmake --build build-asan --target tiberian-dawn -- -j$(nproc)` also succeeds after adding the backend files.
-    - `timeout --foreground 125s bash -lc 'env SDL_RENDER_DRIVER=software ./build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` still runs for the full probe window and exits only from the timeout (`ASAN_STATUS=137`), with no ASan report emitted during the timed run.
+    - `timeout --foreground 125s bash -lc './build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` still runs for the full probe window and exits only from the timeout (`ASAN_STATUS=137`), with no ASan report emitted during the timed run.
   - remaining integration requirements before `GAME_WOL` can use this backend live:
     1. wire `GAME_WOL` startup away from the current direct-connect `Winsock` path and into `WSManagerClass::Configure(...)` / `Init(...)`;
     2. teach the future `NETDLG` WOL flow to consume `Next_Control_Frame(...)` and create/delete `WSManagerClass` connections from the server's lobby/game membership frames;
@@ -463,7 +509,7 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
       - `CODE/DISPLAY.CPP` now rejects off-map cells and edge cells when computing shadow tiles / adjacent remap propagation
   - validation result:
     - `cmake --build build-asan --target tiberian-dawn -j32` succeeds
-    - `timeout --foreground 125s bash -lc 'env SDL_RENDER_DRIVER=software ./build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` now runs for the full timeout window (`STATUS=124`, `ELAPSED=125.001`) instead of crashing early
+    - `timeout --foreground 125s bash -lc './build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` now runs for the full timeout window (`STATUS=124`, `ELAPSED=125.001`) instead of crashing early
   - current remaining runtime follow-up:
     - the 2-minute ASan runtime target is now met
     - non-fatal UBSan diagnostics still appear during gameplay, especially around old object-pool/vptr assumptions and some negative-shift pathing math, so runtime cleanup is not finished even though the current build no longer dies during the timed startup/gameplay probe
@@ -540,7 +586,7 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
   - validation result:
     - `cmake --build build -- -j$(nproc)` succeeds after the runtime/input/render fixes;
     - `cmake --build build-asan --target tiberian-dawn -j$(nproc)` succeeds after the same changes;
-    - `timeout --foreground 45s bash -lc 'env SDL_RENDER_DRIVER=software ./build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` still reaches the timeout window; the process exits under LeakSanitizer with the pre-existing startup/runtime leak set instead of a new crash in the touched input/render code.
+    - `timeout --foreground 45s bash -lc './build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` still reaches the timeout window; the process exits under LeakSanitizer with the pre-existing startup/runtime leak set instead of a new crash in the touched input/render code.
 - Networking parity and ASan bring-up advanced together in the modern multiplayer pass (2026-04-25):
   - completed in this checkpoint:
     - finished the active multiplayer split so TD now launches the three modernized paths distinctly:
@@ -567,7 +613,7 @@ Port the Tiberian Dawn codebase to a reproducible cross-platform SDL3/CMake buil
   - validation result:
     - `cmake --build build -- -j$(nproc)` succeeds after the networking cleanup and sanitizer fixes;
     - `cmake --build build-asan --target tiberian-dawn -- -j$(nproc)` succeeds after the same changes;
-    - `timeout --foreground 125s bash -lc 'env SDL_RENDER_DRIVER=software ASAN_OPTIONS=detect_leaks=0 ./build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` now runs for the full timeout window (`ASAN_STATUS=124`) without the earlier `MSGBOX`, `LCW_Uncompress`, or bonus-dialog crashes.
+    - `timeout --foreground 125s bash -lc 'ASAN_OPTIONS=detect_leaks=0 ./build-asan/tiberian-dawn -gamedata "$PWD/GameData"'` now runs for the full timeout window (`ASAN_STATUS=124`) without the earlier `MSGBOX`, `LCW_Uncompress`, or bonus-dialog crashes.
   - current remaining follow-up:
     - `CODE/INTERNET.CPP` still contains some now-unused WChat/DDE helper implementations that are no longer reachable from the active TD startup/menu/runtime path;
     - the modern WOL backend still reuses TD’s classic global/private packet flow and does not yet consume explicit RA-style control frames such as create/join/leave/start room events;

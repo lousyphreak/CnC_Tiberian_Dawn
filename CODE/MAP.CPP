@@ -372,7 +372,7 @@ void MapClass::Sight_From(CELL cell, int sightrange, bool incremental)
  *=============================================================================================*/
 int MapClass::Cell_Distance(CELL cell1, CELL cell2)
 {
-	register int	x,y;		// Difference on X and Y axis.
+	int	x,y;		// Difference on X and Y axis.
 
 	x = Cell_X(cell1) - Cell_X(cell2);
 	y = Cell_Y(cell1) - Cell_Y(cell2);

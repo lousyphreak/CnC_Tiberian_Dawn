@@ -320,7 +320,7 @@ int Sound_Effect(VocType voc, VolType volume, int variation, signed short pan_va
 			}
 		}
 	}
-	_makepath(name, NULL, NULL, SoundEffectName[voc].Name, ext);
+	WWFS_MakePath(name, NULL, NULL, SoundEffectName[voc].Name, ext);
 	void const * ptr = MixFileClass::Retrieve(name);
 
 	/*
@@ -480,7 +480,7 @@ void Speak_AI(void)
 			if (SpeakQueue != _last) {
 				char name[_MAX_FNAME+_MAX_EXT];
 
-				_makepath(name, NULL, NULL, Speech[SpeakQueue], ".AUD");
+				WWFS_MakePath(name, NULL, NULL, Speech[SpeakQueue], ".AUD");
 				if (CCFileClass(name).Read(SpeechBuffer, SPEECH_BUFFER_SIZE)) {
 					Play_Sample(SpeechBuffer, 254, Options.Volume);
 				}

@@ -486,23 +486,27 @@ bool Init_Game(int , char *[])
 	/*
 	**	Before all else, cache any additional mixfiles.
 	*/
-	struct find_t ff;		// for _dos_findfirst
-	if (!_dos_findfirst("SC*.MIX", _A_NORMAL, &ff)) {
-		char * ptr;
-		do {
-			ptr = strdup(ff.name);
+	int scenario_mix_count = 0;
+	char** scenario_mix_files = WWFS_GlobDirectory(".", "SC*.MIX", SDL_GLOB_CASEINSENSITIVE, &scenario_mix_count);
+	if (scenario_mix_files != NULL) {
+		for (int index = 0; index < scenario_mix_count; ++index) {
+			char* ptr = strdup(scenario_mix_files[index]);
 			new MixFileClass(ptr);
 			MixFileClass::Cache(ptr);
 			free(ptr);
-		} while(!_dos_findnext(&ff));
+		}
+		SDL_free(scenario_mix_files);
 	}
-	if (!_dos_findfirst("SS*.MIX", _A_NORMAL, &ff)) {
-		char * ptr;
-		do {
-			ptr = strdup(ff.name);
+
+	int score_mix_count = 0;
+	char** score_mix_files = WWFS_GlobDirectory(".", "SS*.MIX", SDL_GLOB_CASEINSENSITIVE, &score_mix_count);
+	if (score_mix_files != NULL) {
+		for (int index = 0; index < score_mix_count; ++index) {
+			char* ptr = strdup(score_mix_files[index]);
 			new MixFileClass(ptr);
 			free(ptr);
-		} while(!_dos_findnext(&ff));
+		}
+		SDL_free(score_mix_files);
 	}
 #endif	//DEMO
 
@@ -511,13 +515,6 @@ bool Init_Game(int , char *[])
 		if (GeneralMix) delete GeneralMix;
 		GeneralMix = new MixFileClass("GENERAL.MIX");
 	}
-
-//	if (!_dos_findfirst("SC*.MIX", _A_NORMAL, &ff)) {
-//		do {
-//			new MixFileClass(ff.name);
-//			MixFileClass::Cache(ff.name);
-//		} while(!_dos_findnext(&ff));
-//	}
 
 	/*
 	**	Inform the file system of the various MIX files.
