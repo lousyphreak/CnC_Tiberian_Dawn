@@ -134,6 +134,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "FUNCTION.H"
+#include <new>
 
 
 namespace {
@@ -160,6 +161,22 @@ template <typename T>
 int Decode_Index_From_Pointer(T* pointer)
 {
 	return static_cast<int>(reinterpret_cast<uintptr_t>(pointer));
+}
+
+void Recreate_House_Trackers(HouseClass *house)
+{
+	house->AircraftTotals = new UnitTrackerClass((int)AIRCRAFT_COUNT);
+	house->InfantryTotals = new UnitTrackerClass((int)INFANTRY_COUNT);
+	house->UnitTotals = new UnitTrackerClass((int)UNIT_COUNT);
+	house->BuildingTotals = new UnitTrackerClass((int)STRUCT_COUNT);
+
+	house->DestroyedAircraft = new UnitTrackerClass((int)AIRCRAFT_COUNT);
+	house->DestroyedInfantry = new UnitTrackerClass((int)INFANTRY_COUNT);
+	house->DestroyedUnits = new UnitTrackerClass((int)UNIT_COUNT);
+	house->DestroyedBuildings = new UnitTrackerClass((int)STRUCT_COUNT);
+
+	house->CapturedBuildings = new UnitTrackerClass((int)STRUCT_COUNT);
+	house->TotalCrates = new UnitTrackerClass(TOTAL_CRATE_TYPES);
 }
 
 }
@@ -1824,7 +1841,12 @@ void LayerClass::Decode_Pointers(void)
  *=============================================================================================*/
 bool HouseClass::Load(FileClass & file)
 {
-	return(Read_Object(this, sizeof(*this), sizeof(*this), file, 0));
+	if (!Read_Object(this, sizeof(*this), sizeof(*this), file, 0)) {
+		return(false);
+	}
+
+	Recreate_House_Trackers(this);
+	return(true);
 }
 
 
@@ -1900,6 +1922,8 @@ void HouseClass::Decode_Pointers(void)
 	*/
 	((HouseTypeClass const *&)Class) = &HouseTypeClass::As_Reference(static_cast<HousesType>(reinterpret_cast<uintptr_t>(Class)));
 	Check_Ptr((void *)Class,__FILE__,__LINE__);
+
+	Init_Data(RemapColor, ActLike, Credits);
 }
 
 

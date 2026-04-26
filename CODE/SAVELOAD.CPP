@@ -848,6 +848,12 @@ void Decode_All_Pointers(void)
 	**	PlayerPtr.
 	*/
 	PlayerPtr = HouseClass::As_Pointer(static_cast<HousesType>(reinterpret_cast<intptr_t>(PlayerPtr)));
+	if (!PlayerPtr) {
+		PlayerPtr = HouseClass::As_Pointer(HOUSE_GOOD);
+		if (!PlayerPtr) {
+			return;
+		}
+	}
 	Whom = PlayerPtr->Class->House;
 	switch (PlayerPtr->Class->House) {
 		case HOUSE_GOOD:
@@ -981,7 +987,7 @@ bool Read_Object(void *ptr, int base_size, int class_size, FileClass & file, voi
 	**	Fill in VTable.
 	*/
 	if (vtable) {
-		((void **)ptr)[0] = vtable;
+		Set_VTable(ptr, base_size, vtable);
 	}
 
 	return(true);
@@ -1212,7 +1218,10 @@ TechnoTypeClass const * Target_To_TechnoType(TARGET target)
  *=========================================================================*/
 void * Get_VTable(void *ptr, int base_size)
 {
-	return(((void **)(((char *)ptr) + base_size - static_cast<int>(sizeof(void *))))[0]);
+	(void)base_size;
+	void *vtable = 0;
+	memcpy(&vtable, ptr, sizeof(vtable));
+	return(vtable);
 }
 
 
@@ -1235,5 +1244,6 @@ void * Get_VTable(void *ptr, int base_size)
  *=========================================================================*/
 void Set_VTable(void *ptr, int base_size, void *vtable)
 {
-	((void **)(((char *)ptr) + base_size - static_cast<int>(sizeof(void *))))[0] = vtable;
+	(void)base_size;
+	memcpy(ptr, &vtable, sizeof(vtable));
 }

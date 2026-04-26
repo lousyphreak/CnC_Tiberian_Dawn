@@ -173,7 +173,7 @@ void TeamTypeClass::Init(void)
 	TeamTypes.Free_All();
 
 	ptr = new TeamTypeClass();
-	VTable = ((void **)ptr)[0];
+	VTable = Get_VTable(ptr, sizeof(AbstractTypeClass));
 	delete ptr;
 }
 

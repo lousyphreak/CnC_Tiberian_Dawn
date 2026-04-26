@@ -144,6 +144,7 @@ class TeamTypeClass : public AbstractTypeClass
 		**	Dee-buggin' support.
 		*/
 		int Validate(void) const;
+		static void *Load_VTable(void) {return VTable;}
 
 		/*
 		**	If this teamtype object is active, then this flag will be true.

@@ -106,6 +106,7 @@ class BulletClass :	public ObjectClass,
 		**	Dee-buggin' support.
 		*/
 		int Validate(void) const;
+		static void *Load_VTable(void) {return VTable;}
 
 		/*
 		**	If this bullet is forced to be inaccurate because of some outside means. A tank

@@ -223,6 +223,7 @@ class InfantryClass : public FootClass
 		**	Dee-buggin' support.
 		*/
 		int Validate(void) const;
+		static void *Load_VTable(void) {return VTable;}
 
 		/*
 		**	Translation table to convert facing into infantry shape number. This special

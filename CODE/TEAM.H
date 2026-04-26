@@ -194,6 +194,7 @@ class TeamClass : public AbstractClass
 		**	Dee-buggin' support.
 		*/
 		int Validate(void) const;
+		static void *Load_VTable(void) {return VTable;}
 
 		/*
 		**	This is a record of the current number of active teams of each

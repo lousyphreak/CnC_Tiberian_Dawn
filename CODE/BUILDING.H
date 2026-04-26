@@ -288,6 +288,7 @@ class BuildingClass : public TechnoClass
 		**	Dee-buggin' support.
 		*/
 		int Validate(void) const;
+		static void *Load_VTable(void) {return VTable;}
 
 	private:
 		void  Drop_Debris(TARGET source = TARGET_NONE);

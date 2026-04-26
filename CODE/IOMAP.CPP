@@ -364,7 +364,9 @@ bool MouseClass::Load(FileClass & file)
 	** Read the entire map object in.  Only read in sizeof(MouseClass), so if we're
 	** in editor mode, none of the map editor object is read in.
 	*/
-	if (!Read_Object(this, sizeof(VectorClass<CellClass>), sizeof(MouseClass), file, VTable)) {
+	void *vtable = Get_VTable(this, sizeof(VectorClass<CellClass>));
+
+	if (!Read_Object(this, sizeof(VectorClass<CellClass>), sizeof(MouseClass), file, vtable)) {
 		return(false);
 	}
 

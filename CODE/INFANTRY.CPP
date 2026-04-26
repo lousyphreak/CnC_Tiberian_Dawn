@@ -793,7 +793,7 @@ void InfantryClass::Init(void)
 	Infantry.Free_All();
 
 	ptr = new InfantryClass();
-	VTable = ((void **)ptr)[0];
+	VTable = Get_VTable(ptr, sizeof(AbstractClass));
 	delete ptr;
 }
 
@@ -2190,7 +2190,14 @@ TARGET InfantryClass::Greatest_Threat(ThreatType threat) const
 			if (*this != INFANTRY_E7) {
 				return(TARGET_NONE);
 			}
-			// fall into next case.
+
+			/*
+			**	The special-cased E7 trooper can threaten aircraft even though it has no
+			**	primary weapon enum in TD's infantry data. Do not fall through and index
+			**	Weapons[-1].
+			*/
+			threat = threat | THREAT_AIR;
+			break;
 
 		/*
 		**	Dragon missile equiped soldiers are also assumed to carry a Stinger missile. As such,

@@ -3,6 +3,7 @@
 **	Copyright 2025 Electronic Arts Inc.
 **
 **	This program is free software: you can redistribute it and/or modify
+		static void *Load_VTable(void) {return VTable;}
 **	it under the terms of the GNU General Public License as published by
 **	the Free Software Foundation, either version 3 of the License, or
 **	(at your option) any later version.
@@ -90,6 +91,7 @@ class AnimClass : public ObjectClass, private StageClass {
 		**	Dee-buggin' support.
 		*/
 		int Validate(void) const;
+		static void *Load_VTable(void) {return VTable;}
 
 		/*
 		**	If this animation is attached to an object, then this points to that object. An

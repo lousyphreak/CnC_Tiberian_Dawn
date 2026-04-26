@@ -2837,7 +2837,7 @@ void UnitClass::Init(void)
 	Units.Free_All();
 
 	ptr = new UnitClass();
-	VTable = ((void **)ptr)[0];
+	VTable = Get_VTable(ptr, sizeof(AbstractClass));
 	delete ptr;
 }
 

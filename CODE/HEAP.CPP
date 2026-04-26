@@ -55,6 +55,95 @@
 #include	<stdio.h>
 #include	<stddef.h>
 #include	<string.h>
+#include <new>
+
+namespace {
+
+template <typename T>
+void Prime_VTable_For_Load(T *)
+{
+}
+
+template <typename T>
+bool Load_Slot_Object(T *ptr, FileClass &file)
+{
+	Prime_VTable_For_Load(ptr);
+	return(ptr->T::Load(file));
+}
+
+template <>
+bool Load_Slot_Object(TeamTypeClass *ptr, FileClass &file)
+{
+	return(Read_Object(ptr, sizeof(AbstractTypeClass), sizeof(*ptr), file, TeamTypeClass::Load_VTable()));
+}
+
+template <>
+bool Load_Slot_Object(TeamClass *ptr, FileClass &file)
+{
+	return(Read_Object(ptr, sizeof(AbstractClass), sizeof(*ptr), file, TeamClass::Load_VTable()));
+}
+
+template <>
+bool Load_Slot_Object(AnimClass *ptr, FileClass &file)
+{
+	return(Read_Object(ptr, sizeof(AbstractClass), sizeof(*ptr), file, AnimClass::Load_VTable()));
+}
+
+template <>
+bool Load_Slot_Object(AircraftClass *ptr, FileClass &file)
+{
+	return(Read_Object(ptr, sizeof(AbstractClass), sizeof(*ptr), file, AircraftClass::Load_VTable()));
+}
+
+template <>
+bool Load_Slot_Object(BuildingClass *ptr, FileClass &file)
+{
+	return(Read_Object(ptr, sizeof(AbstractClass), sizeof(*ptr), file, BuildingClass::Load_VTable()));
+}
+
+template <>
+bool Load_Slot_Object(BulletClass *ptr, FileClass &file)
+{
+	return(Read_Object(ptr, sizeof(AbstractClass), sizeof(*ptr), file, BulletClass::Load_VTable()));
+}
+
+template <>
+bool Load_Slot_Object(InfantryClass *ptr, FileClass &file)
+{
+	return(Read_Object(ptr, sizeof(AbstractClass), sizeof(*ptr), file, InfantryClass::Load_VTable()));
+}
+
+template <>
+bool Load_Slot_Object(OverlayClass *ptr, FileClass &file)
+{
+	return(Read_Object(ptr, sizeof(AbstractClass), sizeof(*ptr), file, OverlayClass::Load_VTable()));
+}
+
+template <>
+bool Load_Slot_Object(SmudgeClass *ptr, FileClass &file)
+{
+	return(Read_Object(ptr, sizeof(AbstractClass), sizeof(*ptr), file, SmudgeClass::Load_VTable()));
+}
+
+template <>
+bool Load_Slot_Object(TemplateClass *ptr, FileClass &file)
+{
+	return(Read_Object(ptr, sizeof(AbstractClass), sizeof(*ptr), file, TemplateClass::Load_VTable()));
+}
+
+template <>
+bool Load_Slot_Object(TerrainClass *ptr, FileClass &file)
+{
+	return(Read_Object(ptr, sizeof(AbstractClass), sizeof(*ptr), file, TerrainClass::Load_VTable()));
+}
+
+template <>
+bool Load_Slot_Object(UnitClass *ptr, FileClass &file)
+{
+	return(Read_Object(ptr, sizeof(AbstractClass), sizeof(*ptr), file, UnitClass::Load_VTable()));
+}
+
+}
 
 
 /*********************************************************************************************** 
@@ -431,7 +520,7 @@ int TFixedIHeapClass<T>::Save(FileClass &file)
 		/*
 		** Save the object itself
 		*/
-		if (!Ptr(i)->Save(file)) {
+		if (!Ptr(i)->T::Save(file)) {
 			return(false);
 		}
 	}
@@ -466,12 +555,22 @@ int TFixedIHeapClass<T>::Load(FileClass &file)
 	if (file.Read(&a_count, sizeof(a_count)) != sizeof(a_count)) {
 		return(false);
 	}
+	if (a_count < 0) {
+		return(false);
+	}
 
 	/*
 	** Error if more objects than we can hold
 	*/
 	if (a_count > TotalCount) {
 		return(false);
+	}
+
+	/*
+	** Ensure this heap starts from a clean active set before loading.
+	*/
+	if (ActiveCount || ActivePointers.Count()) {
+		Free_All();
 	}
 
 	/*
@@ -482,6 +581,12 @@ int TFixedIHeapClass<T>::Load(FileClass &file)
 		** Read the object's array index
 		*/
 		if (file.Read (&idx, sizeof(idx)) != sizeof(idx)) {
+			return(false);
+		}
+		if (idx < 0 || idx >= TotalCount) {
+			return(false);
+		}
+		if (FreeFlag[idx]) {
 			return(false);
 		}
 
@@ -496,7 +601,7 @@ int TFixedIHeapClass<T>::Load(FileClass &file)
 		/*
 		** Load the object
 		*/
-		if (!ptr->Load(file)) {
+		if (!Load_Slot_Object(ptr, file)) {
 			return(false);
 		}
 	}
@@ -523,7 +628,7 @@ void TFixedIHeapClass<T>::Code_Pointers(void)
 	int i;
 
 	for (i = 0; i < ActiveCount; i++) {
-		Ptr(i)->Code_Pointers();
+		Ptr(i)->T::Code_Pointers();
 	}
 }
 
@@ -546,7 +651,7 @@ void TFixedIHeapClass<T>::Decode_Pointers(void)
 	int i;
 
 	for (i = 0; i < ActiveCount; i++) {
-		Ptr(i)->Decode_Pointers();
+		Ptr(i)->T::Decode_Pointers();
 	}
 }
 

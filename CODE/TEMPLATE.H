@@ -103,6 +103,7 @@ class TemplateClass : public ObjectClass
 		**	Dee-buggin' support.
 		*/
 		int Validate(void) const;
+		static void *Load_VTable(void) {return VTable;}
 
 	private:
 
