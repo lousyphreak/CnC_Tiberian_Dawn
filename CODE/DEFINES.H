@@ -866,6 +866,18 @@ typedef enum StructType {
 
 inline StructType operator++(StructType &, int);
 
+/*
+** Convert a structure type to its prerequisite scan bit safely.
+** Only prerequisite-capable structures (through STRUCT_MISSION)
+** participate in the 32-bit house scan masks.
+*/
+inline constexpr uint32_t Structure_Scan_Bit(StructType type)
+{
+	return (type >= STRUCT_FIRST && type <= STRUCT_MISSION)
+		? (uint32_t(1) << static_cast<int>(type))
+		: 0U;
+}
+
 #define	STRUCTF_NONE				0U
 #define	STRUCTF_ADVANCED_POWER	(1U << STRUCT_ADVANCED_POWER)
 #define	STRUCTF_REPAIR				(1U << STRUCT_REPAIR)

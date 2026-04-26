@@ -290,7 +290,10 @@ int Read_Game_Options(char *name)
 	MPlayerTiberium = WWGetPrivateProfileInt("Options", "Tiberium", 0, buffer);
 	MPlayerGoodies = WWGetPrivateProfileInt("Options", "Crates", 0, buffer);
 	MPlayerGhosts = WWGetPrivateProfileInt("Options", "AI", 0, buffer);
-	BuildLevel = WWGetPrivateProfileInt("Options", "BuildLevel", 0, buffer);
+	BuildLevel = WWGetPrivateProfileInt("Options", "BuildLevel", BuildLevel, buffer);
+	if (BuildLevel < 1) {
+		BuildLevel = 1;
+	}
 	MPlayerUnitCount = WWGetPrivateProfileInt("Options", "UnitCount", 0, buffer);
 	Seed = WWGetPrivateProfileInt("Options", "Seed", 0, buffer);
 	Special.IsCaptureTheFlag = WWGetPrivateProfileInt("Options", "CaptureTheFlag", 0, buffer);

@@ -235,9 +235,21 @@ void LogicClass::AI(void)
 	}
 	for (index = 0; index < Buildings.Count(); index++) {
 		BuildingClass const * building = Buildings.Ptr(index);
+		const uint32_t structure_bit = Structure_Scan_Bit(building->Class->Type);
+		if (structure_bit == 0) continue;
 		if (building->IsLocked && (GameToPlay != GAME_NORMAL || !building->House->IsHuman || building->IsDiscoveredByPlayer)) {
-			building->House->NewBScan |= (1U << building->Class->Type);
-			if (!building->IsInLimbo) building->House->NewActiveBScan |= (1U << building->Class->Type);
+			building->House->NewBScan |= structure_bit;
+			if (!building->IsInLimbo) building->House->NewActiveBScan |= structure_bit;
+		} else {
+			/*
+			**	Local-player owned buildings must still contribute to prerequisite
+			**	masks even if discovery flags are transient during deploy/build
+			**	transitions in the SDL runtime.
+			*/
+			if (building->House == PlayerPtr && !building->IsInLimbo) {
+				building->House->NewBScan |= structure_bit;
+				building->House->NewActiveBScan |= structure_bit;
+			}
 		}
 	}
 

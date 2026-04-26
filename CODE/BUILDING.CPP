@@ -1318,13 +1318,14 @@ bool BuildingClass::Unlimbo(COORDINATE coord, DirType dir)
 	**	Normal building unlimbo process.
 	*/
 	if (TechnoClass::Unlimbo(coord, dir)) {
+		const uint32_t structure_bit = Structure_Scan_Bit(Class->Type);
 
 		/*
 		**	Ensure that the owning house knows about the
 		**	new object.
 		*/
-		House->BScan |= (1U << Class->Type);
-		House->ActiveBScan |= (1U << Class->Type);
+		House->BScan |= structure_bit;
+		House->ActiveBScan |= structure_bit;
 
 		/*
 		**	Update the total factory type, assuming this building has a factory.
@@ -3966,8 +3967,6 @@ int BuildingClass::Mission_Attack(void)
 
 			case FIRE_REARM:
 			case FIRE_BUSY:
-			case FIRE_MOVING:
-			case FIRE_ROTATING:
 				return(1);
 
 			case FIRE_CLOAKED:
