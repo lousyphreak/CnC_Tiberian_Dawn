@@ -39,6 +39,24 @@
 
 #ifdef NEWMENU
 
+namespace
+{
+struct BonusMissionEntry {
+	int Scenario;
+	HousesType Side;
+	int Text;
+};
+
+void Build_Bonus_Scenario_Name(char* buffer, size_t buffer_size, int scenario)
+{
+	if (buffer == NULL || buffer_size == 0) {
+		return;
+	}
+
+	std::snprintf(buffer, buffer_size, "SCM%02dEA", scenario);
+}
+}
+
 bool Expansion_Present(void)
 {
 	CCFileClass file("EXPAND.DAT");
@@ -279,6 +297,14 @@ bool Expansion_Dialog(void)
  *=============================================================================================*/
 bool Bonus_Dialog(void)
 {
+	static BonusMissionEntry const BonusMissions[] = {
+		{60, HOUSE_GOOD, TXT_BONUS_MISSION_1},
+		{61, HOUSE_GOOD, TXT_BONUS_MISSION_2},
+		{62, HOUSE_GOOD, TXT_BONUS_MISSION_3},
+		{60, HOUSE_BAD,  TXT_BONUS_MISSION_4},
+		{61, HOUSE_BAD,  TXT_BONUS_MISSION_5},
+	};
+
 	int factor			= (SeenBuff.Get_Width() == 320) ? 1 : 2;
 
 	int	option_width 	= 236 * factor;
@@ -309,50 +335,28 @@ bool Bonus_Dialog(void)
 
 
 	/*
-	**	Add in all the expansion scenarios.
+	**	Gateway bonus missions are authored as SCM multiplayer-format maps.
+	**	Expose the intended five menu entries explicitly, with side selection
+	**	separate from the underlying scenario root.
 	*/
-	int gdi_scen_names[3]={
-		TXT_BONUS_MISSION_1,
-		TXT_BONUS_MISSION_2,
-		TXT_BONUS_MISSION_3
-	};
-
-	int nod_scen_names[2]={
-		TXT_BONUS_MISSION_4,
-		TXT_BONUS_MISSION_5
-	};
-
-
-	for (int index = 60; index < 63; index++) {
+	for (unsigned index = 0; index < (sizeof(BonusMissions) / sizeof(BonusMissions[0])); ++index) {
 		char buffer[128];
+		char scenario_name[32];
 		CCFileClass file;
 
-		Set_Scenario_Name(buffer, index, SCEN_PLAYER_GDI, SCEN_DIR_EAST, SCEN_VAR_A);
-		strcat(buffer, ".INI");
+		Build_Bonus_Scenario_Name(scenario_name, sizeof(scenario_name), BonusMissions[index].Scenario);
+		std::snprintf(buffer, sizeof(buffer), "%s.INI", scenario_name);
 		file.Set_Name(buffer);
 		if (file.Is_Available()) {
-			memcpy (buffer, Text_String (gdi_scen_names[index-60]), 1+strlen(Text_String (gdi_scen_names[index-60])));
-			char * data = new char [strlen(buffer)+1+sizeof(int)+25];
-			*((int*)&data[0]) = index;
-			strcpy(&data[sizeof(int)], "GDI: ");
-			strcat(&data[sizeof(int)], buffer);
-			list.Add_Item(data);
-		}
-	}
+			char const* mission_name = Text_String(BonusMissions[index].Text);
+			if (mission_name == NULL) {
+				mission_name = "Bonus Mission";
+			}
 
-	for (int index = 60; index < 62; index++) {
-		char buffer[128];
-		CCFileClass file;
-
-		Set_Scenario_Name(buffer, index, SCEN_PLAYER_NOD, SCEN_DIR_EAST, SCEN_VAR_A);
-		strcat(buffer, ".INI");
-		file.Set_Name(buffer);
-		if (file.Is_Available()) {
-			memcpy (buffer, Text_String (nod_scen_names[index-60]), 1+strlen(Text_String (nod_scen_names[index-60])));
-			char * data = new char [strlen(buffer)+1+sizeof(int)+25];
-			*((int*)&data[0]) = index;
-			strcpy(&data[sizeof(int)], "NOD: ");
-			strcat(&data[sizeof(int)], buffer);
+			char * data = new char [strlen(mission_name)+1+sizeof(int)+25];
+			*((int*)&data[0]) = BonusMissions[index].Scenario;
+			strcpy(&data[sizeof(int)], BonusMissions[index].Side == HOUSE_GOOD ? "GDI: " : "NOD: ");
+			strcat(&data[sizeof(int)], mission_name);
 			list.Add_Item(data);
 		}
 	}
@@ -406,13 +410,13 @@ bool Bonus_Dialog(void)
 					break;
 				}
 
+				ScenPlayer = SCEN_PLAYER_MULTIPLAYER;
 				if (current_item[sizeof(int)] == 'G') {
-					ScenPlayer = SCEN_PLAYER_GDI;
+					Whom = HOUSE_GOOD;
 				} else {
-					ScenPlayer = SCEN_PLAYER_NOD;
+					Whom = HOUSE_BAD;
 				}
 				ScenDir = SCEN_DIR_EAST;
-				Whom = HOUSE_GOOD;
 				Scenario = *(int*)current_item;
 				process = false;
 				okval = true;
@@ -423,7 +427,7 @@ bool Bonus_Dialog(void)
 			case 201|KN_BUTTON:
 			{
 				char const* current_item = list.Current_Item();
-				ScenPlayer = SCEN_PLAYER_GDI;
+				ScenPlayer = SCEN_PLAYER_MULTIPLAYER;
 				ScenDir = SCEN_DIR_EAST;
 				Whom = HOUSE_GOOD;
 				if (current_item != NULL) {

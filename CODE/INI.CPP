@@ -64,6 +64,62 @@ static bool Is_Bonus_Mission_Scenario(int scenario)
 	return scenario >= 60 && scenario <= 62;
 }
 
+static void Configure_Bonus_Mission_Scenario(void)
+{
+	static PlayerColorType const bonus_colors[4] = {
+		REMAP_YELLOW,
+		REMAP_RED,
+		REMAP_AQUA,
+		REMAP_ORANGE,
+	};
+
+	HousesType const player_side = (Whom == HOUSE_BAD) ? HOUSE_BAD : HOUSE_GOOD;
+	HousesType const enemy_side = (player_side == HOUSE_BAD) ? HOUSE_GOOD : HOUSE_BAD;
+
+	MultiplayerMaxPlayers = 4;
+	MultiplayerPlayerCount = 1;
+	MultiplayerBasesEnabled = 0;
+	MultiplayerCredits = 0;
+	MultiplayerGoodiesEnabled = 0;
+	MultiplayerGhostsEnabled = 0;
+	Special.IsCaptureTheFlag = false;
+
+	for (int index = 0; index < MultiplayerMaxPlayers; ++index) {
+		HouseClass * house = HouseClass::As_Pointer((HousesType)(HOUSE_MULTI1 + index));
+		if (house == NULL) {
+			continue;
+		}
+
+		house->Init_Data(bonus_colors[index], index == 0 ? player_side : enemy_side, MultiplayerCredits);
+		house->IsHuman = (index == 0);
+		house->IsDefeated = false;
+		if (!house->IsHuman) {
+			char cpu_name[] = {'C', 'P', 'U', static_cast<char>('1' + index), '\0'};
+			std::snprintf((char*)house->Name, MPLAYER_NAME_MAX, "%s", cpu_name);
+		}
+	}
+
+	for (int index = 1; index < MultiplayerMaxPlayers; ++index) {
+		HouseClass * house = HouseClass::As_Pointer((HousesType)(HOUSE_MULTI1 + index));
+		if (house == NULL) {
+			continue;
+		}
+
+		for (int ally = 1; ally < MultiplayerMaxPlayers; ++ally) {
+			if (ally == index) {
+				continue;
+			}
+			house->Make_Ally((HousesType)(HOUSE_MULTI1 + ally));
+		}
+	}
+
+	PlayerPtr = HouseClass::As_Pointer(HOUSE_MULTI1);
+	if (PlayerPtr != NULL) {
+		PlayerPtr->IsHuman = true;
+		std::snprintf((char*)PlayerPtr->Name, MPLAYER_NAME_MAX, "%s", player_side == HOUSE_BAD ? "Nod" : "GDI");
+	}
+}
+
 
 /***********************************************************************************************
  * Set_Scenario_Name -- Creates the INI scenario name string.                                  *
@@ -347,6 +403,10 @@ bool Read_Scenario_Ini(char *root, bool fresh)
 
 		if (Special.IsJurassic) {
 			PlayerPtr->ActLike = Whom;
+		}
+
+		if (Is_Bonus_Mission_Scenario(Scenario) && ScenPlayer == SCEN_PLAYER_MULTIPLAYER) {
+			Configure_Bonus_Mission_Scenario();
 		}
 	} else {
 		Assign_Houses();
