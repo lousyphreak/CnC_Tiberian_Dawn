@@ -91,6 +91,7 @@ class ScoreAnimClass {
 		CountDownTimerClass Timer;
 		void const * DataPtr;
 		virtual void Update(void) {} ;
+		virtual int Animation_Stage(void) const { return -1; };
 		virtual ~ScoreAnimClass(void) {} ;
 };
 
@@ -103,6 +104,7 @@ class ScoreCredsClass : public ScoreAnimClass {
 		void const * Clock1;
 
 		virtual void Update(void);
+		virtual int Animation_Stage(void) const { return Stage; };
 		ScoreCredsClass(int xpos, int ypos, void const * data, int max, int timer);
 		virtual ~ScoreCredsClass(void) {};
 };
@@ -113,6 +115,7 @@ class ScoreTimeClass : public ScoreAnimClass {
 		int MaxStage;
 		int TimerReset;
 		virtual void Update(void);
+		virtual int Animation_Stage(void) const { return Stage; };
 		ScoreTimeClass(int xpos, int ypos, void const * data, int max, int timer);
 		virtual ~ScoreTimeClass(void) {};
 };

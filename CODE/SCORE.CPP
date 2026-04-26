@@ -479,16 +479,17 @@ void ScoreScaleClass::Update(void)
 
 int Alloc_Object(ScoreAnimClass *obj)
 {
-	int i,ret;
+	int i;
 
-	for (i = ret = 0; i < MAXSCOREOBJS; i++) {
+	for (i = 0; i < MAXSCOREOBJS; i++) {
 		if (!ScoreObjs[i]) {
 			ScoreObjs[i] = obj;
-			ret = i;
-			break;
+			return(i);
 		}
 	}
-	return(ret);
+
+	delete obj;
+	return(-1);
 }
 
 
@@ -1363,6 +1364,9 @@ void ScoreClass::Show_Credits(int house, char const pal[])
 	Call_Back_Delay(15);
 
 	credobj = Alloc_Object(new ScoreCredsClass(_credsx[house], _credsy[house], credshape, 32, 2));
+	if (credobj < 0) {
+		return;
+	}
 	min = PlayerPtr->Available_Money() / 100;
 
 	/*
@@ -1391,11 +1395,13 @@ void ScoreClass::Show_Credits(int house, char const pal[])
 	} while (i < PlayerPtr->Available_Money()) ;
 
 	// Make sure the credits object doesn't freeze on the white stage
-	while (((ScoreTimeClass *)ScoreObjs[credobj])->Stage >= 20 && !ControlQ) {
+	while (ScoreObjs[credobj] && ScoreObjs[credobj]->Animation_Stage() >= 20 && !ControlQ) {
 		Call_Back_Delay(1);
 	}
-	delete ScoreObjs[credobj];
-	ScoreObjs[credobj] = 0;
+	if (ScoreObjs[credobj]) {
+		delete ScoreObjs[credobj];
+		ScoreObjs[credobj] = 0;
+	}
 }
 
 
@@ -1556,7 +1562,9 @@ if ( (ascii >= '!' && ascii <= KA_TILDA) || ascii == ' ') {
 					int objindex;
 					Play_Sample(keystrok, 255, Options.Normalize_Sound(255));
 					objindex = Alloc_Object(new ScoreScaleClass(str+index,xpos+(index*6), ypos, pal));
-					while (ScoreObjs[objindex]) Call_Back_Delay(1);
+					if (objindex >= 0) {
+						while (ScoreObjs[objindex]) Call_Back_Delay(1);
+					}
 
 					if (index < (MAX_FAMENAME_LENGTH-2) ) index++;
 				}
