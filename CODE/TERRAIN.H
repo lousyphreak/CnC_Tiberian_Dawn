@@ -55,7 +55,7 @@ class TerrainClass : public ObjectClass, public StageClass
   		/*
 		**	Constructor for terrain object class.
 		*/
-		static void * operator new(size_t size);
+		static void * operator new(size_t size) noexcept;
 		static void operator delete(void *ptr);
 		TerrainClass(void);
 		TerrainClass(TerrainType id, CELL cell);

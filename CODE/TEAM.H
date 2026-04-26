@@ -168,7 +168,7 @@ class TeamClass : public AbstractClass
 		virtual ~TeamClass(void);
 		virtual RTTIType What_Am_I(void) const {return RTTI_TEAM;};
 		static void operator delete(void *ptr);
-		static void * operator new(size_t size);
+		static void * operator new(size_t size) noexcept;
 		static void Init(void);
 		static void Suspend_Teams(int priority);
 

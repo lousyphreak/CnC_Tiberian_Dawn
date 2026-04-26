@@ -490,6 +490,28 @@ void MapClass::Pick_Up(CELL cell, ObjectClass * object)
 
 
 /***********************************************************************************************
+ * MapClass::Detach -- Removes stale references to an object from cached map cell state.      *
+ *                                                                                             *
+ * INPUT:   object   -- Object to detach from all cells.                                       *
+ *                                                                                             *
+ * OUTPUT:  none                                                                               *
+ *                                                                                             *
+ * WARNINGS:   none                                                                            *
+ *                                                                                             *
+ * HISTORY:                                                                                    *
+ *   04/26/2026 GH : Added runtime cell-cache cleanup for the SDL3 port.                      *
+ *=============================================================================================*/
+void MapClass::Detach(ObjectClass * object)
+{
+	if (!object) return;
+
+	for (CELL cell = 0; cell < MAP_CELL_TOTAL; ++cell) {
+		(*this)[cell].Detach_Object(object);
+	}
+}
+
+
+/***********************************************************************************************
  * MapClass::Overlap_Down -- computes & marks object's overlap cells                           *
  *                                                                                             *
  * This routine is just like Place_Down, but it doesn't mark the cell's Occupier.              *
@@ -1002,16 +1024,6 @@ int MapClass::Validate(void)
 	LandType land;
 	int i;
 
-BlubCell = &((*this)[797]);
-
-if (BlubCell->Overlapper[1]) {
-	obj = BlubCell->Overlapper[1];
-	if (obj) {
-		if (obj->IsInLimbo)
-		obj = obj;
-	}
-}
-
 	/*------------------------------------------------------------------------
 	Check every cell on the map, even those that aren't displayed,
 	in the hopes of detecting a memory trasher.
@@ -1082,7 +1094,7 @@ if (BlubCell->Overlapper[1]) {
 		Validate Overlappers
 		.....................................................................*/
 		for (i = 0; i < 3; i++) {
-			obj = (*this)[cell].Overlapper[i];
+			obj = (*this)[cell].Fetch_Overlapper(i);
 			if (obj) {
 				if (
 					((reinterpret_cast<uintptr_t>(obj) & ~static_cast<uintptr_t>(0x00FFFFFFu)) != 0) ||

@@ -375,7 +375,7 @@ class HouseClass {
 		/*---------------------------------------------------------------------
 		**	Constructors, Destructors, and overloaded operators.
 		*/
-		static void * operator new(size_t size);
+		static void * operator new(size_t size) noexcept;
 		static void operator delete(void *ptr);
 		HouseClass(void) : Class(0) {};
 		HouseClass(HousesType house);

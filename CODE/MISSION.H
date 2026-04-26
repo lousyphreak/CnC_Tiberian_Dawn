@@ -39,7 +39,7 @@
 #define MISSION_H
 
 #include "OBJECT.H"
-#include	"MONOC.H"
+#include	"MONO.H"
 
 /****************************************************************************
 **	This handles order assignment and tracking. The order is used to guide

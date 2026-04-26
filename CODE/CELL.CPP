@@ -79,6 +79,40 @@
 
 #define	FIXUP		0
 
+namespace {
+	template<class T>
+	bool Pointer_Belongs_To_Heap(TFixedIHeapClass<T>& heap, ObjectClass const * object)
+	{
+		int const length = heap.Length();
+		if (!object || length <= 0) {
+			return(false);
+		}
+
+		uintptr_t const base = reinterpret_cast<uintptr_t>(heap.Raw_Ptr(0));
+		uintptr_t const address = reinterpret_cast<uintptr_t>(object);
+		uintptr_t const span = static_cast<uintptr_t>(sizeof(T)) * static_cast<uintptr_t>(length);
+
+		if (address < base || address >= base + span) {
+			return(false);
+		}
+
+		return(((address - base) % sizeof(T)) == 0);
+	}
+
+	bool Is_Map_Object_Pointer(ObjectClass const * object)
+	{
+		return(
+			Pointer_Belongs_To_Heap(Infantry, object) ||
+			Pointer_Belongs_To_Heap(Units, object) ||
+			Pointer_Belongs_To_Heap(Buildings, object) ||
+			Pointer_Belongs_To_Heap(Aircraft, object) ||
+			Pointer_Belongs_To_Heap(Terrains, object) ||
+			Pointer_Belongs_To_Heap(Bullets, object) ||
+			Pointer_Belongs_To_Heap(Anims, object)
+		);
+	}
+}
+
 
 /***********************************************************************************************
  * CellClass::Validate -- validates cell's number                                              *
@@ -396,8 +430,9 @@ void CellClass::Redraw_Objects(bool forced)
 		**	Flag any overlapping object in this cell to be redrawn.
 		*/
 		for (size_t index = 0; index < sizeof(Overlapper) / sizeof(Overlapper[0]); ++index) {
-			if (Overlapper[index]) {
-				Overlapper[index]->Mark(MARK_CHANGE);
+			ObjectClass * optr = Fetch_Overlapper(static_cast<int>(index));
+			if (optr) {
+				optr->Mark(MARK_CHANGE);
 			}
 		}
 	}
@@ -686,8 +721,9 @@ void CellClass::Overlap_Down(ObjectClass * object)
 
 	if (!object) return;
 	for (size_t index = 0; index < sizeof(Overlapper) / sizeof(Overlapper[0]); ++index) {
-		if (Overlapper[index] == object) return;
-		if (!Overlapper[index]) ptr = &Overlapper[index];
+		ObjectClass * overlapper = Fetch_Overlapper(static_cast<int>(index));
+		if (overlapper == object) return;
+		if (!overlapper) ptr = &Overlapper[index];
 	}
 
 	/*
@@ -696,7 +732,14 @@ void CellClass::Overlap_Down(ObjectClass * object)
 	*/
 	if (!ptr && object->What_Am_I() == RTTI_BUILDING) {
 		for (int index = 0; index < static_cast<int>(sizeof(Overlapper) / sizeof(Overlapper[0])); index++) {
-			switch (Overlapper[index]->What_Am_I()) {
+			ObjectClass * overlapper = Fetch_Overlapper(index);
+			if (!overlapper) {
+				Overlapper[index] = object;
+				index = static_cast<int>(sizeof(Overlapper) / sizeof(Overlapper[0]));
+				break;
+			}
+
+			switch (overlapper->What_Am_I()) {
 				case RTTI_BUILDING:
 				case RTTI_TERRAIN:
 					break;
@@ -739,7 +782,7 @@ void CellClass::Overlap_Up(ObjectClass *object)
 {
 	Validate();
 	for (size_t index = 0; index < sizeof(Overlapper) / sizeof(Overlapper[0]); ++index) {
-		if (Overlapper[index] == object) {
+		if (Fetch_Overlapper(static_cast<int>(index)) == object) {
 			Overlapper[index] = 0;
 			break;
 		}
@@ -2155,12 +2198,163 @@ void CellClass::Shimmer(void)
  *=============================================================================================*/
 ObjectClass * CellClass::Cell_Occupier(void) const
 {
-	ObjectClass * ptr = OccupierPtr;
+	return(Fetch_Occupier());
+}
 
-	while (ptr && !ptr->IsActive) {
-		ptr = ptr->Next;
-		((ObjectClass *&)OccupierPtr) = 0;
+
+/***********************************************************************************************
+ * CellClass::Fetch_Occupier -- Fetches and sanitizes the occupier chain.                      *
+ *                                                                                             *
+ * INPUT:   none                                                                               *
+ *                                                                                             *
+ * OUTPUT:  Returns with the first valid occupier object.                                      *
+ *                                                                                             *
+ * WARNINGS:   none                                                                            *
+ *                                                                                             *
+ * HISTORY:                                                                                    *
+ *   04/26/2026 GH : Added stale-pointer sanitation for 64-bit SDL3 port.                     *
+ *=============================================================================================*/
+ObjectClass * CellClass::Fetch_Occupier(void) const
+{
+	CellClass * cell = const_cast<CellClass *>(this);
+	ObjectClass * prev = 0;
+	ObjectClass * ptr = cell->OccupierPtr;
+
+	while (ptr) {
+		if (!Is_Map_Object_Pointer(ptr)) {
+			if (prev) {
+				prev->Next = 0;
+			} else {
+				cell->OccupierPtr = 0;
+			}
+			break;
+		}
+
+		ObjectClass * next = ptr->Next;
+		if (!ptr->IsActive || ptr->IsInLimbo) {
+			if (prev) {
+				prev->Next = next;
+			} else {
+				cell->OccupierPtr = next;
+			}
+			ptr->Next = 0;
+			ptr = next;
+			continue;
+		}
+
+		prev = ptr;
+		ptr = next;
+	}
+
+	return(cell->OccupierPtr);
+}
+
+
+/***********************************************************************************************
+ * CellClass::Fetch_Overlapper -- Fetches and sanitizes an overlap pointer.                    *
+ *                                                                                             *
+ * INPUT:   index   -- Overlap slot to fetch.                                                  *
+ *                                                                                             *
+ * OUTPUT:  Returns with the valid overlap object or NULL.                                     *
+ *                                                                                             *
+ * WARNINGS:   none                                                                            *
+ *                                                                                             *
+ * HISTORY:                                                                                    *
+ *   04/26/2026 GH : Added stale-pointer sanitation for 64-bit SDL3 port.                     *
+ *=============================================================================================*/
+ObjectClass * CellClass::Fetch_Overlapper(int index) const
+{
+	if ((unsigned)index >= sizeof(Overlapper) / sizeof(Overlapper[0])) {
+		return(0);
+	}
+
+	CellClass * cell = const_cast<CellClass *>(this);
+	ObjectClass * ptr = cell->Overlapper[index];
+	if (!ptr) {
+		return(0);
+	}
+
+	if (!Is_Map_Object_Pointer(ptr) || !ptr->IsActive || ptr->IsInLimbo) {
+		cell->Overlapper[index] = 0;
+		return(0);
 	}
 
 	return(ptr);
+}
+
+
+/***********************************************************************************************
+ * CellClass::Detach_Object -- Removes an object from this cell's cached object pointers.      *
+ *                                                                                             *
+ * INPUT:   object   -- Object to unlink from occupier and overlap caches.                     *
+ *                                                                                             *
+ * OUTPUT:  bool; Was anything detached from this cell?                                        *
+ *                                                                                             *
+ * WARNINGS:   none                                                                            *
+ *                                                                                             *
+ * HISTORY:                                                                                    *
+ *   04/26/2026 GH : Added for runtime stale-cell cleanup in the SDL3 port.                   *
+ *=============================================================================================*/
+bool CellClass::Detach_Object(ObjectClass * object)
+{
+	if (!object) {
+		return(false);
+	}
+
+	bool changed = false;
+	bool occupier_changed = false;
+	ObjectClass * prev = 0;
+	ObjectClass * ptr = Fetch_Occupier();
+
+	while (ptr) {
+		ObjectClass * next = ptr->Next;
+		if (ptr == object) {
+			if (prev) {
+				prev->Next = next;
+			} else {
+				OccupierPtr = next;
+			}
+			ptr->Next = 0;
+			changed = true;
+			occupier_changed = true;
+			ptr = next;
+			continue;
+		}
+		prev = ptr;
+		ptr = next;
+	}
+
+	for (int index = 0; index < static_cast<int>(sizeof(Overlapper) / sizeof(Overlapper[0])); ++index) {
+		if (Fetch_Overlapper(index) == object) {
+			Overlapper[index] = 0;
+			changed = true;
+		}
+	}
+
+	if (occupier_changed) {
+		switch (object->What_Am_I()) {
+			case RTTI_BUILDING:
+				Flag.Occupy.Building = false;
+				break;
+
+			case RTTI_AIRCRAFT:
+			case RTTI_UNIT:
+				Flag.Occupy.Vehicle = false;
+				break;
+
+			case RTTI_TERRAIN:
+				Flag.Occupy.Monolith = false;
+				break;
+
+			default:
+				break;
+		}
+		Map.Radar_Pixel(Cell_Number());
+	}
+
+	if (changed) {
+		Redraw_Objects();
+	}
+
+	return(changed);
 }

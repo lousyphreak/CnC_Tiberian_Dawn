@@ -70,7 +70,7 @@ class BulletClass :	public ObjectClass,
 		/*---------------------------------------------------------------------
 		**	Constructors, Destructors, and overloaded operators.
 		*/
-		static void * operator new(size_t size);
+		static void * operator new(size_t size) noexcept;
 		static void operator delete(void *ptr);
 		BulletClass(void);
 		BulletClass(BulletType id);

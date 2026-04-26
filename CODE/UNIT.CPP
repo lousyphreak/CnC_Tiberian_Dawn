@@ -1028,7 +1028,7 @@ ResultType UnitClass::Take_Damage(int & damage, int distance, WarheadType warhea
  *   04/11/1994 JLB : Created.                                                                 *
  *   04/21/1994 JLB : Converted to operator new.                                               *
  *=============================================================================================*/
-void * UnitClass::operator new(size_t)
+void * UnitClass::operator new(size_t) noexcept
 {
 	return(Units.Allocate());
 }

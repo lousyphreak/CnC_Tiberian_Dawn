@@ -122,7 +122,7 @@ extern int32_t LParam;
 #include	"VECTOR.H"
 #include	"HEAP.H"
 #include	"CCFILE.H"
-#include	"MONOC.H"
+#include	"MONO.H"
 #include	"CONQUER.H"
 //#include	"debug.h"
 #include "SPECIAL.H"

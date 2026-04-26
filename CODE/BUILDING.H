@@ -162,7 +162,7 @@ class BuildingClass : public TechnoClass
 		/*---------------------------------------------------------------------
 		**	Constructors, Destructors, and overloaded operators.
 		*/
-		static void * operator new(size_t size);
+		static void * operator new(size_t size) noexcept;
 		static void operator delete(void *ptr);
 		BuildingClass(void) : Class(0) {};
 		BuildingClass(StructType type, HousesType house);

@@ -57,7 +57,7 @@
 #include "KEY.H"
 #include "SDLINPUT.H"
 
-#include	"MONOC.H"
+#include	"MONO.H"
 
 #include <ctype.h>
 #include <stdint.h>

@@ -411,53 +411,18 @@ void CCDebugString (char const *string)
 //}
 
 
-unsigned char	*VQPalette;
-int32_t			VQNumBytes;
-uint32_t		VQSlowpal;
-bool				VQPaletteChange = false;
-
-
-extern "C"{
-	void SetPalette(unsigned char *palette, int32_t numbytes, uint32_t slowpal);
-}
-
-
-
-void Flag_To_Set_Palette(unsigned char *palette, int32_t numbytes, uint32_t slowpal)
-{
-	VQPalette = palette;
-	VQNumBytes = numbytes;
-	VQSlowpal = slowpal;
-	VQPaletteChange = true;
-}
-
-
+/*
+ * Check_VQ_Palette_Set: formerly used a deferred-palette mechanism (Flag_To_Set_Palette /
+ * VQPaletteChange) to apply VQA palettes from the main loop. VQA playback now calls
+ * SetPalette(uint8_t*, int32_t, uint32_t) directly via WIN32LIB/PALETTE/PALETTE.CPP, so
+ * this hook is no longer needed. Kept as an empty stub because CONQUER.CPP's VQ_Call_Back
+ * still calls it each frame.
+ */
+bool VQPaletteChange = false;
 
 void Check_VQ_Palette_Set(void)
 {
-	if (VQPaletteChange){
-		SetPalette(VQPalette, VQNumBytes, VQSlowpal);
-		VQPaletteChange = false;
-	}
 }
-
-
-
-
-
-void SetPalette(unsigned char *palette, int32_t, uint32_t)
-{
-	for (int i=0 ; i<256*3 ; i++){
-		*(palette+i)&=63;
-	}
-	Increase_Palette_Luminance(palette , 15 , 15 , 15 ,63);
-
-	if (PalettesRead){
-		memcpy (&PaletteInterpolationTable[0][0] , InterpolatedPalettes[PaletteCounter++] , 65536);
-	}
-	Set_Palette(palette);
-}
-
 
 
 /***********************************************************************************************

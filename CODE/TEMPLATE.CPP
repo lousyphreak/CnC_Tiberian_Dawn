@@ -352,7 +352,7 @@ bool TemplateClass::Mark(MarkType mark)
  * HISTORY:                                                                                    *
  *   05/17/1994 JLB : Created.                                                                 *
  *=============================================================================================*/
-void * TemplateClass::operator new(size_t )
+void * TemplateClass::operator new(size_t ) noexcept
 {
 	return(Templates.Allocate());
 }

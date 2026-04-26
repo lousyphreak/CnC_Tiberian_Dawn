@@ -250,7 +250,7 @@ void HouseClass::Debug_Dump(MonoClass *) const
  * HISTORY:                                                                                    *
  *   05/22/1994 JLB : Created.                                                                 *
  *=============================================================================================*/
-void * HouseClass::operator new(size_t)
+void * HouseClass::operator new(size_t) noexcept
 {
 	return(Houses.Allocate());
 }
@@ -305,6 +305,13 @@ HouseClass::HouseClass(HousesType house) :
 	}
 	WhoLastHurtMe = house;			// init this to myself
 
+	/*
+	**	HouseClass is not derived from AbstractClass, so its IsActive bitfield
+	**	must be explicitly initialized here. Leaving it uninitialized causes
+	**	nondeterministic skipping of HouseClass::AI(), which in turn suppresses
+	**	house triggers/reinforcements and scan-mask propagation.
+	*/
+	IsActive = true;
 	IsVisionary = false;
 	IsFreeHarvester = false;
 	Blockage = 0;

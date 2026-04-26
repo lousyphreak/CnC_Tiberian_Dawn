@@ -201,6 +201,8 @@ class CellClass
 		int  Clear_Icon(void) const;
 		bool  Goodie_Check(FootClass * object);
 		ObjectClass *  Fetch_Occupier(void) const;
+		ObjectClass *  Fetch_Overlapper(int index) const;
+		bool  Detach_Object(ObjectClass * object);
 
 		/*
 		**	Object placement and removal flag operations.

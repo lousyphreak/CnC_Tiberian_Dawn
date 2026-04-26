@@ -96,6 +96,10 @@ list(FILTER TD_WIN32LIB_SOURCES EXCLUDE REGEX "/(TEST|TST|REDBOOK)\\.CPP$")
 list(FILTER TD_WIN32LIB_SOURCES EXCLUDE REGEX "/(PROFILE|WPROFILE)\\.CPP$")
 list(FILTER TD_WIN32LIB_SOURCES EXCLUDE REGEX "/KEYBOARD/KEYBOARD\\.CPP$")
 list(FILTER TD_WIN32LIB_SOURCES EXCLUDE REGEX "/RAWFILE/.*\\.CPP$")
+# LOADPCX.CPP defines Read_PCX_File using raw POSIX I/O; CODE/WINSTUB.CPP provides
+# the same symbol using CCFileClass (Mix archive access), which is the correct
+# implementation for this port. Excluding LOADPCX.CPP eliminates the ODR violation.
+list(FILTER TD_WIN32LIB_SOURCES EXCLUDE REGEX "/IFF/LOADPCX\\.CPP$")
 
 add_library(sdl3_compat STATIC
   SDL3_COMPAT/wrappers/win32_compat.cpp

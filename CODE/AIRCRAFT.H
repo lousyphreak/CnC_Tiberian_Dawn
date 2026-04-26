@@ -52,7 +52,7 @@ class AircraftClass : public FootClass, public FlyClass
 		AircraftTypeClass const * const Class;
 
 		//-----------------------------------------------------------------------------
-		void * operator new(size_t);
+		void * operator new(size_t) noexcept;
 		void operator delete(void *);
 		operator AircraftType(void) const {return Class->Type;};
 		AircraftClass(void) : Class(0) {};
