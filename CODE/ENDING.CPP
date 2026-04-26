@@ -119,10 +119,12 @@ void Nod_Ending(void)
 #ifdef NOT_FOR_WIN95
 	char *satpic = new char[64000];
 #endif	//NOT_FOR_WIN95
+	int original_sound_volume;
 	int oldfontxspacing = FontXSpacing;
 	void const *oldfont;
 
 	Score.Presentation();
+	original_sound_volume = Set_Sound_Vol(MAX((int)Options.Volume, (int)Options.ScoreVolume));
 
 	oldfont = Set_Font(ScoreFontPtr);
 
@@ -256,6 +258,7 @@ void Nod_Ending(void)
 
 	Play_Movie("CC2TEASE");
 
+	Set_Sound_Vol(original_sound_volume);
 	delete [] localpal;
 	delete TextPrintBuffer;
 	BlitList.Clear();

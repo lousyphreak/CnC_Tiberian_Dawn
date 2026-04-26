@@ -554,6 +554,16 @@ bool Init_Game(int , char *[])
 	Anim_Init();
 
 	/*
+	**	Read game options before intro playback so movie/cinematic audio uses
+	**	the player's saved slider settings rather than constructor defaults.
+	**	(Initialize working palettes first because Options.Load_Settings()
+	**	may apply brightness/color adjustments through them.)
+	*/
+	memcpy(GamePalette, Palette, 768);
+	memcpy(OriginalPalette, Palette, 768);
+	Options.Load_Settings();
+
+	/*
 	**	Play the introduction movies.
 	*/
 	CCDebugString ("C&C95 - About to play the intro movie\n");

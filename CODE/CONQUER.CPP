@@ -1752,6 +1752,7 @@ void Play_Movie(char const * name, ThemeType theme, bool clrscrn)
 		} else {
 			AnimControl.OptionFlags &= ~VQAOPTF_AUDIO;
 		}
+		AnimControl.Volume = Bound(MAX((int)Options.Volume, (int)Options.ScoreVolume), 0, 255);
 
 
 		if ((vqa = VQA_Alloc()) != NULL) {

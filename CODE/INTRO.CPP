@@ -50,6 +50,7 @@ VQAHandle *Open_Movie(char const *name)
 	} else {
 		AnimControl.OptionFlags &= ~VQAOPTF_AUDIO;
 	}
+	AnimControl.Volume = Bound(MAX((int)Options.Volume, (int)Options.ScoreVolume), 0, 255);
 
 	VQAHandle * vqa = VQA_Alloc();
 	if (vqa) {
@@ -91,6 +92,7 @@ void Choose_Side(void)
 	void const *staticaud, *oldfont;
 	void const *speechg, *speechn, *speech;
 	int statichandle, speechplaying = 0;
+	int original_sound_volume;
 	int oldfontxspacing = FontXSpacing;
 	int setpalette = 0;
 
@@ -105,6 +107,7 @@ void Choose_Side(void)
 	int frame = 0, endframe = 255, lettersdone = 0;
 
 	Hide_Mouse();
+	original_sound_volume = Set_Sound_Vol(MAX((int)Options.Volume, (int)Options.ScoreVolume));
 /* Change to the six-point font for Text_Print */
 	oldfont = Set_Font(ScoreFontPtr);
 
@@ -289,6 +292,7 @@ void Choose_Side(void)
 	delete[] static_cast<char const *>(staticaud);
 	delete[] static_cast<char const *>(speechg);
 	delete[] static_cast<char const *>(speechn);
+	Set_Sound_Vol(original_sound_volume);
 
 	Set_Font(oldfont);
 	FontXSpacing = oldfontxspacing;
