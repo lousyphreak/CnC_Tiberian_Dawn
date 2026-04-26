@@ -942,11 +942,6 @@ DynamicVectorClass <NodeNameType *> Players;
 
 char *DebugFname;	// for stoopid debugging purposes
 int DebugLine;		// for stoopid debugging purposes
-#ifdef DEMO
-int RequiredCD = -2;
-#else
-int RequiredCD = -1;
-#endif
 int MouseInstalled;
 
 /*
@@ -987,7 +982,6 @@ HANDLE hInstance;
 int AllDone;
 BOOL				InMovie = FALSE;	//Are we currently playing a VQ movie?
 TimerClass		TickCount(BT_SYSTEM);
-GetCDClass		CDList;
 bool				GameStatisticsPacketSent;
 bool				ConnectionLost;
 

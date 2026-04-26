@@ -40,57 +40,13 @@
 
 #include	"RAWFILE.H"
 
-class GetCDClass
-{
-	public:
-		GetCDClass(void) : CurrentDrive(0) {}
-
-		int Get_Number_Of_Drives(void) const
-		{
-			const unsigned drive_count = WWFS_GetDriveCount();
-			return drive_count > 0 ? (int)drive_count : 1;
-		}
-
-		int Get_First_CD_Drive(void)
-		{
-			CurrentDrive = (int)WWFS_GetCurrentDriveNumber();
-			if (CurrentDrive <= 0) {
-				CurrentDrive = 1;
-			}
-			return CurrentDrive;
-		}
-
-		int Get_Next_CD_Drive(void)
-		{
-			const unsigned drive_count = WWFS_GetDriveCount();
-			if (drive_count == 0) {
-				return Get_First_CD_Drive();
-			}
-
-			if (CurrentDrive <= 0) {
-				return Get_First_CD_Drive();
-			}
-
-			++CurrentDrive;
-			if ((unsigned)CurrentDrive > drive_count) {
-				CurrentDrive = 1;
-			}
-			return CurrentDrive;
-		}
-
-	private:
-		int CurrentDrive;
-};
-
 /*
 **	This class is derived from the raw file class. This class adds the functionality of searching
-**	across multiple directories or drives. It is designed for the typical case of a CD-ROM game
-**	were some data exists in the current directory (hard drive) and the rest exists on the CD-ROM.
-**	Searching for the file occurs by first examining the current directory. If the file does not
-**	exist there, then all the paths available are examined in turn until the file can be found.
-**	For opening files to write, only the current directory is examined. The directory search order
-**	is controlled by the path list as submitted to Set_Search_Drives(). The format of the path
-**	string is the same as the DOS path string.
+**	across multiple directories or drives. Searching for the file occurs by first examining the
+**	current directory. If the file does not exist there, then all the paths available are examined
+**	in turn until the file can be found. For opening files to write, only the current directory is
+**	examined. The directory search order is controlled by the path list as submitted to
+**	Set_Search_Drives(). The format of the path string is the same as the DOS path string.
 */
 class CDFileClass : public RawFileClass
 {
@@ -110,9 +66,6 @@ class CDFileClass : public RawFileClass
 		static void Add_Search_Drive(char *path);
 		static void Clear_Search_Drives(void);
 		static void Refresh_Search_Drives(void);
-		static void Set_CD_Drive(int drive);
-		static int  Get_CD_Drive(void) {return(CurrentCDDrive);};
-		static int  Get_Last_CD_Drive(void) {return(LastCDDrive);};
 
 	private:
 
@@ -140,15 +93,6 @@ class CDFileClass : public RawFileClass
 		*/
 		static char RawPath[512];
 
-		/*
-		** The drive letter of the current cd drive
-		*/
-		static int CurrentCDDrive;
-
-		/*
-		** The drive letter of the last used CD drive
-		*/
-		static int LastCDDrive;
 };
 
 

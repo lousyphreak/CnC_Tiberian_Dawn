@@ -59,6 +59,11 @@ static int Furthest_Cell(CELL *cells, int numcells, CELL *tcells, int numtcells)
 static CELL Clip_Scatter(CELL cell, int maxdist);
 static CELL Clip_Move(CELL cell, FacingType facing, int dist);
 
+static bool Is_Bonus_Mission_Scenario(int scenario)
+{
+	return scenario >= 60 && scenario <= 62;
+}
+
 
 /***********************************************************************************************
  * Set_Scenario_Name -- Creates the INI scenario name string.                                  *
@@ -91,30 +96,37 @@ void Set_Scenario_Name(char *buf, int scenario, ScenarioPlayerType player, Scena
 
 	/*
 	** Set the player-type value.
+	**
+	** Gateway bonus missions keep the single-player game flow, but the bundled
+	** scenario files are named with the multiplayer prefix (SCM60EA-SCM62EA).
 	*/
-	switch (player) {
-		case SCEN_PLAYER_GDI:
-			c_player = HouseTypeClass::As_Reference(HOUSE_GOOD).Prefix;
-//			c_player = 'G';
-			break;
+	if (Is_Bonus_Mission_Scenario(scenario)) {
+		c_player = HouseTypeClass::As_Reference(HOUSE_MULTI1).Prefix;
+	} else {
+		switch (player) {
+			case SCEN_PLAYER_GDI:
+				c_player = HouseTypeClass::As_Reference(HOUSE_GOOD).Prefix;
+//				c_player = 'G';
+				break;
 
-		case SCEN_PLAYER_NOD:
-			c_player = HouseTypeClass::As_Reference(HOUSE_BAD).Prefix;
-//			c_player = 'B';
-			break;
+			case SCEN_PLAYER_NOD:
+				c_player = HouseTypeClass::As_Reference(HOUSE_BAD).Prefix;
+//				c_player = 'B';
+				break;
 
-		case SCEN_PLAYER_JP:
-			c_player = HouseTypeClass::As_Reference(HOUSE_JP).Prefix;
-//			c_player = 'J';
-			break;
+			case SCEN_PLAYER_JP:
+				c_player = HouseTypeClass::As_Reference(HOUSE_JP).Prefix;
+//				c_player = 'J';
+				break;
 
-		/*
-		**	Multi player scenario.
-		*/
-		default:
-			c_player = HouseTypeClass::As_Reference(HOUSE_MULTI1).Prefix;
-//			c_player = 'M';
-			break;
+			/*
+			**	Multi player scenario.
+			*/
+			default:
+				c_player = HouseTypeClass::As_Reference(HOUSE_MULTI1).Prefix;
+//				c_player = 'M';
+				break;
+		}
 	}
 
 	/*
@@ -230,40 +242,6 @@ bool Read_Scenario_Ini(char *root, bool fresh)
 
 	if (fresh) {
 		Clear_Scenario();
-	}
-
-	/*
-	** If we are not dealing with scenario 1, or a multi player scenario
-	** then make sure the correct disk is in the drive.
-	*/
-	if (RequiredCD != -2) {
-		if (Scenario >= 20 && Scenario <60 && GameToPlay == GAME_NORMAL) {
-			RequiredCD = 2;
-		} else {
-			if (Scenario != 1) {
-				if (Scenario >=60){
-					RequiredCD = -1;
-				}else{
-					switch (ScenPlayer) {
-						case SCEN_PLAYER_GDI:
-							RequiredCD = 0;
-							break;
-						case SCEN_PLAYER_NOD:
-							RequiredCD = 1;
-							break;
-						default:
-							RequiredCD = -1;
-							break;
-					}
-				}
-			} else {
-				RequiredCD = -1;
-			}
-		}
-	}
-	if (!Force_CD_Available(RequiredCD)) {
-		Prog_End();
-		exit(EXIT_FAILURE);
 	}
 
 	/*

@@ -81,22 +81,8 @@
  *=============================================================================================*/
 void CCFileClass::Error(int , int , char const * )
 {
-#ifdef DEMO
-	if (strstr(File_Name(), "\\")) {
-		if (!Force_CD_Available(-1)) {
-			Prog_End();
-			exit(EXIT_FAILURE);
-		}
-	}
-
-#else
-
-	if (!Force_CD_Available(RequiredCD)) {
-		Prog_End();
-		exit(EXIT_FAILURE);
-	}
-
-#endif
+	Prog_End();
+	exit(EXIT_FAILURE);
 }
 
 

@@ -414,8 +414,6 @@ int main(int argc, char *argv[])
 #endif
 		}
 
-		CDFileClass::Set_CD_Drive (CDList.Get_First_CD_Drive());
-
 		if (cfile.Is_Available()) {
 			const int32_t config_size = cfile.Size();
 			char* config_data = new char[config_size + 1];

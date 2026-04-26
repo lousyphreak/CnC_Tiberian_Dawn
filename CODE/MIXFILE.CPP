@@ -177,11 +177,6 @@ MixFileClass::MixFileClass(char const *filename)
 	file.Set_Name(filename);
 	Filename = strdup(file.File_Name());
 
-	if (!Force_CD_Available(RequiredCD)) {
-		Prog_End();
-		exit(EXIT_FAILURE);
-	}
-
 	if (file.Is_Available(true)) {
 		FileHeader fileheader;
 

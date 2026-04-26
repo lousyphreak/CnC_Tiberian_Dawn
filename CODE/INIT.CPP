@@ -243,8 +243,6 @@ bool Init_Game(int , char *[])
 	new MixFileClass("DEMOL.MIX");
 	MixFileClass::Cache("DEMOL.MIX");
 #else
-	int temp = RequiredCD;
-	RequiredCD = -2;
 	new MixFileClass("CCLOCAL.MIX");			// Cached.
 	MixFileClass::Cache("CCLOCAL.MIX");
 	CCDebugString ("C&C95 - About to register UPDATE.MIX\n");
@@ -257,8 +255,6 @@ bool Init_Game(int , char *[])
 	new MixFileClass("LANGUAGE.MIX");
 #endif	//JAPANESE
 
-	RequiredCD = temp;
-
 #ifndef DEMO
 	const bool bootstrap_core_data_available = CCFileClass("CONQUER.MIX").Is_Available()
 		&& CCFileClass("GENERAL.MIX").Is_Available();
@@ -267,8 +263,6 @@ bool Init_Game(int , char *[])
 			char local_search[] = ".";
 			CCFileClass::Set_Search_Drives(local_search);
 		}
-
-		RequiredCD = -2;
 
 		if (!CCFileClass("12GREEN.FNT").Is_Available()) {
 			CCDebugString("C&C95 - About to pre-register GENERAL.MIX\n");
@@ -393,79 +387,13 @@ bool Init_Game(int , char *[])
 	}
 #endif
 
-	CCDebugString ("C&C95 - About to search for CD drives\n");
+	CCDebugString ("C&C95 - About to initialize data search paths\n");
 	/*
-	**	Always try to look at the CD-ROM for data files.
+	**	Use local GameData search paths only.
 	*/
 	if (!CCFileClass::Is_There_Search_Drives()) {
-		RawFileClass local_ccmix("CONQUER.MIX");
-		RawFileClass local_generalmix("GENERAL.MIX");
-		if (local_ccmix.Is_Available() && local_generalmix.Is_Available()) {
-			char local_search[] = ".";
-			CCFileClass::Set_Search_Drives(local_search);
-		}
-	}
-
-	if (!CCFileClass::Is_There_Search_Drives()) {
-
-		/*
-		** If there are no search drives specified then we must be playing
-		** off cd, so read files from there.
-		*/
-		int error;
-
-		do {
-			if (!CDList.Get_Number_Of_Drives()){
-				Set_Palette(GamePalette);
-				Show_Mouse();
-				CCMessageBox().Process(TXT_CD_ERROR1, TXT_OK);
-				Prog_End();
-				exit(EXIT_FAILURE);
-			}
-			CCFileClass::Set_CD_Drive( CDList.Get_First_CD_Drive() );
-
-			error = CCFileClass::Set_Search_Drives("?:\\");
-			switch(error) {
-				case 1:
-					Set_Palette(GamePalette);
-					Show_Mouse();
-					CCMessageBox().Process(TXT_CD_ERROR1, TXT_OK);
-					Prog_End();
-					exit(EXIT_FAILURE);
-
-				case 2:
-					Set_Palette(GamePalette);
-					Show_Mouse();
-					if (CCMessageBox().Process(TXT_CD_DIALOG_1, TXT_OK, TXT_CANCEL) == 1) {
-						Prog_End();
-						exit(EXIT_FAILURE);
-					}
-					Hide_Mouse();
-					break;
-
-				default:
-					Show_Mouse();
-					if (!Force_CD_Available(RequiredCD)) {
-						Prog_End();
-						exit(EXIT_FAILURE);
-					}
-					Hide_Mouse();
-					break;
-			}
-		} while (error);
-
-#ifdef DEMO
-		RequiredCD = -2;
-#else
-		RequiredCD = -1;
-#endif
-	} else {
-
-		/*
-		** If there are search drives specified then all files are to be
-		** considered local.
-		*/
-		RequiredCD = -2;
+		char local_search[] = ".";
+		CCFileClass::Set_Search_Drives(local_search);
 	}
 #ifndef DEMO
 	CCDebugString ("C&C95 - About to register addon mixfiles\n");
@@ -817,7 +745,6 @@ bool Select_Game(bool fade)
 	bool process = true;				// false = break out of while loop
 	bool display = true;
 	CountDownTimerClass count;
-	int cd_index;
 
 	MEMORYSTATUS	mem_info;
 	mem_info.dwLength=sizeof(mem_info);
@@ -1025,22 +952,6 @@ bool Select_Game(bool fade)
 				*/
 				case SEL_BONUS_MISSIONS:
 					CarryOverMoney = 0;
-
-					/*
-					** Ensure that CD1 or CD2 is in the drive. These missions
-					** are not on the covert CD.
-					*/
-					cd_index = Get_CD_Index(CCFileClass::Get_CD_Drive(), 1*60);
-					/*
-					** If cd_index == 2 then its a covert CD
-					*/
-					if (cd_index == 2){
-						RequiredCD = 0;
-						if (!Force_CD_Available (RequiredCD)){
-							Prog_End();
-							exit(EXIT_FAILURE);
-						}
-					}
 
 					if (Bonus_Dialog()) {
 						Theme.Fade_Out();
@@ -1282,8 +1193,6 @@ bool Select_Game(bool fade)
 					Theme.Fade_Out();
 					Theme.Stop();
 					Call_Back();
-
-					Force_CD_Available(-1);
 					Play_Intro(false);
 					Hide_Mouse();
 
@@ -1848,7 +1757,6 @@ bool Parse_Command_Line(int argc, char *argv[])
 	#ifdef GERMAN
 			puts("Command & Conquer (c) 1995,1996 Westwood Studios\r\n"
 						"Parameter:\r\n"
-//						"  -CD<Pfad> = Suchpfad f�r Daten-Dateien festlegen.\r\n"
 						"  -DESTNET  = Netzwerkkennung des Zielrechners festlegen\r\n"
 						"              (Syntax: DESTNETxx.xx.xx.xx)\r\n"
 						"  -SOCKET   = Kennung des Netzwerk-Sockets (0 - 16383)\n"
@@ -1860,8 +1768,6 @@ bool Parse_Command_Line(int argc, char *argv[])
 	#ifdef FRENCH
 			puts("Command & Conquer (c) 1995, Westwood Studios\r\n"
 						"Param�tres:\r\n"
-//						"  -CD<chemin d'acc�s> = Recherche des fichiers dans le\r\n"
-//						"                        r�pertoire indiqu�.\r\n"
 						"  -DESTNET  = Sp�cifier le num�ro de r�seau du syst�me de destination\r\n"
 						"              (Syntaxe: DESTNETxx.xx.xx.xx)\r\n"
 						"  -SOCKET   = ID poste r�seau (0 � 16383)\r\n"
@@ -1871,7 +1777,6 @@ bool Parse_Command_Line(int argc, char *argv[])
 	#else
 			puts("Command & Conquer (c) 1995, 1996 Westwood Studios\r\n"
 						"Parameters:\r\n"
-//						"  -CD<path> = Set search path for data files.\r\n"
 						"  -DESTNET  = Specify Network Number of destination system\r\n"
 						"              (Syntax: DESTNETxx.xx.xx.xx)\r\n"
 						"  -SOCKET   = Network Socket ID (0 - 16383)\n"
@@ -2023,13 +1928,6 @@ bool Parse_Command_Line(int argc, char *argv[])
 			continue;
 		}
 
-		/*
-		**	File search path override.
-		*/
-		if (strstr(string, "-CD")) {
-			CCFileClass::Set_Search_Drives(&string[3]);
-			continue;
-		}
 #ifdef JAPANESE
 		/*
 		** Enable english-compatible keyboard

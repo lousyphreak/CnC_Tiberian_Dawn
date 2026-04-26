@@ -238,7 +238,6 @@ typedef struct NodeNameTag {
 #include	"EXTERNS.H"
 
 
-extern int Get_CD_Drive(void);
 extern void Fatal(char const *message, ...);
 
 
@@ -267,7 +266,6 @@ void Explosion_Damage(COORDINATE coord, unsigned strength, TechnoClass * source,
 **	CONQUER.CPP
 */
 void Center_About_Objects(void);
-bool Force_CD_Available(int cd);
 void Handle_View(int view, int action=0);
 void Handle_Team(int team, int action=0);
 TechnoTypeClass const * Fetch_Techno_Type(RTTIType type, int id);

@@ -389,33 +389,6 @@ bool Load_Game(int id)
 	}
 
 	Call_Back();
-	/*
-	**	Set the required CD to be in the drive according to the scenario
-	**	loaded.
-	*/
-	if (RequiredCD != -2) {
-		if (scenario >= 20 && scenario <60 && GameToPlay == GAME_NORMAL) {
-			RequiredCD = 2;
-		} else {
-			if (scenario >= 60){
-				/*
-				** This is a gateway bonus scenario
-				*/
-				RequiredCD = -1;
-			}else{
-				if (house == HOUSE_GOOD) {
-					RequiredCD = 0;
-				} else {
-					RequiredCD = 1;
-				}
-			}
-		}
-	}
-	if(!Force_CD_Available(RequiredCD)) {
-		Prog_End();
-		exit(EXIT_FAILURE);
-	}
-
 	Call_Back();
 
 	/*

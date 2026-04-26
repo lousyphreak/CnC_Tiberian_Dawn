@@ -210,8 +210,6 @@ extern int						SuperRecord;
 extern int						PlaybackGame;
 extern int						AllowAttract;
 
-class GetCDClass;
-extern GetCDClass				CDList;
 
 extern InternetRoleType								InternetGameRole;
 extern InternetTransportType					InternetTransport;
@@ -354,7 +352,6 @@ extern SpecialDialogType	SpecialDialog;
 
 extern char *DebugFname;	// for stoopid debugging purposes
 extern int DebugLine;		// for stoopid debugging purposes
-extern int RequiredCD;
 extern int MouseInstalled;
 extern int AreThingiesEnabled;
 
@@ -363,7 +360,6 @@ extern int In_Debugger;
 extern WWMouseClass	*WWMouse;
 extern HANDLE hInstance;
 extern int AllDone;
-extern int Get_CD_Index (int cd_drive, int timeout);
 void Memory_Error_Handler(void);
 extern bool GameStatisticsPacketSent;
 extern bool ConnectionLost;

@@ -374,21 +374,6 @@ void Do_Win(void)
 	/*
 	**	Play the winning movie and then start the next scenario.
 	*/
-	if (RequiredCD != -2) {
-		if (Scenario >= 20 && Scenario <60 && GameToPlay == GAME_NORMAL) {
-			RequiredCD = 2;
-		} else {
-			if (Scenario >=60){
-				RequiredCD = -1;
-			}else{
-				if (PlayerPtr->Class->House == HOUSE_GOOD) {
-					RequiredCD = 0;
-				} else {
-					RequiredCD = 1;
-				}
-			}
-		}
-	}
 
 #ifndef DEMO
 	Play_Movie(WinMovie);
