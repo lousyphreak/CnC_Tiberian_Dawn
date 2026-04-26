@@ -1202,25 +1202,7 @@ void RadarClass::Radar_Cursor(int forced)
 	// Draw lower right hand corner
 	draw_window.Draw_Line(x2,	y2 - barlen,	x2, 	y2, 	LTGREEN);
 	draw_window.Draw_Line(x2 - barlen, 	y2,	x2,	y2, 	LTGREEN);
-#if(0)
-	draw_window.Draw_Rect(x1, y1, x2, y2, WHITE);
-#endif
 
-#if(FALSE)
-	if (oldpage == &SeenBuff) {
-		Hide_Mouse();
-	   HidPage.Blit(	SeenBuff,
-							(int)(RadX + RadOffX + BaseX),
-							(int)(RadY + RadOffY + BaseY),
-							(int)(RadX + RadOffX + BaseX),
-							(int)(RadY + RadOffY + BaseY),
-							(int)draw_window.Get_Width(),
-							(int)draw_window.Get_Height(),
-						 	(BOOL)FALSE);
-
-		Show_Mouse();
-	}
-#endif
 	Set_Logic_Page(oldpage);
 	_last_pos = tac_cell;
 	_last_frame = SpecialRadarFrame;
@@ -1576,13 +1558,8 @@ void RadarClass::Set_Radar_Position(CELL cell)
 	int newcell;
 
 	if (ZoomFactor != 1) {
-#if(FALSE)
-		oldx = (Cell_X(cell) - MapCellX) - (RadarCellWidth / 2);
-		oldy = (Cell_Y(cell) - MapCellY) - (RadarCellHeight / 2);
-#else
 		oldx = (Cell_X(cell) - MapCellX);
 		oldy = (Cell_Y(cell) - MapCellY);
-#endif
 	} else {
 		oldx = 0;
 		oldy = 0;

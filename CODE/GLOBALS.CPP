@@ -273,11 +273,7 @@ ThemeClass Theme;
 /***************************************************************************
 **	This is the main control class for the map.
 */
-#ifdef SCENARIO_EDITOR
-MapEditClass Map;
-#else
 MouseClass Map;
-#endif
 
 /**************************************************************************
 **	The running game score is handled by this class (and member functions).
@@ -357,14 +353,6 @@ bool GameActive;
 **	specifically for the default reference value. As such, it is not stable.
 */
 int32_t LParam;
-
-
-#ifdef SCENARIO_EDITOR
-/***************************************************************************
-** The currently-selected cell for the Scenario Editor
-*/
-CELL CurrentCell = 0;
-#endif
 
 
 /***************************************************************************
@@ -998,7 +986,6 @@ WWMouseClass		*WWMouse = NULL;
 HANDLE hInstance;
 int AllDone;
 BOOL				InMovie = FALSE;	//Are we currently playing a VQ movie?
-bool				MMXAvailable = false;	//Does this CPU support MMX extensions?
 TimerClass		TickCount(BT_SYSTEM);
 GetCDClass		CDList;
 bool				GameStatisticsPacketSent;

@@ -146,46 +146,7 @@ int LoadOptionsClass::Process(void)
 	int d_cancel_h 	= 13 * factor;
 	int d_cancel_x 	= d_dialog_cx + d_margin;
 	int d_cancel_y 	= d_dialog_y + d_dialog_h - d_cancel_h - d_margin;
-#if(0)
-	enum {
-		D_DIALOG_W = 250,											// dialog width
-		D_DIALOG_H = 156,											// dialog height
-		D_DIALOG_X = ((320 - D_DIALOG_W) / 2),				// centered x-coord
-		D_DIALOG_Y = ((200 - D_DIALOG_H) / 2),				// centered y-coord
-		D_DIALOG_CX = D_DIALOG_X + (D_DIALOG_W / 2),		// coord of x-center
 
-		D_TXT8_H = 11,												// ht of 8-pt text
-		D_MARGIN = 7,												// margin width/height
-
-		D_LIST_W = D_DIALOG_W - (D_MARGIN * 2),
-		D_LIST_H = 104,
-		D_LIST_X = D_DIALOG_X + D_MARGIN,
-		D_LIST_Y = D_DIALOG_Y + D_MARGIN + D_TXT8_H + D_MARGIN,
-
-		D_EDIT_W = D_DIALOG_W - (D_MARGIN * 2),
-		D_EDIT_H = 13,
-		D_EDIT_X = D_DIALOG_X + D_MARGIN,
-		D_EDIT_Y = D_LIST_Y + D_LIST_H - 30 + D_MARGIN + D_TXT8_H,
-
-#if (GERMAN | FRENCH)
-		D_BUTTON_W = 50,
-#else
-		D_BUTTON_W = 40,
-#endif
-		D_BUTTON_H = 13,
-		D_BUTTON_X = D_DIALOG_CX - D_BUTTON_W - D_MARGIN,
-		D_BUTTON_Y = D_DIALOG_Y + D_DIALOG_H - D_BUTTON_H - D_MARGIN,
-
-#if (GERMAN | FRENCH)
-		D_CANCEL_W = 50,//BG:40
-#else
-		D_CANCEL_W = 40,
-#endif
-		D_CANCEL_H = 13,
-		D_CANCEL_X = D_DIALOG_CX + D_MARGIN,
-		D_CANCEL_Y = D_DIALOG_Y + D_DIALOG_H - D_CANCEL_H - D_MARGIN,
-	};
-#endif
 	/*
 	**	Button enumerations
 	*/

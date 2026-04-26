@@ -3280,26 +3280,6 @@ static void Compute_Game_CRC(void)
 		Add_CRC (&GameCRC, (int)bldgp->Coord + (int)bldgp->PrimaryFacing);
 	}
 
-#if(0)
-	//------------------------------------------------------------------------
-	//	Map Layers
-	//------------------------------------------------------------------------
-	for (i = 0; i < LAYER_COUNT; i++) {
-		for (j = 0; j < Map.Layer[i].Count(); j++) {
-			objp = Map.Layer[i][j];
-			Add_CRC (&GameCRC, (int)objp->Coord + (int)objp->What_Am_I());
-		}
-	}
-
-	//------------------------------------------------------------------------
-	//	Logic Layers
-	//------------------------------------------------------------------------
-	for (i = 0; i < Logic.Count(); i++) {
-		objp = Logic[i];
-		Add_CRC (&GameCRC, (int)objp->Coord + (int)objp->What_Am_I());
-	}
-#endif
-
 	//------------------------------------------------------------------------
 	//	A random #
 	//------------------------------------------------------------------------
@@ -3766,113 +3746,6 @@ void Print_CRCs(EventClass *ev)
 		}
 		Mono_Printf("Multi6 Buildings:%d\n",GameCRC);
 	}
-#if (0)
-	//------------------------------------------------------------------------
-	//	Map Layers
-	//------------------------------------------------------------------------
-	GameCRC = 0;
-	for (i = 0; i < LAYER_COUNT; i++) {
-		fprintf(fp,">>>> MAP LAYER %d <<<<\n",i);
-		for (j = 0; j < Map.Layer[i].Count(); j++) {
-			objp = Map.Layer[i][j];
-			Add_CRC (&GameCRC, (int)objp->Coord + (int)objp->What_Am_I());
-			fprintf(fp,"Object %d: %x ",j,objp->Coord);
-
-			if (objp->What_Am_I() == RTTI_AIRCRAFT)
-				fprintf(fp,"Aircraft  (Type:%d) ",
-					(AircraftType)(*((AircraftClass *)objp)));
-			else if (objp->What_Am_I() == RTTI_ANIM)
-				fprintf(fp,"Anim      (Type:%d) ",
-					(AnimType)(*((AnimClass *)objp)));
-			else if (objp->What_Am_I() == RTTI_BUILDING)
-				fprintf(fp,"Building  (Type:%d) ",
-					(StructType)(*((BuildingClass *)objp)));
-			else if (objp->What_Am_I() == RTTI_BULLET)
-				fprintf(fp,"Bullet    (Type:%d) ",
-					(BulletType)(*((BulletClass *)objp)));
-			else if (objp->What_Am_I() == RTTI_INFANTRY)
-				fprintf(fp,"Infantry  (Type:%d) ",
-					(InfantryType)(*((InfantryClass *)objp)));
-			else if (objp->What_Am_I() == RTTI_OVERLAY)
-				fprintf(fp,"Overlay   (Type:%d) ",
-					(OverlayType)(*((OverlayClass *)objp)));
-			else if (objp->What_Am_I() == RTTI_SMUDGE)
-				fprintf(fp,"Smudge    (Type:%d) ",
-					(SmudgeType)(*((SmudgeClass *)objp)));
-			else if (objp->What_Am_I() == RTTI_TEMPLATE)
-				fprintf(fp,"Template  (Type:%d) ",
-					(TemplateType)(*((TemplateClass *)objp)));
-			else if (objp->What_Am_I() == RTTI_TERRAIN)
-				fprintf(fp,"Terrain   (Type:%d) ",
-					(TerrainType)(*((TerrainClass *)objp)));
-			else if (objp->What_Am_I() == RTTI_UNIT)
-				fprintf(fp,"Unit      (Type:%d) ",
-					(UnitType)(*((UnitClass *)objp)));
-
-			house = objp->Owner();
-			if (house!=HOUSE_NONE) {
-				housep = HouseClass::As_Pointer (house);
-				fprintf(fp,"Owner: %s\n",housep->Class->IniName);
-			}
-			else {
-				fprintf(fp,"Owner: NONE\n");
-			}
-		}
-	}
-	Mono_Printf("Map Layers:%d\n",GameCRC);
-
-	//------------------------------------------------------------------------
-	//	Logic Layers
-	//------------------------------------------------------------------------
-	GameCRC = 0;
-	fprintf(fp,">>>> LOGIC LAYER <<<<\n");
-	for (i = 0; i < Logic.Count(); i++) {
-		objp = Logic[i];
-		Add_CRC (&GameCRC, (int)objp->Coord + (int)objp->What_Am_I());
-		fprintf(fp,"Object %d: %x ",i,objp->Coord);
-
-		if (objp->What_Am_I() == RTTI_AIRCRAFT)
-			fprintf(fp,"Aircraft  (Type:%d) ",
-				(AircraftType)(*((AircraftClass *)objp)));
-		else if (objp->What_Am_I() == RTTI_ANIM)
-			fprintf(fp,"Anim      (Type:%d) ",
-				(AnimType)(*((AnimClass *)objp)));
-		else if (objp->What_Am_I() == RTTI_BUILDING)
-			fprintf(fp,"Building  (Type:%d) ",
-				(StructType)(*((BuildingClass *)objp)));
-		else if (objp->What_Am_I() == RTTI_BULLET)
-			fprintf(fp,"Bullet    (Type:%d) ",
-				(BulletType)(*((BulletClass *)objp)));
-		else if (objp->What_Am_I() == RTTI_INFANTRY)
-			fprintf(fp,"Infantry  (Type:%d) ",
-				(InfantryType)(*((InfantryClass *)objp)));
-		else if (objp->What_Am_I() == RTTI_OVERLAY)
-			fprintf(fp,"Overlay   (Type:%d) ",
-				(OverlayType)(*((OverlayClass *)objp)));
-		else if (objp->What_Am_I() == RTTI_SMUDGE)
-			fprintf(fp,"Smudge    (Type:%d) ",
-				(SmudgeType)(*((SmudgeClass *)objp)));
-		else if (objp->What_Am_I() == RTTI_TEMPLATE)
-			fprintf(fp,"Template  (Type:%d) ",
-				(TemplateType)(*((TemplateClass *)objp)));
-		else if (objp->What_Am_I() == RTTI_TERRAIN)
-			fprintf(fp,"Terrain   (Type:%d) ",
-				(TerrainType)(*((TerrainClass *)objp)));
-		else if (objp->What_Am_I() == RTTI_UNIT)
-			fprintf(fp,"Unit      (Type:%d) ",
-				(UnitType)(*((UnitClass *)objp)));
-
-		house = objp->Owner();
-		if (house!=HOUSE_NONE) {
-			housep = HouseClass::As_Pointer (house);
-			fprintf(fp,"Owner: %s\n",housep->Class->IniName);
-		}
-		else {
-			fprintf(fp,"Owner: NONE\n");
-		}
-	}
-	Mono_Printf("Logic:%d\n",GameCRC);
-#endif
 
 	//------------------------------------------------------------------------
 	//	Random # generator, frame #
@@ -3884,17 +3757,6 @@ void Print_CRCs(EventClass *ev)
 
 	Mono_Printf("My Frame:%d\n",Frame);
 	fprintf(fp,"My Frame:%d\n",Frame);
-#if (0)
-	fprintf(fp,"-------------- Offending event: ----------------\n");
-	fprintf(fp,"Type:         %d\n",ev->Type);
-	fprintf(fp,"Frame:        %d\n",ev->Frame);
-	fprintf(fp,"MPlayerID:    %04x\n",ev->MPlayerID);
-	if (ev->Type == EventClass::FRAMEINFO) {
-		fprintf(fp,"CRC:          %x\n",ev->Data.FrameInfo.CRC);
-		fprintf(fp,"CommandCount: %x\n",ev->Data.FrameInfo.CommandCount);
-		fprintf(fp,"Delay:        %x\n",ev->Data.FrameInfo.Delay);
-	}
-#endif
 	fclose(fp);
 
 }	/* end of Print_CRCs */

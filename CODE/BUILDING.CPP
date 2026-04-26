@@ -1256,19 +1256,6 @@ void BuildingClass::AI(void)
 bool BuildingClass::Unlimbo(COORDINATE coord, DirType dir)
 {
 	Validate();
-#ifdef OBSOLETE
-	if (*this == STRUCT_ROAD) {
-		if (Can_Enter_Cell(Coord_Cell(coord), FACING_NONE) == MOVE_OK) {
-			ObjectClass * o = OverlayTypeClass::As_Reference(OVERLAY_ROAD).Create_One_Of(House);
-			if (o && o->Unlimbo(coord)) {
-				Transmit_Message(RADIO_OVER_OUT);
-				delete this;
-				return(true);
-			}
-		}
-		return(false);
-	}
-#endif
 
 	/*
 	**	If this is a wall type building, then it never gets unlimboed. Instead, it gets
@@ -2124,20 +2111,6 @@ int BuildingClass::Exit_Object(TechnoClass * base)
 					cell = Find_Exit_Cell(base);
 					if (cell) found = true;
 
-#ifdef OBSOLETE
-					CELL	const *ptr;
-					bool	found = false;
-
-					ptr = Class->ExitList;
-					while (*ptr != REFRESH_EOL) {
-						cell = Coord_Cell(Coord) + *ptr++;
-						if (base->Can_Enter_Cell(cell) == MOVE_OK) {
-							found = true;
-							break;
-						}
-					}
-#endif
-
 					if (found) {
 						DirType	dir = Direction(cell);
 						COORDINATE		start = Coord_Add(Coord, Class->ExitPoint);
@@ -2358,64 +2331,6 @@ bool BuildingClass::Limbo(void)
 			Map.Flag_To_Redraw(false);
 		}
 
-#ifdef OBSOLETE
-		/*
-		**	If this building is building something, the FactoryClass doing the
-		**	building must be deleted, as well as the object being built.
-		**	- If this building is controlled by Computer AI, this building's Factory
-		**	  pointer will point to the factory doing the building.
-		**	- Otherwise, the owner House's Factory indices will indicate what's
-		**	  being built.  (The player's sidebar also contains indices to indicate
-		**	  what's being built, but those just echo the house's indices.)
-		*/
-		if (Factory) {
-			Factory->Abandon();
-			delete Factory;
-			Factory = 0;
-		}
-
-		/*
-		** If the owner HouseClass is building something, and this building can
-		** build that thing, we may be the last building for that house that can
-		** build that thing; if so, abandon production of it.
-		*/
-		housep = HouseClass::As_Pointer(Owner());
-		if (housep) {
-			FactoryClass * factory = 0;
-			bld_type = RTTI_NONE;
-			if (housep->AircraftFactory != -1 && Class->ToBuild == RTTI_AIRCRAFTTYPE) {
-				bld_type = RTTI_AIRCRAFTTYPE;
-				factory = Factories.Raw_Ptr(housep->AircraftFactory);
-			}
-			if (housep->InfantryFactory != -1 && Class->ToBuild==RTTI_INFANTRYTYPE) {
-				bld_type = RTTI_INFANTRYTYPE;
-				factory = Factories.Raw_Ptr(housep->InfantryFactory);
-			}
-			if (housep->UnitFactory != -1 && Class->ToBuild==RTTI_UNITTYPE) {
-				bld_type = RTTI_UNITTYPE;
-				factory = Factories.Raw_Ptr(housep->UnitFactory);
-			}
-			if (housep->BuildingFactory != -1 && Class->ToBuild==RTTI_BUILDINGTYPE) {
-				bld_type = RTTI_BUILDINGTYPE;
-				factory = Factories.Raw_Ptr(housep->BuildingFactory);
-			}
-			if (housep->SpecialFactory != -1 && Class->ToBuild==RTTI_SPECIAL) {
-				bld_type = RTTI_SPECIAL;
-			}
-
-			if (bld_type != RTTI_NONE) {
-				if (factory) {
-					TechnoClass * object = factory->Get_Object();
-					IsInLimbo = true;
-					if (object && !object->Techno_Type_Class()->Who_Can_Build_Me(true, false, housep->Class->House)) {
-						housep->Abandon_Production(bld_type);
-					}
-					IsInLimbo = false;
-				}
-			}
-		}
-#endif
-
 		/*
 		**	This could be a building that builds. If so, then the sidebar may need adjustment.
 		** Set IsInLimbo to true to "fool" the sidebar into knowing that this building
@@ -2427,12 +2342,6 @@ bool BuildingClass::Limbo(void)
 			Map.Recalc();
 			IsInLimbo = false;
 		}
-#ifdef NEVER
-		if (!House->IsHuman) {
-			Update_Specials();
-		}
-#endif
-
 	}
 	return(TechnoClass::Limbo());
 }
@@ -3295,15 +3204,6 @@ bool BuildingClass::Captured(HouseClass * newowner)
 				break;
 		}
 
-#ifdef NEVER
-		if (IsOwnedByPlayer && !ScenarioInit) {
-			Map.Recalc();
-		}
-		if (!House->IsHuman) {
-			Update_Specials();
-		}
-#endif
-
 		/*
 		**	Flag that both owners now need to update their buildable lists.
 		*/
@@ -4160,19 +4060,8 @@ int BuildingClass::Mission_Repair(void)
 					IsReadyToCommence = false;
 					int32_t param = Health_Ratio();
 					if (Transmit_Message(RADIO_REPAIR, param) != RADIO_ROGER) {
-#ifdef OBSOLETE
-						if (House->Available_Money() < 10) {
-							Transmit_Message(RADIO_RUN_AWAY);
-						}
-#endif
 						Begin_Mode(BSTATE_IDLE);
 						Status = IDLE;
-#ifdef OBSOLETE
-					} else {
-						int time = Bound(Fixed_To_Cardinal(TICKS_PER_SECOND, House->Power_Fraction()), 0, TICKS_PER_SECOND);
-						time = (TICKS_PER_SECOND + (TICKS_PER_SECOND/2)) - time;
-						return(time);
-#endif
 					}
 				}
 				break;

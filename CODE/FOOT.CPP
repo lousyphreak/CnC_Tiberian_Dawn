@@ -471,28 +471,6 @@ bool FootClass::Basic_Path(void)
 				}
 			}
 
-#ifdef OBSOLETE
-			for (MoveType move = MOVE_CLOAK; move <= maxtype; move++) {
-				if (!found1) {
-					path = Find_Path(cell, &workpath1[0], sizeof(workpath1), move);
-					if (path && path->Cost) {
-						memcpy(&path1, path, sizeof(path1));
-						found1 = true;
-						if (path1.Cost < 5) break;
-					}
-				} else {
-					path = Find_Path(cell, &workpath2[0], sizeof(workpath2), move);
-
-					if (path) {
-						if (path->Cost && path->Cost <= path1.Cost/2) {
-							memcpy(&path1, path, sizeof(path1));
-							memcpy(workpath1, workpath2, sizeof(workpath1));
-						}
-					}
-				}
-			}
-#endif
-
 			/*
 			**	If a good path was found, then record it in the object's path
 			**	list.
@@ -504,21 +482,6 @@ bool FootClass::Basic_Path(void)
 
 			Mark(MARK_DOWN);
 		}
-
-
-#ifdef NEVER
-		/*
-		** Patch at this point to see if we are moving directly into a
-		** MOVE_TEMP.  This allows units to bunch up at a bridge even if there
-		** is an enormously long way around.  This also allows units to give
-		** up trying to move into the MOVE_TEMP using the normal movement
-		** retry logic.
-		*/
-		CELL cell = Adjacent_Cell(Coord_Cell(Coord), Path[0]);
-		if (Can_Enter_Cell(cell, FACING_NONE) == MOVEF_TEMP) {
-			Path[0] = FACING_NONE;
-		}
-#endif
 
 		PathDelay = PATH_DELAY;
 		if (Path[0] != FACING_NONE) return(true);
@@ -909,13 +872,6 @@ void FootClass::Approach_Target(void)
 			** in the room.
 			*/
 			maxrange -= 0x00B7;
-#ifdef OBSOLETE
-			if (What_Am_I() == RTTI_INFANTRY) {
-				maxrange -= 0x0111;
-			} else {
-				maxrange -= 0x00B7;
-			}
-#endif
 			maxrange = MAX(maxrange, 0);
 
 			COORDINATE tcoord = ::As_Coord(TarCom);

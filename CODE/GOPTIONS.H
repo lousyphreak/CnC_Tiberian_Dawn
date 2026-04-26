@@ -56,26 +56,6 @@ class GameOptionsClass : public OptionsClass {
 		};
 
 		enum GameOptionsEnum {
-			#if(0)
-
-			OPTION_WIDTH=(216+8),
-			OPTION_HEIGHT=100,
-			OPTION_X=((320 - OPTION_WIDTH) / 2),
-			OPTION_Y=((200 - OPTION_HEIGHT) / 2),
-#ifdef FRENCH
-			BUTTON_WIDTH=142,
-#else
-			BUTTON_WIDTH=130,
-#endif
-//			OBUTTON_HEIGHT=13,
-			NUMBER_OF_BUTTONS=6,
-			CAPTION_Y_POS=5,
-			BUTTON_Y=21,
-			BORDER1_LEN=72,
-			BORDER2_LEN=16,
-			BUTTON_RESUME_Y=(OPTION_HEIGHT-15)
-
-			#endif
 		};
 
 	public:

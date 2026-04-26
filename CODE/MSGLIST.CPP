@@ -205,17 +205,6 @@ TextLabelClass * MessageListClass::Add_Message(char *txt, int color,
 	char	*current_string;
 	char	*s1,*s2;
 	bool	same;
-#if (0)
-#if (GERMAN)
-			static int from_adjust = -1;
-#else
-#if (FRENCH)
-			static int from_adjust = -2;
-#else
-			static int from_adjust = 0;
-#endif
-#endif
-#endif	//(0)
 
 	/*------------------------------------------------------------------------
 	Prevent a duplicate message.  (The IPXManager Global Channel cannot detect

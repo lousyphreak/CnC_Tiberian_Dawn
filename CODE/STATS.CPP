@@ -130,9 +130,6 @@ enum {
 extern uint32_t 	PlanetWestwoodGameID;
 extern uint32_t 	PlanetWestwoodStartTime;
 
-extern "C" char	CPUType;
-
-
 bool			GameTimerInUse = false;
 TimerClass	GameTimer;
 long			GameEndTime;
@@ -374,10 +371,6 @@ void Send_Statistics_Packet(void)
 
 
 		CCDebugString ("C&C95 - Adding hardware info stats.\n");
-		/*
-		** CPU type
-		*/
-		stats.Add_Field (FIELD_CPU_TYPE, (char)CPUType);
 
 		/*
 		** Memory
@@ -615,14 +608,6 @@ void Send_Statistics_Packet(void)
 	*/
 	CCDebugString ("C&C95 - Legacy external stats upload removed; discarding packet.\n");
 
-
-	/*
-	** Save it to disk as well so I can see it
-	*/
-#if (0)
-	RawFileClass anotherfile ("packet.net");
-	anotherfile.Write(packet, packet_size);
-#endif	//(0)
 	/*
 	** Tidy up
 	*/

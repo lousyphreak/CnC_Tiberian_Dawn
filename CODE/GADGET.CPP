@@ -468,35 +468,6 @@ KeyNumType GadgetClass::Input(void)
 		key = Keyboard::Get();
 	}
 
-#ifdef SCENARIO_EDITOR
-
-	if ( key == KN_K ){
-		/*
-		** time to create a screen shot using the PCX code (if it works)
-		*/
-		GraphicBufferClass temp_page(	SeenBuff.Get_Width(),
-												SeenBuff.Get_Height(),
-												NULL,
-												SeenBuff.Get_Width() * SeenBuff.Get_Height());
-		char filename[30];
-
-		SeenBuff.Blit(temp_page);
-		for (int lp = 0; lp < 99; lp ++) {
-			if (lp < 10) {
-				sprintf(filename, "scrsht0%d.pcx", lp);
-			} else {
-				sprintf(filename, "scrsht%d.pcx", lp);
-			}
-			if (access(filename, F_OK) == -1)
-				break;
-		}
-
-		Write_PCX_File(filename, temp_page, (unsigned char *)CurrentPalette);
-		//Map.Place_Random_Crate();
-	}
-
-#endif	//SCENARIO_EDITOR
-
 	/*
 	**	For mouse button clicks, the mouse position is actually held in the MouseQ...
 	**	globals rather than their normal Mouse... globals. This is because we need to

@@ -218,9 +218,6 @@ void Fade_Palette_To(void *palette1, uint32_t delay, void (*callback)() )
 				................. Update callback while waiting .................
 				*/
 				if (callback) {
-#if LIB_EXTERNS_RESOLVED
-					Sound_Callback();		// should be removed!
-#endif
 					(*cb_ptr)();
 				}
 				if (static_cast<uint32_t>(WWTickCount.Time()) < timer) {
@@ -229,9 +226,6 @@ void Fade_Palette_To(void *palette1, uint32_t delay, void (*callback)() )
 			}
 		}
 
-#if LIB_EXTERNS_RESOLVED
-		Sound_Callback();		// should be removed!
-#endif
 		if (callback) {
 			(*cb_ptr)();
 		}

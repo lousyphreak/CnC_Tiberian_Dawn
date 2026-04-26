@@ -218,14 +218,9 @@ void MapClass::Free_Cells(void)
 void MapClass::Init_Cells(void)
 {
 	TotalValue = 0;
-#ifdef NEVER
-	Free_Cells();
-	Alloc_Cells();
-#else
 	for (int index = 0; index < MAP_CELL_TOTAL; index++) {
 		Map[index] = CellClass();
 	}
-#endif
 }
 
 

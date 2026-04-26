@@ -910,57 +910,6 @@ TerrainType TerrainTypeClass::From_Name(char const * name)
 }
 
 
-#ifdef SCENARIO_EDITOR
-/***********************************************************************************************
- * TerrainTypeClass::Display -- Display a generic terrain object.                              *
- *                                                                                             *
- *    This routine is used to display a generic terrain object. Typical                        *
- *    use is during scenario editing.                                                          *
- *                                                                                             *
- * INPUT:   x,y   -- Pixel coordinates to display object at (centered).                        *
- *                                                                                             *
- *          window-- The window to display the object within.                                  *
- *                                                                                             *
- * OUTPUT:  none                                                                               *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   05/16/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
-void TerrainTypeClass::Display(int x, int y, WindowNumberType window, HousesType) const
-{
-	CC_Draw_Shape(Get_Image_Data(), 0, x, y, window, SHAPE_NORMAL|SHAPE_CENTER|SHAPE_WIN_REL);
-}
-
-
-/***********************************************************************************************
- * TerrainTypeClass::Prep_For_Add -- Prepares to add terrain object.                           *
- *                                                                                             *
- *    Submits all of the valid terrain objects to the scenario editor for possible selection   *
- *    and subsequent placement on the map. All terrain objects, that have a valid shape        *
- *    file available, are added.                                                               *
- *                                                                                             *
- * INPUT:   none                                                                               *
- *                                                                                             *
- * OUTPUT:  none                                                                               *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   05/23/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
-void TerrainTypeClass::Prep_For_Add(void)
-{
-	for (TerrainType index = TERRAIN_FIRST; index < TERRAIN_COUNT; index++) {
-		if (As_Reference(index).Get_Image_Data()) {
-			Map.Add_To_List(&As_Reference(index));
-		}
-	}
-}
-#endif
-
-
 /***********************************************************************************************
  * TerrainTypeClass::Create_And_Place -- Creates and places terrain object on map.             *
  *                                                                                             *

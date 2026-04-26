@@ -505,37 +505,17 @@ ResultType InfantryClass::Take_Damage(int & damage, int distance, WarheadType wa
 			Scatter(c4);
 		}
 
-#ifdef BOXING
-		if (IsBoxing) {
-			int addval = 0;
-
-			switch (warhead) {
-				case WARHEAD_FIST:
-					if (damage == Infantry_Punch_Damage[1]) addval++;
-					Do_Action( (DoType) ( (int)DO_PUNCH_HIT1 + addval),true);
-					break;
-
-				case WARHEAD_FOOT:
-					if (damage == Infantry_Kick_Damage[1]) addval++;
-					Do_Action( (DoType) ( (int)DO_KICK_HIT1 + addval),true);
-					break;
+		if (source && Fear < FEAR_SCARED) {
+			if (Class->IsFraidyCat) {
+				Fear = FEAR_PANIC;
+			} else {
+				Fear = FEAR_SCARED;
 			}
 		} else {
-#endif
-			if (source && Fear < FEAR_SCARED) {
-				if (Class->IsFraidyCat) {
-					Fear = FEAR_PANIC;
-				} else {
-					Fear = FEAR_SCARED;
-				}
-			} else {
-				int morefear = FEAR_ANXIOUS;
-				if (Health_Ratio() > 0x0080) morefear /= 4;
-				Fear = MIN((int)Fear + morefear, FEAR_MAXIMUM);
-			}
-#ifdef BOXING
+			int morefear = FEAR_ANXIOUS;
+			if (Health_Ratio() > 0x0080) morefear /= 4;
+			Fear = MIN((int)Fear + morefear, FEAR_MAXIMUM);
 		}
-#endif
 	}
 	return(res);
 }
@@ -599,11 +579,6 @@ void InfantryClass::Draw_It(int x, int y, WindowNumberType window)
 		shapenum += facenum * Class->DoControls[doit].Jump;
 	}
 	shapenum += Class->DoControls[doit].Frame;
-
-#ifdef BOXING
-// BG hack to get him to face right when he's supposed to.
-	if (IsBoxing && BodyFacing<128) shapenum += 47;
-#endif
 
 	/*
 	**	Actually draw the root body of the unit.
@@ -1093,58 +1068,27 @@ void InfantryClass::AI(void)
 			break;
 
 		case FIRE_OK:
-#ifdef BOXING
-			ObjectClass *object = As_Object(TarCom);
-
-			if (object) {
-				/* If we're engaged in hand-to-hand combat, keep boxing */
-				if (IsBoxing) {
-					IsFiring = true;
-					if (((InfantryClass *)object)->Doing == DO_FIGHT_READY) {
-						Do_Action((DoType) ((int)DO_PUNCH + (DoType)(Random_Pick(0, 1) == 1)),true);
-					}
-				} else {
-
-					if (Is_Target_Infantry(TarCom) && (Distance(TarCom)<=0x80) && (Coord_Y(Coord) == Coord_Y(object->Coord))) {
-
-						// Too close to shoot, so start hand-to-hand combat
-						if (Establish_Contact((TechnoClass *)object)) {
-							if (Transmit_Message(RADIO_PREPARE_TO_BOX) == RADIO_ROGER) {
-								IsBoxing = true;
-								Do_Action(DO_ON_GUARD,true);
-							}
-						}
-					} else {
-#endif
-
-						/*
-						**	Start firing animation.
-						*/
-						if (IsProne) {
-							Do_Action(DO_FIRE_PRONE);
-							IsFiring = true;
-						} else {
-							Do_Action(DO_FIRE_WEAPON);
-							IsFiring = true;
-						}
-#ifdef BOXING
-					}
-#endif
-
-					PrimaryFacing.Set(Direction8(Center_Coord(), As_Coord(TarCom)));
-
-					/*
-					**	If the target is in range, and the NavCom is the same, then just
-					**	stop and keep firing.
-					*/
-					if (TarCom == NavCom) {
-						NavCom = TARGET_NONE;
-						Path[0] = FACING_NONE;
-					}
-#ifdef BOXING
-				}
+			/*
+			**	Start firing animation.
+			*/
+			if (IsProne) {
+				Do_Action(DO_FIRE_PRONE);
+				IsFiring = true;
+			} else {
+				Do_Action(DO_FIRE_WEAPON);
+				IsFiring = true;
 			}
-#endif
+
+			PrimaryFacing.Set(Direction8(Center_Coord(), As_Coord(TarCom)));
+
+			/*
+			**	If the target is in range, and the NavCom is the same, then just
+			**	stop and keep firing.
+			*/
+			if (TarCom == NavCom) {
+				NavCom = TARGET_NONE;
+				Path[0] = FACING_NONE;
+			}
 			break;
 
 		default:
@@ -1160,13 +1104,6 @@ void InfantryClass::AI(void)
 	*/
 	int firestage = Class->FireLaunch;
 	if (IsProne) firestage = Class->ProneLaunch;
-
-#ifdef BOXING
-	if (IsBoxing) {
-		firestage = 1;
-		if (Doing == DO_KICK) firestage = 2;
-	}
-#endif
 
 	if (IsFiring && Fetch_Stage() == firestage) {
 		Fire_At(TarCom, 0);
@@ -1197,24 +1134,6 @@ void InfantryClass::AI(void)
 					}
 				}
 				break;
-
-#ifdef BOXING
-			case DO_FIGHT_READY:
-			case DO_ON_GUARD:
-			case DO_PUNCH:
-			case DO_KICK:
-			case DO_PUNCH_HIT1:
-			case DO_PUNCH_HIT2:
-			case DO_KICK_HIT1:
-			case DO_KICK_HIT2:
-				if (In_Radio_Contact()) {
-					Do_Action(DO_FIGHT_READY, true);
-				} else {
-					IsBoxing = false;
-					Do_Action(DO_READY_WEAPON);
-				}
-				break;
-#endif
 
 			/*
 			**	When death is due to hand-to-hand combat, use the gunfire death
@@ -1413,86 +1332,6 @@ void InfantryClass::AI(void)
 		IsNewNavCom = false;
 	}
 }
-
-
-#ifdef NEVER
-/***************************************************************************
- * InfantryClass::Blocking_Object -- Determines how a object blocks an inf *
- *                                                                         *
- * INPUT:		TechnoClass * pointer to object that is blocking unit       *
- *					CELL			  the cell the unit is being blocked in			*
- *                                                                         *
- * OUTPUT:		MoveBitType the way that the object is blocking the unit    *
- *                                                                         *
- * HISTORY:                                                                *
- *   06/08/1995 PWG : Created.                                             *
- *=========================================================================*/
-MoveBitType InfantryClass::Blocking_Object(TechnoClass const *techno, CELL cell) const
-{
-	Validate();
-	bool inf  = (techno->What_Am_I() == RTTI_INFANTRY);
-	bool unit = (techno->What_Am_I() == RTTI_UNIT) || inf;
-
-	CellClass const * cellptr = &Map[cell];
-
-	if (House->Is_Ally(techno)) {
-
-		/*
-		** Logic to handle a trasport type object.
-		*/
-		if (NavCom == techno->As_Target() && Contact_With_Whom() == techno) {
-			return(MOVEF_OK);
-		}
-
-		/*
-		** If the object is of type infantry, then the square is blocked only
-		** if the cell is completely full of infantry.
-		*/
-		if (inf && ((cellptr->Flag.Composite & 0x1f) != 0x1f)) {
-			return(MOVEF_OK);
-		}
-
-		if (unit) {
-
-			/*
-			** If the unit in question has a destination than we should
-			** be prepared to wait for the unit to get out of our way.
-			*/
-			if (((FootClass *)techno)->NavCom != TARGET_NONE) {
-				return(MOVEF_MOVING_BLOCK);
-			}
-			return(MOVEF_TEMP);
-		}
-	} else {
-
-		/*
-		** If its an enemy unit, things are dealt with a little differently
-		*/
-		if (unit) {
-
-
-			/*
-			**	If the object is cloaked, then consider it passable for findpath purposes,
-			**	but not so for all other cases.
-			*/
-			if (techno->Cloak == CLOAKED) {
-				if (IsFindPath) return(MOVEF_OK);
-				return(MOVEF_CLOAK);
-			}
-
-			/*
-			**	If our vehicle is weapon equipped, then report that the cell occupier
-			**	needs only to be destroyed in order to make the cell passable.
-			*/
-			if (Class->Primary != WEAPON_NONE) {
-				return(MOVEF_DESTROYABLE);
-			}
-		}
-	}
-	return(MOVEF_NO);
-}
-#endif
-
 
 
 /***********************************************************************************************
@@ -1751,25 +1590,11 @@ short const * InfantryClass::Overlap_List(void) const
 FireErrorType InfantryClass::Can_Fire(TARGET target, int which) const
 {
 	Validate();
-#ifdef BOXING
-	/*
-	** If in hand-to-hand, and we're currently playing a got-hit animation,
-	** then we can't punch back yet.
-	*/
-	if (IsBoxing) {
-		if ( (Doing>=DO_PUNCH_HIT1 && Doing<=DO_KICK_DEATH) || (Doing == DO_ON_GUARD) ) return FIRE_BUSY;
-		if (Arm) return(FIRE_BUSY);	// don't let fire if still re-arming
-	}
-#endif
 
 	/*
 	**	Don't allow firing if the turret is not ready.
 	*/
 	if (IsFiring) return(FIRE_REARM);
-
-#ifdef OBSOLETE
-	if (weapon->Fires == BULLET_FLAME && IsProne) return(FIRE_ILLEGAL);
-#endif
 
 	/*
 	**	The target must still be legal.
@@ -2196,31 +2021,6 @@ bool InfantryClass::Start_Driver(COORDINATE & headto)
 }
 
 
-#ifdef NEVER
-/***********************************************************************************************
- * InfantryClass::Set_Primary_Facing -- Change infantry primary facing -- always and instantly *
- *                                                                                             *
- *    This routine ensures that when the infantry primary facing is changes, it is changed     *
- *    instantly and always. There is no provision for infantry facing changing slowly over     *
- *    time as the other vehicles usually do.                                                   *
- *                                                                                             *
- * INPUT:   facing   -- The desired facing for the infantry unit.                              *
- *                                                                                             *
- * OUTPUT:  none                                                                               *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   12/11/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
-void InfantryClass::Set_Primary_Facing(DirType facing, bool )
-{
-	Validate();
-	FootClass::Set_Primary_Facing(facing, true);
-}
-#endif
-
-
 /***********************************************************************************************
  * InfantryClass::Limbo -- Performs cleanup operations needed when limboing.                   *
  *                                                                                             *
@@ -2275,53 +2075,28 @@ BulletClass * InfantryClass::Fire_At(TARGET target, int which)
 
 	IsFiring = false;
 
-#ifdef BOXING
-	if (IsBoxing) {
-		RadioMessageType	hitaction = (Doing == DO_KICK) ? RADIO_KICK : RADIO_PUNCH;
+	bullet = FootClass::Fire_At(target, which);
+	if (bullet) {
 
 		/*
-		**	When fighting, verify that the target is legal to proceed. If there is some
-		**	error, then abort fightning mode. Otherwise, tell the target that it has
-		**	just been hit.
+		**	For fraidycat infantry that run out of ammo, always go into
+		**	a maximum fear state at that time.
 		*/
-		if (In_Radio_Contact() && Target_Legal(target) && Transmit_Message(hitaction) == RADIO_ROGER) {
-			Arm = Rearm_Delay(true);
-		} else {
-
-			/*
-			** Fighting done for some reason, so pick up gun
-			*/
-			IsBoxing = false;
-			Do_Action(DO_READY_WEAPON,true);
-		}
-	} else {
-#endif
-
-		bullet = FootClass::Fire_At(target, which);
-		if (bullet) {
-
-			/*
-			**	For fraidycat infantry that run out of ammo, always go into
-			**	a maximum fear state at that time.
-			*/
-			if (Class->IsFraidyCat && !Ammo) {
-				Fear = FEAR_MAXIMUM;
-				if (Mission == MISSION_ATTACK || Mission == MISSION_HUNT) {
-					Assign_Mission(MISSION_GUARD);
-				}
+		if (Class->IsFraidyCat && !Ammo) {
+			Fear = FEAR_MAXIMUM;
+			if (Mission == MISSION_ATTACK || Mission == MISSION_HUNT) {
+				Assign_Mission(MISSION_GUARD);
 			}
-
-			/*
-			**	Create the projectile. Then process any special operations that
-			**	need to be performed according to the style of projectile
-			**	created.
-			*/
-			Sound_Effect(weapon->Sound, Coord);
 		}
 
-#ifdef BOXING
+		/*
+		**	Create the projectile. Then process any special operations that
+		**	need to be performed according to the style of projectile
+		**	created.
+		*/
+		Sound_Effect(weapon->Sound, Coord);
 	}
-#endif
+
 	return(bullet);
 }
 
@@ -2680,9 +2455,6 @@ RadioMessageType InfantryClass::Receive_Message(RadioClass * from, RadioMessageT
 	switch (message) {
 
 		case	RADIO_OVER_OUT:
-#ifdef BOXING
-			if (IsBoxing) Do_Action(DO_READY_WEAPON);
-#endif
 			break;
 
 		/*
@@ -2690,9 +2462,6 @@ RadioMessageType InfantryClass::Receive_Message(RadioClass * from, RadioMessageT
 		**	then refuse the offer.
 		*/
 		case	RADIO_PREPARE_TO_BOX:
-#ifdef BOXING
-			if (IsBoxing) break;
-#endif
 			if (Contact_With_Whom() == from) {
 				Do_Action(DO_ON_GUARD, true);
 				Assign_Target(Contact_With_Whom()->As_Target());
@@ -2742,11 +2511,6 @@ RadioMessageType InfantryClass::Receive_Message(RadioClass * from, RadioMessageT
 int InfantryClass::Rearm_Delay(bool second) const
 {
 	Validate();
-#ifdef BOXING
-	if (IsBoxing) {
-		return(Random_Pick(5, 50));
-	}
-#endif
 	return(FootClass::Rearm_Delay(second));
 }
 

@@ -59,19 +59,6 @@ class Keyboard
 };
 
 
-#ifdef NEVER
-inline void * operator delete(void * data) 
-{
-	Free(data);
-}
-
-inline void * operator delete[] (void * data)
-{
-	Free(data);
-}
-#endif
-
-
 /*
 **	These templates allow enumeration types to have simple bitwise
 **	arithmatic performed. The operators must be instatiated for the

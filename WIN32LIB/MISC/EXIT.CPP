@@ -81,10 +81,3 @@ void randomize	( void )
 {
   srand ( time ( NULL ) ) ;
 }
-
-#if(0)
-uint32_t	Random_Mod ( uint32_t mod )
-{
-  return rand () * mod / RAND_MAX ;
-}
-#endif

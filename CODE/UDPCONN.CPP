@@ -558,22 +558,6 @@ int UDPConnClass::Send_To(char *buf, int buflen, UDPAddressClass *address,
 
 		*(unsigned short*)tempsend = htons(target_mask);
 		memcpy (tempsend+2, buf, buflen);
-#if (0)
-char tempbuf[256];
-CommHeaderType *packet = (CommHeaderType *)(&tempsend[2]);
-static char pcode [4][18]={
-	"PACKET_DATA_ACK",			// this is a data packet requiring an ACK
-	"PACKET_DATA_NOACK",		// this is a data packet not requiring an ACK
-	"PACKET_ACK",					// this is an ACK for a packet
-	"PACKET_COUNT"				// for computational purposes
-};
-
-sprintf (tempbuf, "Sending unicast packet type %d, ID=%d, code=%s, length=%d\n", tempsend[sizeof(CommHeaderType)+2],
-																						packet->PacketID,
-																						pcode[packet->Code],
-																						buflen + sizeof (target_mask));
-CCDebugString (tempbuf);
-#endif	//(0)
 
 		Winsock.Write((void*)tempsend, buflen + sizeof (target_mask));
 		delete [] tempsend;
@@ -639,22 +623,6 @@ int UDPConnClass::Broadcast(char *buf, int buflen)
 		memcpy (tempsend+2, buf, buflen);
 		*tempsend = 0;
 		*(tempsend+1) = 0;
-#if (0)
-char tempbuf[256];
-CommHeaderType *packet = (CommHeaderType *)(&tempsend[2]);
-static char pcode [4][18]={
-	"PACKET_DATA_ACK",			// this is a data packet requiring an ACK
-	"PACKET_DATA_NOACK",		// this is a data packet not requiring an ACK
-	"PACKET_ACK",					// this is an ACK for a packet
-	"PACKET_COUNT"				// for computational purposes
-};
-
-sprintf (tempbuf, "Sending multicast packet type %d, ID=%d, code=%s, length=%d\n", tempsend[sizeof(CommHeaderType)+2],
-																						packet->PacketID,
-																						pcode[packet->Code],
-																						buflen + sizeof (unsigned short));
-CCDebugString (tempbuf);
-#endif	//(0)
 
 		Winsock.Write((void*)tempsend, buflen + sizeof (unsigned short));
 		delete [] tempsend;

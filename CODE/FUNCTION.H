@@ -38,95 +38,6 @@
 #ifndef FUNCTION_H
 #define FUNCTION_H
 
-#ifdef NEVER
-Map (screen) class heirarchy.
-
- MapeditClass (most derived class) -- scenario editor
-        �
-   MouseClass -- handles mouse animation and display control
-        �
-  ScrollClass -- map scroll handler
-        �
-    HelpClass -- pop-up help text handler
-        �
-     TabClass -- file folder tab screen mode control dispatcher
-        �
- SidebarClass -- displays and controls construction list sidebar
-        �
-   PowerClass -- display power production/consumption bargraph
-        �
-   RadarClass -- displays and controls radar map
-        �
- DisplayClass -- general tactical map display handler
-        �
-     MapClass -- general tactical map data handler
-        �
- GScreenClass (pure virtual base class) -- generic screen control
-
-                          AbstractClass
-                                  �
-                                  �
-                                  �
-                                  �
-                            ObjectClass
-                                  �
-       ����������������������������������������������������������������Ŀ
-   AnimClass  �  TemplateClass    �        �� FuseClass     �    TerrainClass
-              �                   �        �� FlyClass      �
-              �                   �  BulletClass            �
-       OverlayClass        MissionClass               SmudgeClass
-                                  �
-                             RadioClass
-                                  �
-                                  �� CrewClass
-                                  �� FlasherClass
-                                  �� StageClass
-                                  �� CargoClass
-                            TechnoClass
-                                  �
-         �����������������������������������������������������Ŀ
-     FootClass                                         BuildingClass
-         �
-         ����������������������������Ŀ
-    DriveClass  InfantryClass         �� FlyClass
-         �                      AircraftClass
-   TurretClass
-         �
-   TarComClass
-         �
-     UnitClass
-
-
-                            AbstractTypeClass
-                                    �
-                              ObjectTypeClass
-                                    �
-             �����������������������������������������������������Ŀ
-             �                      �            �                 �
-       TechnoTypeClass              �            �                 �
-             �                BulletTypeClass    �                 �
-             �                           TemplateTypeClass         �
-    �����������������������������������������Ŀ             TerrainTypeClass
-    �              �           �              �
-UnitTypeClass      �   BuildingTypeClass      �
-                   �                  InfantryTypeClass
-           AircraftTypeClass
-#endif
-
-/*
-**	The "bool" integral type was defined by the C++ comittee in
-**	November of '94. Until the compiler supports this, use the following
-**	definition.
-*/
-#ifndef TRUE_FALSE_DEFINED
-#ifndef __cplusplus
-enum {false=0,true=1};
-typedef int bool;
-#endif
-#define TRUE_FALSE_DEFINED
-#endif	//TRUE_FALSE_DEFINED
-
-
 #include <stdint.h>
 #include <SDL3/SDL_timer.h>
 
@@ -673,7 +584,6 @@ void Remove_From_List(void **list, int *index, void * ptr);
 void *Conquer_Build_Fading_Table(void const *palette, void *dest, int color, int frac);
 void Fat_Put_Pixel(int x, int y, int color, int size, GraphicViewPortClass &);
 extern "C" void strtrim(char *buffer);
-uint32_t Get_EAX(void);
 #ifdef	__cplusplus
 }
 #endif
@@ -837,20 +747,7 @@ int Distance_Coord(COORDINATE coord1, COORDINATE coord2);
 
 inline int Distance(COORDINATE coord1, COORDINATE coord2)
 {
-#ifdef NEVER
-	int	diff1, diff2;
-
-	diff1 = Coord_Y(coord1) - Coord_Y(coord2);
-	if (diff1 < 0) diff1 = -diff1;
-	diff2 = Coord_X(coord1) - Coord_X(coord2);
-	if (diff2 < 0) diff2 = -diff2;
-	if (diff1 > diff2) {
-		return(diff1 + (diff2>>1));
-	}
-	return(diff2 + (diff1>>1));
-#else
 	return(Distance_Coord(coord1, coord2));
-#endif
 }
 
 

@@ -363,16 +363,6 @@ int CCMessageBox::Process(const char *msg, const char *b1txt, const char *b2txt,
 				**	Check 'input' to see if it's the 1st char of button text
 				*/
 				default:
-#ifdef NEVER
-					if (b1char == toupper(Keyboard::To_ASCII((KeyNumType)(input & 0xFF)))) {
-						selection = BUTTON_1;
-						pressed = true;
-					} else if (b2txt!=NULL &&
-						b2char == toupper(Keyboard::To_ASCII((KeyNumType)(input & 0xFF)))) {
-						selection = BUTTON_2;
-						pressed = true;
-					}
-#endif
 					break;
 			}
 

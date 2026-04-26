@@ -72,13 +72,6 @@
 
 
 /**********************************************************************
-**	If the scenario editor to to be active in this build then uncomment
-**	the following #define line.
-*/
-//#define SCENARIO_EDITOR
-
-
-/**********************************************************************
 **	This define enables the full set of cheat keys and special
 **	command line options.
 */
@@ -851,9 +844,6 @@ typedef enum StructType {
 	STRUCT_V35,
 	STRUCT_V36,
 	STRUCT_V37,
-#ifdef OBSOLETE
-	STRUCT_ROAD,
-#endif
 	STRUCT_SANDBAG_WALL,
 	STRUCT_CYCLONE_WALL,
 	STRUCT_BRICK_WALL,
@@ -1430,24 +1420,6 @@ typedef enum AnimType {
 	ANIM_FIRE_MED2,				// Medium flame animation (oranger).
 	ANIM_FIRE_TINY,				// Very tiny flames.
 	ANIM_MUZZLE_FLASH,			// Big cannon flash (with translucency).
-#ifdef NEVER
-	ANIM_E1_ROT_FIRE,				// Infantry decay animations.
-	ANIM_E1_ROT_GRENADE,
-	ANIM_E1_ROT_GUN,
-	ANIM_E1_ROT_EXP,
-	ANIM_E2_ROT_FIRE,
-	ANIM_E2_ROT_GRENADE,
-	ANIM_E2_ROT_GUN,
-	ANIM_E2_ROT_EXP,
-	ANIM_E3_ROT_FIRE,
-	ANIM_E3_ROT_GRENADE,
-	ANIM_E3_ROT_GUN,
-	ANIM_E3_ROT_EXP,
-	ANIM_E4_ROT_FIRE,
-	ANIM_E4_ROT_GRENADE,
-	ANIM_E4_ROT_GUN,
-	ANIM_E4_ROT_EXP,
-#endif
 	ANIM_SMOKE_M,					// Smoke rising from ground.
 	ANIM_BURN_SMALL,				// Small combustable fire effect (with trail off).
 	ANIM_BURN_MED,					// Medium combustable fire effect (with trail off).

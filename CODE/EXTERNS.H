@@ -41,10 +41,6 @@
 #include "FTIMER.H"
 
 #include	"CELL.H"
-
-#ifdef SCENARIO_EDITOR
-#include	"MAPEDIT.H"
-#endif
 #include	"TECHNO.H"
 #include	"TYPE.H"
 #include	"BUILDING.H"
@@ -119,11 +115,7 @@ extern CELL							Views[4];
 extern GameOptionsClass 		Options;
 
 extern LogicClass 				Logic;
-#ifdef SCENARIO_EDITOR
-extern MapEditClass 				Map;
-#else
 extern MouseClass 				Map;
-#endif
 extern ScoreClass 				Score;
 extern MonoClass 					MonoArray[MonoClass::MAX_MONO_PAGES];
 extern MixFileClass *			ScoreMix;
@@ -207,10 +199,6 @@ extern int						CarryOverPercent;
 extern char 						ScenarioName[_MAX_FNAME+_MAX_EXT];
 extern unsigned					BuildLevel;
 extern uint32_t					ScenarioCRC;
-
-#ifdef SCENARIO_EDITOR
-extern CELL 						CurrentCell;
-#endif
 
 extern GameType					GameToPlay;
 
@@ -375,7 +363,6 @@ extern int In_Debugger;
 extern WWMouseClass	*WWMouse;
 extern HANDLE hInstance;
 extern int AllDone;
-extern "C" bool MMXAvailable;
 extern int Get_CD_Index (int cd_drive, int timeout);
 void Memory_Error_Handler(void);
 extern bool GameStatisticsPacketSent;

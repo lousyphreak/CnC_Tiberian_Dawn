@@ -1403,65 +1403,6 @@ static BuildingTypeClass const ClassRepair(
 	(short const *)OListFix		// OVERLAPLIST:List of overlap cell offset.
 );
 
-#ifdef OBSOLETE
-static BuildingTypeClass const ClassRoad(
-	STRUCT_ROAD,
-	TXT_ROAD,								// NAME:			Short name of the structure.
-	"ROAD",									// NAME:			Short name of the structure.
-	STRUCTF_NONE,							// PREREQ:		Buildings that must exist first.
-	XYP_COORD(0,0),						// Exit point for produced units.
-	99,							// Build level.
-	0,								// Building prerequisite.
-		false,		// Has ability to detect adjacent cloaked objects?
-		false,		// Animation rate is regulated for constant speed?
-		false,		// Requires a bib dirt patch?
-		true,			// Always use the given name for the building?
-		false,		// Is this a wall type structure?
-		false,		// Is it a factory type building?
-		false,		// Can this building be captured?
-		false,		// Does it catch fire?
-		false,		// Simple (one frame) damage imagery?
-		false,		// Is it invisible to radar?
-		false,		// Can the player select this?
-		false,		// Is this a legal target for attack or move?
-		true,			// Is this an insignificant building?
-		false,		// Is it immune to normal combat damage?
-		false,		// Theater specific graphic image?
-		false,		// Does it have a rotating turret?
-		false,		// Fires multiple shots in quick succession?
-		false,		// Can it be repaired?
-		true,			// Can it be manufactured by the player?
-		false,		// Does it contain a crew?
-		true,			// Does building care less if placed on concrete?
-	RTTI_NONE,								// The object type produced at this factory.
-	DIR_N,									// Starting idle frame to match construction.
-	1,											// STRNTH:		Full strength of building.
-	0,											// SIGHTRANGE:	Range of sighting.
-	50,										// COST:			Cost to purchase.
-	99,										// SCENARIO:	Starting availability scenario.
-	0,0,										// RISK/RWRD:	Risk/reward rating values.
-	HOUSEF_MULTI1|
-	HOUSEF_MULTI2|
-	HOUSEF_MULTI3|
-	HOUSEF_MULTI4|
-	HOUSEF_MULTI5|
-	HOUSEF_MULTI6|
-	HOUSEF_JP|
-	HOUSEF_GOOD|
-	HOUSEF_BAD,								// OWNABLE:		Ownable by house (bit field).
-	WEAPON_NONE,WEAPON_NONE,
-	ARMOR_NONE,								// ARMOR:		Armor type
-	0,											// CANENTER:	Units that can enter building.
-	0,											// CAPACITY:	Spice storage capacity.
-	0,											// POWER:		Power points required.
-	0,											// DRAIN:		Power points required.
-	BSIZE_11, 								// SIZE:			Building size.
-	NULL,										// Preferred exit cell list.
-	(short const *)List1,			// OCCUPYLIST:	List of active foundation squares.
-	(short const *)NULL			// OVERLAPLIST:List of overlap cell offset.
-);
-#endif
-
 static BuildingTypeClass const ClassV01(
 	STRUCT_V01,
 	TXT_CIV1,								// NAME:			Short name of the structure.
@@ -3916,9 +3857,6 @@ BuildingTypeClass const * const BuildingTypeClass::Pointers[STRUCT_COUNT] = {
 	&ClassV35,				//	STRUCT_V35
 	&ClassV36,				//	STRUCT_V36
 	&ClassV37,				//	STRUCT_V37
-#ifdef OBSOLETE
-	&ClassRoad,				// STRUCT_ROAD
-#endif
 	&Sandbag,				// STRUCT_SANDBAG_WALL
 	&Cyclone,				//	STRUCT_CYCLONE_WALL
 	&Brick,					// STRUCT_BRICK_WALL
@@ -4213,64 +4151,6 @@ StructType BuildingTypeClass::From_Name(char const *name)
 }
 
 
-#ifdef SCENARIO_EDITOR
-/***********************************************************************************************
- * BuildingTypeClass::Display -- Renders a generic view of building.                           *
- *                                                                                             *
- *    This routine is used to display a generic representation of the                          *
- *    building. Typical use of this occurs with the scenario editor.                           *
- *                                                                                             *
- * INPUT:   x,y      -- Coordinate to display the building (centered).                         *
- *                                                                                             *
- *          window   -- The window the building should be rendered                             *
- *                      relative to.                                                           *
- *                                                                                             *
- *          house    -- The house color to use for the building.                               *
- *                                                                                             *
- * OUTPUT:  none                                                                               *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   05/23/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
-void BuildingTypeClass::Display(int x, int y, WindowNumberType window, HousesType house) const
-{
-	void const * ptr = Get_Cameo_Data();
-	if (!ptr) {
-		ptr = Get_Image_Data();
-	}
-	CC_Draw_Shape(ptr, 0, x, y, window, SHAPE_FADING|SHAPE_CENTER|SHAPE_WIN_REL, HouseTypeClass::As_Reference(house).RemapTable);
-}
-
-
-/***********************************************************************************************
- * BuildingTypeClass::Prep_For_Add -- Prepares scenario editor for adding a                    *
- *                                                                                             *
- *    This routine is used to prepare the scenario editor for the addition                     *
- *    of a building object to the game.                                                        *
- *                                                                                             *
- * INPUT:   none                                                                               *
- *                                                                                             *
- * OUTPUT:  none                                                                               *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   05/23/1994 JLB : Created.                                                                 *
- *   06/04/1994 JLB : Uses map editing interface routines.                                     *
- *=============================================================================================*/
-void BuildingTypeClass::Prep_For_Add(void)
-{
-	for (StructType index = STRUCT_FIRST; index < STRUCT_COUNT; index++) {
-		if (As_Reference(index).Get_Image_Data()) {
-			Map.Add_To_List(&As_Reference(index));
-		}
-	}
-}
-#endif
-
-
 /***********************************************************************************************
  * BuildingTypeClass::Create_And_Place -- Creates and places a building object onto the map.   *
  *                                                                                             *
@@ -4383,29 +4263,6 @@ int BuildingTypeClass::Legal_Placement(CELL pos) const
 	short const	*offset;		// Pointer to cell offset list.
 
 	if (pos == -1) return(false);
-
-#ifdef NEVER
-	/*
-	**	Concrete has special checking performed to determine legal placement. Concrete
-	**	can legally be placed if there is any cell that would be affected by the concrete
-	**	placement. Unlike other buildings, only one cell needs to be effective in order
-	**	to flag legal placement for the entire "structure".
-	*/
-	if (Type == STRUCT_CONCRETE_NOD || Type == STRUCT_CONCRETE_GDI) {
-		offset = Occupy_List();
-		while (*offset != REFRESH_EOL) {
-			if (!Map.Cell_Template(pos + (CELL)*offset++)) {
-				return(true);
-			}
-		}
-
-		/*
-		**	No squares would be affected by concrete placement so consider legal
-		**	placement query to be false.
-		*/
-		return(false);
-	}
-#endif
 
 	/*
 	**	Normal buildings must check to see that every foundation square is free of

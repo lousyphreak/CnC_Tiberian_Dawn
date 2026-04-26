@@ -101,21 +101,6 @@ void *  Load_Font(char const *name)
 	}
 
 
-
-#ifdef cuts
-	if (Find_File(name)) {
-		fh = Open_File(name, READ);
-		if (Read_File(fh, (char *) &size, 2) != 2) return(NULL);
-
-		ptr = (char *) Alloc(size, MEM_NORMAL);
-		*(int16_t *)ptr = size;
-		Read_File(fh, ptr + 2, size - 2);
-		Close_File(fh);
-	} else {
-		return (NULL);
-	}
-#endif
-
 	//
 	// verify that the file loaded is a valid font file.
 	//

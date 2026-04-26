@@ -452,23 +452,6 @@ void WWMouseClass::Erase_Mouse(GraphicViewPortClass *scr, int32_t forced)
 	//	lock the buffer.
 	//
 	if (!forced) {
-#if(0)
-		if (scr->Lock()) {
-			//
-			// If the surface has not already been restore then restore it and erase the
-			// restoration coordinates so we don't accidentally do it twice.
-			//
-			if (EraseBuffX != -1 || EraseBuffY != -1) {
-				Mouse_Shadow_Buffer(this, scr, EraseBuffer, EraseBuffX, EraseBuffY, 0);
-				EraseBuffX = -1;
-				EraseBuffY = -1;
-			}
-			//
-			// We are done writing to the buffer so unlock it.
-			//
-			scr->Unlock();
-		}
-#endif
 	} else	{
 			//
 			// If the surface has not already been restore then restore it and erase the

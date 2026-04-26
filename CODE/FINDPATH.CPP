@@ -101,22 +101,6 @@
 #define MAX_MLIST_SIZE		300
 #define THREAT_THRESHOLD	5
 
-#ifdef NEVER
-typedef enum {
-	FACING_N,			// North
-	FACING_NE,			// North-East
-	FACING_E,			// East
-	FACING_SE,			// South-East
-	FACING_S,			// South
-	FACING_SW,			// South-West
-	FACING_W,			// West
-	FACING_NW,			// North-West
-
-	FACING_COUNT			// Total of 8 directions (0..7).
-} FacingType;
-#endif
-
-
 /*-------------------------------------------------------------------------*/
 static bool DrawPath;
 
@@ -431,92 +415,6 @@ bool FootClass::Register_Cell(PathType *path, CELL cell, FacingType dir, int cos
 	}
 	return(true);
 }
-#ifdef OBSOLETE
-bool FootClass::Register_Cell(PathType *path, CELL cell, FacingType dir, int cost, MoveType threshhold)
-{
-	FacingType  *list;
-	int 	pos  = cell >> 5;
-	int	bit  = (cell & 31) - 1;
-	int	idx;
-
-	/*
-	** See if this point has already been registered as on the list.  If so
-	** we need to truncate the list back to this point and register the
-	** new direction.
-	*/
-	if (path->Overlap[pos] & (1 << bit)) {
-		/*
-		** If this is not a case of immediate back tracking then handle
-		** by searching the list to see what we find.  However is this is
-		** an immediate back track, then pop of the last direction
-		** and unflag the cell we are in (not the cell we are moving to).
-		** Note: That we do not check for a zero length cell because we
-		** could not have a duplicate unless there are cells in the list.
-		*/
-
-		if (path->Command[path->Length - 1] == Opposite(dir)) {
-			CELL pos = Adjacent_Cell(cell, Opposite(dir));
-			path->Overlap[pos >> 5] &= ~(1 << ((pos & 31) - 1));
-			path->Length--;
-			Draw_Cell_Point(pos, true, -1, BLUE);
-		} else {
-			/*
-			** If this overlap is in the same place as we had our last overlap
-			** then we are in a loop condition.  We need to signify that we
-			** cannot register this cell.
-			*/
-			if (path->LastOverlap == cell) {
-				return(false);
-			} else {
-				path->LastOverlap = cell;
-			}
-
-			CELL pos 	  	= path->Start;
-			int newlen		= 0;
-
-			/*
-			** Note that the cell has to be in this list, so theres no sense
-			** in checking whether we found it (famous last words)
-			*/
-			for (idx = 0, list = path->Command; idx < path->Length; idx++, list++) {
-				pos = Adjacent_Cell(pos, *list);
-			  	if (pos == cell) {
-					idx++;
-					list++;
-					break;
-				}
-			}
-			newlen = idx;
-
-			/*
-			** Now we are pointing at the next command in the list.  From here on
-			** out we need to unmark the fact that we have entered these cells and
-			** adjust the cost of our path to reflect that we have not entered
-			** then.
-			*/
-			while (idx < path->Length) {
-				pos			= Adjacent_Cell(pos, *list);
-				path->Cost -= Passable_Cell(pos, *list, -1, threshhold);
-				path->Overlap[pos >> 5] &= ~(1 << ((pos & 31) - 1));
-				Draw_Cell_Point(pos, true, -1, LTBLUE);
-				idx++;
-				list++;
-			}
-			path->Length = newlen;
-		}
-	} else {
-		/*
-		** Now we need to register the new direction, updating the cell structure
-		** and the cost.
-		*/
-		int cpos 				= path->Length++;
-		path->Command[cpos]	= dir;			// save of the direction we moved
-		path->Cost 			  += cost;			// figure new cost for cell
-		path->Overlap[pos]  |= (1 << bit);	// mark the we have entered point
-	}
-	return(true);
-}
-#endif
 
 
 /***********************************************************************************************
@@ -1346,19 +1244,6 @@ int FootClass::Optimize_Moves(PathType *path, MoveType threshhold)
 	path->Length = 0;
 	while (*cmd2 != END) {
 		if (*cmd2 != EMPTY) {
-
-#ifdef NEVER
-			if (Debug_ShowPath) {
-				int	x,y,x1,y1;
-
-				if (Map.Coord_To_Pixel(Cell_Coord(cell), x, y)) {
-					Map.Coord_To_Pixel(Cell_Coord(Adjacent_Cell(cell, *cmd2)), x1, y1);
-					Set_Logic_Page(SeenBuff);
-					LogicPage->Draw_Line(x, y+8, x1, y1+8, DKGREY);
-				}
-			}
-#endif
-
 			cell = Adjacent_Cell(cell, *cmd2);
 			path->Cost+= Passable_Cell(cell, *cmd2, -1, threshhold);
 			path->Length++;
@@ -1458,40 +1343,6 @@ int FootClass::Passable_Cell(CELL cell, FacingType face, int threat, MoveType th
 		0			//	MOVE_NO
 	};
 	return(_value[move]);
-
-#ifdef NEVER
-	int can;
-	int retval;
-
-	int temp_move_mask = MoveMask;
-
-	if (!House->IsHuman) {
-		temp_move_mask &= ~MOVEF_TEMP;
-	}
-
-#ifdef NEVER
-	if ((!(MoveMask & MOVEF_MOVING_BLOCK)) && Map.Cell_Distance(StartLocation, cell) > 2) {
-		temp_move_mask |= MOVEF_MOVING_BLOCK;
-	}
-#endif
-
-	can = (temp_move_mask & Can_Enter_Cell(cell, face));
-	if (can & MOVEF_NO) return(0);
-
-	retval = 1;
-	if (can & MOVEF_MOVING_BLOCK) retval += 3;
-	if (can & MOVEF_DESTROYABLE) retval += 10;
-	if (can & MOVEF_TEMP) retval += 10;
-
-	if (threat != -1) {
-		if (Map.Cell_Distance(cell, DestLocation) > THREAT_THRESHOLD) {
-			if (Map.Cell_Threat(cell, Owner()) > threat)
-				return(0);
-		}
-	}
-
-	return(retval);
-#endif
 }
 
 

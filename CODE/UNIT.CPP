@@ -1649,48 +1649,6 @@ void UnitClass::Per_Cell_Process(bool center)
 		}
 	}
 
-#ifdef OBSOLETE
-	/*
-	**	If this unit is on a teather, then cut it at this time so that
-	**	the "parent" unit is free to proceed. Note that the parent
-	**	unit might actually be a building.
-	*/
-	if (IsTethered && center && !Map[cell].Cell_Building()) {
-		if (!Tiberium || *this != UNIT_HARVESTER) {
-			Transmit_Message(RADIO_UNLOADED);
-			if (*this == UNIT_HARVESTER) {
-				if (Target_Legal(ArchiveTarget)) {
-					Assign_Mission(MISSION_HARVEST);
-					Assign_Destination(ArchiveTarget);
-					ArchiveTarget = TARGET_NONE;
-				} else {
-
-					/*
-					**	Since there is no place to go, move away to clear
-					**	the pad for another harvester.
-					*/
-					Scatter(0, true);
-				}
-			}
-		}
-	}
-#endif
-
-#ifdef OBSOLETE
-	/*
-	** If the unit is at the center of the repair facility, and that was his
-	** destination, then start him repairing.
-	*/
-	if (center && !IsRepairing) {
-		BuildingClass * b = As_Building(NavCom);
-		if (b && *b==STRUCT_REPAIR && Coord == b->Center_Coord()) {
-			NavCom = 0;
-			IsRepairing = true;
-			Transmit_Message(RADIO_REPAIR_BEGIN_ANIM);
-		}
-	}
-#endif
-
 	/*
 	**	Check to see if this is merely the end of a rotation for the MCV as it is
 	**	preparing to deploy. In this case, it should begin its deploy process.
@@ -1729,25 +1687,6 @@ void UnitClass::Per_Cell_Process(bool center)
 			}
 		}
 	}
-
-#ifdef OBSOLETE
-	/*
-	**	Destroy any crushable wall that is driven over by a tracked vehicle.
-	*/
-	CellClass * cellptr = &Map[cell];
-	if (center && Class->Speed == SPEED_TRACK && cellptr->Overlay != OVERLAY_NONE) {
-		OverlayTypeClass const * optr = &OverlayTypeClass::As_Reference(cellptr->Overlay);
-
-		if (optr->IsCrushable) {
-			cellptr->Reduce_Wall(100);
-			cellptr->Reduce_Wall(100);
-			cellptr->Reduce_Wall(100);
-			cellptr->Reduce_Wall(100);
-			cellptr->Reduce_Wall(100);
-			cellptr->Reduce_Wall(100);
-		}
-	}
-#endif
 
 	/*
 	**	Check to see if crushing of any unfortunate infantry is warranted.
@@ -2636,108 +2575,6 @@ short const * UnitClass::Overlap_List(void) const
 	}
 	return(Coord_Spillage_List(Coord, size)+1);
 }
-
-
-#ifdef NEVER
-/********************************************************************************************* *
- * UnitClass::Blocking_Object -- Determines how a object blocks a unit                         *
- *                                                                                             *
- *    This routine is used by the Can_Enter_Cell logic when an object is in the desired cell   *
- *    and it needs to know if that causes blockage. If blocked, this routine will return why.  *
- *                                                                                             *
- * INPUT:      TechnoClass * pointer to object that is blocking unit                           *
- *                                                                                             *
- *               CELL           the cell the unit is being blocked in                          *
- *                                                                                             *
- * OUTPUT:      MoveBitType the way that the object is blocking the unit                       *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   06/08/1995 PWG : Created.                                                                 *
- *=============================================================================================*/
-MoveBitType UnitClass::Blocking_Object(TechnoClass const *techno, CELL cell) const
-{
-	Validate();
-	/*
-	** There are some extra checks we need to make if the techno is a unit
-	*/
-	bool unit = (techno->What_Am_I() == RTTI_INFANTRY || techno->What_Am_I() == RTTI_UNIT);
-	CellClass const * cellptr = &Map[cell];
-
-	if (House->Is_Ally(techno)) {
-
-		if (techno == Contact_With_Whom() && IsTethered) {
-			return(MOVE_BIT_OK);
-		}
-
-		if (unit) {
-			/*
-			** If the unit in question has a destination than we should
-			** be prepared to wait for the unit to get out of our way.
-			*/
-			if (((FootClass *)techno)->NavCom != TARGET_NONE) {
-				int face 		= Dir_Facing(PrimaryFacing);
-				int techface	= Dir_Facing(((FootClass const *)techno)->PrimaryFacing) ^4;
-				if (face != techface && Distance((AbstractClass const *)techno) > 0x1FF) {
-					return(MOVE_BIT_MOVING_BLOCK);
-				} else {
-//					Mono_Printf("Move No!\r");
-					return(MOVE_BIT_NO);
-				}
-			}
-
-			return(MOVE_BIT_TEMP);
-		}
-	} else {
-
-		/*
-		** If its an enemy unit, things are dealt with a little differently
-		*/
-		if (unit) {
-
-#ifdef NEVER
-			/*
-			** If this is an enemy unit and we are not doing a find path then
-			** we need to tell the unit to uncloak just in case it is a
-			** stealth tank.
-			*/
-			if (!IsFindPath) {
-				techno->Do_Uncloak();
-			}
-#endif
-
-			/*
-			** Can we just run it over?
-			*/
-			if (techno->Class_Of().IsCrushable && (cellptr->Flag.Composite & 0xE0) == 0 && Class->IsCrusher) {
-
-				/*
-				** Now lets run it over.
-				*/
-				return(MOVE_BIT_OK);
-			}
-
-			/*
-			**	If the object is cloaked, then consider it passable for findpath purposes,
-			**	but not so for all other cases.
-			*/
-			if (techno->Cloak == CLOAKED) {
-				if (House == techno->House) return(MOVE_BIT_NO);
-				if (IsFindPath) return(MOVE_BIT_OK);
-				return(MOVE_BIT_CLOAK);
-			}
-
-			/*
-			**	If our vehicle is weapon equipped, then report that the cell occupier
-			**	needs only to be destroyed in order to make the cell passable.
-			*/
-			if (Class->Primary != WEAPON_NONE) {
-				return(MOVE_BIT_DESTROYABLE);
-			}
-		}
-	}
-	return(MOVE_BIT_NO);
-}
-#endif
 
 
 /***********************************************************************************************

@@ -260,18 +260,6 @@ ObjectClass * As_Object(TARGET target)
 		default:
 			break;
 	}
-#if (0)
-	/*
-	**	Special check to ensure that a target value that references an
-	**	invalid object will not be converted back into an object pointer.
-	**	This condition is rare, but could occur in a network game if the
-	**	object it refers to is destroyed between the time an event message
-	**	is sent and when it is received.
-	*/
-	if (object != NULL && !object->IsActive) {
-		object = NULL;
-	}
-#endif	//(0)
 
 	return(object);
 }
@@ -321,14 +309,6 @@ InfantryClass * As_Infantry(TARGET target)
 }
 
 
-#ifdef NEVER
-TerrainClass * As_Terrain(TARGET target)
-{
-	return(Is_Target_Terrain(target) ? &Terrains[Target_Value(target)] : NULL);
-}
-#endif
-
-
 /***********************************************************************************************
  * As_Building -- Converts a target value into a building object pointer.                      *
  *                                                                                             *
@@ -348,37 +328,6 @@ BuildingClass * As_Building(TARGET target)
 {
 	return(Is_Target_Building(target) ? Buildings.Raw_Ptr(Target_Value(target)) : NULL);
 }
-
-
-#ifdef NEVER
-/***********************************************************************************************
- * Target_Legal -- Determines if the specified target is legal.                                *
- *                                                                                             *
- *    This routine is used to check for the legality of the target value specified. It is      *
- *    necessary to call this routine if there is doubt about the the legality of the target.   *
- *    It is possible for the unit that a target value represents to be eliminated and thus     *
- *    rendering the target value invalid.                                                      *
- *                                                                                             *
- * INPUT:   target   -- The target value to check.                                             *
- *                                                                                             *
- * OUTPUT:  bool; Is the target value legal?                                                   *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   05/27/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
-bool Target_Legal(TARGET target)
-{
-	if (!Target_Legal(target)) return(false);
-
-	ObjectClass * obj = As_Object(target);
-	if (obj) {
-		return(obj->Get_Strength() > 0 && obj->IsActive && !obj->IsInLimbo && obj->Class_Of().IsLegalTarget);
-	}
-	return(true);
-}
-#endif
 
 
 /***********************************************************************************************

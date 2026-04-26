@@ -371,10 +371,6 @@ class ObjectTypeClass : public AbstractTypeClass
 		void const *  Get_Image_Data(void) const {return ImageData;};
 		void const *  Get_Radar_Data(void) const {return RadarIcon;};
 
-		#ifdef SCENARIO_EDITOR
-		virtual void  Display(int, int, WindowNumberType, HousesType) const {};
-		#endif
-
 		static void const * SelectShapes;
 		static void const * PipShapes;
 };
@@ -798,10 +794,6 @@ class BuildingTypeClass : public TechnoTypeClass {
 		virtual int  Repair_Step(void) const;
 		bool  Bib_And_Offset(SmudgeType & bib, CELL & cell) const;
 
-		#ifdef SCENARIO_EDITOR
-		virtual void  Display(int x, int y, WindowNumberType window, HousesType house) const;
-		#endif
-
 
 	private:
 
@@ -1033,10 +1025,6 @@ class UnitTypeClass : public TechnoTypeClass
 		virtual int  Repair_Cost(void) const;
 		virtual int  Repair_Step(void) const;
 
-		#ifdef SCENARIO_EDITOR
-		virtual void  Display(int x, int y, WindowNumberType window, HousesType house) const;
-		#endif
-
 		/*
 		**	This is a pointer to the wake shape (as needed by the gunboat).
 		*/
@@ -1156,10 +1144,6 @@ class InfantryTypeClass : public TechnoTypeClass
 		virtual short const *  Occupy_List(bool placement=false) const;
 		virtual BuildingClass *  Who_Can_Build_Me(bool intheory, bool legal, HousesType house) const;
 		virtual int  Full_Name(void) const;
-
-		#ifdef SCENARIO_EDITOR
-		virtual void  Display(int x, int y, WindowNumberType window, HousesType house) const;
-		#endif
 };
 
 
@@ -1411,10 +1395,6 @@ class TerrainTypeClass : public ObjectTypeClass
 		virtual short const *  Occupy_List(bool placement=false) const;
 		virtual short const *  Overlap_List(void) const;
 
-		#ifdef SCENARIO_EDITOR
-		virtual void  Display(int x, int y, WindowNumberType window, HousesType house=HOUSE_NONE) const;
-		#endif
-
 	private:
 		short const *Occupy;
 		short const *Overlap;
@@ -1486,10 +1466,6 @@ class TemplateTypeClass: public ObjectTypeClass
 		virtual bool  Create_And_Place(CELL cell, HousesType house=HOUSE_NONE) const;
 		virtual ObjectClass *  Create_One_Of(HouseClass *) const;
 		virtual short const *  Occupy_List(bool placement=false) const;
-
-		#ifdef SCENARIO_EDITOR
-		virtual void  Display(int x, int y, WindowNumberType window, HousesType house=HOUSE_NONE) const;
-		#endif
 
 	private:
 		static TemplateTypeClass const * const Pointers[TEMPLATE_COUNT];
@@ -1765,10 +1741,6 @@ class AircraftTypeClass : public TechnoTypeClass
 		virtual BuildingClass *  Who_Can_Build_Me(bool intheory, bool legal, HousesType house) const;
 		virtual int  Max_Pips(void) const;
 
-		#ifdef SCENARIO_EDITOR
-		virtual void  Display(int x, int y, WindowNumberType window, HousesType house) const;
-		#endif
-
 		static void const * LRotorData;
 		static void const * RRotorData;
 
@@ -1889,10 +1861,6 @@ class OverlayTypeClass: public ObjectTypeClass
 		virtual void  Draw_It(int x, int y, int data) const;
 		virtual unsigned char *  Radar_Icon(int data) const;
 
-		#ifdef SCENARIO_EDITOR
-		virtual void  Display(int x, int y, WindowNumberType window, HousesType house=HOUSE_NONE) const;
-		#endif
-
 	private:
 		static OverlayTypeClass const * const Pointers[OVERLAY_COUNT];
 };
@@ -1960,10 +1928,6 @@ class SmudgeTypeClass : public ObjectTypeClass
 		virtual short const *  Occupy_List(bool placement=false) const;
 		virtual short const *  Overlap_List(void) const {return Occupy_List();};
 		virtual void  Draw_It(int x, int y, int data) const ;
-
-		#ifdef SCENARIO_EDITOR
-		virtual void  Display(int x, int y, WindowNumberType window, HousesType house=HOUSE_NONE) const;
-		#endif
 
 	private:
 		static SmudgeTypeClass const * const Pointers[SMUDGE_COUNT];

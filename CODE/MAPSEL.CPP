@@ -51,26 +51,6 @@ int LowMedHiStr(int percentage);
 extern int ControlQ;
 
 unsigned char CountryRemap[256];
-#ifdef OBSOLETE
-unsigned char const High16Remap[256]={
- 0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF,
- 0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF,
- 0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF,
- 0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF,
- 0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF,
- 0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF,
- 0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF,
- 0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF,
- 0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF,
- 0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF,
- 0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF,
- 0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF,
- 0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF,
- 0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF,
- 0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF,
- 0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF
-};
-#endif
 
 #define SDE	SCEN_DIR_EAST
 #define SDW	SCEN_DIR_WEST
@@ -1033,108 +1013,6 @@ void Print_Statistics(int country, int xpos, int ypos)
 	Keyboard::Clear();
 	Set_Font(oldfont);
 }
-
-#ifdef NEVER
-/***************************************************************************
- * FADING_BYTE_BLIT -- 'Pixelized' incremental byte blit.                  *
- *                                                                         *
- *    This routine will perform the same function as Byte_Blit, but will   *
- *    do so in an incremental (one piece at a time) method.  This is       *
- *    usefull for graphic 'fades' from one display to another.             *
- *                                                                         *
- * INPUT:   srcx  - Source page X byte position of upper left corner.      *
- *                                                                         *
- *          srcy  - Source page Y pixel position of upper left corner.     *
- *                                                                         *
- *          destx - Dest page X byte position of upper left corner.        *
- *                                                                         *
- *          desty - Dest page Y pixel position of upper left corner.       *
- *                                                                         *
- *          w     - Width of the blit in bytes.                            *
- *                                                                         *
- *          h     - Height of the blit in pixels.                          *
- *                                                                         *
- *          src   - PageType of the source page.                           *
- *                                                                         *
- *          dest  - Page type of the destination.                          *
- *                                                                         *
- * OUTPUT:  none                                                           *
- *                                                                         *
- * WARNINGS:   This routine, although functionally equivalent to the       *
- *             normal Byte_Blit, is very slow.  Only use this when         *
- *             the 'fading' graphic effect is desired.  This means the     *
- *             destination page should probably be the SEENPAGE.           *
- *                                                                         *
- * HISTORY:                                                                *
- *   07/17/1991 JLB : Created from Bit_It_In() (LJC code).                 *
- *   04/17/1995 BWG : Adapted to the C++ system.									*
- *=========================================================================*/
-void Fading_Byte_Blit(int srcx, int srcy, int destx, int desty, int w, int h, GraphicBufferClass *src, GraphicBufferClass *dest)
-{
-	unsigned int	xindex,			// Working array index var.
-						yindex;			// Working y index var.
-	unsigned int	x,y;				// Extraction position indexes.
-	unsigned int	tempy;			// Temporary working Y index var.
-	int	_xindex[40];	// X position array.
-	int	_yindex[200];	// Y position array.
-
-	// Anticipate two pixel rows per blit.
-	h >>= 1;
-
-	// This routine is byte-aligned
-	srcx  >>=3;
-	destx >>=3;
-	w		>>=3;
-
-	for (xindex = 0; xindex < w; xindex++) _xindex[xindex] = xindex;		/* init the index array */
-	for (yindex = 0; yindex < h; yindex++) _yindex[yindex] = yindex;		/* init the index array */
-
-	/*
-	**	Shuffle the X indexes around a bit.  This gives it
-	**	that 'random' feel while remaining precise.
-	*/
-	for (xindex = 0; xindex < w; xindex++) {
-		int	temp;
-
-	 	x = IRandom(0,w-1);
-		temp = _xindex[x];
-		_xindex[x] = _xindex[xindex];
-		_xindex[xindex] = temp;
-	}
-
-	/*
-	**	Shuffle the Y indexes around a bit for the same reason that
-	**	the x indexes were shuffled.
-	*/
-	for (yindex = 0; yindex < h; yindex++) {
-		int	temp;
-
-	 	y = IRandom(0,h-1);
-		temp = _yindex[y];
-		_yindex[y] = _yindex[yindex];
-		_yindex[yindex] = temp;
-	}
-
-	/*
-	**	Sweep through the indexes and 'construct' the destination display
-	**	from a series of miniature Byte_Blits.
-	*/
-	for (yindex = 0; yindex < h; yindex++) {
-		tempy = yindex;
-		Call_Back();
-		for (xindex = 0; xindex < w; xindex++) {
-			x = _xindex[xindex];
-			y = _yindex[tempy];
-			tempy++;
-			if (tempy >= h) tempy = 0;
-			src->Blit(*dest, (srcx+x)<<3, srcy+(y<<1), (destx+x)<<3, desty+(y<<1), 1<<3, 2);
-		}
-	}
-}
-#endif
-
-
-
 
 
 void Cycle_Call_Back_Delay(int time, unsigned char *pal)

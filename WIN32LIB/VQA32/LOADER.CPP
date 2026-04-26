@@ -1487,12 +1487,6 @@ static VQAData *AllocBuffers(VQAHeader *header, VQAConfig *config)
 					* (audio->BitsPerSample >> 3));
 		}
 
-		/* Adjust the HMI buffer to accomodate the amount of data. */
-		#if(0)
-		config->HMIBufSize *= (audio->SampleRate / 22050);
-		config->HMIBufSize *= audio->Channels * (audio->BitsPerSample >> 3);
-		#endif
-
 		/* The default audio buffer size should be large enough to hold
 		 * 1.5 seconds of data.
 		 */

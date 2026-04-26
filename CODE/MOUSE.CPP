@@ -170,11 +170,6 @@ bool MouseClass::Override_Mouse_Shape(MouseType mouse, bool wwsmall)
 		Timer.Set(control->FrameRate);
 		Frame = 0;
 
-#ifdef OBSOLETE
-		Control.Set_Stage(0);
-		int rate = Options.Normalize_Delay(control->FrameRate);
-		Control.Set_Rate(MAX(rate, 1));
-#endif
 		baseshp = (wwsmall) ? control->SmallFrame : control->StartFrame;
 
 		Set_Mouse_Cursor(control->X, control->Y, Extract_Shape(MouseShapes, baseshp + Frame/4));
@@ -218,10 +213,6 @@ void MouseClass::AI(KeyNumType &input, int x, int y)
 		Frame++;
 		Frame %= control->FrameCount;
 		Timer.Set(control->FrameRate);
-
-#ifdef OBSOLETE
-		Control.Set_Stage(Control.Fetch_Stage() % control->FrameCount);
-#endif
 
 		if (!IsSmall || control->SmallFrame != -1) {
 			int baseframe = (IsSmall) ? control->SmallFrame : control->StartFrame;

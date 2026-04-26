@@ -565,28 +565,6 @@ int NonSequencedConnClass::Service_Send_Queue (void)
 			/*
 			......................... Send the message .........................
 			*/
-#if(0)
-{
-			packet_hdr = (CommHeaderType *)send_entry->Buffer;
-			if (send_entry->SendCount) {
-				if (packet_hdr->Code == PACKET_DATA_NOACK) {
-// Smart_Printf( "Resending DATA NOACK for %d \n", packet_hdr->PacketID );
-				} else {
-					if (packet_hdr->Code == PACKET_DATA_ACK) {
-// Smart_Printf( "Resending DATA ACK for %d \n", packet_hdr->PacketID );
-					}
-				}
-			} else {
-				if (packet_hdr->Code == PACKET_DATA_NOACK) {
-// Smart_Printf( "Sending DATA NOACK for %d \n", packet_hdr->PacketID );
-				} else {
-					if (packet_hdr->Code == PACKET_DATA_ACK) {
-// Smart_Printf( "Sending DATA ACK for %d \n", packet_hdr->PacketID );
-					}
-				}
-			}
-}
-#endif
 			Send (send_entry->Buffer, send_entry->BufLen);
 
 			/*

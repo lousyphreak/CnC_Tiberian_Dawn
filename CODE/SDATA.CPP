@@ -316,68 +316,6 @@ void SmudgeTypeClass::Init(TheaterType theater)
 }
 
 
-#ifdef SCENARIO_EDITOR
-/***********************************************************************************************
- * SmudgeTypeClass::Display -- Draws a generic version of this smudge type.                    *
- *                                                                                             *
- *    The scenario object editor will call this routine to display a typical imagery of this   *
- *    smudge object for graphical identification purposes.                                     *
- *                                                                                             *
- * INPUT:   x,y   -- Coordinate to render the smudge at.                                       *
- *                                                                                             *
- *          window-- The window to base the coordinate rendering upon.                         *
- *                                                                                             *
- * OUTPUT:  none                                                                               *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   08/12/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
-void SmudgeTypeClass::Display(int x, int y, WindowNumberType window, HousesType ) const
-{
-	void const *ptr = Get_Image_Data();
-
-	x += WindowList[window][WINDOWX] << 3;
-	y += WindowList[window][WINDOWY];
-
-	if (ptr) {
-		for (int w = 0; w < Width; w++) {
-			for (int h = 0; h < Height; h++) {
-				CC_Draw_Shape(ptr, 0, x + w*ICON_PIXEL_W, y + h*ICON_PIXEL_H, WINDOW_TACTICAL, SHAPE_WIN_REL);
-				//LogicPage->Draw_Stamp(ptr, w + (h*Width), x + w*ICON_PIXEL_W, y + h*ICON_PIXEL_H, NULL, WINDOW_TACTICAL);
-			}
-		}
-	}
-}
-
-
-/***********************************************************************************************
- * SmudgeTypeClass::Prep_For_Add -- Prepares the scenario editor for adding a smudge object.   *
- *                                                                                             *
- *    This routine adds smudge objects to the list of objects that the scenario editor can     *
- *    place upon the ground. It is only called from the scenario editor.                       *
- *                                                                                             *
- * INPUT:   none                                                                               *
- *                                                                                             *
- * OUTPUT:  none                                                                               *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   08/12/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
-void SmudgeTypeClass::Prep_For_Add(void)
-{
-	for (SmudgeType index = SMUDGE_FIRST; index < SMUDGE_COUNT; index++) {
-		if (As_Reference(index).Get_Image_Data()) {
-			Map.Add_To_List(&As_Reference(index));
-		}
-	}
-}
-#endif
-
-
 /***********************************************************************************************
  * SmudgeTypeClass::Create_And_Place -- Creates and places on map, a smudge object.            *
  *                                                                                             *

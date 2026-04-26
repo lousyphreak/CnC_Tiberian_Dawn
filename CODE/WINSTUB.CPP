@@ -55,74 +55,6 @@ void Shake_Screen(int32_t)
 bool InDebugger = false;
 bool ReadyToQuit = false;
 
-#if (0)
-/***************************************************************************
- * Extract_Shape_Count -- returns # of shapes in the given shape block		*
- *                                                                         *
- * The # of shapes in a shape block is the first WORD in the block, so		*
- * this is the value returned.															*
- *																									*
- * INPUT:                                                                  *
- * buffer	pointer to shape block, created with MAKESHPS.EXE					*
- *                                                                         *
- * OUTPUT:                                                                 *
- * # shapes in the block																	*
- *                                                                         *
- * WARNINGS:                                                               *
- *	none																							*
- *                                                                         *
- * HISTORY:                                                                *
- *   06/09/1992 JLB : Created.                                             *
- *   08/19/1993 SKB : Split drawshp.asm into several modules.              *
- *   05/25/1994 BR : Converted to 32-bit                                   *
- *=========================================================================*/
-int Extract_Shape_Count(VOID const *buffer)
-{
-	ShapeBlock_Type *block = (ShapeBlock_Type *)buffer;
-
-	return (block->NumShapes);
-
-}	/* end of Extract_Shape_Count */
-
-
-/***************************************************************************
- * Extract_Shape -- Gets pointer to shape in given shape block					*
- *                                                                         *
- * INPUT:                                                                  *
- * buffer	pointer to shape block, created with MAKESHPS.EXE					*
- * shape		index of shape to get														*
- *                                                                         *
- * OUTPUT:                                                                 *
- * pointer to shape in the shape block													*
- *                                                                         *
- * WARNINGS:                                                               *
- *	none																							*
- *                                                                         *
- * HISTORY:                                                                *
- *   06/09/1992 JLB : Created.                                             *
- *   08/19/1993 SKB : Split drawshp.asm into several modules.              *
- *   05/25/1994 BR : Converted to 32-bit                                   *
- *=========================================================================*/
-VOID * Extract_Shape(VOID const *buffer, int shape)
-{
-	ShapeBlock_Type *block = (ShapeBlock_Type*) buffer;
-	int32_t offset;			// Offset of shape data, from start of block
-	char *bytebuf = (char*) buffer;
-
-	/*
-	----------------------- Return if invalid argument -----------------------
-	*/
-	if (!buffer || shape < 0 || shape >= block->NumShapes)
-		return(NULL);
-
-	offset = block->Offsets[shape];
-
-	return(bytebuf + 2 + offset);
-
-}	/* end of Extract_Shape */
-#endif	//(0)
-
-
 
 uint32_t CCFocusMessage = WM_USER+50;	//Private message for receiving application focus
 extern	void VQA_PauseAudio(void);
@@ -362,19 +294,8 @@ int	DebugColour=1;
 extern "C" void Set_Palette_Register(int number,int red ,int green ,int blue);
 void Colour_Debug (int call_number)
 {
-	//#if 0
-	//if (DebugColour==call_number || !call_number){
-
-		//if (call_number){
-		//	Wait_Vert_Blank();
-		//}
-
-		Set_Palette_Register (0,ColourLookup[call_number].Red ,
-										ColourLookup[call_number].Green,
-										ColourLookup[call_number].Blue);
-	//}
-	//#endif
 }
+
 BOOL Any_Locked (void)
 {
 	if (SeenBuff.Get_LockCount() ||
@@ -409,35 +330,7 @@ HANDLE DebugFile = INVALID_HANDLE_VALUE;
  *=============================================================================================*/
 void CCDebugString (char const *string)
 {
-#if (0)
-
-	char outstr[256];
-
-	sprintf (outstr, "%s", string);
-
-	DWORD	actual;
-	if (DebugFile == INVALID_HANDLE_VALUE){
-		DebugFile = CreateFile("debug.txt", GENERIC_WRITE, 0,
-												NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	}else{
-		DebugFile = CreateFile("debug.txt", GENERIC_WRITE, 0,
-												NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	}
-
-	if (DebugFile != INVALID_HANDLE_VALUE){
-		SetFilePointer (DebugFile, 0, NULL, FILE_END);
-		WriteFile(DebugFile, outstr, strlen(outstr)+1, &actual, NULL);
-		CloseHandle (DebugFile);
-	}
-
-	OutputDebugString (string);
-
-#else
-
-	string = string;
-
-#endif
-
+	printf( "%s", string );
 }
 
 

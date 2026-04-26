@@ -471,34 +471,6 @@ void Window_Print(char const string[], ...)
 		}
 
 		switch(static_cast<unsigned char>(c)) {
-
-#if(FALSE)
-	// these are the positions of foreign language characters
-			/*
-			** These are characters that shouldn't be window printed because
-			**	they are currently reserved.
-			*/
-			case KA_CTRL_C:
-			case KA_CTRL_D:
-			case KA_CTRL_E:
-			case KA_CTRL_G:
-			case KA_CTRL_J:
-			case KA_CTRL_K:
-			case KA_CTRL_N:
-			case KA_CTRL_O:
-			case KA_CTRL_P:
-			case KA_CTRL_Q:
-			case KA_CTRL_R:
-			case KA_CTRL_T:
-			case KA_CTRL_U:
-			case KA_CTRL_V:
-			case KA_CTRL_W:
-			case KA_CTRL_Z:
-			case KA_CTRL_BACKSLASH:
-			case KA_CTRL_CARROT:
-			case KA_CTRL_UNDERLINE:
-				break;
-#endif
 			/*
 			**	Force cursor column to specified X value.
 			*/
@@ -550,18 +522,7 @@ void Window_Print(char const string[], ...)
 				Flush_Line();
 				ScrollCounter++;
 				WinCx = 0;
-
-#if(FALSE)
-				if (WinCy >= WindowLines-1) {
-					Scroll_Window();
-				}
-				else {
-					WinCy++;
-				}
-#else
 	  			WinCy++;
-#endif
-
 				break;
 
 			/*
@@ -857,15 +818,7 @@ PRIVATE void Flush_Line(void)
 	*/
 	if (Pos || static_cast<int32_t>(WinCx) >= WindowWidth) {
 		WinCx = WPos = 0;
-		#if(FALSE)
-			if (WinCy >= WindowLines-1) {
-				Scroll_Window();
-			} else {
-				WinCy++;
-			}
-		#else
-			WinCy++;
-		#endif
+		WinCy++;
 		Flush_Line();
 		ScrollCounter++;	// must be done after flush line for correct counting
 	}

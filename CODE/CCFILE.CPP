@@ -495,14 +495,6 @@ int CCFileClass::Open(int rights)
 
 static CCFileClass Handles[10];
 
-#ifdef NEVER
-bool Set_Search_Drives(char const *)
-{
-	CCFileClass::Set_Search_Path(path);
-	return(true);
-}
-#endif
-
 int Open_File(char const *file_name, int mode)
 {
 	for (size_t index = 0; index < sizeof(Handles) / sizeof(Handles[0]); ++index) {
@@ -547,23 +539,6 @@ int Find_File(char const *file_name)
 	return(file.Is_Available());
 }
 
-#ifdef NEVER
-int Delete_File(char const *file_name)
-{
-	return(CCFileClass(file_name).Delete());
-}
-
-int Create_File(char const *file_name)
-{
-	return(CCFileClass(file_name).Create());
-}
-
-ULONG Load_Data(char const *name, VOID *ptr, ULONG size)
-{
-	return(CCFileClass(name).Read(ptr, size));
-}
-#endif
-
 VOID * Load_Alloc_Data(char const *name, int )
 {
 	CCFileClass file(name);
@@ -579,13 +554,6 @@ ULONG File_Size(int handle)
 	return(0);
 }
 
-#ifdef NEVER
-ULONG Write_Data(char const *name, VOID const *ptr, ULONG size)
-{
-	return(CCFileClass(name).Write(ptr, size));
-}
-#endif
-
 ULONG Seek_File(int handle, LONG offset, int starting)
 {
 	if (handle != WW_ERROR && Handles[handle].Is_Open()) {
@@ -600,27 +568,6 @@ void WWDOS_Shutdown(void)
 		Handles[index].Set_Name(NULL);
 	}
 }
-
-#ifdef NEVER
-bool Multi_Drive_Search(bool on)
-{
-//	return(CCFileClass::Multi_Drive_Search(on));
-	return(on);
-}
-
-VOID WWDOS_Init(VOID)
-{
-}
-
-VOID WWDOS_Shutdown(VOID)
-{
-}
-
-int Find_Disk_Number(char const *)
-{
-	return(0);
-}
-#endif
 
 //ULONG cdecl Load_Uncompress(BYTE const *file, BuffType uncomp_buff, BuffType dest_buff, VOID *reserved_data)
 //{

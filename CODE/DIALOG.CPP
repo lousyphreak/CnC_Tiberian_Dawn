@@ -321,7 +321,6 @@ void Simple_Text_Print(char const *text, unsigned x, unsigned y, unsigned fore, 
 	static int		xspace=0;			// Spacing adjustment for font.
 	void const *	font=0;		// Font to use.
 
-////////////////#if (0)
  	static unsigned char _textfontpal[16][16] = {
 		{ 0,  0,  0,  0,   0,  0,  0,  0,   0,  0,  0,  0,   0,  0,  0,  0	},
 		{ 0, 26,  0,  0,   0,  0,  0,  0,   0,  0,  0, 27,  27, 26, 25, 24	},
@@ -352,7 +351,6 @@ void Simple_Text_Print(char const *text, unsigned x, unsigned y, unsigned fore, 
 	static unsigned char _textpalbright[16] = {
 		  0,  24, 2,  4,   0,  5,  0,  176, 127,0,  201,0,   0,  0,  0,  0
 	};
-///////////////////////#endif	//(0)
 
 	int				point;				// Requested font size.
 	int				shadow;				// Requested shadow value.

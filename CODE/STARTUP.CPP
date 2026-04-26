@@ -59,11 +59,6 @@ void Read_Setup_Options(char *config_data);
 
 bool VideoBackBufferAllowed = true;
 
-extern "C"{
-	bool Detect_MMX_Availability(void);
-	void Init_MMX(void);
-}
-
 namespace
 {
 const char* const kStartupGameDataBaseMixfiles[] = {
@@ -231,36 +226,6 @@ void print_missing_game_data_error(int argc, char* argv[], const char* executabl
 }
 
 
-
-#if (0)
-char				WibbleBuffer[1024*1024];
-
-void CD_Test(void)
-{
-	HANDLE		handle;
-	DWORD			size;
-
-	handle= CreateFile("e:\\scores.mix", GENERIC_READ, FILE_SHARE_READ,
-												NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-	if (handle== INVALID_HANDLE_VALUE){
-		return;
-	}
-
-	unsigned bytes_read;
-
-	do{
-		bytes_read = ReadFile (handle , WibbleBuffer , 1024*1024, &size, NULL);
-
-	}while(size == 1024*1024);
-
-
-	CloseHandle (handle);
-}
-#endif	//(0)
-
-
-
 /***********************************************************************************************
  * main -- Initial startup routine (preps library systems).                                    *
  *                                                                                             *
@@ -413,15 +378,6 @@ int main(int argc, char *argv[])
 	//////////////////////////////////////if(!ForceEnglish) KBLanguage = 1;
 #endif
 
-
-		/*
-		** Check for existance of MMX support on the processor
-		*/
-		if (Detect_MMX_Availability()){
-			//MessageBox(NULL, "MMX extensions detected - enabling MMX support.", "Command & Conquer",MB_ICONEXCLAMATION|MB_OK);
-			MMXAvailable = true;
-		}
-
 		/*
 		** If there is loads of memory then use uncompressed shapes
 		*/
@@ -559,14 +515,6 @@ int main(int argc, char *argv[])
 			** Install the memory error handler
 			*/
 			Memory_Error = &Memory_Error_Handler;
-
-			/*
-			** Initialise MMX support if its available
-			*/
-			CCDebugString ("C&C95 - Entering MMX detection.\n");
-			if (MMXAvailable){
-				Init_MMX();
-			}
 
 			CCDebugString ("C&C95 - Creating mouse class.\n");
 			WWMouse = new WWMouseClass(&SeenBuff, 32, 32);

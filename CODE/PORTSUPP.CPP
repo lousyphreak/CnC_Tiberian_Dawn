@@ -23,7 +23,6 @@
 #include <cstdio>
 
 char* __nheapbeg = nullptr;
-char CPUType = 0;
 
 static int Approx_Multiply_Shift7(int factor, int distance)
 {
@@ -144,24 +143,6 @@ void Hex_Dump_Data(char* buffer, int length)
 		}
 		putchar('\n');
 	}
-}
-
-extern "C" bool Detect_MMX_Availability(void)
-{
-#if defined(__MMX__) || defined(_M_IX86_FP) || defined(__x86_64__) || defined(_M_X64)
-	return true;
-#else
-	return false;
-#endif
-}
-
-extern "C" void Init_MMX(void)
-{
-}
-
-uint32_t Get_EAX(void)
-{
-	return 0;
 }
 
 extern "C" void ModeX_Blit(GraphicBufferClass* source)

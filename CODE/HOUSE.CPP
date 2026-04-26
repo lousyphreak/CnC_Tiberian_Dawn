@@ -960,26 +960,6 @@ void HouseClass::AI(void)
 	**	half strength take a little bit of damage.
 	*/
 	if (DamageTime.Expired()) {
-
-/*
-**	No free harvesters for computer or player. - 8/16/95
-*/
-#ifdef OBSOLETE
-		/*
-		**	Replace the last harvester if there is a refinery present.
-		*/
-		if (GameToPlay == GAME_NORMAL &&
-			Frame > 5 &&
-			(!IsHuman && BuildLevel <= 6) &&
-			(ActiveBScan & STRUCTF_REFINERY) != 0 &&
-			(UScan & UNITF_HARVESTER) == 0 &&
-			!IsFreeHarvester) {
-
-			IsFreeHarvester = true;
-			FreeHarvester = TICKS_PER_MINUTE * 2;
-		}
-#endif
-
 		/*
 		**	If a free harvester is to be created and the time is right, then create
 		**	the harvester and clear the free harvester pending flag.
@@ -1211,19 +1191,6 @@ void HouseClass::AI(void)
 		}
 	}
 
-#ifdef NEVER
-	/*
-	** The following logic deals with the nuclear warhead state machine.  It
-	** handles all the different stages of the temple firing and the rocket
-	** travelling up and down.  The rocket explosion is handled by the anim
-	** which is attached to the bullet.
-	*/
-	if (!IsHuman && NukePresent) {
-		Special_Weapon_AI(SPC_NUCLEAR_BOMB);
-
-	}
-#endif
-
 	/*
 	** Special win/lose check for multiplayer games; by-passes the
 	** trigger system.  We must wait for non-zero frame, because init
@@ -1366,22 +1333,6 @@ void HouseClass::AI(void)
 	if (PlayerPtr == this && IsRecalcNeeded) {
 		IsRecalcNeeded = false;
 		Map.Recalc();
-
-#ifdef NEVER
-		/*
-		**	Remove the ion cannon if necessary.
-		*/
-		if (IonCannon.Is_Present() && !(BScan & STRUCTF_EYE)) {
-			IonCannon.Remove();
-		}
-
-		/*
-		**	Remove the nuclear bomb if necessary.
-		*/
-		if (NukeStrike.Is_Present() && !(BScan & STRUCTF_TEMPLE)) {
-			NukeStrike.Remove();
-		}
-#endif
 
 		/*
 		**	This placement might affect any prerequisite requirements for construction
@@ -2392,21 +2343,6 @@ bool HouseClass::Place_Special_Blast(SpecialWeaponType id, CELL cell)
 
 		case SPC_NUCLEAR_BOMB:
 			if (NukeStrike.Is_Ready()) {
-
-
-#ifdef NEVER
-				/*
-				**	Scatter the nuclear bomb impact point into an adjacent cell.
-				*/
-				for (;;) {
-					CELL newcell = Adjacent_Cell(cell, Random_Pick(FACING_N, FACING_COUNT));
-					if (Map.In_Radar(newcell)) {
-						cell = newcell;
-						break;
-					}
-				}
-#endif
-
 				/*
 				**	Search for a suitable launch site for this missile.
 				*/
@@ -2672,162 +2608,6 @@ bool HouseClass::Manual_Place(BuildingClass * builder,  BuildingClass * object)
 }
 
 
-#ifdef OBSOLETE
-/***********************************************************************************************
- * HouseClass::Init_Ion_Cannon -- Initialize the ion cannon countdown.                         *
- *                                                                                             *
- *    This routine will initiate the ion cannon charging countdown. It will add the ion        *
- *    cannon to the sidebar if it isn't there and it is specified to be added.                 *
- *                                                                                             *
- * INPUT:   first_time  -- Set to true if the ion cannon must be added to the sidebar.         *
- *                                                                                             *
- * OUTPUT:  none                                                                               *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   05/18/1995 JLB : commented                                                                *
- *=============================================================================================*/
-void HouseClass::Init_Ion_Cannon(SpecialControlType control)
-{
-	Validate();
-	switch (control) {
-		case CONTROL_RESET:
-			if (IonCannonPresent) {
-				IonOldStage = -1;
-				IonControl.Set(ION_CANNON_GONE_TIME);
-				if (PlayerPtr == this) {
-					Map.Add(RTTI_SPECIAL, SPC_ION_CANNON);
-					if (!ScenarioInit) {
-						Speak(VOX_ION_CHARGING);
-					}
-				}
-			}
-			break;
-
-		/*
-		**	Adds the special no-prerequisite ion cannon option.
-		*/
-		case CONTROL_ONE_TIME:
-			if (!IonCannonPresent) {
-				Init_Ion_Cannon(CONTROL_ADD);
-				IonOneTimeFlag = true;
-			}
-			break;
-
-		/*
-		**	Adds the normal legitimate ion cannon option. If there was
-		**	already a one-time ion cannon available, the charging state
-		**	is NOT interrupted.
-		*/
-		case CONTROL_ADD:
-			IonOneTimeFlag = false;
-			if (!IconCannonPresent) {
-				IonCannonPresent = true;
-				IonReady = false;
-				Init_Ion_Cannon(CONTROL_RESET);
-			}
-			break;
-
-		case CONTROL_REMOVE:
-			break;
-	}
-
-
-	if (!(first_time && IonCannonPresent)) {
-
-		if (IonCannonPresent && IonOneTimeFlag) {
-			IonOneTimeFlag = false;
-			if (this == PlayerPtr) Map.Recalc();
-			return;
-		}
-
-		if (first_time && this == PlayerPtr) {
-			Map.Add(RTTI_SPECIAL, SPC_ION_CANNON);
-		}
-
-		if (!ScenarioInit) {
-			if (this == PlayerPtr) {
-				Speak(VOX_ION_CHARGING);
-			}
-		}
-
-		IonControl.Set(ION_CANNON_GONE_TIME);
-		IonCannonPresent = true;
-		IonReady = false;
-		IonOldStage = -1;
-		IonOneTimeFlag = one_time_effect;
-	} else {
-	 	if (first_time && IonCannonPresent && !one_time_effect && IonOneTimeFlag) {
-			IonOneTimeFlag	= false;
-		}
-	}
-}
-#ifdef NEVER
-void HouseClass::Init_Ion_Cannon(bool first_time, bool one_time_effect)
-{
-	Validate();
-	if (!(first_time && IonCannonPresent)) {
-
-		if (IonCannonPresent && IonOneTimeFlag) {
-			IonOneTimeFlag = false;
-			if (this == PlayerPtr) Map.Recalc();
-			return;
-		}
-
-		if (first_time && this == PlayerPtr) {
-			Map.Add(RTTI_SPECIAL, SPC_ION_CANNON);
-		}
-
-		if (!ScenarioInit) {
-			if (this == PlayerPtr) {
-				Speak(VOX_ION_CHARGING);
-			}
-		}
-
-		IonControl.Set(ION_CANNON_GONE_TIME);
-		IonCannonPresent = true;
-		IonReady = false;
-		IonOldStage = -1;
-		IonOneTimeFlag = one_time_effect;
-	} else {
-	 	if (first_time && IonCannonPresent && !one_time_effect && IonOneTimeFlag) {
-			IonOneTimeFlag	= false;
-		}
-	}
-}
-#endif
-
-
-/***********************************************************************************************
- * HouseClass::Remove_Ion_Cannon -- Disables the ion cannon.                                   *
- *                                                                                             *
- *    This routine will disable the ion cannon. It is called when the ion cannon cannot        *
- *    establish a command link to the ground (usually when there is insufficient power).       *
- *                                                                                             *
- * INPUT:   none                                                                               *
- *                                                                                             *
- * OUTPUT:  none                                                                               *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   05/18/1995 JLB : commented                                                                *
- *=============================================================================================*/
-void HouseClass::Remove_Ion_Cannon(void)
-{
-	Validate();
-	if (IonCannonPresent) {
-		IonCannonPresent = false;
-		IonOneTimeFlag = false;
-		IonReady = false;
-		IonControl.Clear();
-		IonOldStage = -1;
-	}
-}
-#endif
-
-
 /***************************************************************************
  * HouseClass::Clobber_All -- removes house & all its objects              *
  *                                                                         *
@@ -2888,180 +2668,6 @@ void HouseClass::Clobber_All(void)
 
 	delete this;
 }
-
-
-#ifdef NEVER
-/***********************************************************************************************
- * HouseClass::Init_Nuke_Bomb -- Adds (if necessary) the atom bomb to the sidebar.             *
- *                                                                                             *
- *    Use this routine whenever a piece of atom bomb has been discovered (also at scenario     *
- *    start). It will add the nuclear bomb button to the sidebar if necessary.                 *
- *                                                                                             *
- * INPUT:   none                                                                               *
- *                                                                                             *
- * OUTPUT:  none                                                                               *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   05/18/1995 JLB : commented                                                                *
- *=============================================================================================*/
-void HouseClass::Init_Nuke_Bomb(bool first_time, bool one_time_effect)
-{
-	Validate();
-	if (!first_time || !NukePresent) {
-
-		if (NukePresent && NukeOneTimeFlag) {
-			NukeOneTimeFlag = false;
-			if (this == PlayerPtr) Map.Recalc();
-			return;
-		}
-
-		if (first_time && this == PlayerPtr) {
-			Map.Add(RTTI_SPECIAL, SPC_NUCLEAR_BOMB);
-		}
-
-		NukeControl.Set(NUKE_GONE_TIME);
-		NukePresent = true;
-		NukeReady = false;
-		NukeOldStage = -1;
-		NukeOneTimeFlag = one_time_effect;
-
-	} else {
-		if (!one_time_effect && NukeOneTimeFlag) {
-			NukeOneTimeFlag = false;
-		}
-	}
-}
-
-
-/***********************************************************************************************
- * HouseClass::Remove_Nuke_Bomb -- Removes the nuclear bomb from the sidebar.                  *
- *                                                                                             *
- *    This routine will remove the nuclear bomb from the sidebar. It should be called when     *
- *    the nuclear strike has been launched.                                                    *
- *                                                                                             *
- * INPUT:   none                                                                               *
- *                                                                                             *
- * OUTPUT:  none                                                                               *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   05/18/1995 JLB : commented                                                                *
- *   07/25/1995 JLB : Handles recharge reset logic.                                            *
- *=============================================================================================*/
-void HouseClass::Remove_Nuke_Bomb(void)
-{
-	Validate();
-	if (NukePresent && !NukeOneTimeFlag) {
-		NukePresent = false;
-		NukeControl.Clear();
-		NukeOldStage = -1;
-		NukeReady = false;
-	}
-}
-
-
-/***********************************************************************************************
- * HouseClass::Init_Air_Strike -- Add (or reset) the air strike sidebar button.                *
- *                                                                                             *
- *    This routine will activate (add if so indicated) the air strike button to the sidebar.   *
- *    Call this routine when events indicate that a special air strike is available.           *
- *                                                                                             *
- * INPUT:   first_time  -- If the air strike button is to be added, then this will be true.    *
- *                                                                                             *
- * OUTPUT:  none                                                                               *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   05/18/1995 JLB : commented                                                                *
- *=============================================================================================*/
-void HouseClass::Init_Air_Strike(bool first_time, bool one_time_effect)
-{
-	Validate();
-	if (!(first_time && AirPresent)) {
-
-		if (AirPresent && AirOneTimeFlag) {
-			AirOneTimeFlag = false;
-			AirPresent		= false;
-			Map.Recalc();
-			return;
-		}
-
-		if (first_time) {
-			if (PlayerPtr == this) {
-				Map.Add(RTTI_SPECIAL, SPC_AIR_STRIKE);
-			}
-			AirControl.Set(0);
-		} else {
-			AirControl.Set(AIR_CANNON_GONE_TIME);
-		}
-
-		AirReady 			= first_time;
-		AirPresent 			= true;
-		AirOldStage 		= -1;
-		AirOneTimeFlag		= one_time_effect;
-
-		if (AirReady && !IsHuman) {
-			Special_Weapon_AI(SPC_AIR_STRIKE);
-		}
-	} else {
-	 	if (first_time && AirPresent && !one_time_effect && AirOneTimeFlag) {
-			AirOneTimeFlag	= false;
-		}
-	}
-}
-
-
-/***********************************************************************************************
- * HouseClass::Remove_Air_Strike -- Removes the air strike button from the sidebar.            *
- *                                                                                             *
- *    This routine will remove the air strike button from the sidebar. Call this routine when  *
- *    the air strike has been launched.                                                        *
- *                                                                                             *
- * INPUT:   none                                                                               *
- *                                                                                             *
- * OUTPUT:  none                                                                               *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   05/18/1995 JLB : commented                                                                *
- *=============================================================================================*/
-void HouseClass::Remove_Air_Strike(void)
-{
-	Validate();
-	AirPresent = false;
-	AirReady = false;
-	AirControl.Clear();
-	AirOldStage = -1;
-}
-
-
-/***********************************************************************************************
- * HouseClass::Make_Air_Strike_Available -- Make the airstrike available.                      *
- *                                                                                             *
- *    This routine will make the airstrike available. Typically, this results in a new icon    *
- *    added to the sidebar.                                                                    *
- *                                                                                             *
- * INPUT:   present  -- The the airstrike being added?                                         *
- *                                                                                             *
- * OUTPUT:  none                                                                               *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   06/20/1995 JLB : Created.                                                                 *
- *=============================================================================================*/
-void HouseClass::Make_Air_Strike_Available(bool present, bool one_time_effect)
-{
-	Validate();
-	Init_Air_Strike(true, one_time_effect);
-	AirPresent = present;
-}
-#endif
 
 
 /***********************************************************************************************
@@ -3847,48 +3453,6 @@ void HouseClass::Multiplayer_Defeated(void)
 			MultiplayerScore[score_index[i]].Color = MultiplayerID_To_ColorIndex(MultiplayerID[i]);
 		}
 
-#if 0	// (This is the old method of tallying scores:
-		/*---------------------------------------------------------------------
-		Tally up the scores for this game:
-		- For each house:
-		  - If this house is human & wasn't defeated, its the winner
-		  - If this house was defeated, find out who did it & increment their
-		    Kills value.
-		---------------------------------------------------------------------*/
-		for (house = HOUSE_MULTI1; house < (HOUSE_MULTI1 + MultiplayerMaxPlayers); house++) {
-			hptr = HouseClass::As_Pointer(house);
-			if (!hptr) continue;
-
-			if (!hptr->IsDefeated) {
-
-				/*...............................................................
-				If this is the winning house, find which player it was & increment
-				their 'Wins' value
-				...............................................................*/
-				if (hptr->IsHuman) {
-					for (i = 0; i < MultiplayerPlayerCount; i++) {
-						if (house == MultiplayerHouses[i]) {
-							MultiplayerScore[score_index[i]].Wins++;
-							MultiplayerWinner = score_index[i];
-						}
-					}
-				}
-			} else {
-
-				/*..................................................................
-				This house was defeated; find which player who defeated him & increment
-				his 'Kills' value for this game
-				..................................................................*/
-				for (i = 0; i < MultiplayerPlayerCount; i++) {
-					if (hptr->WhoLastHurtMe == MultiplayerHouses[i]) {
-						MultiplayerScore[score_index[i]].Kills[MultiplayerCurrentGame]++;
-					}
-				}
-			}
-		}
-
-#else	// This is the new method:
-
 		/*---------------------------------------------------------------------
 		Tally up the scores for this game:
 		- For each player:
@@ -3919,7 +3483,6 @@ void HouseClass::Multiplayer_Defeated(void)
 					hptr->BuildingsKilled[house];
 			}
 		}
-#endif
 
 		/*---------------------------------------------------------------------
 		Destroy all the IPX connections, since we have to go through the rest
@@ -4066,24 +3629,6 @@ void HouseClass::Blowup_All(void)
 			}
 		}
 	}
-
-#ifdef NEVER
-	/*
-	**	Just delete the teams & triggers for this house.
-	*/
-	for (i = 0; i < TeamTypes.Count(); i++) {
-		if (TeamTypes.Ptr(i)->House == Class->House) {
-			delete TeamTypes.Ptr(i);
-			i--;
-		}
-	}
-	for (i = 0; i < Triggers.Count(); i++) {
-		if (Triggers.Ptr(i)->House == Class->House) {
-			delete Triggers.Ptr(i);
-			i--;
-		}
-	}
-#endif
 }
 
 

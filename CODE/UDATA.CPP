@@ -1500,66 +1500,6 @@ UnitType UnitTypeClass::From_Name(char const *name)
 }
 
 
-#ifdef SCENARIO_EDITOR
-/***********************************************************************************************
- * UnitTypeClass::Display -- Displays a generic unit shape.                                    *
- *                                                                                             *
- *    This routine displays a generic representation of a unit of this                         *
- *    type. Typically, it is used when adding objects to the game map.                         *
- *                                                                                             *
- * INPUT:   x,y   -- Coordinate to render the unit shape.                                      *
- *                                                                                             *
- *          window-- Window to render within.                                                  *
- *                                                                                             *
- *          house -- House to render the unit colors.                                          *
- *                                                                                             *
- * OUTPUT:  none                                                                               *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   05/14/1994 JLB : Created.                                                                 *
- *   11/08/1994 JLB : Handles chunky type vehicles now.                                        *
- *=============================================================================================*/
-void UnitTypeClass::Display(int x, int y, WindowNumberType window, HousesType house) const
-{
-	int shape = 0;
-	void const * ptr = Get_Cameo_Data();
-	if (!ptr) {
-		ptr = Get_Image_Data();
-		shape = IsChunkyShape ? 0 : 5;
-	}
-	CC_Draw_Shape(ptr, shape, x, y, window, SHAPE_FADING|SHAPE_CENTER|SHAPE_WIN_REL, HouseTypeClass::As_Reference(house).RemapTable);
-}
-
-
-/***********************************************************************************************
- * UnitTypeClass::Prep_For_Add -- Prepares scenario editor to add unit.                        *
- *                                                                                             *
- *    This routine is used to prepare the generic object adder dialog                          *
- *    box so that it will be able to add a unit object.                                        *
- *                                                                                             *
- * INPUT:   none                                                                               *
- *                                                                                             *
- * OUTPUT:  none                                                                               *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   05/23/1994 JLB : Created.                                                                 *
- *   06/04/1994 JLB : Uses map editing interface functions.                                    *
- *=============================================================================================*/
-void UnitTypeClass::Prep_For_Add(void)
-{
-	for (UnitType index = UNIT_FIRST; index < UNIT_COUNT; index++) {
-		if (As_Reference(index).Get_Image_Data() != NULL) {
-			Map.Add_To_List(&As_Reference(index));
-		}
-	}
-}
-#endif
-
-
 /***********************************************************************************************
  * UnitTypeClass::One_Time -- Performs one time processing for unit type class objects.        *
  *                                                                                             *

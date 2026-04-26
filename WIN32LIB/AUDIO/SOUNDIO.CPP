@@ -362,14 +362,6 @@ static int32_t  Stream_Sample_Vol(void *buffer, int32_t size, int32_t (*callback
 
 
 
-#if (0)
-static int32_t  Stream_Sample(void *buffer, int32_t size, int32_t (*callback)(int16_t id, int16_t *odd, void **buffer, int32_t *size), int32_t handle)
-{
-	return Stream_Sample_Vol(buffer, size, callback, 0xFF, handle);
-}
-#endif
-
-
 /***********************************************************************************************
  * File_Stream_Sample -- Streams a sample directly from a file.                                *
  *                                                                                             *

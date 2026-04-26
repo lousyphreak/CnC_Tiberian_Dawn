@@ -474,35 +474,6 @@ void DriveClass::Assign_Destination(TARGET target)
 	*/
 	if (target == NavCom) return;
 
-#ifdef NEVER
-	UnitClass 		*tunit;		// Destination unit pointer.
-
-	/*
-	** When in move mode, a map position may really indicate
-	**	a unit to guard.
-	*/
-	if (Is_Target_Cell(target)) {
-		cell = As_Cell(target);
-
-		tunit = Map[cell].Cell_Unit();
-		if (tunit) {
-
-			/*
-			**	Prevent targeting of itself.
-			*/
-			if (tunit != this) {
-				target = tunit->As_Target();
-			}
-		} else {
-
-			tbuilding = Map[cell].Cell_Building();
-			if (tbuilding) {
-				target = tbuilding->As_Target();
-			}
-		}
-	}
-#endif
-
 	/*
 	**	For harvesting type vehicles, it might go into a dock and unload procedure
 	**	when the harvester is full and an empty refinery is selected as a target.
@@ -789,18 +760,6 @@ void DriveClass::Per_Cell_Process(bool center)
 		Path[0] = FACING_NONE;
 	}
 
-#ifdef NEVER
-	/*
-	**	A "lemon" vehicle will have a tendency to break down as
-	**	it moves about the terrain.
-	*/
-	if (Is_A_Lemon) {
-		if (Random_Pick(1, 4) == 1) {
-			Take_Damage(1);
-		}
-	}
-#endif
-
 	Lay_Track();
 
 	FootClass::Per_Cell_Process(center);
@@ -849,20 +808,6 @@ bool DriveClass::Start_Of_Move(void)
 		}
 		return(false);		// Why is it calling this routine!?!
 	}
-
-#ifdef NEVER
-	/*
-	**	Movement start logic can't begin until a unit that requires
-	**	a locked down turret gets to a locked down state (i.e., the
-	**	turret rotation stops.
-	*/
-	if (ClassF & CLASSF_LOCKTURRET) {
-		Set_Secondary_Facing(facing<<5);
-		if (Is_Rotating) {
-			return(true);
-		}
-	}
-#endif
 
 	/*
 	**	Reduce the path length if the target is a unit and the
@@ -965,17 +910,6 @@ bool DriveClass::Start_Of_Move(void)
 		IsTurretLockedDown = true;
 	}
 
-#ifdef NEVER
-	/*
-	**	If the turret needs to match the body's facing before
-	**	movement can occur, then start it's rotation and
-	**	don't start a movement track until it is aligned.
-	*/
-	if (!Ok_To_Move(BodyFacing)) {
-		return(true);
-	}
-#endif
-
 	/*
 	**	Determine the coordinate of the next cell to move into.
 	*/
@@ -1065,17 +999,6 @@ bool DriveClass::Start_Of_Move(void)
 		ground = Map[destcell].Land_Type();
 		speed = Ground[ground].Cost[Class->Speed];
 		if (!speed) speed = 128;
-
-#ifdef NEVER
-		/*
-		**	Set the jiggle flag if the terrain would cause the unit
-		**	to jiggle when travelled over.
-		*/
-		BaseF &= ~BASEF_JIGGLE;
-		if (Ground[ground].Jiggle) {
-			BaseF |= BASEF_JIGGLE;
-		}
-#endif
 
 		/*
 		**	A damaged unit has a reduced speed.
@@ -1483,22 +1406,6 @@ void DriveClass::Fixup_Path(PathType *path)
  *=============================================================================================*/
 void DriveClass::Lay_Track(void)
 {
-#ifdef NEVER
-	static IconCommandType *_trackdirs[8] = {
-		TrackN_S,
-		TrackNE_SW,
-		TrackE_W,
-		TrackNW_SE,
-		TrackN_S,
-		TrackNE_SW,
-		TrackE_W,
-		TrackNW_SE
-	};
-
-	if (!(ClassF & CLASSF_TRACKS)) return;
-
-	Icon_Install(Coord_Cell(Coord), _trackdirs[Facing_To_8(BodyFacing)]);
-#endif
 }
 
 

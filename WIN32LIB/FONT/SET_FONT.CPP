@@ -83,12 +83,6 @@ void *  Set_Font(void const *fontptr)
 		FontHeight = *(blockptr + FONTINFOMAXHEIGHT);
 		FontWidth  = *(blockptr + FONTINFOMAXWIDTH);
 		//Draw_Char_Setup();
-
-#if FALSE
-		WindowLines = WinH / FontHeight;
-		WindowWidth = WinW << 3;
-		WindowColumns = WindowWidth / FontWidth;
-#endif
 	}
 
 	return(oldfont);

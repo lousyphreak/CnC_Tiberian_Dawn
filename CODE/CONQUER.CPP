@@ -187,70 +187,10 @@ void Main_Game(int argc, char *argv[])
 
 		InMainLoop = true;
 
-#ifdef SCENARIO_EDITOR
-		/*
-		**	Scenario-editor version of main-loop processing
-		*/
-		for (;;) {
-
-			/*
-			**	Non-scenario-editor-mode: call the game's main loop
-			*/
-			if (!Debug_Map) {
-				TotalLocks=0;
-				if (Main_Loop()) {
-					break;
-				}
-
-				if (SpecialDialog != SDLG_NONE) {
-					//Stop_Profiler();
-					switch (SpecialDialog) {
-						case SDLG_SPECIAL:
-							Map.Help_Text(TXT_NONE);
-							Map.Override_Mouse_Shape(MOUSE_NORMAL, false);
-							Special_Dialog();
-							Map.Revert_Mouse_Shape();
-							SpecialDialog = SDLG_NONE;
-							break;
-
-						case SDLG_OPTIONS:
-							Map.Help_Text(TXT_NONE);
-							Map.Override_Mouse_Shape(MOUSE_NORMAL, false);
-							Options.Process();
-							Map.Revert_Mouse_Shape();
-							SpecialDialog = SDLG_NONE;
-							break;
-
-						case SDLG_SURRENDER:
-							Map.Help_Text(TXT_NONE);
-							Map.Override_Mouse_Shape(MOUSE_NORMAL, false);
-							if (Surrender_Dialog()) {
-								OutList.Add(EventClass(EventClass::DESTRUCT));
-							}
-							SpecialDialog = SDLG_NONE;
-							Map.Revert_Mouse_Shape();
-							break;
-
-						default:
-							break;
-					}
-				}
-			} else {
-
-				/*
-				**	Scenario-editor-mode: call the editor's main loop
-				*/
-				if (Map_Edit_Loop()) {
-					break;
-				}
-			}
-		}
-#else
 		/*
 		**	Non-editor version of main-loop processing
 		*/
 		for (;;) {
-
 			/*
 			**	Call the game's main loop
 			*/
@@ -298,7 +238,7 @@ void Main_Game(int argc, char *argv[])
 				}
 			}
 		}
-#endif
+
 		//Stop_Profiler();
 		InMainLoop = false;
 
@@ -584,16 +524,6 @@ void Keyboard_Process(KeyNumType &input)
 				Handle_View(KN_To_VK(plain) - VK_F7, action);
 			}
 			break;
-#if (0)
- case VK_F11:
-	Winsock.Set_Protocol_UDP(FALSE);
-	break;
-
- case VK_F12:
-	Winsock.Set_Protocol_UDP(TRUE);
-	break;
-#endif	//(0)
-
 
 		/*
 		**	Control the custom team select state.
@@ -660,34 +590,6 @@ void Keyboard_Process(KeyNumType &input)
 		default:
 			break;
 	}
-
-#ifdef NEVER
-	FacingType	facing = KN_To_Facing(input);
-
-	/*
-	**	Scroll the map according to the cursor key pressed.
-	*/
-	if (facing != FACING_NONE) {
-		Map.Scroll_Map(facing);
-		input = 0;
-		facing = FACING_NONE;
-	}
-#endif
-
-#ifdef NEVER
-	/*
-	**	If the <TAB> key is pressed, then select the next object.
-	*/
-	if (input == KN_TAB) {
-		ObjectClass * obj = Map.Next_Object(CurrentObject);
-		if (obj) {
-			if (CurrentObject) {
-				CurrentObject->Unselect();
-			}
-		 	obj->Select();
-		}
-	}
-#endif
 
 #ifdef CHEAT_KEYS
 	if (Debug_Flag && input && (input & KN_RLSE_BIT) == 0) {
@@ -1377,12 +1279,9 @@ bool Main_Loop()
 	//
 	ProcessTimer.Set(0, true);
 
-
-#if 1
 	if (TrapCheckHeap) {
 		Debug_Trap_Check_Heap = true;
 	}
-#endif
 
 #ifdef CHEAT_KEYS
  Heap_Dump_Check( "After Trap" );
@@ -1572,405 +1471,6 @@ bool Main_Loop()
 }
 
 
-#ifdef SCENARIO_EDITOR
-/***************************************************************************
- * Map_Edit_Loop -- a mini-main loop for map edit mode only                *
- *                                                                         *
- * INPUT:                                                                  *
- *                                                                         *
- * OUTPUT:                                                                 *
- *                                                                         *
- * WARNINGS:                                                               *
- *                                                                         *
- * HISTORY:                                                                *
- *   10/19/1994 BR : Created.                                              *
- *=========================================================================*/
-bool Map_Edit_Loop(void)
-{
-	/*
-	**	Redraw the map.
-	*/
-	Map.Render();
-
-	/*
-	**	Get user input (keys, mouse clicks).
-	*/
-	KeyNumType input;
-
-	int x;
-	int y;
-	Map.Input(input, x, y);
-
-	/*
-	**	Process keypress.
-	*/
-	if (input) {
-		Keyboard_Process(input);
-	}
-
-	Call_Back();								// maintains Theme.AI() for music
-	Color_Cycle();
-
-	return(!GameActive);
-}
-
-
-/***************************************************************************
- * Go_Editor -- Enables/disables the map editor										*
- *                                                                         *
- * INPUT:                                                                  *
- *		flag		true = go into editor mode; false = go into game mode			*
- *                                                                         *
- * OUTPUT:                                                                 *
- *		none.																						*
- *                                                                         *
- * WARNINGS:                                                               *
- *		none.																						*
- *                                                                         *
- * HISTORY:                                                                *
- *   10/19/1994 BR : Created.                                              *
- *=========================================================================*/
-void Go_Editor(bool flag)
-{
-	/*
-	**	Go into Scenario Editor mode
-	*/
-	if (flag) {
-		Debug_Map = true;
-		Debug_Unshroud = true;
-
-		/*
-		** Un-select any selected objects
-		*/
-		Unselect_All();
-
-		/*
-		** Turn off the sidebar if it's on
-		*/
-		Map.Activate(0);
-
-		/*
-		** Reset the map's Button list for the new mode
-		*/
-		Map.Init_IO();
-
-		/*
-		** Force a complete redraw of the screen
-		*/
-		HiddenPage.Clear();
-		Map.Flag_To_Redraw(true);
-		Map.Render();
-
-	} else {
-
-		/*
-		**	Go into normal game mode
-		*/
-		Debug_Map = false;
-		Debug_Unshroud = false;
-
-		/*
-		** Un-select any selected objects
-		*/
-		Unselect_All();
-
-		/*
-		** Reset the map's Button list for the new mode
-		*/
-		Map.Init_IO();
-
-		/*
-		** Force a complete redraw of the screen
-		*/
-		HiddenPage.Clear();
-		Map.Flag_To_Redraw(true);
-		Map.Render();
-	}
-}
-
-#endif
-
-#if (0)
-#define VQ_THREAD_BUFFER_SIZE 1024*1024
-#define VQ_THREAD_BUFFER_CHUNK VQ_THREAD_BUFFER_SIZE/4
-unsigned char *VQThreadBuffer = NULL;
-volatile bool ThreadReading = false;
-uint32_t VQThreadBlockHead;
-uint32_t VQThreadBlockTail;
-uint32_t VQBytesLeft;
-uint32_t VQBytesRead;
-
-
-void Init_VQ_Threading(CCFileClass *file)
-{
-	if (!VQThreadBuffer){
-		VQThreadBuffer = new unsigned char [VQ_THREAD_BUFFER_SIZE];
-	}
-	Force_VM_Page_In(VQThreadBuffer, VQ_THREAD_BUFFER_SIZE);
-	VQThreadBlockHead = 0;
-	VQThreadBlockTail = 0;
-	VQBytesRead = 0;
-	VQBytesLeft = file->Size();
-}
-
-
-void Cleanup_VQ_Threading(void)
-{
-	while (ThreadReading){}
-	if (VQThreadBuffer){
-		delete VQThreadBuffer;
-		VQThreadBuffer = NULL;
-	}
-}
-
-uint32_t Thread_Read(void *file)
-{
-	int bytes_to_read;
-	int left_to_read;
-	int read_this_time;
-	uint32_t head;
-	int sleep_time;
-
-	CCFileClass *ccfile = (CCFileClass*)file;
-
-	bytes_to_read = MIN (VQBytesLeft, VQ_THREAD_BUFFER_CHUNK);
-
-	if (!bytes_to_read){
-		ThreadReading = false;
-		return(0);
-	}
-
-	left_to_read = bytes_to_read;
-
-	while (left_to_read){
-		read_this_time = MIN(8*1024, left_to_read);
-		//if (read_this_time & 3){
-			ccfile->Read(VQThreadBuffer+VQThreadBlockHead, read_this_time);
-		//}else{
-		//	ccfile->Read(VQThreadBuffer+VQThreadBlockHead, read_this_time/4);
-		//	ccfile->Read(VQThreadBuffer+VQThreadBlockHead+read_this_time/4, read_this_time/4);
-		//	ccfile->Read(VQThreadBuffer+VQThreadBlockHead+(read_this_time/4)*2, read_this_time/4);
-		//	ccfile->Read(VQThreadBuffer+VQThreadBlockHead+(read_this_time/4)*3, read_this_time/4);
-		//}
-		VQThreadBlockHead += read_this_time;
-		left_to_read -= read_this_time;
-
-		head = VQThreadBlockHead;
-		if (head<VQThreadBlockTail) head+= VQ_THREAD_BUFFER_SIZE;
-		sleep_time = head - VQThreadBlockTail;
-		sleep_time = sleep_time/ (VQ_THREAD_BUFFER_CHUNK/32);
-		sleep_time += 2;
-		if (sleep_time<1) sleep_time=1;
-		Sleep(sleep_time);
-	}
-
-	VQThreadBlockHead &= VQ_THREAD_BUFFER_SIZE-1;
-	VQBytesLeft -= bytes_to_read;
-	ThreadReading = false;
-	return (0);
-}
-
-
-
-void Read_VQ_Thread_Block(CCFileClass *file)
-{
-	HANDLE 	thread_handle;
-	DWORD		thread_id;
-	if (!ThreadReading){
-		//_beginthreadex (&Thread_Read, NULL, 16*1024, NULL);
-		ThreadReading = true;
-		thread_handle = CreateThread(NULL, 0, &Thread_Read, (void*)file, 0, &thread_id);
-		//SetThreadPriority (thread_handle, THREAD_PRIORITY_IDLE);
-
-		CloseHandle (thread_handle);
-	}
-}
-
-
-
-int32_t VQ_Thread_Read(CCFileClass *file, void *buffer, int32_t bytes)
-{
-	int32_t bytes_to_read;
-
-	do {
-		if (VQThreadBlockHead > VQThreadBlockTail){
-			bytes_to_read = MIN(bytes, VQThreadBlockHead-VQThreadBlockTail);
-
-		}else{
-			bytes_to_read = MIN(bytes, VQThreadBlockHead+VQ_THREAD_BUFFER_SIZE - VQThreadBlockTail);
-		}
-
-	}while(ThreadReading && bytes_to_read<bytes);
-
-
-	if (VQThreadBlockTail+bytes_to_read > VQ_THREAD_BUFFER_SIZE){
-
-		int first_chunk = VQ_THREAD_BUFFER_SIZE - VQThreadBlockTail;
-		int second_chunk = bytes_to_read - first_chunk;
-
-		memcpy (buffer, VQThreadBuffer + VQThreadBlockTail, first_chunk);
-		memcpy ((unsigned char*)buffer + first_chunk, VQThreadBuffer, second_chunk);
-	}else{
-		memcpy (buffer, VQThreadBuffer + VQThreadBlockTail, bytes_to_read);
-	}
-
-	VQThreadBlockTail += bytes_to_read;
-	VQThreadBlockTail &= VQ_THREAD_BUFFER_SIZE - 1;
-
-	uint32_t head = VQThreadBlockHead;
-	if (head<VQThreadBlockTail) head+= VQ_THREAD_BUFFER_SIZE;
-	if (head-VQThreadBlockTail < VQ_THREAD_BUFFER_CHUNK && !ThreadReading) Read_VQ_Thread_Block(file);
-
-	VQBytesRead += bytes_to_read;
-	return (bytes_to_read);
-
-}
-
-
-int32_t VQ_Thread_Seek(int32_t bytes)
-{
-	VQThreadBlockTail += bytes;
-	VQBytesRead += bytes;
-	return (VQBytesRead);
-}
-
-
-
-
-
-/***********************************************************************************************
- * MixFileHandler -- Handles VQ file access.                                                   *
- *                                                                                             *
- *    This routine is called from the VQ player when it needs to access the source file. By    *
- *    using this routine it is possible to virtualize the file system.                         *
- *                                                                                             *
- * INPUT:   vqa   -- Pointer to the VQA handle for this animation.                             *
- *                                                                                             *
- *          action-- The requested action to perform.                                          *
- *                                                                                             *
- *          buffer-- Optional buffer pointer as needed by the type of action.                  *
- *                                                                                             *
- *          nbytes-- The number of bytes (if needed) for this operation.                       *
- *                                                                                             *
- * OUTPUT:  Returns a value consistent with the action requested.                              *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   07/04/1995 JLB : Created.                                                                 *
- *=============================================================================================*/
-int32_t MixFileHandler(VQAHandle *vqa, int32_t action, void *buffer, int32_t nbytes)
-{
-	CCFileClass *file;
-	int32_t     error;
-
-	file = (CCFileClass *)vqa->VQAio;
-
-	/*
-	**	Perform the action specified by the stream command.
-	*/
-	switch (action) {
-
-		/*
-		** VQACMD_READ means read NBytes from the stream and place it in the
-		** memory pointed to by Buffer.
-		**
-		** Any error code returned will be remapped by VQA library into
-		** VQAERR_READ.
-		*/
-		case VQACMD_READ:
-			error = VQ_Thread_Read (file, buffer, nbytes);
-			//error = (file->Read(buffer, (unsigned short)nbytes) != (unsigned short)nbytes);
-			if (error == nbytes) error = 0;
-			break;
-
-		/*
-		**	VQACMD_WRITE is analogous to VQACMD_READ.
-		**
-		** Writing is not allowed to the VQA file, VQA library will remap the
-		** error into VQAERR_WRITE.
-		*/
-		case VQACMD_WRITE:
-			error = 1;
-			break;
-
-		/*
-		**	VQACMD_SEEK asks that you perform a seek relative to the current
-		** position. NBytes is a signed number, indicating seek direction
-		** (positive for forward, negative for backward). Buffer has no meaning
-		** here.
-		**
-		** Any error code returned will be remapped by VQA library into
-		** VQAERR_SEEK.
-		*/
-		case VQACMD_SEEK:
-			//error = (file->Seek(nbytes, SEEK_CUR) == -1);
-			VQ_Thread_Seek(nbytes);
-			error = 0;
-			break;
-
-		/*
-		**	VQACMD_OPEN asks that you open your stream for access.
-		*/
-		case VQACMD_OPEN:
-			file = new CCFileClass((char *)buffer);
-
-			if (file != NULL && file->Is_Available()) {
-				error = file->Open((char *)buffer, READ);
-
-				if (error != -1) {
-					vqa->VQAio = reinterpret_cast<uintptr_t>(file);
-					error = 0;
-					//file->Set_Buffer_Size(8*1024);
-				} else {
-					delete file;
-					file = 0;
-					error = 1;
-				}
-			} else {
-				error = 1;
-			}
-
-			if (error != -1){
-				Init_VQ_Threading(file);
-				Read_VQ_Thread_Block(file);
-				CountDownTimerClass timer;
-				timer.Set(60);
-				while (ThreadReading || timer.Time()){}
-			}
-			break;
-
-		case VQACMD_CLOSE:
-			Cleanup_VQ_Threading();
-			file->Close();
-			delete file;
-			file = 0;
-			vqa->VQAio = 0;
-			error = 0;
-			break;
-
-		/*
-		**	VQACMD_INIT means to prepare your stream for reading. This is used for
-		** certain streams that can't be read immediately upon opening, and need
-		** further preparation. This operation is allowed to fail; the error code
-		** will be returned directly to the client.
-		*/
-		case VQACMD_INIT:
-
-		/*
-		**	IFFCMD_CLEANUP means to terminate the transaction with the associated
-		** stream. This is used for streams that can't simply be closed. This
-		** operation is not allowed to fail; any error returned will be ignored.
-		*/
-		case VQACMD_CLEANUP:
-			error = 0;
-			break;
-	}
-
-	return(error);
-}
-#endif	//(0)
-//#if (0)
 /***********************************************************************************************
  * MixFileHandler -- Handles VQ file access.                                                   *
  *                                                                                             *
@@ -2573,7 +2073,6 @@ void CC_Texture_Fill (void const *shapefile, int shapenum, int xpos, int ypos, i
  *=============================================================================================*/
 void CC_Draw_Shape(void const * shapefile, int shapenum, int x, int y, WindowNumberType window, ShapeFlags_Type flags, void const * fadingdata, void const * ghostdata)
 {
-#if(TRUE)
 	int predoffset;
 	char				*shape_pointer;
 	void*			built_frame;
@@ -2637,7 +2136,6 @@ void CC_Draw_Shape(void const * shapefile, int shapenum, int x, int y, WindowNum
 //			Mono_Printf( "Overrun ShapeBuffer!!!!!!!!!\n" );
 		}
 	}
-#endif
 
 	WWDraw_Flush_Present();
 }
@@ -3052,12 +2550,6 @@ void Handle_View(int view, int action)
 #ifdef CHEAT_KEYS
 void Heap_Dump_Check( char const *string )
 {
-#if 0
-	struct _heapinfo h_info;
-	int heap_status;
-#endif
-
-
 	if ( !Debug_Trap_Check_Heap ) {	// check the heap?
 		return;
 	}
@@ -3067,72 +2559,6 @@ void Heap_Dump_Check( char const *string )
 	Smart_Printf( "%s\n", string );
 
 	Dump_Heap_Pointers();
-
-#if 0
-	heap_status = _heapset( 0xee );
-
-#if (1)
-	if ( heap_status == _HEAPOK ||
-		heap_status == _HEAPEMPTY ) {
-		Debug_Heap_Dump = false;
-		return;
-	}
-
-	h_info._pentry = NULL;
-
-	for(;;) {
-		heap_status = _heapwalk( &h_info );
-
-		if ( heap_status != _HEAPOK )
-			break;
-	}
-
-	if (heap_status != _HEAPEND &&
-		heap_status != _HEAPEMPTY) {
-#endif
-		h_info._pentry = NULL;
-
-		for(;;) {
-			heap_status = _heapwalk( &h_info );
-
-			if ( heap_status != _HEAPOK )
-				break;
-
-			Smart_Printf( " %s block at %Fp of size %4.4X\n",
-				(h_info._useflag == _USEDENTRY ? "USED" : "FREE"),
-				h_info._pentry, h_info._size );
-		}
-
-		Smart_Printf( " %d block at %Fp of size %4.4X\n",
-			h_info._useflag, h_info._pentry, h_info._size );
-
-		switch ( heap_status ) {
-//			case _HEAPEND:
-//				Smart_Printf( "OK - end of heap\n" );
-//				break;
-
-//			case _HEAPEMPTY:
-//				Smart_Printf( "OK - heap is empty\n" );
-//				break;
-
-			case _HEAPBADBEGIN:
-				Smart_Printf( "ERROR - heap is damaged\n" );
-				break;
-
-			case _HEAPBADPTR:
-				Smart_Printf( "ERROR - bad pointer to heap\n" );
-				break;
-
-			case _HEAPBADNODE:
-				Smart_Printf( "ERROR - bad node in heap\n" );
-				break;
-		}
-#if (1)
-	}
-#endif
-#endif
-
-//	Debug_Heap_Dump = false;
 }
 
 

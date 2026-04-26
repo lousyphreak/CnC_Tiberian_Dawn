@@ -138,27 +138,6 @@ static void* Load_Alloc_Data_From_Name(char const* filename)
 }
 
 #define ATTRACT_MODE_TIMEOUT	3600		// timeout for attract mode
-#if(0)
-
-long FAR PASCAL _export Start_Game_Proc(HWND hwnd, UINT message, UINT wParam, LONG lParam)
-{
-	switch (message) {
-		case WM_CREATE:
-			break;
-
-		case WM_COMMAND:
-			EndDialog(hwnd, TRUE);
-			AllDone = TRUE;
-			break;
-
-		case WM_DESTROY:
-			EndDialog(hwnd, TRUE);
-			break;
-	}
-	return(DefWindowProc(hwnd, message, wParam, lParam));
-}
-#endif
-
 
 extern bool Server_Remote_Connect(void);
 extern bool Client_Remote_Connect(void);
@@ -541,43 +520,6 @@ bool Init_Game(int , char *[])
 	CCDebugString ("C&C95 - About to register MOVIES.MIX\n");
 		if (!MoviesMix) MoviesMix = new MixFileClass("MOVIES.MIX");			// Never cached.
 //	}
-
-
-
-#if (0)
-
-	/*
-	** Extract a movie from a mixfile.
-	*/
-	char *file_ptr = (char*)Alloc (32 * 1024 * 1024, MEM_NORMAL);
-	CCFileClass whatever ("PINTLE.VQA");
-
-	int len = whatever.Size();
-
-	whatever.Open();
-
-	DWORD	actual;
-		HANDLE sfile = CreateFile("c:\\temp\\PINTLE.VQA", GENERIC_WRITE, 0,
-												NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-
-	if (sfile != INVALID_HANDLE_VALUE){
-		SetFilePointer (sfile, 0, NULL, FILE_END);
-
-		do{
-			whatever.Read (file_ptr, MIN (len, 1024*64));
-			WriteFile(sfile, file_ptr, MIN (len, 1024*64), &actual, NULL);
-			len -= MIN (len, 1024*64);
-		}while ( len >0 );
-
-		CloseHandle (sfile);
-	}
-
-	whatever.Close();
-
-	Free (file_ptr);
-
-#endif	//(0)
-
 
 
 	/*
@@ -1472,8 +1414,6 @@ bool Select_Game(bool fade)
 
 	/*
 	** Get a pointer to the compiler's random number seed.
-	**	the Get_EAX() must follow immediately after the srand(0) in order to save
-	**	the address of the random seed.  (Currently not used.)
 	*/
 	srand(0);
 	RandSeedPtr = &RandNumb;
@@ -1515,29 +1455,6 @@ bool Select_Game(bool fade)
 	srand(Seed);
 	RandNumb = Seed;
 	SimRandIndex = 0;
-#if (0)
-	DWORD	actual;
-		HANDLE sfile = CreateFile("random.txt", GENERIC_WRITE, 0,
-												NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-
-	if (sfile != INVALID_HANDLE_VALUE){
-		SetFilePointer (sfile, 0, NULL, FILE_END);
-
-		int minimum;
-		int maximum;
-		char whatever[80];
-		for ( int i=0 ; i<1000 ; i++){
-			minimum = rand();
-			maximum = rand();
-
-			sprintf (whatever, "%04x\n", Random_Pick(minimum, maximum));
-			WriteFile(sfile, whatever, strlen(whatever), &actual, NULL);
-		}
-		CloseHandle (sfile);
-	}
-#endif
-
-
 
 	/*
 	**	Load the scenario.  Specify variation 'A' for the editor; for the game,
@@ -1944,10 +1861,6 @@ bool Parse_Command_Line(int argc, char *argv[])
 	#else
 			puts("Command & Conquer (c) 1995, 1996 Westwood Studios\r\n"
 						"Parameters:\r\n"
-	#ifdef NEVER
-						"  CHEAT     = Enable debug keys.\r\n"
-						"  -EDITOR    = Enable scenario editor.\r\n"
-	#endif
 //						"  -CD<path> = Set search path for data files.\r\n"
 						"  -DESTNET  = Specify Network Number of destination system\r\n"
 						"              (Syntax: DESTNETxx.xx.xx.xx)\r\n"
@@ -1959,32 +1872,6 @@ bool Parse_Command_Line(int argc, char *argv[])
 						"  -ENGLISH  = Enable English keyboard compatibility.\r\n"
 #endif
 	//					"  -ELITE    = Advanced AI and combat characteristics.\r\n"
-	#ifdef NEVER
-						"  -O[options]= Special control options;\r\n"
-						"     1 : Tiberium grows.\r\n"
-						"     2 : Tiberium grows and spreads.\r\n"
-						"     A : Aggressive player unit defense enabled.\r\n"
-						"     B : Bargraphs always displayed.\r\n"
-						"     C : Capture the flag mode.\r\n"
-						"     E : Elite defense mode disable (attacker advantage).\r\n"
-						"     D : Deploy reversal allowed for construction yard.\r\n"
-						"     F : Fleeing from direct immediate threats is enabled.\r\n"
-						"     H : Hussled recharge time.\r\n"
-						"     G : Growth for Tiberium slowed in multiplay.\r\n"
-						"     I : Inert weapons -- no damage occurs.\r\n"
-						"     J : 7th grade sound effects.\r\n"
-						"     M : Monochrome debug messages.\r\n"
-						"     N : Name the civilians and buildings.\r\n"
-						"     P : Path algorithm displayed as it works.\r\n"
-						"     Q : Quiet mode (no sound).\r\n"
-						"     R : Road pieces are not added to buildings.\r\n"
-						"     T : Three point turns for wheeled vehicles.\r\n"
-						"     U : U can target and burn trees.\r\n"
-						"     V : Show target selection by opponent.\r\n"
-						"     X : Make a recording of a multiplayer game.\r\n"
-						"     Y : Play a recording of a multiplayer game.\r\n"
-						"     Z : Disaster containment team.\r\n"
-	#endif
 						"\r\n");
 	#endif
 	#endif
@@ -2226,15 +2113,6 @@ bool Parse_Command_Line(int argc, char *argv[])
 			continue;
 		}
 
-		/*
-		** Allow use of MMX instructions
-		*/
-		if (strstr(string,"-MMX")){
-			MMXAvailable = true;
-			continue;
-		}
-
-
 #ifdef CHEAT_KEYS
 		/*
 		**	Allow solo net play
@@ -2249,15 +2127,6 @@ bool Parse_Command_Line(int argc, char *argv[])
 		*/
 		if (strstr(string, "-SEED")) {
 			CustomSeed = (unsigned short)(atoi(string + strlen("SEED")));
-			continue;
-		}
-#endif
-
-#ifdef NEVER
-		/*
-		**	Handle the prog init differently in this case.
-		*/
-		if (strstr(string, "-V")) {
 			continue;
 		}
 #endif
@@ -2499,63 +2368,6 @@ void Parse_INI_File(void)
  *=============================================================================================*/
 int Version_Number(void)
 {
-#ifdef OBSOLETE
-	static bool initialized = false;
-	static int version;
-	static char const * date = __DATE__;
-	static char const * time = __TIME__;
-	static char const * months = "JANFEBMARAPRMAYJUNJULAUGSEPOCTNOVDEC";
-
-	if (!initialized) {
-		char * ptr;
-		char * tok;
-
-		/*
-		**	Fetch the month and place in the first two digit positions.
-		*/
-		strupr(date);
-		tok = strtok(date, " ");
-		ptr = strstr(months, tok);
-		if (ptr) {
-			version = (((ptr - months) / 3)+1) * 10000;
-		}
-
-		/*
-		**	Fetch the date and place that in the next two digit positions.
-		*/
-		tok = strtok(NULL, " ");
-		if (tok) {
-			version += atoi(tok) * 100;
-		}
-
-		/*
-		**	Fetch the time and place that in the last two digit positions.
-		*/
-		tok = strtok(time, ": ");
-		if (tok) {
-			version += atoi(tok);
-		}
-
-
-		/*
-		**	Fetch the virgin text file (if present).
-		*/
-		RawFileClass file("VERSION.TXT");
-		if (file.Is_Available()) {
-			file.Read(VersionText, sizeof(VersionText));
-			VersionText[sizeof(VersionText)-1] = '\0';
-			while (VersionText[sizeof(VersionText)-1] == '\r') {
-				VersionText[sizeof(VersionText)-1] = '\0';
-			}
-		} else {
-			VersionText[0] = '\0';
-		}
-
-		initialized = true;
-	}
-	return(version);
-#endif
-
 #ifdef WIN32
 
 #if (FRENCH)

@@ -512,9 +512,7 @@ void Read_MultiPlayer_Settings (void)
 	MultiplayerHouse = (HousesType)WWGetPrivateProfileInt("MultiPlayer", "Side",
 		HOUSE_GOOD, buffer);
 
-#if 1
 	TrapCheckHeap = WWGetPrivateProfileInt( "MultiPlayer", "CheckHeap", 0, buffer);
-#endif
 
 	/*------------------------------------------------------------------------
 	Read special recording playback values, to help find sync bugs

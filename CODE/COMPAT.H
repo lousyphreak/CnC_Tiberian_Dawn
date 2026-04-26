@@ -138,22 +138,6 @@ typedef enum MenuIndexType {
 #define	DKGRAY	GREY
 #define	LTGRAY	LTGREY
 
-#if 0
-typedef struct {
-	short	Width;			// Width of icons (pixels).
-	short	Height;			// Height of icons (pixels).
-	short	Count;			// Number of (logical) icons in this set.
-	short	Allocated;		// Was this iconset allocated?
-	int32_t	Size;				// Size of entire iconset memory block.
-	unsigned char * Icons;			// Offset from buffer start to icon data.
-	int32_t	Palettes;		// Offset from buffer start to palette data.
-	int32_t	Remaps;			// Offset from buffer start to remap index data.
-	int32_t	TransFlag;		// Offset for transparency flag table.
-	unsigned char * Map;				// Icon map offset (if present).
-} IControl_Type;
-#endif
-
-
 
 void Stuff_Key_Num ( int );
 

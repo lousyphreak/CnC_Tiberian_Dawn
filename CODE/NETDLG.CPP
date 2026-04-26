@@ -262,48 +262,6 @@ void Shutdown_Network (void)
 {
 	NetMgr.Shutdown();
 
-//
-// Note: The thought behind this section of code was that if the program
-// terminates early, without an EventClass::EXIT event, it still needs to
-// tell the other systems that it's gone, so it would send a SIGN_OFF packet.
-// BUT, this causes a sync bug if the systems are running slow and this system
-// is running ahead of the others; it will send the NET_SIGN_OFF >>before<<
-// the other system execute their EventClass::EXIT event, and the other systems
-// will kill the connection at some random Frame # & turn my stuff over to
-// the computer possibly at different times.
-// BRR, 10/29/96
-//
-#if (0)
-	/*------------------------------------------------------------------------
-	Broadcast a sign-off packet, by sending the packet over the Global Channel,
-	telling the IPX Manager that no ACK is required, and specifying a NULL
-	destination address.
-	------------------------------------------------------------------------*/
-	memset (&GPacket, 0, sizeof(GlobalPacketType));
-
-	GPacket.Command = NET_SIGN_OFF;
-	strcpy (GPacket.Name, MultiplayerName);
-
-	NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType), 0, NULL);
-	NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType), 0, NULL);
-
-	if (IsBridge && !Winsock.Get_Connected()) {
-		NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0, &BridgeNet);
-		NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 0, &BridgeNet);
-	}
-
-	/*------------------------------------------------------------------------
-	Wait for the packets to finish going out (or the Global Channel times out)
-	------------------------------------------------------------------------*/
-	for (;;) {
-		if (NetMgr.Global_Num_Send()==0) {
-			break;
-		}
-		NetMgr.Service();
-	}
-
-#endif	//(0)
-
 	/*------------------------------------------------------------------------
 	Delete our "meta-packet"
 	------------------------------------------------------------------------*/
@@ -5103,16 +5061,7 @@ static int Net_Fake_Join_Dialog(void)
 				GameStatisticsPacketSent = false;
 				process = false;
 				rc = -1;
-#if (0)
-				if (joinstate != JOIN_CONFIRMED) {
-					process = false;
-					rc = -1;
-				} else {
-					MultiplayerGameName[0] = 0;
-					joinstate = JOIN_NOTHING;
-					display = REDRAW_ALL;
-				}
-#endif	//(0)
+
 				break;
 
 			/*------------------------------------------------------------------

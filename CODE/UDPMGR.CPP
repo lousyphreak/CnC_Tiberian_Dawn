@@ -408,29 +408,6 @@ void UDPManagerClass::Set_Timing(uint32_t retrydelta, uint32_t maxretries, uint3
  *=========================================================================*/
 bool UDPManagerClass::Create_Connection(int id, char *name, UDPAddressClass *address)
 {
-#if (0)
-	char temp[80];
-
-	NetNumType num;
-	NetNodeType node;
-
-	address->Get_Address (num, node);
-
-	sprintf (temp, "Address:%02x %02x %02x %02x %02x %02x\n", node[0],
-														  node[1],
-														  node[2],
-														  node[3],
-														  node[4],
-														  node[5]);
-	CCDebugString (temp);
-
-	sprintf (temp, "Network:%02x %02x %02x %02x\n", num[0],
-														  num[1],
-														  num[2],
-														  num[3]);
-	CCDebugString (temp);
-#endif	//(0)
-
 	/*
 	----------------------- Error if IPX not installed -----------------------
 	*/
@@ -1015,22 +992,7 @@ int UDPManagerClass::Service(void)
 			packet goes into the Global Queue, or into one of the Private Queues
 			.....................................................................*/
 			packet = (CommHeaderType *)CurDataBuf;
-#if (0)
-char tempbuf[256];
 
-static char pcode [4][18]={
-	"PACKET_DATA_ACK",			// this is a data packet requiring an ACK
- 	"PACKET_DATA_NOACK",		// this is a data packet not requiring an ACK
-	"PACKET_ACK",					// this is an ACK for a packet
-	"PACKET_COUNT"				// for computational purposes
-};
-
-sprintf (tempbuf, "Received packet type %d, ID=%d, code=%s, length=%d \n", CurDataBuf[sizeof(CommHeaderType)],
-																						packet->PacketID,
-																						pcode[packet->Code],
-																						recv_length);
-CCDebugString (tempbuf);
-#endif	//(0)
 			if (packet->MagicNumber == GlobalChannel->Magic_Num()) {
 				/*..................................................................
 				Put the packet in the Global Queue

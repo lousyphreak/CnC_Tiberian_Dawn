@@ -64,45 +64,6 @@ class SidebarClass: public PowerClass
 		enum SideBarClassEnums {
 			BUTTON_ACTIVATOR=100,			// Button ID for the activator.
 			SIDEBARWIDTH = 80,
-#if 0
-			SIDE_X=RADAR_X,					// The X position of sidebar upper left corner.
-			SIDE_Y=RADAR_Y+RADAR_HEIGHT,	// The Y position of sidebar upper left corner.
-			SIDE_WIDTH=320-SIDE_X,			// Width of the entire sidebar (in pixels).
-			SIDE_HEIGHT=200-SIDE_Y,			// Height of the entire sidebar (in pixels).
-			TOP_HEIGHT=13,						// Height of top section (with repair/sell buttons).
-			COLUMN_ONE_X=SIDE_X+8,			// Sidestrip upper left coordinates...
-			COLUMN_ONE_Y=SIDE_Y+TOP_HEIGHT,
-			COLUMN_TWO_X=COLUMN_ONE_X+((SIDE_WIDTH-16)/2)+3,
-			COLUMN_TWO_Y=SIDE_Y+TOP_HEIGHT,
-#if (GERMAN | FRENCH)
-//BGA: changes to all buttons
-			BUTTON_ONE_WIDTH=20,				// Button width.
-			BUTTON_TWO_WIDTH=27,				// Button width.
-			BUTTON_THREE_WIDTH=26,			// Button width.
-			BUTTON_HEIGHT=9,					// Button height.
-			BUTTON_ONE_X=SIDE_X+2,			// Left button X coordinate.
-			BUTTON_ONE_Y=SIDE_Y+2,			// Left button Y coordinate.
-			BUTTON_TWO_X=SIDE_X+24,			// Right button X coordinate.
-			BUTTON_TWO_Y=SIDE_Y+2,			// Right button Y coordinate.
-			BUTTON_THREE_X=SIDE_X+53,			// Right button X coordinate.
-			BUTTON_THREE_Y=SIDE_Y+2,			// Right button Y coordinate.
-#else
-			BUTTON_ONE_WIDTH=32,				// Button width.
-			BUTTON_TWO_WIDTH=20,				// Button width.
-			BUTTON_THREE_WIDTH=20,			// Button width.
-			BUTTON_HEIGHT=9,					// Button height.
-			BUTTON_ONE_X=SIDE_X+2,			// Left button X coordinate.
-			BUTTON_ONE_Y=SIDE_Y+2,			// Left button Y coordinate.
-			BUTTON_TWO_X=SIDE_X+36,			// Right button X coordinate.
-			BUTTON_TWO_Y=SIDE_Y+2,			// Right button Y coordinate.
-			BUTTON_THREE_X=SIDE_X+58,			// Right button X coordinate.
-			BUTTON_THREE_Y=SIDE_Y+2,			// Right button Y coordinate.
-#endif
-			BUTTON_ONE_WIDTH=32,				// Button width.
-			BUTTON_TWO_WIDTH=20,				// Button width.
-			BUTTON_THREE_WIDTH=20,			// Button width.
-			BUTTON_HEIGHT=9,					// Button height.
-#endif
 			COLUMNS=2,							// Number of side strips on sidebar.
 		};
 

@@ -715,13 +715,6 @@ RadioMessageType TechnoClass::Receive_Message(RadioClass * from, RadioMessageTyp
 //				int step = Fixed_To_Cardinal(Techno_Type_Class()->Repair_Step(), param);
 				step = MAX(step, 1);
 				if (House->Available_Money() >= cost) {
-#ifdef OBSOLETE
-					if (Health_Ratio() >= 0x0100) {
-						Strength = Class_Of().MaxStrength;
-						from->Scatter(true);
-						return(RADIO_NEGATIVE);
-					}
-#endif
 					House->Spend_Money(cost);
 					Strength += step;
 					return(RADIO_ROGER);
@@ -1651,14 +1644,6 @@ void TechnoClass::AI(void)
 							}
 							break;
 
-#ifdef NEVER
-						case VISUAL_SHADOWY:
-							if (pre != Visual_Character(true)) {
-								Detach_All(false);
-							}
-							break;
-#endif
-
 						case VISUAL_HIDDEN:
 							Cloak = CLOAKED;
 							CloakingDevice.Set_Rate(0);
@@ -2551,13 +2536,6 @@ bool TechnoClass::Captured(HouseClass * newowner)
 		**	Remove from targeting computers.
 		*/
 		Detach_All(false);
-
-#ifdef NEVER
-		/*
-		**	Break off any radio contact.
-		*/
-		Transmit_Message(RADIO_OVER_OUT);
-#endif
 
 		/*
 		**	Change ownership now.

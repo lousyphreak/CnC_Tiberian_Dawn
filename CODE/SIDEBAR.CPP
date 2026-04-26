@@ -714,13 +714,6 @@ void SidebarClass::Draw_It(bool complete)
 			CC_Draw_Shape(SidebarShape1, 0, SideX, 158, WINDOW_MAIN, SHAPE_WIN_REL);
 			CC_Draw_Shape(SidebarShape2, 0, SideX, 158+118, WINDOW_MAIN, SHAPE_WIN_REL);
 
-	#if (0)
-			if ( complete ) {
-				LogicPage->Fill_Rect(SideX+Map.PowWidth, SideY, SideX+SideWidth-1, SideY+SideHeight-1, LTGREY);
-			}
-			LogicPage->Fill_Rect(SideX, SideY, SideX+SideWidth-1, SideY+TopHeight-1, LTGREY);
-			Draw_Box(SideX+Map.PowWidth, SideY+TopHeight, SideWidth-Map.PowWidth, SideHeight-TopHeight, BOXSTYLE_RAISED, false);
-	#endif	//(0)
 			//Repair.Draw_Me(true);
 			//Upgrade.Draw_Me(true);
 			//Zoom.Draw_Me(true);
@@ -844,29 +837,6 @@ void SidebarClass::AI(KeyNumType & input, int x, int y)
 		if (input == (BUTTON_UPGRADE|KN_BUTTON)) {
 			Sell_Mode_Control(-1);
 		}
-
-#ifdef NEVER
-//		int index = -1;
-		if (index != -1) {
-			/*
-			**	Display help text if the mouse is over a sidebar button.
-			*/
-			switch (index) {
-				default:
-				case 2:
-					Map.Help_Text(TXT_UPGRADE, -1, -1, PlayerPtr->Class->Color);
-					break;
-
-				case 1:
-					Map.Help_Text(PlayerPtr->Class->House == HOUSE_GOOD ? TXT_SELL : TXT_DEMOLISH, x, y, PlayerPtr->Class->Color);
-					break;
-
-				case 0:
-					Map.Help_Text(TXT_REPAIR, x, y, PlayerPtr->Class->Color);
-					break;
-			}
-		}
-#endif
 
 		if (redraw) {
 			//IsToRedraw = true;
@@ -1320,74 +1290,6 @@ void SidebarClass::StripClass::Deactivate(void)
 }
 
 
-#ifdef NEVER
-/***********************************************************************************************
- * sortfunc -- Utility routine that handles 'qsort' the strip buttons.                         *
- *                                                                                             *
- *    This routine is called by qsort() in order to sort the sidebar buttons. This sorting     *
- *    forces the sidebar buttons to always occur in the order that they can be built in,       *
- *    rather than the order that they were added to the sidebar list.                          *
- *                                                                                             *
- * INPUT:   ptr1  -- Pointer to the first sidebar class object.                                *
- *                                                                                             *
- *          ptr2  -- Pointer to the second sidebar class object.                               *
- *                                                                                             *
- * OUTPUT:  Returns <0 if the first object can be produced before the second. It returns       *
- *          >0 if the reverse is true. It returns exactly 0 if the production scneario for     *
- *          both objects is the same.                                                          *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   05/18/1995 JLB : Created.                                                                 *
- *=============================================================================================*/
-static int sortfunc(void const * ptr1, void const * ptr2)
-{
-	SidebarClass::StripClass::BuildType * b1 = (SidebarClass::StripClass::BuildType *)ptr1;
-	SidebarClass::StripClass::BuildType * b2 = (SidebarClass::StripClass::BuildType *)ptr2;
-
-	TechnoTypeClass const * p1 = Fetch_Techno_Type(b1->BuildableType, b1->BuildableID);
-	TechnoTypeClass const * p2 = Fetch_Techno_Type(b2->BuildableType, b2->BuildableID);
-
-	int i1 = 0;
-	int i2 = 0;
-
-	if (p1) i1 = p1->What_Am_I()*2;
-	if (p2) i2 = p2->What_Am_I()*2;
-
-	/*
-	**	Walls should be sorted after the regular buildings.
-	*/
-	if (p1 && p1->What_Am_I() == RTTI_BUILDINGTYPE && ((BuildingTypeClass * const)p1)->IsWall) {
-		i1++;
-	}
-	if (p2 && p2->What_Am_I() == RTTI_BUILDINGTYPE && ((BuildingTypeClass * const)p2)->IsWall) {
-		i2++;
-	}
-
-	/*
-	**	If the object types are identical, then sort by scenario available.
-	*/
-	if (i1 == i2) {
-
-		/*
-		**	In the case of walls (can tell if there is an odd value), then sort
-		**	by cost.
-		*/
-		if (i1 & 0x01) {
-			i1 = p1->Cost;
-			i2 = p2->Cost;
-		} else {
-			i1 = p1->Scenario;
-			i2 = p2->Scenario;
-		}
-	}
-
-	return(i1 - i2);
-}
-#endif
-
-
 /***********************************************************************************************
  * SidebarClass::StripClass::Add -- Add an object to the side strip.                           *
  *                                                                                             *
@@ -1420,11 +1322,7 @@ bool SidebarClass::StripClass::Add(RTTIType type, int id)
 		Buildables[BuildableCount].BuildableID = id;
 		BuildableCount++;
 		IsToRedraw = true;
-#ifdef OBSOLETE
-		if (GameToPlay == GAME_NORMAL) {
-			qsort(&Buildables[0], BuildableCount, sizeof(Buildables[0]), sortfunc);
-		}
-#endif
+
 		return(true);
 	}
 	return(false);
@@ -1456,27 +1354,7 @@ bool SidebarClass::StripClass::Scroll(bool up)
 	} else {
 		Scroller++;
 	}
-#ifdef NEVER
-	if (BuildableCount <= MAX_VISIBLE) return(false);
 
-	/*
-	**	Top of list is moving toward lower ordered entries in the object list. It looks like
-	**	the "window" to the object list is moving up even though the actual object images are
-	**	scrolling downward.
-	*/
-	if (up) {
-		if (!TopIndex) return(false);
-
-		TopIndex--;
-		Slid = 0;
-	} else {
-		if (TopIndex+MAX_VISIBLE >= BuildableCount) return(false);
-
-		Slid = ObjectHeight;
-	}
-	IsScrollingDown = !up;
-	IsScrolling = true;
-#endif
 	return(true);
 }
 
@@ -1973,39 +1851,6 @@ bool SidebarClass::StripClass::Recalc(void)
 					ok = false;
 					break;
 			}
-
-#ifdef OBSOLETE
-		} else {
-			switch (Buildables[index].BuildableID) {
-				case SPC_ION_CANNON:
-					ok = (PlayerPtr->BScan & STRUCTF_EYE) != 0 || PlayerPtr->IonOneTimeFlag;
-					if (!ok) {
-						PlayerPtr->Remove_Ion_Cannon();
-					}
-					break;
-
-				case SPC_NUCLEAR_BOMB:
-					ok  = (PlayerPtr->BScan & STRUCTF_TEMPLE) != 0 && PlayerPtr->Has_Nuke_Device();
-					ok  = ok || PlayerPtr->NukeOneTimeFlag;
-					if (!ok) {
-						PlayerPtr->Remove_Nuke_Bomb();
-					}
-					break;
-
-				case SPC_AIR_STRIKE:
-//					ok = (PlayerPtr->BScan & STRUCTF_SAM) == 0;
-//					ok = !PlayerPtr->Does_Enemy_Building_Exist(STRUCT_SAM);
-					ok = (PlayerPtr->AirPresent /*&& !PlayerPtr->Does_Enemy_Building_Exist(STRUCT_SAM)*/) || PlayerPtr->AirOneTimeFlag;
-					if (!ok) {
-						PlayerPtr->Remove_Air_Strike();
-					}
-					break;
-
-				default:
-					ok = false;
-					break;
-			}
-#endif
 		}
 
 		if (!ok) {
@@ -2036,14 +1881,6 @@ bool SidebarClass::StripClass::Recalc(void)
 		}
 	}
 
-#ifdef NEVER
-	/*
-	**	If there are no more buildable objects to display, make the sidebar go away.
-	*/
-	if (!BuildableCount) {
-		Map.SidebarClass::Activate(0);
-	}
-#endif
 	return(redraw);
 }
 

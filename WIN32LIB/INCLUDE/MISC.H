@@ -168,29 +168,6 @@ void  Shake_Screen(int32_t shakes);
 int32_t  Reverse_Long(int32_t number);
 int16_t  Reverse_Short(int16_t number);
 int32_t  Swap_Long(int32_t number);
-#if (0)
-/*=========================================================================*/
-/* The following prototype is for the file: FACING8.ASM							*/
-/*=========================================================================*/
-
-int32_t  Desired_Facing8(int32_t x1, int32_t y1, int32_t x2, int32_t y2);
-
-/*=========================================================================*/
-/* The following prototype is for the file: FACING16.ASM							*/
-/*=========================================================================*/
-
-int32_t  Desired_Facing16(int32_t x1, int32_t y1, int32_t x2, int32_t y2);
-
-/*=========================================================================*/
-/* The following prototype is for the file: FACINGFF.ASM							*/
-/*=========================================================================*/
-
-int32_t  Desired_Facing256(int32_t x1, int32_t y1, int32_t x2, int32_t y2);
-
-/*=========================================================================*/
-/* The following prototype is for the file: FADING.ASM							*/
-/*=========================================================================*/
-#endif
 
 void *  Build_Fading_Table(void const *palette, void const *dest, int32_t color, int32_t frac);
 /*=========================================================================*/

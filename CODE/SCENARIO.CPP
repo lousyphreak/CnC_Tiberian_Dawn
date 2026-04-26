@@ -574,14 +574,6 @@ void Do_Lose(void)
 		Call_Back();
 	}
 
-#ifdef OBSOLETE
-	if (Debug_Play_Map) {
-		Go_Editor(true);
-		Show_Mouse();
-		return;
-	}
-#endif
-
 	/*
 	** Stop here if this is a multiplayer game.
 	*/

@@ -476,24 +476,6 @@ class HouseClass {
 		*/
 		RegionClass Regions[MAP_TOTAL_REGIONS];
 
-#ifdef OBSOLETE
-		/*
-		**	This count down timer class handles decrements and then changes
-		** the ion cannon state.  If the Ion cannon was out of range it is
-		** now in range.  If the Ion cannon was in range it will toggle out
-		** of range.
-		*/
-		TCountDownTimerClass IonControl;
-		int						IonOldStage;
-
-		TCountDownTimerClass AirControl;
-		int						AirOldStage;
-
-		TCountDownTimerClass NukeControl;
-		int						NukeOldStage;
-#endif
-
-
 		/*
 		** This timer is for multiplayer mode; for a computer-controlled house,
 		** it determines how long until this player "blitzes" the hapless humans.

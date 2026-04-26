@@ -488,64 +488,6 @@ ObjectClass * AircraftTypeClass::Create_One_Of(HouseClass * house) const
 }
 
 
-#ifdef SCENARIO_EDITOR
-/***********************************************************************************************
- * AircraftTypeClass::Prep_For_Add -- Prepares the scenario editor for adding an aircraft objec*
- *                                                                                             *
- *    This routine is used by the scenario editor to prepare for the adding operation. It      *
- *    builds a list of pointers to object types that can be added.                             *
- *                                                                                             *
- * INPUT:   none                                                                               *
- *                                                                                             *
- * OUTPUT:  none                                                                               *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   07/26/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
-void AircraftTypeClass::Prep_For_Add(void)
-{
-	for (AircraftType index = AIRCRAFT_FIRST; index < AIRCRAFT_COUNT; index++) {
-		if (As_Reference(index).Get_Image_Data()) {
-			Map.Add_To_List(&As_Reference(index));
-		}
-	}
-}
-
-
-/***********************************************************************************************
- * AircraftTypeClass::Display -- Displays a generic version of the aircraft type.              *
- *                                                                                             *
- *    This routine is used by the scenario editor to display a generic version of the object   *
- *    type. This is displayed in the object selection dialog box.                              *
- *                                                                                             *
- * INPUT:   x,y      -- The coordinates to draw the aircraft at (centered).                    *
- *                                                                                             *
- *          window   -- The window to base the coordinates upon.                               *
- *                                                                                             *
- *          house    -- The owner of this generic aircraft.                                    *
- *                                                                                             *
- * OUTPUT:  none                                                                               *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   07/26/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
-void AircraftTypeClass::Display(int x, int y, WindowNumberType window, HousesType house) const
-{
-	int shape = 0;
-	void const * ptr = Get_Cameo_Data();
-	if (!ptr) {
-		ptr = Get_Image_Data();
-		shape = 5;
-	}
-	CC_Draw_Shape(ptr, shape, x, y, window, SHAPE_CENTER|SHAPE_WIN_REL|SHAPE_FADING, HouseClass::As_Pointer(house)->Remap_Table(false, true));
-}
-#endif
-
-
 /***********************************************************************************************
  * AircraftTypeClass::Occupy_List -- Returns with occupation list for landed aircraft.         *
  *                                                                                             *

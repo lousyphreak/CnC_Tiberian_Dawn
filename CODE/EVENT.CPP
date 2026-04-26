@@ -441,24 +441,21 @@ void EventClass::Execute(void)
 	HouseClass * house = 0;
 	char txt[80];
 	int i;
-//#if (0)
-if (Type < 0 || Type > PROCESS_TIME){
-char tempbuf[128];
-sprintf (tempbuf, "Packet type %d received\n", Type);
-CCDebugString (tempbuf);
 
-sprintf (tempbuf, "	ID = %d\n", ID);
-CCDebugString (tempbuf);
+	if (Type < 0 || Type > PROCESS_TIME) {
+		char tempbuf[128];
+		sprintf(tempbuf, "Packet type %d received\n", Type);
+		CCDebugString(tempbuf);
 
-sprintf (tempbuf, "	Frame = %d\n", Frame);
-CCDebugString (tempbuf);
+		sprintf(tempbuf, "	ID = %d\n", ID);
+		CCDebugString(tempbuf);
 
-sprintf (tempbuf, "	MPlayer ID = %d\n", MultiplayerID);
-CCDebugString (tempbuf);
+		sprintf(tempbuf, "	Frame = %d\n", Frame);
+		CCDebugString(tempbuf);
 
-}
-//#endif	//(0)
-
+		sprintf(tempbuf, "	MPlayer ID = %d\n", MultiplayerID);
+		CCDebugString(tempbuf);
+	}
 
 	switch (Type) {
 		/*
@@ -651,14 +648,6 @@ CCDebugString ("C&C95 - Primary building packet received\n");
 					techno->Assign_Target(Data.MegaMission.Target);
 					techno->Assign_Destination(Data.MegaMission.Destination);
 				}
-
-#ifdef NEVER
-				if ((techno->What_Am_I() == RTTI_UNIT || techno->What_Am_I() == RTTI_INFANTRY) &&
-						Data.MegaMission.Mission == MISSION_GUARD_AREA) {
-
-					((FootClass *)techno)->ArchiveTarget = Data.MegaMission.Destination;
-				}
-#endif
 			}
 			break;
 

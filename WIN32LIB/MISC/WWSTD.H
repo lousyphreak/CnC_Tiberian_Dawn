@@ -38,18 +38,6 @@
 #define	WWSTD_H
 
 
-//
-// Win 95 includes
-//
-
-
-
-// Note: SKB 4/11/94
-// Before this library is done, this needs to be able to be set to TRUE.
-// Once it is, the FALSE parts should be removed from the source code.
-#define LIB_EXTERNS_RESOLVED FALSE
-
-
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>

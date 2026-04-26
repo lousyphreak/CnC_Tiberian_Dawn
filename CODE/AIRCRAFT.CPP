@@ -851,27 +851,6 @@ void AircraftClass::AI(void)
 	} else {
 		IsLocked = true;
 //		House->NewAScan |= (1U << Class->Type);
-
-#ifdef NEVER
-		/*
-		**	Transport helicopters must ensure that their passengers are properly
-		**	considered "alive" by setting the appropriate scan bits.
-		*/
-		FootClass const * foot = Attached_Object();
-		while (foot) {
-			switch (foot->What_Am_I()) {
-				case RTTI_UNIT:
-					House->NewUScan |= (1U << ((UnitTypeClass const &)Class_Of()).Type);
-					break;
-
-				case RTTI_INFANTRY:
-					House->NewIScan |= (1U << ((InfantryTypeClass const &)Class_Of()).Type);
-					break;
-			}
-
-			foot = (FootClass const *)foot->Next;
-		}
-#endif
 	}
 }
 
@@ -1779,11 +1758,6 @@ void AircraftClass::Enter_Idle_Mode(bool )
 				mission = MISSION_RETREAT;
 			}
 		} else {
-#ifdef NEVER
-			if (In_Radio_Contact() && Contact_With_Whom() == Map[Coord_Cell(Coord)].Cell_Techno()) {
-				Transmit_Message(RADIO_IM_IN);
-			}
-#endif
 			Assign_Destination(TARGET_NONE);
 			Assign_Target(TARGET_NONE);
 			mission = MISSION_GUARD;
@@ -2007,22 +1981,6 @@ void AircraftClass::Active_Click_With(ActionType action, ObjectClass * object)
 void AircraftClass::Active_Click_With(ActionType action, CELL cell)
 {
 	Validate();
-#ifdef NEVER
-	switch (action) {
-		case ACTION_MOVE:
-			if (Map[cell].IsVisible) {
-				Player_Assign_Mission(MISSION_MOVE, TARGET_NONE, ::As_Target(cell));
-			}
-			break;
-
-		case ACTION_NOMOVE:
-			break;
-
-		case ACTION_ATTACK:
-			Player_Assign_Mission(MISSION_ATTACK, ::As_Target(cell));
-			break;
-	}
-#endif
 	FootClass::Active_Click_With(action, cell);
 }
 

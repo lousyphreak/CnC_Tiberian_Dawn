@@ -155,17 +155,6 @@ void Fatal(char const *message, ...)
 }
 
 
-#ifdef NEVER
-void File_Fatal(char const *message)
-{
-	Prog_End();
-	perror(message);
-	exit(EXIT_FAILURE);
-}
-#endif
-
-
-
 /***********************************************************************************************
  * Load_Uncompress -- Loads and uncompresses data to a buffer.                                 *
  *                                                                                             *

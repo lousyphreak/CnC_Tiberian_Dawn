@@ -53,25 +53,6 @@ void * Get_Icon_Set_Remapdata(void const *iconset);
 void * Get_Icon_Set_Palettedata(void const *iconset);
 int32_t Get_Icon_Set_Count(void const *iconset);
 void * Get_Icon_Set_Map(void const *iconset);
-#if (0)
-/*
-** This is the control structure at the start of a loaded icon set.  It must match
-** the structure in WWLIB.I!  This structure MUST be a multiple of 16 bytes long.
-*/
-typedef struct {
-	int16_t	Width;			// Width of icons (pixels).
-	int16_t	Height;			// Height of icons (pixels).
-	int16_t	Count;			// Number of (logical) icons in this set.
-//	BOOL	Allocated;		// Was this iconset allocated?
-	int16_t	Allocated;		// Was this iconset allocated?
-	int32_t	Size;				// Size of entire iconset memory block.
-	uint8_t *Icons;			// Offset from buffer start to icon data.
-	int32_t	Palettes;		// Offset from buffer start to palette data.
-	int32_t	Remaps;			// Offset from buffer start to remap index data.
-	int32_t	TransFlag;		// Offset for transparency flag table.
-	uint8_t *Map;				// Icon map offset (if present).
-} IControl_Type;
-#endif	//(0)
 
 #pragma pack(push, 1)
 typedef struct {

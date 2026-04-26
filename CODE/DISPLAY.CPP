@@ -2076,21 +2076,6 @@ ObjectClass * DisplayClass::Cell_Object(CELL cell, int x, int y)
 		*/
 		CellRedraw.Reset();
 //Colour_Debug(0);
-
-#ifdef SCENARIO_EDITOR
-		/*
-		**	If we're placing an object (PendingObject is non-NULL), and that object
-		**	is NOT an icon, smudge, or overlay, draw it here.
-		**	Terrain, Buildings & Aircraft aren't drawn at the cell's center coord;
-		**	they're drawn at the upper left coord, so I have to AND the coord value
-		**	with 0xFF00FF00 to strip off the lepton coordinates, but leave the
-		**	cell coordinates.
-		*/
-		if (Debug_Map && PendingObjectPtr) {
-			PendingObjectPtr->Coord = PendingObjectPtr->Class_Of().Coord_Fixup(Cell_Coord(ZoneCell + ZoneOffset));
-			PendingObjectPtr->Render(true);
-		}
-#endif
 	}
 }
 
@@ -3249,17 +3234,6 @@ void DisplayClass::Mouse_Left_Release(CELL cell, int x, int y, ObjectClass * obj
 			Select_These(XYPixel_Coord(BandX, BandY), XYPixel_Coord(x, y));
 
 			Set_Default_Mouse(MOUSE_NORMAL, wwsmall);
-#ifdef NEVER
-			if (CurrentObject.Count()) {
-				if (CurrentObject[0]->Can_Player_Fire()) {
-					Set_Default_Mouse(MOUSE_CAN_ATTACK, wwsmall);
-				} else {
-					Set_Default_Mouse(MOUSE_NORMAL, wwsmall);
-				}
-			} else {
-				Set_Default_Mouse(MOUSE_NORMAL, wwsmall);
-			}
-#endif
 
 			IsRubberBand = false;
 			IsTentative = false;
@@ -3290,13 +3264,6 @@ void DisplayClass::Mouse_Left_Release(CELL cell, int x, int y, ObjectClass * obj
 				Unselect_All();
 				object->Select();
 				Set_Default_Mouse(MOUSE_NORMAL, wwsmall);
-#ifdef NEVER
-				if (object->Can_Player_Fire()) {
-					Set_Default_Mouse(MOUSE_CAN_ATTACK, wwsmall);
-				} else {
-					Set_Default_Mouse(MOUSE_NORMAL, wwsmall);
-				}
-#endif
 			}
 
 			/*
@@ -3703,22 +3670,6 @@ bool DisplayClass::In_View(CELL cell)
 	if (xdiff < 0 || xdiff > TacLeptonWidth+255) return(false);
 	if (ydiff < 0 || ydiff > TacLeptonHeight+255) return(false);
 	return(true);
-
-#ifdef OBSOLETE
-	int fudgex = Coord_XLepton(TacticalCoord) ? -1 : 0;
-	int fudgey = Coord_YLepton(TacticalCoord) ? -1 : 0;
-	if ((unsigned)(Cell_X(cell)-Coord_XCell(TacticalCoord)) > Lepton_To_Cell(TacLeptonWidth)+fudgex) return(false);
-	if ((unsigned)(Cell_Y(cell)-Coord_YCell(TacticalCoord)) > Lepton_To_Cell(TacLeptonHeight)+fudgey) return(false);
-	return(true);
-#endif
-
-#ifdef OBSOLETE
-	cell -= TacticalCell;
-
-	if (Cell_X(cell) >= TacWidth + (TacPartialX ? 1 : 0)) return(false);
-	if (Cell_Y(cell) >= TacHeight + (TacPartialY ? 1 : 0)) return(false);
-	return(true);
-#endif
 }
 
 

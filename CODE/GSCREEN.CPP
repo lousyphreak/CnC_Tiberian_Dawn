@@ -408,16 +408,6 @@ void GScreenClass::Render(void)
 
 		if (Buttons) Buttons->Draw_All(false);
 
-#ifdef SCENARIO_EDITOR
-		/*
-		** Draw the Editor's buttons
-		*/
-		if (Debug_Map) {
-			if (Buttons) {
-				Buttons->Draw_All();
-			}
-		}
-#endif
 		/*
 		** Draw the multiplayer message system to the Hidpage at this point.
 		** This way, they'll Blit along with the rest of the map.
@@ -494,34 +484,16 @@ extern bool CanVblankSync;
 void GScreenClass::Blit_Display(void)
 {
 	if (SeenBuff.Get_Width()!=320){
-#if (0)
-		if (HidPage.Get_IsVideoSurface() && (Options.GameSpeed >1 || Options.ScrollRate==6 && CanVblankSync) ){
-			WWMouse->Draw_Mouse(&HidPage);
-			SeenBuff.Get_Graphic_Buffer()->Get_DD_Surface()->Flip(NULL , DDFLIP_WAIT);
-			SeenBuff.Blit (HidPage , 0 , 0 , 0 , 0 , SeenBuff.Get_Width() , SeenBuff.Get_Height() , (BOOL) FALSE );
+		WWMouse->Draw_Mouse(&HidPage);
+		HidPage.Blit ( SeenBuff , 0 , 0 , 0 , 0 , HidPage.Get_Width() , HidPage.Get_Height() , (BOOL) FALSE );
 #ifdef CHEAT_KEYS
-			Add_Current_Screen();
+		Add_Current_Screen();
 #endif
-			//HidPage.Blit ( SeenBuff , 0 , 0 , 0 , 0 , HidPage.Get_Width() , HidPage.Get_Height() , (BOOL) FALSE );
-			WWMouse->Erase_Mouse(&HidPage, FALSE);
-		}else{
-#else	//(0)
-			WWMouse->Draw_Mouse(&HidPage);
-			HidPage.Blit ( SeenBuff , 0 , 0 , 0 , 0 , HidPage.Get_Width() , HidPage.Get_Height() , (BOOL) FALSE );
-#ifdef CHEAT_KEYS
-			Add_Current_Screen();
-#endif
-			WWMouse->Erase_Mouse(&HidPage, FALSE);
-			WWDraw_Flush_Present();
-#endif	//(0)
-#if (0)
-		}
-#endif	//(0)
-
+		WWMouse->Erase_Mouse(&HidPage, FALSE);
+		WWDraw_Flush_Present();
 	} else {
 		ModeX_Blit (&HiddenPage);
 	}
-
 }
 
 

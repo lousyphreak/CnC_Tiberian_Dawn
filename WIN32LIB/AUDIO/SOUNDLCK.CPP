@@ -78,36 +78,4 @@ void Init_Locked_Data(void)
 	LockedData.SoundVolume			= 255;
 	LockedData.ScoreVolume			= 255;
 	LockedData._int					= FALSE;
-
-	#ifdef cuts
-	/*
-	** Lock the sound specific c functions that will cause us problems if
-	** they are swapped out during an interrupt.
-	*/
-	DPMI_Lock(&LockedData,							4096L);
-	DPMI_Lock(Simple_Copy, 							4096L);
-	DPMI_Lock(Sample_Copy, 							4096L);
-	DPMI_Lock((void *)maintenance_callback, 	4096L);
-	DPMI_Lock((void *)DigiCallback, 				4096L);
-	DPMI_Lock((void *)HMI_TimerCallback, 		4096L);
-	DPMI_Lock(Audio_Add_Long_To_Pointer,		4096L);
-	DPMI_Lock(DPMI_Unlock,							4096L);
-
-	/*
-	** Lock the library functions that will cause us problems if they are
-	** swapped out during an interrupt.
-	*/
-	DPMI_Lock(Mem_Copy,								4096L);
-	DPMI_Lock(Audio_Mem_Set,						4096L);
-	DPMI_Lock(__GETDS,								4096L);
-
-	/*
-	** Finally lock the two assembly modules that need locking.  This can
-	** be handled by calling the lock function that is local to thier module
-	** swapped out during an interrupt.
-	*/
-	Decompress_Frame_Lock();
-	sosCODEC_Lock();
-
-	#endif	//cuts
 }

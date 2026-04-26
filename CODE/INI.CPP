@@ -371,18 +371,6 @@ bool Read_Scenario_Ini(char *root, bool fresh)
 			PlayerPtr->ActLike = Whom;
 		}
 	} else {
-
-#ifdef OBSOLETE
-		if (GameToPlay==GAME_NORMAL && ScenPlayer==SCEN_PLAYER_JP) {
-			PlayerPtr = HouseClass::As_Pointer(HOUSE_MULTI4);
-			PlayerPtr->IsHuman = true;
-			PlayerPtr->Credits += CarryOverMoney;
-			PlayerPtr->InitialCredits += CarryOverMoney;
-			PlayerPtr->ActLike = Whom;
-		} else {
-			Assign_Houses();
-		}
-#endif
 		Assign_Houses();
 	}
 

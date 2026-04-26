@@ -89,12 +89,6 @@ static void  UnVQ_Nop(uint8_t *codebook, uint8_t *pointers,
 		uint32_t bufwidth);
 #endif
 
-#if(0)
-static void Mask_Rect(VQAHandle *vqa, uint32_t x1, uint32_t y1,
-		uint32_t x2, uint32_t y2);
-static void Mask_Pointers(VQAData *vqabuf);
-#endif
-
 static int drawer_trace_enabled(void)
 {
 	static int enabled = -1;
@@ -511,11 +505,6 @@ static void Prepare_Frame(VQAData *vqabuf)
 		/* Mark as uncompressed */
 		curframe->Flags &= ~VQAFRMF_PTRCOMP;
 	}
-
-	/* Mask the pointers */
-	#if(0)
-	Mask_Pointers(vqabuf);
-	#endif
 }
 
 
@@ -724,129 +713,3 @@ static int32_t PageFlip_Nop(VQAHandle *)
 {
 	return (0);
 }
-
-
-#if(0)
-/****************************************************************************
-*
-* NAME
-*     Mask_Rect - Sets non-drawable rectangle in image.
-*
-* SYNOPSIS
-*     Mask_Rect(VQA, X1, Y1, X2, Y2)
-*
-*     void Mask_Rect(VQAHandle *, uint32_t, uint32_t,
-*                    uint32_t, uint32_t);
-*
-* FUNCTION
-*
-* INPUTS
-*     VQA - Pointer to VQA handle.
-*     X1  - X coordinate of upper-left corner
-*     Y1  - Y coordinate of upper-left corner
-*     X2  - X coordinate of lower-right corner
-*     Y2  - Y coordinate of lower-right corner
-*
-* RESULT
-*     NONE
-*
-****************************************************************************/
-
-static void Mask_Rect(VQAHandle *vqa, uint32_t x1, uint32_t y1,
-		uint32_t x2, uint32_t y2)
-{
-	VQAData   *vqabuf;
-	VQADrawer *drawer;
-	VQAHeader *header;
-	int32_t      blocks_per_row;
-
-	/* Dereference data members for quicker access. */
-	vqabuf = ((VQAHandleP *)vqa)->VQABuf;
-	header = &((VQAHandleP *)vqa)->Header;
-	drawer =  &vqabuf->Drawer;
-
-	/* Clip coords to image size */
-	if (x1 < vqabuf->Drawer.X1) {
-		x1 = vqabuf->Drawer.X1;
-	}
-
-	if (y1 < vqabuf->Drawer.Y1) {
-		y1 = vqabuf->Drawer.Y1;
-	}
-
-	if (x2 > vqabuf->Drawer.X2) {
-		x2 = vqabuf->Drawer.X2;
-	}
-
-	if (y2 > vqabuf->Drawer.Y2) {
-		y2 = vqabuf->Drawer.Y2;
-	}
-
-	/* Convert pixel coords to block coords */
-	x1 /= header->block_width;
-	x2 /= header->block_width;
-	y1 /= header->block_height;
-	y2 /= header->block_height;
-
-	/* Compute the mask values */
-	blocks_per_row = (header->image_width / header->block_width);
-	vqabuf->Drawer.MaskStart = blocks_per_row * y1 + x1;
-
-	if (x1 == x2) {
-		drawer->MaskWidth = 0;
-	} else {
-		drawer->MaskWidth = x2 - x1 + 1;
-	}
-
-	if (y1 == y2) {
-		drawer->MaskHeight = 0;
-	} else {
-		drawer->MaskHeight = y2 - y1 + 1;
-	}
-}
-
-
-/****************************************************************************
-*
-* NAME
-*     Mask_Pointers - Mask vector pointer that are in the mask rectangle.
-*
-* SYNOPSIS
-*     Mask_Pointers(VQAData)
-*
-*     void Mask_Pointers(VQAData *);
-*
-* FUNCTION
-*
-* INPUTS
-*     VQAData - Pointer to VQAData structure.
-*
-* RESULT
-*     NONE
-*
-****************************************************************************/
-
-static void Mask_Pointers(VQAData *vqabuf)
-{
-	VQADrawer     *drawer;
-	VQAFrameNode  *curframe;
-	uint32_t *ptr;
-	uint32_t i,j;
-	uint32_t start;
-
-	/* Dereference data members for quicker access. */
-	drawer = &vqabuf->Drawer;
-	curframe = drawer->CurFrame;
-	start = vqabuf->Drawer.MaskStart;
-
-	for (i = 0; i < drawer->MaskHeight; i++) {
-		ptr = (uint32_t *)(curframe->Pointers) + start;
-
-		for (j = 0; j < drawer->MaskWidth; j++) {
-			ptr[j] = VQA_MASK_POINTER;
-		}
-
-		start += drawer->BlocksPerRow;
-	}
-}
-#endif

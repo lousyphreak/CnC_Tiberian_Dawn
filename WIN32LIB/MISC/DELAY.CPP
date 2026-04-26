@@ -45,16 +45,4 @@ void Delay(int32_t duration)
 			;
 		}
 	}
-
-#if(FALSE)
-	while (duration--)
-		Wait_Vert_Blank(VertBlank);
-#endif
 }
-
-#if(FALSE)
-void Vsync()
-{
-	Wait_Vert_Blank(VertBlank);
-}
-#endif
