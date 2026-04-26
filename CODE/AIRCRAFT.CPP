@@ -943,7 +943,7 @@ void AircraftClass::Init(void)
 	Aircraft.Free_All();
 
 	ptr = new AircraftClass();
-	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - sizeof(void *)))[0];
+	VTable = ((void **)ptr)[0];
 	delete ptr;
 }
 

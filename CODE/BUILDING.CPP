@@ -1973,7 +1973,7 @@ void BuildingClass::Init(void)
 	Buildings.Free_All();
 
 	ptr = new BuildingClass();
-	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - sizeof(void *)))[0];
+	VTable = ((void **)ptr)[0];
 	delete ptr;
 }
 

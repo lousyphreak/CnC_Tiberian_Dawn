@@ -954,6 +954,7 @@ void Decode_All_Pointers(void)
 bool Read_Object(void *ptr, int base_size, int class_size, FileClass & file, void * vtable)
 {
 	int size;					// object size in bytes
+	(void)base_size;
 
 	/*
 	**	Read size of this chunk.
@@ -980,7 +981,7 @@ bool Read_Object(void *ptr, int base_size, int class_size, FileClass & file, voi
 	**	Fill in VTable.
 	*/
 	if (vtable) {
-		((void **)(((char *)ptr) + base_size - static_cast<int>(sizeof(void *))))[0] = vtable;
+		((void **)ptr)[0] = vtable;
 	}
 
 	return(true);

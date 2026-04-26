@@ -243,7 +243,7 @@ void TemplateClass::Init(void)
 	Templates.Free_All();
 
 	ptr = new TemplateClass();
-	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - sizeof(void *)))[0];
+	VTable = ((void **)ptr)[0];
 	delete ptr;
 }
 

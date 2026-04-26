@@ -130,7 +130,7 @@ void TeamClass::Init(void)
 	memset(Success, 0, sizeof(Success));
 
 	ptr = new TeamClass();
-	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - sizeof(void *)))[0];
+	VTable = ((void **)ptr)[0];
 	delete ptr;
 }	
 

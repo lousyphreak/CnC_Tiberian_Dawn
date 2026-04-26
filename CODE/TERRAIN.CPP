@@ -411,7 +411,7 @@ void TerrainClass::Init(void)
 	Terrains.Free_All();
 
 	ptr = new TerrainClass();
-	VTable = ((void **)(((char *)ptr) + sizeof(AbstractClass) - sizeof(void *)))[0];
+	VTable = ((void **)ptr)[0];
 	delete ptr;
 }
 
