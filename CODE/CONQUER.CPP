@@ -72,7 +72,6 @@
 #include	<string.h>
 #include	<fcntl.h>
 #include <malloc.h>
-#include  "CCDDE.H"
 
 #define SHAPE_TRANS		0x40
 
@@ -317,11 +316,11 @@ void Main_Game(int argc, char *argv[])
 		/*
 		**	Un-initialize whatever needs it, for each game played.
 		**
-		**	Shut down either the modem or network; they'll get re-initialized if
+		**	Shut down networking; it will get re-initialized if
 		**	the user selections those options again in Select_Game().  This
-		**	"re-boots" the modem & network code, which I currently feel is safer
+		**	"re-boots" the network code, which I currently feel is safer
 		**	than just letting it hang around.
-		** (Skip this step if we're in playback mode; the modem or net won't have
+		** (Skip this step if we're in playback mode; networking won't have
 		** been initialized in that case.)
 		*/
 		if ( (RecordGame && !SuperRecord) || PlaybackGame) {
@@ -414,7 +413,7 @@ void Keyboard_Process(KeyNumType &input)
 
 #ifndef DEMO
 	/*
-	**	For network & modem, process user input for inter-player messages.
+	**	For network play, process user input for inter-player messages.
 	*/
 	Message_Input(input);
 #endif
@@ -741,31 +740,31 @@ static void Message_Input(KeyNumType &input)
 	**	'to' portion.  At the other end, the buffer allocated to display the
 	**	message must be MAX_MESSAGE_LENGTH plus the size of "From: xxx (house)".
 	*/
-	if (input >= KN_F1 && input < (KN_F1 + MPlayerMax) &&
+	if (input >= KN_F1 && input < (KN_F1 + MultiplayerMaxPlayers) &&
 		Messages.Get_Edit_Buf()==NULL) {
 		memset (txt, 0, 40);
 
 		if (Is_Network_Game(GameToPlay)) {
 			ConnManClass *net = Current_Network_Manager();
 
-			if (input==(KN_F1 + MPlayerMax - 1) && Messages.Get_Edit_Buf()==NULL) {
+			if (input==(KN_F1 + MultiplayerMaxPlayers - 1) && Messages.Get_Edit_Buf()==NULL) {
 
 				MessageAddress = UDPAddressClass();		// set to broadcast
 				strcpy(txt,Text_String(TXT_TO_ALL));	// "To All:"
 
-				Messages.Add_Edit(MPlayerTColors[MPlayerColorIdx],
+				Messages.Add_Edit(MultiplayerTColors[MultiplayerColorIndex],
 					TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_FULLSHADOW, txt, 180*factor);
 
 				Map.Flag_To_Redraw(false);
 			} else {
 				if (Messages.Get_Edit_Buf()==NULL) {
-					if ((input - KN_F1) < net->Num_Connections() && !MPlayerObiWan) {
+					if ((input - KN_F1) < net->Num_Connections() && !MultiplayerObiWan) {
 
 						id = net->Connection_ID(input - KN_F1);
 						MessageAddress = (*(net->Connection_Address(id)));
 						sprintf(txt,Text_String(TXT_TO), net->Connection_Name(id));
 
-						Messages.Add_Edit(MPlayerTColors[MPlayerColorIdx],
+						Messages.Add_Edit(MultiplayerTColors[MultiplayerColorIndex],
 							TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_FULLSHADOW, txt, 180*factor);
 
 						Map.Flag_To_Redraw(false);
@@ -831,7 +830,7 @@ static void Message_Input(KeyNumType &input)
 			while (sent_so_far < message_length){
 
 					GPacket.Command = NET_MESSAGE;
-					strcpy (GPacket.Name, MPlayerName);
+					strcpy (GPacket.Name, MultiplayerName);
 					memcpy (GPacket.Message.Buf, Messages.Get_Edit_Buf()+sent_so_far, COMPAT_MESSAGE_LENGTH-5);
 
 						/*
@@ -862,8 +861,8 @@ static void Message_Input(KeyNumType &input)
 					*((unsigned short*)(GPacket.Message.Buf + COMPAT_MESSAGE_LENGTH-4)) = magic_number;
 					*((unsigned short*)(GPacket.Message.Buf + COMPAT_MESSAGE_LENGTH-2)) = crc;
 
-					GPacket.Message.ID = MPlayerLocalID;
-					GPacket.Message.NameCRC = Compute_Name_CRC(MPlayerGameName);
+					GPacket.Message.ID = MultiplayerLocalID;
+					GPacket.Message.NameCRC = Compute_Name_CRC(MultiplayerGameName);
 
 					/*
 					**	If 'F4' was hit, MessageAddress will be a broadcast address; send
@@ -1076,7 +1075,7 @@ void Call_Back(void)
 							if (!NetProtect) {
 								msg_ok = true;
 							} else {
-								if (GPacket.Message.NameCRC == Compute_Name_CRC(MPlayerGameName)) {
+								if (GPacket.Message.NameCRC == Compute_Name_CRC(MultiplayerGameName)) {
 									msg_ok = true;
 								} else {
 									msg_ok = false;
@@ -1087,8 +1086,8 @@ void Call_Back(void)
 								sprintf(txt,Text_String (TXT_FROM), GPacket.Name, GPacket.Message.Buf);
 								magic_number = *((unsigned short*)(GPacket.Message.Buf + COMPAT_MESSAGE_LENGTH-4));
 								crc = *((unsigned short*)(GPacket.Message.Buf + COMPAT_MESSAGE_LENGTH-2));
-								color = MPlayerID_To_ColorIndex(GPacket.Message.ID);
-								Messages.Add_Message(txt, MPlayerTColors[color],
+								color = MultiplayerID_To_ColorIndex(GPacket.Message.ID);
+								Messages.Add_Message(txt, MultiplayerTColors[color],
 									TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_FULLSHADOW, 600, magic_number, crc);
 
 								/*
@@ -1544,7 +1543,7 @@ bool Main_Loop()
 	/*
 	** Very rarely, the human players will get a message from the computer.
 	*/
-	if (GameToPlay != GAME_NORMAL && MPlayerGhosts && IRandom(0,10000) == 1) {
+	if (GameToPlay != GAME_NORMAL && MultiplayerGhostsEnabled && IRandom(0,10000) == 1) {
 		Computer_Message();
 	}
 

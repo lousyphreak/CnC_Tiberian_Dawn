@@ -533,15 +533,8 @@ void Draw_Caption(int text, int x, int y, int w)
 			break;
 
 		case TXT_NONE:
-		case TXT_MODEM_SERIAL:
-		case TXT_SELECT_MPLAYER_GAME:
-		case TXT_SELECT_SERIAL_GAME:
+		case TXT_SELECT_MULTIPLAYER_GAME:
 			option = OPTION_DIALOG;
-			break;
-
-		case TXT_HOST_SERIAL_GAME:
-		case TXT_JOIN_SERIAL_GAME:
-			option = OPTION_SERIAL;
 			break;
 
 		case TXT_SETTINGS:

@@ -1926,7 +1926,7 @@ bool CellClass::Goodie_Check(FootClass * object)
 				**	If the player should get an MCV replacement, then give it now (probably).
 				*/
 				if (Random_Pick(0, 1) == 0 &&
-					MPlayerBases &&
+					MultiplayerBasesEnabled &&
 					!(object->House->UScan & UNITF_MCV) &&
 					object->House->BScan == 0 &&
 					object->House->Available_Money() > (BuildingTypeClass::As_Reference(STRUCT_REFINERY).Cost + BuildingTypeClass::As_Reference(STRUCT_POWER).Cost)) {
@@ -2028,7 +2028,7 @@ bool CellClass::Goodie_Check(FootClass * object)
 					**	money to rebuild a new base. Of course, if he already has an MCV, then don't
 					**	give him another one.
 					*/
-					if (MPlayerBases &&
+					if (MultiplayerBasesEnabled &&
 						!(object->House->UScan & UNITF_MCV) &&
 						object->House->BScan == 0 &&
 						object->House->Available_Money() > (BuildingTypeClass::As_Reference(STRUCT_REFINERY).Cost + BuildingTypeClass::As_Reference(STRUCT_POWER).Cost)) {
@@ -2046,7 +2046,7 @@ bool CellClass::Goodie_Check(FootClass * object)
 
 					while (!utp) {
 						UnitType utype = Random_Pick(UNIT_FIRST, (UnitType)(UNIT_COUNT-1));
-						if (utype != UNIT_MCV || MPlayerBases) {
+						if (utype != UNIT_MCV || MultiplayerBasesEnabled) {
 							utp = &UnitTypeClass::As_Reference(utype);
 							if (utp->IsCrateGoodie && (utp->Ownable & (1 << object->Owner())) && utp->Level <= BuildLevel+2) break;
 							utp = NULL;

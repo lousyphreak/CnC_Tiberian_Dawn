@@ -112,7 +112,7 @@ int MapEditClass::New_Scenario(void)
 		new HouseClass(house);
 	}
 
-	if (ScenPlayer == SCEN_PLAYER_MPLAYER) {
+	if (ScenPlayer == SCEN_PLAYER_MULTIPLAYER) {
 		PlayerPtr = HouseClass::As_Pointer(HOUSE_MULTI1);
 		PlayerPtr->IsHuman = true;
 		LastHouse = HOUSE_MULTI1;
@@ -215,9 +215,9 @@ int MapEditClass::Load_Scenario(void)
 	  to set various multiplayer variables to fool the Assign_Houses() routine
 	  into working properly.
 	------------------------------------------------------------------------*/
-	if (ScenPlayer == SCEN_PLAYER_MPLAYER) {
-		MPlayerLocalID = Build_MPlayerID(2,HOUSE_GOOD);
-		MPlayerCount = 1;
+	if (ScenPlayer == SCEN_PLAYER_MULTIPLAYER) {
+		MultiplayerLocalID = Build_MultiplayerID(2,HOUSE_GOOD);
+		MultiplayerPlayerCount = 1;
 		LastHouse = HOUSE_MULTI1;
 	}
 	else if (ScenPlayer==SCEN_PLAYER_JP) {
@@ -617,7 +617,7 @@ int MapEditClass::Pick_Scenario(char const * caption, int *scen_nump,
 		nodbtn.Add_Tail(*commands);
 		playermbtn.Add_Tail(*commands);
 	} else {
-		if ((*playerp) == SCEN_PLAYER_MPLAYER) {
+		if ((*playerp) == SCEN_PLAYER_MULTIPLAYER) {
 			playermbtn.Add_Tail(*commands);
 		} else {
 			gdibtn.Add_Tail(*commands);
@@ -791,7 +791,7 @@ int MapEditClass::Pick_Scenario(char const * caption, int *scen_nump,
 				break;
 
 			case (BUTTON_MPLAYER | KN_BUTTON):
-				(*playerp) = SCEN_PLAYER_MPLAYER;
+				(*playerp) = SCEN_PLAYER_MULTIPLAYER;
 				gdibtn.Turn_Off();
 				nodbtn.Turn_Off();
 				playermbtn.Turn_On();
@@ -1763,7 +1763,7 @@ int MapEditClass::Scenario_Dialog(void)
 	............................ Init parameters .............................
 	*/
 	orig_theater = theater = Theater;
-	if (ScenPlayer != SCEN_PLAYER_MPLAYER) {
+	if (ScenPlayer != SCEN_PLAYER_MULTIPLAYER) {
 		gdi_credits = HouseClass::As_Pointer(HOUSE_GOOD)->Credits / 1000L;
 		nod_credits = HouseClass::As_Pointer(HOUSE_BAD)->Credits / 1000L;
 		neut_credits = HouseClass::As_Pointer(HOUSE_NEUTRAL)->Credits / 1000L;
@@ -2036,7 +2036,7 @@ int MapEditClass::Scenario_Dialog(void)
 	/*
 	------------------------ Save selections & return ------------------------
 	*/
-	if (ScenPlayer != SCEN_PLAYER_MPLAYER) {
+	if (ScenPlayer != SCEN_PLAYER_MULTIPLAYER) {
 		/*
 		.............................. Credits ................................
 		*/

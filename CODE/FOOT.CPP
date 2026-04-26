@@ -701,7 +701,7 @@ int FootClass::Mission_Timed_Hunt(void)
 		** has expired, or if our owning house has lost more than 1/4 of its units
 		** (it gets mad at you)
 		*/
-		if ( (MPlayerBlitz && House->BlitzTime==0) ||
+		if ( (MultiplayerBlitz && House->BlitzTime==0) ||
 			House->CurUnits < ((House->MaxUnit * 4) / 5)) {
 			Assign_Mission(MISSION_HUNT);
 			changed = 1;
@@ -712,7 +712,7 @@ int FootClass::Mission_Timed_Hunt(void)
 		** "snap out" of their daze, and begin hunting.  Try to time it so that all
 		** units will be hunting within 10 minutes (600 calls to this routine).
 		*/
-		if (MPlayerBases) {
+		if (MultiplayerBasesEnabled) {
 			rndmax = 5000;
 		} else {
 			rndmax = 1000;

@@ -456,41 +456,8 @@ int PlaybackGame= 0;			// 1 = play back a game
 int AllowAttract = 0;		// 1 = allow attract mode
 
 
-/***************************************************************************
-**	This is the null modem manager class.  Declaring this class doesn't
-** perform any allocations;
-** the class itself is ?? bytes.
-*/
-bool ModemService = true;					// When false disable servicing modem.
-NullModemClass NullModem (
-   16,											// number of send entries
-	64,											// number of receive entries
-//	sizeof (EventClass) * MAX_EVENTS,	// maxlen of entry buffer
-	(200 / sizeof(EventClass) ) * sizeof(EventClass) + sizeof( CommHeaderType ),
-	0x1234);										// Magic number must have each digit unique
-													// and different from the queue magic number
-
-DynamicVectorClass <PhoneEntryClass *> PhoneBook;
-int CurPhoneIdx;								// current phonebook index, for dialing
-
-DynamicVectorClass <char *> InitStrings;
-
-SerialSettingsType SerialDefaults;		// serial port default settings
-
-ModemGameType ModemGameToPlay;			// type of modem play Dialer, answerer, null
+InternetRoleType InternetGameRole = INTERNET_HOST;
 InternetTransportType InternetTransport = INTERNET_TRANSPORT_UDP;
-
-char const *DialMethodCheck[ DIAL_METHODS ] = {
-	"T",
-	"P"
-};
-
-char const *CallWaitStrings[ CALL_WAIT_STRINGS_NUM ] = {
-	"*70,",
-	"70#,",
-	"1170,",
-	"CUSTOM -                "
-};
 
 
 /***************************************************************************
@@ -508,7 +475,7 @@ int ColorUsed[MAX_MPLAYER_COLORS];
 /***************************************************************************
 **	This string stores the player's name.
 */
-char MPlayerName[MPLAYER_NAME_MAX];
+char MultiplayerName[MPLAYER_NAME_MAX];
 
 
 /***************************************************************************
@@ -516,7 +483,7 @@ char MPlayerName[MPLAYER_NAME_MAX];
 ** assigned one of these colors.  The 'G' is for graphics drawing; the 'T'
 ** is for text printing (indicates a remap table for the font to use).
 */
-int MPlayerGColors[MAX_MPLAYER_COLORS] = {
+int MultiplayerGColors[MAX_MPLAYER_COLORS] = {
 	5, 			// Yellow
 	127, 			// Red
 	135, 			// BlueGreen
@@ -525,7 +492,7 @@ int MPlayerGColors[MAX_MPLAYER_COLORS] = {
 	202			// Blue-Grey
 };
 
-int MPlayerTColors[MAX_MPLAYER_COLORS] = {
+int MultiplayerTColors[MAX_MPLAYER_COLORS] = {
 	CC_GDI_COLOR, 			// Yellow
 	CC_NOD_COLOR, 			// Red
 	CC_BLUE_GREEN, 		// BlueGreen
@@ -540,46 +507,46 @@ int MPlayerTColors[MAX_MPLAYER_COLORS] = {
 ** bases (production), and those that don't.  There is a list for
 ** descriptions, and another for actual filenames.
 */
-char MPlayerDescriptions[100][40];
-DynamicVectorClass <char *> MPlayerScenarios;
-DynamicVectorClass <int> MPlayerFilenum;
+char MultiplayerDescriptions[100][40];
+DynamicVectorClass <char *> MultiplayerScenarios;
+DynamicVectorClass <int> MultiplayerFileNum;
 
 
 /***************************************************************************
 **	This value determines the max allowable # of players.
 */
-int MPlayerMax = 4;
+int MultiplayerMaxPlayers = 4;
 
 
 /***************************************************************************
 **	Multiplayer game options
 */
-int MPlayerPrefColor;			// preferred color index for this player
-int MPlayerColorIdx;				// actual color index of this player
-HousesType MPlayerHouse;		// House of this player (GDI/NOD)
-unsigned char MPlayerLocalID;	// ID of this player
-int MPlayerCount;					// # of human players in this game
-int MPlayerBases;					// 1 = bases are on for this scenario
-int MPlayerCredits;				// # credits everyone gets
-int MPlayerTiberium;				// 1 = tiberium enabled for this scenario
-int MPlayerGoodies;				// 1 = goodies enabled for this scenario
-int MPlayerGhosts;				// 1 = houses with no players will still play
-int MPlayerSolo = 0;				// 1 = allows a single-player net game
-int MPlayerUnitCount = 10;		// # units for non-base multiplayer scenarios
+int MultiplayerPreferredColor;			// preferred color index for this player
+int MultiplayerColorIndex;				// actual color index of this player
+HousesType MultiplayerHouse;		// House of this player (GDI/NOD)
+unsigned char MultiplayerLocalID;	// ID of this player
+int MultiplayerPlayerCount;					// # of human players in this game
+int MultiplayerBasesEnabled;					// 1 = bases are on for this scenario
+int MultiplayerCredits;				// # credits everyone gets
+int MultiplayerTiberiumEnabled;				// 1 = tiberium enabled for this scenario
+int MultiplayerGoodiesEnabled;				// 1 = goodies enabled for this scenario
+int MultiplayerGhostsEnabled;				// 1 = houses with no players will still play
+int MultiplayerSoloAllowed = 0;				// 1 = allows a single-player net game
+int MultiplayerUnitCount = 10;		// # units for non-base multiplayer scenarios
 
 
 /*---------------------------------------------------------------------------
 Min & Max unit count values; index0 = bases OFF, index1 = bases ON
 ---------------------------------------------------------------------------*/
-int MPlayerCountMin[2] = {1,0};
-int MPlayerCountMax[2] = {50,12};
+int MultiplayerCountMin[2] = {1,0};
+int MultiplayerCountMax[2] = {50,12};
 
 
 /*---------------------------------------------------------------------------
 MPlayerMaxAhead is the number of frames ahead of this one to execute a given
 packet.  It's set by the RESPONSE_TIME event.
 ---------------------------------------------------------------------------*/
-uint32_t MPlayerMaxAhead = 3;
+uint32_t MultiplayerMaxAhead = 3;
 
 
 /*---------------------------------------------------------------------------
@@ -596,19 +563,19 @@ uint32_t FrameSendRate;
 ** bits 4-7: the player's Color Index
 ** These values are used as the IPX connection ID's.
 */
-unsigned char MPlayerID [MAX_PLAYERS];
+unsigned char MultiplayerID [MAX_PLAYERS];
 
 
 /***************************************************************************
 ** This array stores the actual HousesType for all players (MULT1, etc).
 */
-HousesType MPlayerHouses [MAX_PLAYERS];
+HousesType MultiplayerHouses [MAX_PLAYERS];
 
 
 /***************************************************************************
 ** This array stores the names of all players in a multiplayer game.
 */
-char MPlayerNames [MAX_PLAYERS][MPLAYER_NAME_MAX];
+char MultiplayerNames [MAX_PLAYERS][MPLAYER_NAME_MAX];
 
 
 /***************************************************************************
@@ -625,24 +592,24 @@ char LastMessage[MAX_MESSAGE_LENGTH];
 ** If this flag is set, computer AI will blitz the humans all at once;
 ** otherwise, the computer units trickle gradually out.
 */
-int MPlayerBlitz = 0;
+int MultiplayerBlitz = 0;
 
 
 /***************************************************************************
 ** If this flag is set, we can move around the map, but we can't do anything.
 ** It means we've been defeated, but we're still allowed to watch the action.
 */
-int MPlayerObiWan = 0;
+int MultiplayerObiWan = 0;
 
 
 /***************************************************************************
 ** These variables keep track of the multiplayer game scores.
 */
-MPlayerScoreType MPlayerScore[MAX_MULTI_NAMES];
-int MPlayerGamesPlayed;					// # games played this run
-int MPlayerNumScores;					// # active entries in MPlayerScore
-int MPlayerWinner;						// index of winner of last game
-int MPlayerCurGame;						// index of current game being played
+MultiplayerScoreType MultiplayerScore[MAX_MULTI_NAMES];
+int MultiplayerGamesPlayed;					// # games played this run
+int MultiplayerNumScores;					// # active entries in MPlayerScore
+int MultiplayerWinner;						// index of winner of last game
+int MultiplayerCurrentGame;						// index of current game being played
 
 
 //
@@ -863,7 +830,7 @@ bool NetOpen = false;
 ** GameName does not include the "'s Game"; comparing GameName to
 ** PlayerName can determine if this player is the originator of the game.
 */
-char MPlayerGameName[MPLAYER_NAME_MAX];
+char MultiplayerGameName[MPLAYER_NAME_MAX];
 
 
 /***************************************************************************

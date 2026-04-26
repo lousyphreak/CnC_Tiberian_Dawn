@@ -677,7 +677,7 @@ typedef enum PlayerColorType {
 
 /**********************************************************************
 ** These are the types of games that can be played.  GDI & NOD are the
-** usual human-vs-computer games; 2-Player games are network or modem,
+** usual human-vs-computer games; 2-Player games are networked,
 ** with 2 players; multi-player games are network with > 2 players.
 */
 typedef enum ScenarioPlayerEnum
@@ -687,7 +687,7 @@ typedef enum ScenarioPlayerEnum
 	SCEN_PLAYER_NOD,
 	SCEN_PLAYER_JP,
 	SCEN_PLAYER_2PLAYER,
-	SCEN_PLAYER_MPLAYER,
+	SCEN_PLAYER_MULTIPLAYER,
 	SCEN_PLAYER_COUNT,
 	SCEN_PLAYER_FIRST = 0,
 } ScenarioPlayerType;
@@ -2455,8 +2455,6 @@ typedef enum WaypointEnum
 */
 typedef enum GameEnum {
 	GAME_NORMAL,			// not multiplayer
-	GAME_MODEM,				// legacy modem game
-	GAME_NULL_MODEM,		// legacy NULL-modem
 	GAME_UDP,				// UDP direct game
 	GAME_INTERNET,			// TCP direct game
 	GAME_WOL				// Westwood Online game
@@ -2467,11 +2465,6 @@ typedef enum InternetTransportEnum {
 	INTERNET_TRANSPORT_TCP,
 	INTERNET_TRANSPORT_WOL
 } InternetTransportType;
-
-inline bool Is_Legacy_Serial_Game(GameType game)
-{
-	return game == GAME_MODEM || game == GAME_NULL_MODEM;
-}
 
 inline bool Is_Online_Game(GameType game)
 {
@@ -2512,10 +2505,9 @@ typedef enum CommProtocolEnum {
 
 
 /****************************************************************************
-** Min value for MaxAhead, for both net & modem; only applies for
+** Min value for MaxAhead for networked play; only applies for
 ** COMM_PROTOCOL_MULTI_E_COMP.
 */
-#define MODEM_MIN_MAX_AHEAD			5
 #define NETWORK_MIN_MAX_AHEAD			2
 
 
@@ -2547,7 +2539,6 @@ typedef enum CommProtocolEnum {
 #define	INITSTRBUF_MAX		41
 #define	CWAITSTRBUF_MAX	16
 #define	CREDITSBUF_MAX		5
-#define	MODEM_NAME_MAX		PORTBUF_MAX - 1	// Max length of modem name in list box
 
 typedef enum DetectPortType {
 	PORT_VALID = 0,
@@ -2596,7 +2587,6 @@ typedef struct {
 	bool Compression;
 	bool ErrorCorrection;
 	bool HardwareFlowControl;
-	char ModemName [ MODEM_NAME_MAX ];
 } SerialSettingsType;
 
 
@@ -2624,7 +2614,6 @@ typedef enum SerialCommandType {
 
 /****************************************************************************
 **	These is the structure sent over the network Global Channel.
-**	Also used for the Null-Modem and Modem.
 */
 typedef struct {
 	SerialCommandType Command;					// One of the enum's defined above
@@ -2648,14 +2637,10 @@ typedef struct {
 	unsigned char ID;								// ID of sender of message
 } SerialPacketType;
 
-typedef enum ModemGameType {
-	MODEM_NULL_HOST = 0,
-	MODEM_NULL_JOIN,
-	MODEM_DIALER,
-	MODEM_ANSWERER,
-	INTERNET_HOST = MODEM_NULL_HOST,
-	INTERNET_JOIN = MODEM_NULL_JOIN
-} ModemGameType;
+typedef enum InternetRoleType {
+	INTERNET_HOST = 0,
+	INTERNET_JOIN
+} InternetRoleType;
 
 
 /****************************************************************************
@@ -2735,7 +2720,7 @@ typedef struct {
 	int Wins;
 	int Kills[MAX_MULTI_GAMES];
 	int Color;
-} MPlayerScoreType;
+} MultiplayerScoreType;
 
 
 typedef enum {

@@ -520,7 +520,7 @@ class HouseClass {
 		** This routine gets called in multiplayer games when every unit, building,
 		** and infantry for a house is destroyed.
 		*/
-		void MPlayer_Defeated(void);
+		void Multiplayer_Defeated(void);
 
 	private:
 		void Silo_Redraw_Check(int32_t oldtib, int32_t oldcap);

@@ -42,7 +42,7 @@
 
 /*
 **	This timer class is based around an external tick system. As such, it is inherently 
-**	in sync with any connected system (through network or modem) that also keeps the external
+**	in sync with any connected system (through multiplayer networking) that also keeps the external
 **	tick system in sync. The game frame number is a good sync value.
 */
 class TCountDownTimerClass {

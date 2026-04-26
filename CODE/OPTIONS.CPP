@@ -564,7 +564,7 @@ void OptionsClass::Load_Settings (void)
 	*/
 	WWGetPrivateProfileString("Options", "Players", "", workbuf, sizeof(workbuf), buffer);
 	if (Obfuscate(workbuf) == PARM_6PLAYER) {
-		MPlayerMax = 6;
+		MultiplayerMaxPlayers = 6;
 	}
 
 	/*

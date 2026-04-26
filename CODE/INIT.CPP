@@ -48,7 +48,6 @@
 #include	"LOADDLG.H"
 #include	"SDLINPUT.H"
 #include	"TCPIP.H"
-#include  "CCDDE.H"
 #include	"WSMGR.H"
 
 static HANDLE			hCCLibrary;
@@ -735,14 +734,14 @@ bool Init_Game(int , char *[])
 	/*
 	**	Initialize the multiplayer score values
 	*/
-	MPlayerGamesPlayed = 0;
-	MPlayerNumScores = 0;
-	MPlayerCurGame = 0;
+	MultiplayerGamesPlayed = 0;
+	MultiplayerNumScores = 0;
+	MultiplayerCurrentGame = 0;
 	for (int i = 0; i < MAX_MULTI_NAMES; i++) {
-		MPlayerScore[i].Name[0] = '\0';
-		MPlayerScore[i].Wins = 0;
+		MultiplayerScore[i].Name[0] = '\0';
+		MultiplayerScore[i].Wins = 0;
 		for (int j = 0; j < MAX_MULTI_GAMES; j++) {
-			MPlayerScore[i].Kills[j] = -1;	// -1 = this player didn't play this round
+			MultiplayerScore[i].Kills[j] = -1;	// -1 = this player didn't play this round
 		}
 	}
 
@@ -831,8 +830,8 @@ extern int ShowCommand;
  *=============================================================================================*/
 extern int Com_Fake_Scenario_Dialog(void);
 extern int Com_Show_Fake_Scenario_Dialog(void);
-extern int WChatMaxAhead;
-extern int WChatSendRate;
+extern int InternetMaxAhead;
+extern int InternetSendRate;
 
 bool Select_Game(bool fade)
 {
@@ -847,7 +846,7 @@ bool Select_Game(bool fade)
 #endif	//BONUS_MISSIONS
 		SEL_INTERNET,
 		SEL_LOAD_MISSION,				// load a saved game
-		SEL_MULTIPLAYER_GAME,		// play modem/null-modem/network game
+		SEL_MULTIPLAYER_GAME,		// play multiplayer network game
 		SEL_INTRO,						// replay the intro
 		SEL_EXIT,						// exit to DOS
 		SEL_FAME,						// view the hall of fame
@@ -890,7 +889,7 @@ bool Select_Game(bool fade)
 	Frame = 0;
 	PlayerWins = false;
 	PlayerLoses = false;
-	MPlayerObiWan = false;
+	MultiplayerObiWan = false;
 	Debug_Unshroud = false;
 	Map.Set_Cursor_Shape(0);
 	Map.PendingObjectPtr = 0;
@@ -901,8 +900,8 @@ bool Select_Game(bool fade)
 	** Initialize multiplayer-protocol-specific variables:
 	** If CommProtocol MULTI_E_COMP is used, you must:
 	** Init FrameSendRate to a sensible value (3 is good)
-	** Init MPlayerMaxAhead to an even multiple of FrameSendRate, and it must
-	**   be at least 2 * MPlayerMaxAhead
+	** Init MultiplayerMaxAhead to an even multiple of FrameSendRate, and it must
+	**   be at least 2 * MultiplayerMaxAhead
 	*/
 	CommProtocol = COMM_PROTOCOL_SINGLE_NO_COMP;
 	FrameSendRate = 3;
@@ -920,7 +919,7 @@ bool Select_Game(bool fade)
 	** Kills for this game.  Kills of -1 means this player didn't play this round.
 	*/
 	for (int i = 0 ; i < MAX_MULTI_GAMES; i++) {
-		MPlayerScore[i].Kills[MPlayerCurGame] = -1;
+		MultiplayerScore[i].Kills[MultiplayerCurrentGame] = -1;
 	}
 
 	/*
@@ -1163,7 +1162,7 @@ bool Select_Game(bool fade)
 					break;
 
 				/*
-				**	SEL_MULTIPLAYER_GAME: set 'GameToPlay' to NULL-modem, modem, or
+				**	SEL_MULTIPLAYER_GAME: set 'GameToPlay' to multiplayer
 				**	network play.
 				*/
 				case SEL_MULTIPLAYER_GAME:
@@ -1193,7 +1192,7 @@ bool Select_Game(bool fade)
 						**	they want.
 						*/
 						case GAME_NORMAL:
-							GameToPlay = Select_MPlayer_Game();
+							GameToPlay = Select_Multiplayer_Game();
 							if (GameToPlay == GAME_NORMAL) {		// 'Cancel'
 								display = true;
 								selection = SEL_NONE;
@@ -1232,10 +1231,10 @@ bool Select_Game(bool fade)
 							Winsock.Set_Host_Address(PlanetWestwoodIPAddress);
 
 							if (Server) {
-								ModemGameToPlay = INTERNET_HOST;
+								InternetGameRole = INTERNET_HOST;
 								Winsock.Start_Server();
 							} else {
-								ModemGameToPlay = INTERNET_JOIN;
+								InternetGameRole = INTERNET_JOIN;
 								Winsock.Start_Client();
 							}
 
@@ -1260,11 +1259,11 @@ bool Select_Game(bool fade)
 						case GAME_WOL: {
 							char server_url[256];
 							char const *server_host = PlanetWestwoodIPAddress[0] ? PlanetWestwoodIPAddress : "127.0.0.1";
-							char const *nickname = MPlayerName[0] ? MPlayerName : "Noname";
+							char const *nickname = MultiplayerName[0] ? MultiplayerName : "Noname";
 
 							Read_MultiPlayer_Settings();
 							server_host = PlanetWestwoodIPAddress[0] ? PlanetWestwoodIPAddress : "127.0.0.1";
-							nickname = MPlayerName[0] ? MPlayerName : "Noname";
+							nickname = MultiplayerName[0] ? MultiplayerName : "Noname";
 
 							if (SDL_strstr(server_host, "://") != NULL) {
 								SDL_strlcpy(server_url, server_host, sizeof(server_url));
@@ -1463,7 +1462,7 @@ bool Select_Game(bool fade)
 #ifdef FORCE_WINSOCK
 	if (Is_Online_Game(GameToPlay)){
 		CommProtocol = COMM_PROTOCOL_MULTI_E_COMP;
-		FrameSendRate = (GameToPlay == GAME_WOL) ? WChatSendRate : 5;
+		FrameSendRate = (GameToPlay == GAME_WOL) ? InternetSendRate : 5;
 	}
 #endif	//FORCE_WINSOCK
 	/*
@@ -1612,16 +1611,16 @@ bool Select_Game(bool fade)
 	//Show_Mouse();
 
 	/*
-	** Special hack initialization of 'MPlayerMaxAhead' to accommodate the
+	** Special hack initialization of 'MultiplayerMaxAhead' to accommodate the
 	** compression protocol technology.
 	*/
 #ifdef FORCE_WINSOCK
 	if (CommProtocol==COMM_PROTOCOL_MULTI_E_COMP && GameToPlay!=GAME_NORMAL) {
 		if (GameToPlay == GAME_WOL) {
-			MPlayerMaxAhead = WChatMaxAhead;
-			FrameSendRate = WChatSendRate;
+			MultiplayerMaxAhead = InternetMaxAhead;
+			FrameSendRate = InternetSendRate;
 		} else {
-			MPlayerMaxAhead = FrameSendRate * 3;	//2;
+			MultiplayerMaxAhead = FrameSendRate * 3;	//2;
 		}
 	}
 #endif	//FORCE_WINSOCK
@@ -2241,7 +2240,7 @@ bool Parse_Command_Line(int argc, char *argv[])
 		**	Allow solo net play
 		*/
 		if (stricmp(string, "-HANSOLO") == 0) {
-			MPlayerSolo = true;
+			MultiplayerSoloAllowed = true;
 			continue;
 		}
 
@@ -2360,7 +2359,7 @@ bool Parse_Command_Line(int argc, char *argv[])
 
 #ifdef CHEAT_KEYS
 					/*
-					**	Target selection by human opponent (network/modem play) will
+					**	Target selection by human opponent (network play) will
 					**	be visible to the player?
 					*/
 					case 'V':
@@ -2644,22 +2643,22 @@ int Version_Number(void)
 void Save_Recording_Values(void)
 {
 	RecordFile.Write(&GameToPlay, sizeof(GameToPlay));
-	RecordFile.Write(&ModemGameToPlay, sizeof(ModemGameToPlay));
+	RecordFile.Write(&InternetGameRole, sizeof(InternetGameRole));
 	RecordFile.Write(&BuildLevel, sizeof(BuildLevel));
-	RecordFile.Write(MPlayerName, sizeof(MPlayerName));
-	RecordFile.Write(&MPlayerPrefColor, sizeof(MPlayerPrefColor));
-	RecordFile.Write(&MPlayerColorIdx, sizeof(MPlayerColorIdx));
-	RecordFile.Write(&MPlayerHouse, sizeof(MPlayerHouse));
-	RecordFile.Write(&MPlayerLocalID, sizeof(MPlayerLocalID));
-	RecordFile.Write(&MPlayerCount, sizeof(MPlayerCount));
-	RecordFile.Write(&MPlayerBases, sizeof(MPlayerBases));
-	RecordFile.Write(&MPlayerCredits, sizeof(MPlayerCredits));
-	RecordFile.Write(&MPlayerTiberium, sizeof(MPlayerTiberium));
-	RecordFile.Write(&MPlayerGoodies, sizeof(MPlayerGoodies));
-	RecordFile.Write(&MPlayerGhosts, sizeof(MPlayerGhosts));
-	RecordFile.Write(&MPlayerUnitCount, sizeof(MPlayerUnitCount));
-	RecordFile.Write(MPlayerID, sizeof(MPlayerID));
-	RecordFile.Write(MPlayerHouses, sizeof(MPlayerHouses));
+	RecordFile.Write(MultiplayerName, sizeof(MultiplayerName));
+	RecordFile.Write(&MultiplayerPreferredColor, sizeof(MultiplayerPreferredColor));
+	RecordFile.Write(&MultiplayerColorIndex, sizeof(MultiplayerColorIndex));
+	RecordFile.Write(&MultiplayerHouse, sizeof(MultiplayerHouse));
+	RecordFile.Write(&MultiplayerLocalID, sizeof(MultiplayerLocalID));
+	RecordFile.Write(&MultiplayerPlayerCount, sizeof(MultiplayerPlayerCount));
+	RecordFile.Write(&MultiplayerBasesEnabled, sizeof(MultiplayerBasesEnabled));
+	RecordFile.Write(&MultiplayerCredits, sizeof(MultiplayerCredits));
+	RecordFile.Write(&MultiplayerTiberiumEnabled, sizeof(MultiplayerTiberiumEnabled));
+	RecordFile.Write(&MultiplayerGoodiesEnabled, sizeof(MultiplayerGoodiesEnabled));
+	RecordFile.Write(&MultiplayerGhostsEnabled, sizeof(MultiplayerGhostsEnabled));
+	RecordFile.Write(&MultiplayerUnitCount, sizeof(MultiplayerUnitCount));
+	RecordFile.Write(MultiplayerID, sizeof(MultiplayerID));
+	RecordFile.Write(MultiplayerHouses, sizeof(MultiplayerHouses));
 	RecordFile.Write(&Seed, sizeof(Seed));
 	RecordFile.Write(&Scenario, sizeof(Scenario));
 	RecordFile.Write(&ScenPlayer, sizeof(ScenPlayer));
@@ -2696,22 +2695,22 @@ void Load_Recording_Values(void)
 	Read_MultiPlayer_Settings();
 
 	RecordFile.Read(&GameToPlay, sizeof(GameToPlay));
-	RecordFile.Read(&ModemGameToPlay, sizeof(ModemGameToPlay));
+	RecordFile.Read(&InternetGameRole, sizeof(InternetGameRole));
 	RecordFile.Read(&BuildLevel, sizeof(BuildLevel));
-	RecordFile.Read(MPlayerName, sizeof(MPlayerName));
-	RecordFile.Read(&MPlayerPrefColor, sizeof(MPlayerPrefColor));
-	RecordFile.Read(&MPlayerColorIdx, sizeof(MPlayerColorIdx));
-	RecordFile.Read(&MPlayerHouse, sizeof(MPlayerHouse));
-	RecordFile.Read(&MPlayerLocalID, sizeof(MPlayerLocalID));
-	RecordFile.Read(&MPlayerCount, sizeof(MPlayerCount));
-	RecordFile.Read(&MPlayerBases, sizeof(MPlayerBases));
-	RecordFile.Read(&MPlayerCredits, sizeof(MPlayerCredits));
-	RecordFile.Read(&MPlayerTiberium, sizeof(MPlayerTiberium));
-	RecordFile.Read(&MPlayerGoodies, sizeof(MPlayerGoodies));
-	RecordFile.Read(&MPlayerGhosts, sizeof(MPlayerGhosts));
-	RecordFile.Read(&MPlayerUnitCount, sizeof(MPlayerUnitCount));
-	RecordFile.Read(MPlayerID, sizeof(MPlayerID));
-	RecordFile.Read(MPlayerHouses, sizeof(MPlayerHouses));
+	RecordFile.Read(MultiplayerName, sizeof(MultiplayerName));
+	RecordFile.Read(&MultiplayerPreferredColor, sizeof(MultiplayerPreferredColor));
+	RecordFile.Read(&MultiplayerColorIndex, sizeof(MultiplayerColorIndex));
+	RecordFile.Read(&MultiplayerHouse, sizeof(MultiplayerHouse));
+	RecordFile.Read(&MultiplayerLocalID, sizeof(MultiplayerLocalID));
+	RecordFile.Read(&MultiplayerPlayerCount, sizeof(MultiplayerPlayerCount));
+	RecordFile.Read(&MultiplayerBasesEnabled, sizeof(MultiplayerBasesEnabled));
+	RecordFile.Read(&MultiplayerCredits, sizeof(MultiplayerCredits));
+	RecordFile.Read(&MultiplayerTiberiumEnabled, sizeof(MultiplayerTiberiumEnabled));
+	RecordFile.Read(&MultiplayerGoodiesEnabled, sizeof(MultiplayerGoodiesEnabled));
+	RecordFile.Read(&MultiplayerGhostsEnabled, sizeof(MultiplayerGhostsEnabled));
+	RecordFile.Read(&MultiplayerUnitCount, sizeof(MultiplayerUnitCount));
+	RecordFile.Read(MultiplayerID, sizeof(MultiplayerID));
+	RecordFile.Read(MultiplayerHouses, sizeof(MultiplayerHouses));
 	RecordFile.Read(&Seed, sizeof(Seed));
 	RecordFile.Read(&Scenario, sizeof(Scenario));
 	RecordFile.Read(&ScenPlayer, sizeof(ScenPlayer));

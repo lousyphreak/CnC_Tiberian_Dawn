@@ -39,7 +39,7 @@
  * incoming packets, which may be from different computers, and distribute	*
  * those packets to Connection Classes via their Receive_Packet function.	*
  *                                                                         *
- * This class should be the only access to the network/modem for the			*
+ * This class should be the only access to multiplayer networking for the	*
  * application, so if the app needs any functions to access the 				*
  * connections or the queue's, the derived versions of this class should	*
  * provide them.																				*

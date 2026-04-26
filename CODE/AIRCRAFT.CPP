@@ -2042,7 +2042,7 @@ void AircraftClass::Active_Click_With(ActionType action, CELL cell)
  * OUTPUT:  none                                                                               *
  *                                                                                             *
  * WARNINGS:   The mission specified will be executed at an indeterminate future game frame.   *
- *             This is controlled by net/modem propogation delay.                              *
+ *             This is controlled by multiplayer network propagation delay.                    *
  *                                                                                             *
  * HISTORY:                                                                                    *
  *   06/19/1995 JLB : Created.                                                                 *

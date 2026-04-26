@@ -516,22 +516,22 @@ bool Read_Scenario_Ini(char *root, bool fresh)
 	**	- If capture-the-flag is enabled, assign flags to cells.
 	*/
 	if (GameToPlay != GAME_NORMAL || ScenPlayer == SCEN_PLAYER_2PLAYER ||
-		ScenPlayer == SCEN_PLAYER_MPLAYER) {
+		ScenPlayer == SCEN_PLAYER_MULTIPLAYER) {
 
 		/*
 		**	If Ghosts are disabled and we're not editing, remove computer players
 		**	(Must be done after all objects are read in from the INI)
 		*/
-		if (!MPlayerGhosts && !Debug_Map) {
+		if (!MultiplayerGhostsEnabled && !Debug_Map) {
 			Remove_AI_Players();
 		} else {
 
 			/*
 			** If Ghosts are on, set up their houses for blitzing the humans
 			*/
-			MPlayerBlitz = IRandom (0,1);					// 1 = computer will blitz
-			if (MPlayerBlitz) {
-				if (MPlayerBases) {
+			MultiplayerBlitz = IRandom (0,1);					// 1 = computer will blitz
+			if (MultiplayerBlitz) {
+				if (MultiplayerBasesEnabled) {
 					rndmax = 14000;
 					rndmin = 10000;
 				} else {
@@ -539,7 +539,7 @@ bool Read_Scenario_Ini(char *root, bool fresh)
 					rndmin = 4000;
 				}
 
-				for (int i = 0; i < MPlayerMax; i++) {
+				for (int i = 0; i < MultiplayerMaxPlayers; i++) {
 					HousesType house = (HousesType)(i + (int)HOUSE_MULTI1);
 					HouseClass *housep = HouseClass::As_Pointer (house);
 					housep->BlitzTime = IRandom (rndmin,rndmax);
@@ -564,8 +564,8 @@ bool Read_Scenario_Ini(char *root, bool fresh)
 		/*
 		**	Place crates if MPlayerGoodies is on.
 		*/
-		if (MPlayerGoodies) {
-			for (int index = 0; index < MPlayerCount; index++) {
+		if (MultiplayerGoodiesEnabled) {
+			for (int index = 0; index < MultiplayerPlayerCount; index++) {
 				Map.Place_Random_Crate();
 			}
 		}
@@ -735,7 +735,7 @@ static void Assign_Houses(void)
 	HouseClass *housep2;
 
 char wibble [256];
-sprintf (wibble, "C&C95 - In 'Assign_Houses'. Number of players:%d\n",MPlayerCount);
+sprintf (wibble, "C&C95 - In 'Assign_Houses'. Number of players:%d\n",MultiplayerPlayerCount);
 CCDebugString (wibble);
 
 	/*
@@ -751,8 +751,8 @@ CCDebugString (wibble);
 	/*
 	**	For each player, randomly pick a house
 	*/
-	for (i = 0; i < MPlayerCount; i++) {
-		j = Random_Pick(0, MPlayerMax-1);
+	for (i = 0; i < MultiplayerPlayerCount; i++) {
+		j = Random_Pick(0, MultiplayerMaxPlayers-1);
 
 		/*
 		**	If this house was already selected, decrement 'i' & keep looping.
@@ -767,10 +767,10 @@ CCDebugString (wibble);
 		**	get a pointer to the house instance
 		*/
 		house = (HousesType)(j + (int)HOUSE_MULTI1);
-		pref_house = MPlayerID_To_HousesType(MPlayerID[i]);
-		color = MPlayerID_To_ColorIndex(MPlayerID[i]);
+		pref_house = MultiplayerID_To_HousesType(MultiplayerID[i]);
+		color = MultiplayerID_To_ColorIndex(MultiplayerID[i]);
 		housep = HouseClass::As_Pointer(house);
-		MPlayerHouses[i] = house;
+		MultiplayerHouses[i] = house;
 
 		/*
 		**	Mark this house & color as used
@@ -782,14 +782,14 @@ CCDebugString (wibble);
 		**	Set the house's IsHuman, Credits, ActLike, & RemapTable
 		*/
 		memset((char *)housep->Name, 0, MPLAYER_NAME_MAX);
-		strncpy((char *)housep->Name, MPlayerNames[i], MPLAYER_NAME_MAX-1);
+		strncpy((char *)housep->Name, MultiplayerNames[i], MPLAYER_NAME_MAX-1);
 		housep->IsHuman = true;
-		housep->Init_Data(color, pref_house, MPlayerCredits);
+		housep->Init_Data(color, pref_house, MultiplayerCredits);
 
 		/*
 		**	If this ID is for myself, set up PlayerPtr
 		*/
-		if (MPlayerID[i] == MPlayerLocalID) {
+		if (MultiplayerID[i] == MultiplayerLocalID) {
 			PlayerPtr = housep;
 		}
 	}
@@ -797,7 +797,7 @@ CCDebugString (wibble);
 	/*
 	**	For all houses not assigned to a player, set them up for computer use
 	*/
-	for (i = 0; i < MPlayerMax; i++) {
+	for (i = 0; i < MultiplayerMaxPlayers; i++) {
 		if (house_used[i] == false) {
 
 			/*
@@ -824,19 +824,19 @@ CCDebugString (wibble);
 			**	Set the house's IsHuman, Credits, ActLike, & RemapTable
 			*/
 			housep->IsHuman = false;
-			housep->Init_Data(color, pref_house, MPlayerCredits);
+			housep->Init_Data(color, pref_house, MultiplayerCredits);
 		}
 	}
 
 	/*
 	**	Now make all computer-owned houses allies of each other.
 	*/
-	for (house = HOUSE_MULTI1; house < (HOUSE_MULTI1 + MPlayerMax); house++) {
+	for (house = HOUSE_MULTI1; house < (HOUSE_MULTI1 + MultiplayerMaxPlayers); house++) {
 		housep = HouseClass::As_Pointer(house);
 		if (housep->IsHuman)
 			continue;
 
-		for (house2 = HOUSE_MULTI1; house2 < (HOUSE_MULTI1 + MPlayerMax); house2++) {
+		for (house2 = HOUSE_MULTI1; house2 < (HOUSE_MULTI1 + MultiplayerMaxPlayers); house2++) {
 			housep2 = HouseClass::As_Pointer (house2);
 			if (housep2->IsHuman)
 				continue;
@@ -999,7 +999,7 @@ static void Create_Units(void)
 	/*........................................................................
 	Compute allowed # units
 	........................................................................*/
-	tot_units = (MPlayerUnitCount * 2) / 3;
+	tot_units = (MultiplayerUnitCount * 2) / 3;
 //	tot_units = MAX(tot_units, 1);
 
 	/*........................................................................
@@ -1022,7 +1022,7 @@ static void Create_Units(void)
 	/*........................................................................
 	Compute allowed # infantry
 	........................................................................*/
-	tot_infantry = MPlayerUnitCount - tot_units;
+	tot_infantry = MultiplayerUnitCount - tot_units;
 
 	/*........................................................................
 	Init # of each category to 0
@@ -1066,7 +1066,7 @@ static void Create_Units(void)
 	ON, are treated as though bases are OFF (since we have no base-building
 	AI logic.)
 	------------------------------------------------------------------------*/
-	for (h = HOUSE_MULTI1; h < (HOUSE_MULTI1 + MPlayerMax); h++) {
+	for (h = HOUSE_MULTI1; h < (HOUSE_MULTI1 + MultiplayerMaxPlayers); h++) {
 
 		/*.....................................................................
 		Get a pointer to this house; if there is none, go to the next house
@@ -1081,7 +1081,7 @@ static void Create_Units(void)
 		.....................................................................*/
 		try_count = 0;
 		while (1) {
-			j = IRandom(0,MPlayerMax - 1);
+			j = IRandom(0,MultiplayerMaxPlayers - 1);
 			if (sorted_waypts[j] != -1) {
 				centroid = sorted_waypts[j];
 				sorted_waypts[j] = -1;
@@ -1106,7 +1106,7 @@ static void Create_Units(void)
 		/*---------------------------------------------------------------------
 		If Bases are ON, human & computer houses are treated differently
 		---------------------------------------------------------------------*/
-		if (MPlayerBases) {
+		if (MultiplayerBasesEnabled) {
 			/*..................................................................
 			- For a human-controlled house:
 			  - Set 'scaleval' to 1
@@ -1136,7 +1136,7 @@ static void Create_Units(void)
 				  - Set 'scaleval' to 3
 				  - Create a Mobile HQ for capture-the-flag mode
 				..................................................................*/
-				scaleval = 3 / (MPlayerMax - MPlayerCount);
+				scaleval = 3 / (MultiplayerMaxPlayers - MultiplayerPlayerCount);
 				if (scaleval==0) {
 					scaleval = 1;
 				}
@@ -1171,7 +1171,7 @@ static void Create_Units(void)
 		/*---------------------------------------------------------------------
 		Set the house's max # units (this is used in the Mission_Timed_Hunt())
 		---------------------------------------------------------------------*/
-		hptr->MaxUnit = MPlayerUnitCount * scaleval;
+		hptr->MaxUnit = MultiplayerUnitCount * scaleval;
 
 		/*---------------------------------------------------------------------
 		Create units for this house

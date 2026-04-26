@@ -1931,28 +1931,28 @@ void Multi_Score_Presentation(void)
 	** Move all the scores over a notch if there's more games than can be
 	** shown (which is known by MPlayerCurGame == MAX_MULTI_GAMES-1);
 	*/
-	if (MPlayerCurGame == MAX_MULTI_GAMES-1) {
+	if (MultiplayerCurrentGame == MAX_MULTI_GAMES-1) {
 		for(i = 0; i < MAX_MULTI_NAMES; i++) {
 			for(k = 0; k < MAX_MULTI_GAMES-1; k++) {
-				MPlayerScore[i].Kills[k] = MPlayerScore[i].Kills[k+1];
+				MultiplayerScore[i].Kills[k] = MultiplayerScore[i].Kills[k+1];
 			}
 		}
 	}
 
 	int y = 41;
 	for(i = 0; i < MAX_MULTI_NAMES; i++) {
-		if (strlen(MPlayerScore[i].Name)) {
-			pal = _colors[MPlayerScore[i].Color];
+		if (strlen(MultiplayerScore[i].Name)) {
+			pal = _colors[MultiplayerScore[i].Color];
 
-			Alloc_Object(new ScorePrintClass(MPlayerScore[i].Name, 15,  y,pal));
+			Alloc_Object(new ScorePrintClass(MultiplayerScore[i].Name, 15,  y,pal));
 			Call_Back_Delay(20);
 
-			Alloc_Object(new ScorePrintClass(Int_Print(MPlayerScore[i].Wins), 118, y, pal));
+			Alloc_Object(new ScorePrintClass(Int_Print(MultiplayerScore[i].Wins), 118, y, pal));
 			Call_Back_Delay(6);
 
-			for(k = 0; k <= MIN(MPlayerCurGame, MAX_MULTI_GAMES-2); k++) {
-				if (MPlayerScore[i].Kills[k] >= 0) {
-					Alloc_Object(new ScorePrintClass(Int_Print(MPlayerScore[i].Kills[k]), 225+(24*k), y, pal));
+			for(k = 0; k <= MIN(MultiplayerCurrentGame, MAX_MULTI_GAMES-2); k++) {
+				if (MultiplayerScore[i].Kills[k] >= 0) {
+					Alloc_Object(new ScorePrintClass(Int_Print(MultiplayerScore[i].Kills[k]), 225+(24*k), y, pal));
 					Call_Back_Delay(6);
 				}
 			}

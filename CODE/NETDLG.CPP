@@ -110,7 +110,7 @@
 #include "WSMGR.H"
 #define SHOW_MONO		0
 
-extern int WChatMaxAhead;
+extern int InternetMaxAhead;
 
 
 #ifndef DEMO
@@ -169,7 +169,7 @@ ConnManClass *Current_Network_Manager(void)
 static uint32_t Current_Global_Response_Time(void)
 {
 	if (GameToPlay == GAME_WOL) {
-		int max_ahead = (WChatMaxAhead > 0) ? WChatMaxAhead : 9;
+		int max_ahead = (InternetMaxAhead > 0) ? InternetMaxAhead : 9;
 		return static_cast<uint32_t>(max_ahead * 8);
 	}
 
@@ -282,7 +282,7 @@ void Shutdown_Network (void)
 	memset (&GPacket, 0, sizeof(GlobalPacketType));
 
 	GPacket.Command = NET_SIGN_OFF;
-	strcpy (GPacket.Name, MPlayerName);
+	strcpy (GPacket.Name, MultiplayerName);
 
 	NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType), 0, NULL);
 	NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType), 0, NULL);
@@ -313,7 +313,7 @@ void Shutdown_Network (void)
 	/*------------------------------------------------------------------------
 	If I was in a game, I'm not now, so clear the game name
 	------------------------------------------------------------------------*/
-	MPlayerGameName[0] = 0;
+	MultiplayerGameName[0] = 0;
 }
 
 
@@ -333,7 +333,7 @@ void Shutdown_Network (void)
  *		true = packet was processed, false = wasn't															  *
  *                                                                         						  *
  * WARNINGS:                                                               						  *
- *		MPlayerName & MPlayerGameName must have been filled in before this function				  *
+ *		MultiplayerName & MultiplayerGameName must have been filled in before this function		  *
  *		can be called.																									  *
  *                                                                         						  *
  * HISTORY:                                                                						  *
@@ -353,12 +353,12 @@ bool Process_Global_Packet(GlobalPacketType *packet, UDPAddressClass *address)
 		the game still shows up on other players' dialogs.
 		If the game is open, only the game owner may respond.
 		.....................................................................*/
-		if (strlen(MPlayerName) > 0 && strlen(MPlayerGameName) > 0 &&
-			((!NetOpen) || (NetOpen && !strcmp(MPlayerName,MPlayerGameName)))) {
+		if (strlen(MultiplayerName) > 0 && strlen(MultiplayerGameName) > 0 &&
+			((!NetOpen) || (NetOpen && !strcmp(MultiplayerName,MultiplayerGameName)))) {
 			memset (&mypacket, 0, sizeof(GlobalPacketType));
 
 			mypacket.Command = NET_ANSWER_GAME;
-			strcpy(mypacket.Name, MPlayerGameName);
+			strcpy(mypacket.Name, MultiplayerGameName);
 #ifdef PATCH
 			if (IsV107) {
 				mypacket.GameInfo.Version = 1;
@@ -380,15 +380,15 @@ bool Process_Global_Packet(GlobalPacketType *packet, UDPAddressClass *address)
 		----------------- Another system asking what player I am -----------------
 		*/
 		if (packet->Command==NET_QUERY_PLAYER &&
-			!strcmp (packet->Name, MPlayerGameName) &&
-				(strlen(MPlayerGameName) > 0) && NetStealth==0) {
+			!strcmp (packet->Name, MultiplayerGameName) &&
+				(strlen(MultiplayerGameName) > 0) && NetStealth==0) {
 			memset (&mypacket, 0, sizeof(GlobalPacketType));
 
 			mypacket.Command = NET_ANSWER_PLAYER;
-			strcpy(mypacket.Name, MPlayerName);
-			mypacket.PlayerInfo.House = MPlayerHouse;
-			mypacket.PlayerInfo.Color = MPlayerColorIdx;
-			mypacket.PlayerInfo.NameCRC = Compute_Name_CRC(MPlayerGameName);
+			strcpy(mypacket.Name, MultiplayerName);
+			mypacket.PlayerInfo.House = MultiplayerHouse;
+			mypacket.PlayerInfo.Color = MultiplayerColorIndex;
+			mypacket.PlayerInfo.NameCRC = Compute_Name_CRC(MultiplayerGameName);
 
 			NetMgr.Send_Global_Message (&mypacket, sizeof(GlobalPacketType), 1, address);
 			return(true);
@@ -435,22 +435,22 @@ void Destroy_Connection(int id, int error)
 
 	if (strlen(txt)) {
 		Messages.Add_Message (txt,
-			MPlayerTColors[MPlayerID_To_ColorIndex((unsigned char)id)],
+			MultiplayerTColors[MultiplayerID_To_ColorIndex((unsigned char)id)],
 			TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_FULLSHADOW, 600, 0, 0);
 		Map.Flag_To_Redraw(false);
 	}
 
 	/*------------------------------------------------------------------------
-	Delete the IPX connection, shift the MPlayerID's & MPlayerHouses' back one.
+	Delete the IPX connection, shift the MultiplayerID's & MultiplayerHouses' back one.
 	------------------------------------------------------------------------*/
 	NetMgr.Delete_Connection(id);
 
-	for (i = 0; i < MPlayerCount; i++) {
-		if (MPlayerID[i] == (unsigned char)id) {
+	for (i = 0; i < MultiplayerPlayerCount; i++) {
+		if (MultiplayerID[i] == (unsigned char)id) {
 			/*..................................................................
 			Turn the player's house over to the computer's AI
 			..................................................................*/
-			house = MPlayerHouses[i];
+			house = MultiplayerHouses[i];
 			housep = HouseClass::As_Pointer (house);
 			housep->IsHuman = false;
 			housep->IsStarted = true;
@@ -458,24 +458,24 @@ void Destroy_Connection(int id, int error)
 			/*..................................................................
 			Move arrays back by one
 			..................................................................*/
-			for (j = i; j < MPlayerCount - 1; j++) {
-				MPlayerID[j] = MPlayerID[j + 1];
-				MPlayerHouses[j] = MPlayerHouses[j + 1];
-				strcpy (MPlayerNames[j], MPlayerNames[j+1]);
+			for (j = i; j < MultiplayerPlayerCount - 1; j++) {
+				MultiplayerID[j] = MultiplayerID[j + 1];
+				MultiplayerHouses[j] = MultiplayerHouses[j + 1];
+				strcpy (MultiplayerNames[j], MultiplayerNames[j+1]);
 				TheirProcessTime[j] = TheirProcessTime[j+1];
 			}
 		}
 	}
 
-	MPlayerCount--;
+	MultiplayerPlayerCount--;
 
 	/*------------------------------------------------------------------------
 	If we're the last player left, tell the user.
 	------------------------------------------------------------------------*/
-	if (MPlayerCount == 1) {
+	if (MultiplayerPlayerCount == 1) {
 		sprintf(txt,"%s",Text_String(TXT_JUST_YOU_AND_ME));
 		Messages.Add_Message (txt,
-			MPlayerTColors[MPlayerID_To_ColorIndex((unsigned char)id)],
+			MultiplayerTColors[MultiplayerID_To_ColorIndex((unsigned char)id)],
 			TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_FULLSHADOW, 600, 0, 0);
 		Map.Flag_To_Redraw(false);
 	}
@@ -505,7 +505,7 @@ bool Remote_Connect(void)
 
 	/*------------------------------------------------------------------------
 	Init network timing parameters; these values should work for both a "real"
-	network, and a simulated modem network (ie Kali)
+	network and a simulated legacy serial-link network (ie Kali)
 	------------------------------------------------------------------------*/
 	NetMgr.Set_Timing (	30, 		// retry 2 times per second
 							-1, 		// ignore max retries
@@ -521,7 +521,7 @@ bool Remote_Connect(void)
 	/*------------------------------------------------------------------------
 	Init my game name to 0-length, since I haven't joined any game yet.
 	------------------------------------------------------------------------*/
-	MPlayerGameName[0] = 0;
+	MultiplayerGameName[0] = 0;
 
 	/*------------------------------------------------------------------------
 	The game is now "open" for joining.  Close it as soon as we exit this
@@ -610,7 +610,7 @@ bool Server_Remote_Connect(void)
 
 	/*------------------------------------------------------------------------
 	Init network timing parameters; these values should work for both a "real"
-	network, and a simulated modem network (ie Kali)
+	network and a simulated legacy serial-link network (ie Kali)
 	------------------------------------------------------------------------*/
 	NetMgr.Set_Timing (	30, 		// retry 2 times per second
 							-1, 		// ignore max retries
@@ -638,7 +638,7 @@ bool Server_Remote_Connect(void)
 	** Match the visible host lobby flow: the host advertises the game under
 	** the player's current multiplayer name before entering the setup dialog.
 	*/
-	SDL_strlcpy(MPlayerGameName, MPlayerName, sizeof(MPlayerGameName));
+	SDL_strlcpy(MultiplayerGameName, MultiplayerName, sizeof(MultiplayerGameName));
 
 	if (!Net_New_Dialog()){
 		Write_MultiPlayer_Settings ();
@@ -674,7 +674,7 @@ bool Client_Remote_Connect(void)
 
 	/*------------------------------------------------------------------------
 	Init network timing parameters; these values should work for both a "real"
-	network, and a simulated modem network (ie Kali)
+	network and a simulated legacy serial-link network (ie Kali)
 	------------------------------------------------------------------------*/
 	NetMgr.Set_Timing (	30, 		// retry 2 times per second
 							-1, 		// ignore max retries
@@ -702,7 +702,7 @@ bool Client_Remote_Connect(void)
 	** The client is not part of an advertised game yet, so clear any stale
 	** game name before entering the normal join dialog.
 	*/
-	MPlayerGameName[0] = 0;
+	MultiplayerGameName[0] = 0;
 
 	/*---------------------------------------------------------------------
 	Pop up the network Join/New dialog
@@ -1015,14 +1015,14 @@ static int Net_Join_Dialog(void)
 	/*
 	----------------------------- Various Inits ------------------------------
 	*/
-	MPlayerColorIdx = MPlayerPrefColor;			// init my preferred color
-	strcpy (namebuf, MPlayerName);				// set my name
+	MultiplayerColorIndex = MultiplayerPreferredColor;			// init my preferred color
+	strcpy (namebuf, MultiplayerName);				// set my name
 	name_edt.Set_Text(namebuf,MPLAYER_NAME_MAX);
-	name_edt.Set_Color (MPlayerTColors[MPlayerColorIdx]);
+	name_edt.Set_Color (MultiplayerTColors[MultiplayerColorIndex]);
 
 	playerlist.Set_Selected_Style(ColorListClass::SELECT_NONE);
 
-	if (MPlayerHouse==HOUSE_GOOD) {
+	if (MultiplayerHouse==HOUSE_GOOD) {
 		gdibtn.Turn_On();
 	} else {
 		nodbtn.Turn_On();
@@ -1118,7 +1118,7 @@ static int Net_Join_Dialog(void)
 				if (joinstate > JOIN_NOTHING) {
 					Fancy_Text_Print(namebuf, d_name_x, d_name_y + 1, CC_GREEN,
 						TBLACK, TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW);
-					if (MPlayerHouse==HOUSE_GOOD) {
+					if (MultiplayerHouse==HOUSE_GOOD) {
 						Fancy_Text_Print(TXT_G_D_I, d_gdi_x, d_gdi_y + 1, CC_GREEN,
 							TBLACK, TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW);
 					} else {
@@ -1171,9 +1171,9 @@ static int Net_Join_Dialog(void)
 				for (i = 0; i < MAX_MPLAYER_COLORS; i++) {
 					LogicPage->Fill_Rect (cbox_x[i] + 1, d_color_y + 1,
 						cbox_x[i] + 1 + d_color_w - 2, d_color_y + 1 + d_color_h - 2,
-						MPlayerGColors[i]);
+						MultiplayerGColors[i]);
 
-					if (i == MPlayerColorIdx) {
+					if (i == MultiplayerColorIndex) {
 						Draw_Box(cbox_x[i], d_color_y, d_color_w, d_color_h,
 							BOXSTYLE_GREEN_DOWN, false);
 					} else {
@@ -1207,7 +1207,7 @@ static int Net_Join_Dialog(void)
 					............................................................*/
 					p = Text_String(TXT_SCENARIO_COLON);
 					if (ScenarioIdx != -1) {
-						sprintf(txt,"%s %s",p, MPlayerScenarios[ScenarioIdx]);
+						sprintf(txt,"%s %s",p, MultiplayerScenarios[ScenarioIdx]);
 
 						Fancy_Text_Print (txt, d_dialog_cx,
 							d_msg1_y, CC_GREEN, TBLACK,
@@ -1224,7 +1224,7 @@ static int Net_Join_Dialog(void)
 					# of credits
 					............................................................*/
 					p = Text_String(TXT_START_CREDITS_COLON);
-					sprintf(txt, "%s %d", p, MPlayerCredits);
+					sprintf(txt, "%s %d", p, MultiplayerCredits);
 					Fancy_Text_Print (txt, d_dialog_cx,
 						d_msg2_y, CC_GREEN, TBLACK,
 						TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW | TPF_CENTER);
@@ -1233,7 +1233,7 @@ static int Net_Join_Dialog(void)
 					Count & Level values
 					............................................................*/
 					p = Text_String(TXT_COUNT);
-					sprintf(txt,"%s %d",p,MPlayerUnitCount);
+					sprintf(txt,"%s %d",p,MultiplayerUnitCount);
 					Fancy_Text_Print (txt,
 						d_dialog_x + (d_dialog_w / 4) - String_Pixel_Width(p),
 						d_msg3_y, CC_GREEN, TBLACK,
@@ -1254,7 +1254,7 @@ static int Net_Join_Dialog(void)
 					Bases
 					............................................................*/
 					p = Text_String(TXT_BASES_COLON);
-					if (MPlayerBases) {
+					if (MultiplayerBasesEnabled) {
 						sprintf(txt,"%s %s",p,Text_String(TXT_ON));
 					} else {
 						sprintf(txt,"%s %s",p,Text_String(TXT_OFF));
@@ -1268,7 +1268,7 @@ static int Net_Join_Dialog(void)
 					Tiberium
 					............................................................*/
 					p = Text_String(TXT_TIBERIUM_COLON);
-					if (MPlayerTiberium) {
+					if (MultiplayerTiberiumEnabled) {
 						sprintf(txt,"%s %s",p,Text_String(TXT_ON));
 					} else {
 						sprintf(txt,"%s %s",p,Text_String(TXT_OFF));
@@ -1283,7 +1283,7 @@ static int Net_Join_Dialog(void)
 					Goody boxes
 					............................................................*/
 					p = Text_String(TXT_CRATES_COLON);
-					if (MPlayerGoodies) {
+					if (MultiplayerGoodiesEnabled) {
 						sprintf(txt,"%s %s",p,Text_String(TXT_ON));
 					} else {
 						sprintf(txt,"%s %s",p,Text_String(TXT_OFF));
@@ -1302,7 +1302,7 @@ static int Net_Join_Dialog(void)
 						sprintf(txt,"%s %s",p,Text_String(TXT_ON));
 					} else {
 						p = Text_String(TXT_AI_PLAYERS_COLON);
-						if (MPlayerGhosts) {
+						if (MultiplayerGhostsEnabled) {
 							sprintf(txt,"%s %s",p,Text_String(TXT_ON));
 						} else {
 							sprintf(txt,"%s %s",p,Text_String(TXT_OFF));
@@ -1354,10 +1354,10 @@ static int Net_Join_Dialog(void)
 					_Kbd->MouseQX < (cbox_x[MAX_MPLAYER_COLORS - 1] + d_color_w) &&
 					_Kbd->MouseQY > d_color_y &&
 					_Kbd->MouseQY < (d_color_y + d_color_h)) {
-						MPlayerPrefColor = (_Kbd->MouseQX - cbox_x[0]) / d_color_w;
-						MPlayerColorIdx = MPlayerPrefColor;
+						MultiplayerPreferredColor = (_Kbd->MouseQX - cbox_x[0]) / d_color_w;
+						MultiplayerColorIndex = MultiplayerPreferredColor;
 
-						name_edt.Set_Color (MPlayerTColors[MPlayerColorIdx]);
+						name_edt.Set_Color (MultiplayerTColors[MultiplayerColorIndex]);
 						name_edt.Flag_To_Redraw();
 
 						display = REDRAW_COLORS;
@@ -1387,20 +1387,20 @@ static int Net_Join_Dialog(void)
 			House Buttons: set the player's desired House
 			------------------------------------------------------------------*/
 			case (BUTTON_GDI | KN_BUTTON):
-				MPlayerHouse = HOUSE_GOOD;
+				MultiplayerHouse = HOUSE_GOOD;
 				gdibtn.Turn_On();
 				nodbtn.Turn_Off();
 				break;
 
 			case (BUTTON_NOD | KN_BUTTON):
-				MPlayerHouse = HOUSE_BAD;
+				MultiplayerHouse = HOUSE_BAD;
 				gdibtn.Turn_Off();
 				nodbtn.Turn_On();
 				break;
 
 			/*------------------------------------------------------------------
 			JOIN: send a join request packet & switch to waiting-for-confirmation
-			mode.  (Request_To_Join fills in MPlayerName with my namebuf.)
+			mode.  (Request_To_Join fills in MultiplayerName with my namebuf.)
 			------------------------------------------------------------------*/
 			case (BUTTON_JOIN | KN_BUTTON):
 				name_edt.Clear_Focus();
@@ -1408,8 +1408,8 @@ static int Net_Join_Dialog(void)
 
 				join_index = gamelist.Current_Index();
 				parms_received = 0;
-				if (Request_To_Join (namebuf, join_index, &playerlist, MPlayerHouse,
-					MPlayerColorIdx)) {
+				if (Request_To_Join (namebuf, join_index, &playerlist, MultiplayerHouse,
+					MultiplayerColorIndex)) {
 					joinstate = JOIN_WAIT_CONFIRM;
 				} else {
 					display = REDRAW_ALL;
@@ -1430,7 +1430,7 @@ static int Net_Join_Dialog(void)
 				memset (&GPacket, 0, sizeof(GlobalPacketType));
 
 				GPacket.Command = NET_SIGN_OFF;
-				strcpy(GPacket.Name,MPlayerName);
+				strcpy(GPacket.Name,MultiplayerName);
 
 				/*...............................................................
 				If we're joined to a game, make extra sure the other players in
@@ -1486,7 +1486,7 @@ static int Net_Join_Dialog(void)
 					process = false;
 					rc = -1;
 				} else {
-					MPlayerGameName[0] = 0;
+					MultiplayerGameName[0] = 0;
 					joinstate = JOIN_NOTHING;
 					display = REDRAW_ALL;
 				}
@@ -1521,8 +1521,8 @@ static int Net_Join_Dialog(void)
 				/*
 				.................... Save player & game name ....................
 				*/
-				strcpy(MPlayerName,namebuf);
-				strcpy(MPlayerGameName,namebuf);
+				strcpy(MultiplayerName,namebuf);
+				strcpy(MultiplayerGameName,namebuf);
 
 				name_edt.Clear_Focus();
 				name_edt.Flag_To_Redraw();
@@ -1545,7 +1545,7 @@ static int Net_Join_Dialog(void)
 
 						strcpy(txt,Text_String(TXT_TO_ALL));	// "To All:"
 
-						Messages.Add_Edit (MPlayerTColors[MPlayerColorIdx],
+						Messages.Add_Edit (MultiplayerTColors[MultiplayerColorIndex],
 							TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_FULLSHADOW, txt, d_message_w-70*factor);
 
 						if (joinstate <= JOIN_NOTHING) {
@@ -1637,8 +1637,8 @@ static int Net_Join_Dialog(void)
 								*(GPacket.Message.Buf + COMPAT_MESSAGE_LENGTH-5) = 0;
 								*((unsigned short*)(GPacket.Message.Buf + COMPAT_MESSAGE_LENGTH-4)) = magic_number;
 								*((unsigned short*)(GPacket.Message.Buf + COMPAT_MESSAGE_LENGTH-2)) = crc;
-								GPacket.Message.ID = Build_MPlayerID (MPlayerColorIdx, MPlayerHouse);
-								GPacket.Message.NameCRC = Compute_Name_CRC(MPlayerGameName);
+								GPacket.Message.ID = Build_MultiplayerID(MultiplayerColorIndex, MultiplayerHouse);
+								GPacket.Message.NameCRC = Compute_Name_CRC(MultiplayerGameName);
 
 								/*..................................................................
 								Send the message to every player in our player list.  The local
@@ -1651,9 +1651,9 @@ static int Net_Join_Dialog(void)
 										NetMgr.Service();
 									}
 
-									sprintf(txt,Text_String (TXT_FROM), MPlayerName, GPacket.Message.Buf);
+									sprintf(txt,Text_String (TXT_FROM), MultiplayerName, GPacket.Message.Buf);
 									Messages.Add_Message (txt,
-										MPlayerTColors[MPlayerColorIdx],
+										MultiplayerTColors[MultiplayerColorIndex],
 										TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_FULLSHADOW, 600, magic_number, crc);
 								}
 								else {
@@ -1702,18 +1702,18 @@ static int Net_Join_Dialog(void)
 					Clear_Player_List(&playerlist);
 
 					item = new char [MPLAYER_NAME_MAX + 4];
-					if (MPlayerHouse==HOUSE_GOOD) {
-						sprintf(item,"%s\t%s",MPlayerName,Text_String(TXT_G_D_I));
+					if (MultiplayerHouse==HOUSE_GOOD) {
+						sprintf(item,"%s\t%s",MultiplayerName,Text_String(TXT_G_D_I));
 					} else {
-						sprintf(item,"%s\t%s",MPlayerName,Text_String(TXT_N_O_D));
+						sprintf(item,"%s\t%s",MultiplayerName,Text_String(TXT_N_O_D));
 					}
-					playerlist.Add_Item (item, MPlayerTColors[MPlayerColorIdx]);
+					playerlist.Add_Item (item, MultiplayerTColors[MultiplayerColorIndex]);
 
 					who = new NodeNameType;
-					strcpy(who->Name, MPlayerName);
+					strcpy(who->Name, MultiplayerName);
 					who->Address = UDPAddressClass();
-					who->Player.House = MPlayerHouse;
-					who->Player.Color = MPlayerColorIdx;
+					who->Player.House = MultiplayerHouse;
+					who->Player.Color = MultiplayerColorIndex;
 					Players.Add (who);
 
 					Send_Join_Queries (game_index, 0, 1);
@@ -1864,7 +1864,7 @@ static int Net_Join_Dialog(void)
 			memset (&GPacket, 0, sizeof(GlobalPacketType));
 
 			GPacket.Command = NET_SIGN_OFF;
-			strcpy (GPacket.Name, MPlayerName);
+			strcpy (GPacket.Name, MultiplayerName);
 
 			for (i = 0; i < Players.Count(); i++) {
 				NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 1,
@@ -1893,13 +1893,13 @@ static int Net_Join_Dialog(void)
 			/*..................................................................
 			Set the number of players in this game, and my ID
 			..................................................................*/
-			MPlayerCount = Players.Count();
-			MPlayerLocalID = Build_MPlayerID (MPlayerColorIdx, MPlayerHouse);
+			MultiplayerPlayerCount = Players.Count();
+			MultiplayerLocalID = Build_MultiplayerID(MultiplayerColorIndex, MultiplayerHouse);
 
 			/*..................................................................
 			Get the scenario number
 			..................................................................*/
-			Scenario = MPlayerFilenum[ScenarioIdx];
+			Scenario = MultiplayerFileNum[ScenarioIdx];
 
 			/*..................................................................
 			Form connections with all other players.  Form the IPX Connection ID
@@ -1912,43 +1912,43 @@ static int Net_Join_Dialog(void)
 				/*...............................................................
 				Only create the connection if it's not myself!
 				...............................................................*/
-				if (strcmp (MPlayerName, Players[i]->Name)) {
-					id = Build_MPlayerID(Players[i]->Player.Color,
+				if (strcmp (MultiplayerName, Players[i]->Name)) {
+					id = Build_MultiplayerID(Players[i]->Player.Color,
 						Players[i]->Player.House);
 
 					tmp_id[i] = id;
 
 					NetMgr.Create_Connection((int)id, Players[i]->Name, &(Players[i]->Address) );
 				} else {
-					tmp_id[i] = MPlayerLocalID;
+					tmp_id[i] = MultiplayerLocalID;
 				}
 			}
 
 			/*..................................................................
-			Store every player's ID in the MPlayerID[] array.  This array will
+			Store every player's ID in the MultiplayerID[] array.  This array will
 			determine the order of event execution, so the ID's must be stored
 			in the same order on all systems.
 			..................................................................*/
-			for (i = 0; i < MPlayerCount; i++) {
+			for (i = 0; i < MultiplayerPlayerCount; i++) {
 				min_index = 0;
 				min_id = 0xff;
-				for (j = 0; j < MPlayerCount; j++) {
+				for (j = 0; j < MultiplayerPlayerCount; j++) {
 					if (tmp_id[j] < min_id) {
 						min_id = tmp_id[j];
 						min_index = j;
 					}
 				}
-				MPlayerID[i] = tmp_id[min_index];
+				MultiplayerID[i] = tmp_id[min_index];
 				tmp_id[min_index] = 0xff;
 			}
 			/*..................................................................
 			Fill in the array of player names, including my own.
 			..................................................................*/
-			for (i = 0; i < MPlayerCount; i++) {
-				if (MPlayerID[i] == MPlayerLocalID) {
-					strcpy (MPlayerNames[i], MPlayerName);
+			for (i = 0; i < MultiplayerPlayerCount; i++) {
+				if (MultiplayerID[i] == MultiplayerLocalID) {
+					strcpy (MultiplayerNames[i], MultiplayerName);
 				} else {
-					strcpy (MPlayerNames[i], NetMgr.Connection_Name(MPlayerID[i]));
+					strcpy (MultiplayerNames[i], NetMgr.Connection_Name(MultiplayerID[i]));
 				}
 			}
 		}
@@ -2163,7 +2163,7 @@ static int Request_To_Join (char *playername, int join_index, ListClass *playerl
 	/*
 	----------------------------- Save game name -----------------------------
 	*/
-	strcpy (MPlayerName,playername);
+	strcpy (MultiplayerName,playername);
 
 	/*
 	----------------------- Send packet to game's owner ----------------------
@@ -2171,7 +2171,7 @@ static int Request_To_Join (char *playername, int join_index, ListClass *playerl
 	memset (&GPacket, 0, sizeof(GlobalPacketType));
 
 	GPacket.Command = NET_QUERY_JOIN;
-	strcpy (GPacket.Name, MPlayerName);
+	strcpy (GPacket.Name, MultiplayerName);
 	GPacket.PlayerInfo.House = house;
 	GPacket.PlayerInfo.Color = color;
 
@@ -2417,7 +2417,7 @@ static JoinEventType Get_Join_Responses(JoinStateType *joinstate, ListClass *gam
 				strcpy(Players[i]->Name, GPacket.Name);
 				Players[i]->Player.House = GPacket.PlayerInfo.House;
 				Players[i]->Player.Color = GPacket.PlayerInfo.Color;
-				playerlist->Colors[i] = MPlayerTColors[GPacket.PlayerInfo.Color];
+				playerlist->Colors[i] = MultiplayerTColors[GPacket.PlayerInfo.Color];
 				found = 1;
 				break;
 			}
@@ -2432,7 +2432,7 @@ static JoinEventType Get_Join_Responses(JoinStateType *joinstate, ListClass *gam
 		/*
 		** Dont add this player if its really me! (hack, hack)
 		*/
-		if (!strcmp(GPacket.Name, MPlayerName)){
+		if (!strcmp(GPacket.Name, MultiplayerName)){
 			found = 1;
 		}
 
@@ -2460,7 +2460,7 @@ static JoinEventType Get_Join_Responses(JoinStateType *joinstate, ListClass *gam
 			} else {
 				sprintf(item,"%s\t%s",GPacket.Name,Text_String(TXT_N_O_D));
 			}
-			playerlist->Add_Item(item, MPlayerTColors[who->Player.Color]);
+			playerlist->Add_Item(item, MultiplayerTColors[who->Player.Color]);
 
 			retcode = EV_NEW_PLAYER;
 		}
@@ -2472,9 +2472,9 @@ static JoinEventType Get_Join_Responses(JoinStateType *joinstate, ListClass *gam
 	------------------------------------------------------------------------*/
 	else if (GPacket.Command==NET_CONFIRM_JOIN) {
 		if ( (*joinstate) != JOIN_CONFIRMED) {
-			strcpy (MPlayerGameName, GPacket.Name);
-			MPlayerHouse = GPacket.PlayerInfo.House;
-			MPlayerColorIdx = GPacket.PlayerInfo.Color;
+			strcpy (MultiplayerGameName, GPacket.Name);
+			MultiplayerHouse = GPacket.PlayerInfo.House;
+			MultiplayerColorIndex = GPacket.PlayerInfo.Color;
 
 			(*joinstate) = JOIN_CONFIRMED;
 			retcode = EV_STATE_CHANGE;
@@ -2492,7 +2492,7 @@ static JoinEventType Get_Join_Responses(JoinStateType *joinstate, ListClass *gam
 			memset (&GPacket, 0, sizeof(GlobalPacketType));
 
 			GPacket.Command = NET_SIGN_OFF;
-			strcpy (GPacket.Name,MPlayerName);
+			strcpy (GPacket.Name,MultiplayerName);
 
 			NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType), 0, NULL);
 			NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType), 0, NULL);
@@ -2506,7 +2506,7 @@ static JoinEventType Get_Join_Responses(JoinStateType *joinstate, ListClass *gam
 
 			Drain_Global_Send_Queue();
 
-			MPlayerGameName[0] = 0;
+			MultiplayerGameName[0] = 0;
 
 			(*joinstate) = JOIN_REJECTED;
 			retcode = EV_STATE_CHANGE;
@@ -2519,18 +2519,18 @@ static JoinEventType Get_Join_Responses(JoinStateType *joinstate, ListClass *gam
 	------------------------------------------------------------------------*/
 	else if (GPacket.Command==NET_GAME_OPTIONS) {
 		if ( (*joinstate)==JOIN_CONFIRMED) {
-			MPlayerCredits = GPacket.ScenarioInfo.Credits;
-			MPlayerBases = GPacket.ScenarioInfo.IsBases;
-			MPlayerTiberium = GPacket.ScenarioInfo.IsTiberium;
-			MPlayerGoodies = GPacket.ScenarioInfo.IsGoodies;
-			MPlayerGhosts = GPacket.ScenarioInfo.IsGhosties;
+			MultiplayerCredits = GPacket.ScenarioInfo.Credits;
+			MultiplayerBasesEnabled = GPacket.ScenarioInfo.IsBases;
+			MultiplayerTiberiumEnabled = GPacket.ScenarioInfo.IsTiberium;
+			MultiplayerGoodiesEnabled = GPacket.ScenarioInfo.IsGoodies;
+			MultiplayerGhostsEnabled = GPacket.ScenarioInfo.IsGhosties;
 			BuildLevel = GPacket.ScenarioInfo.BuildLevel;
-			MPlayerUnitCount = GPacket.ScenarioInfo.UnitCount;
+			MultiplayerUnitCount = GPacket.ScenarioInfo.UnitCount;
 			Seed = GPacket.ScenarioInfo.Seed;
 			Special = GPacket.ScenarioInfo.Special;
 			Options.GameSpeed = GPacket.ScenarioInfo.GameSpeed;
 
-			if (MPlayerTiberium) {
+			if (MultiplayerTiberiumEnabled) {
 				Special.IsTGrowth = 1;
 				Special.IsTSpread = 1;
 			} else {
@@ -2543,8 +2543,8 @@ static JoinEventType Get_Join_Responses(JoinStateType *joinstate, ListClass *gam
 			}else{
 
 				ScenarioIdx = -1;
-				for (i = 0; i < MPlayerFilenum.Count(); i++) {
-					if (GPacket.ScenarioInfo.Scenario == MPlayerFilenum[i])
+				for (i = 0; i < MultiplayerFileNum.Count(); i++) {
+					if (GPacket.ScenarioInfo.Scenario == MultiplayerFileNum[i])
 						ScenarioIdx = i;
 				}
 			}
@@ -2629,7 +2629,7 @@ static JoinEventType Get_Join_Responses(JoinStateType *joinstate, ListClass *gam
 	------------------------------------------------------------------------*/
 	else if (GPacket.Command==NET_GO) {
 		if ( (*joinstate)==JOIN_CONFIRMED) {
-			MPlayerMaxAhead = GPacket.ResponseTime.OneWay;
+			MultiplayerMaxAhead = GPacket.ResponseTime.OneWay;
 			(*joinstate) = JOIN_GAME_START;
 			retcode = EV_STATE_CHANGE;
 CCDebugString ("C&C95 - Received the 'GO' packet\n");
@@ -2643,8 +2643,8 @@ CCDebugString ("C&C95 - Received the 'GO' packet\n");
 		sprintf(txt,Text_String (TXT_FROM), GPacket.Name, GPacket.Message.Buf);
 		magic_number = *((unsigned short*)(GPacket.Message.Buf + COMPAT_MESSAGE_LENGTH-4));
 		crc = *((unsigned short*)(GPacket.Message.Buf + COMPAT_MESSAGE_LENGTH-2));
-		color = MPlayerID_To_ColorIndex(GPacket.Message.ID);
-		Messages.Add_Message (txt, MPlayerTColors[color],
+		color = MultiplayerID_To_ColorIndex(GPacket.Message.ID);
+		Messages.Add_Message (txt, MultiplayerTColors[color],
 			TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_FULLSHADOW, 1200, magic_number, crc);
 		retcode = EV_MESSAGE;
 	}
@@ -2709,7 +2709,7 @@ CCDebugString ("C&C95 - Received the 'GO' packet\n");
  *		true = success, false = cancel																			  *
  *                                                                         						  *
  * WARNINGS:                                                               						  *
- *		MPlayerName & MPlayerGameName must contain this player's name.									  *
+ *		MultiplayerName & MultiplayerGameName must contain this player's name.					  *
  *                                                                         						  *
  * HISTORY:                                                                						  *
  *   02/14/1995 BR : Created.                                              						  *
@@ -3002,63 +3002,63 @@ static int Net_New_Dialog(void)
 	Init dialog values, only the first time through
 	........................................................................*/
 	if (first_time) {
-		MPlayerCredits = 3000;						// init credits & credit buffer
-		MPlayerBases = 1;								// init scenario parameters
-		MPlayerTiberium = 0;
-		MPlayerGoodies = 0;
-		MPlayerGhosts = 0;
+		MultiplayerCredits = 3000;						// init credits & credit buffer
+		MultiplayerBasesEnabled = 1;								// init scenario parameters
+		MultiplayerTiberiumEnabled = 0;
+		MultiplayerGoodiesEnabled = 0;
+		MultiplayerGhostsEnabled = 0;
 		Special.IsCaptureTheFlag = 0;
-		MPlayerUnitCount = (MPlayerCountMax[MPlayerBases] + MPlayerCountMin[MPlayerBases]) / 2;
+		MultiplayerUnitCount = (MultiplayerCountMax[MultiplayerBasesEnabled] + MultiplayerCountMin[MultiplayerBasesEnabled]) / 2;
 		first_time = 0;
 	}
 
 	/*........................................................................
 	Init button states
 	........................................................................*/
-	if (MPlayerBases) {
+	if (MultiplayerBasesEnabled) {
 		basesbtn.Turn_On();
 		basesbtn.Set_Text(TXT_BASES_ON);
 	}
-	if (MPlayerTiberium) {
+	if (MultiplayerTiberiumEnabled) {
 		tiberiumbtn.Turn_On();
 		tiberiumbtn.Set_Text(TXT_TIBERIUM_ON);
 	}
-	if (MPlayerGoodies) {
+	if (MultiplayerGoodiesEnabled) {
 		goodiesbtn.Turn_On();
 		goodiesbtn.Set_Text(TXT_CRATES_ON);
 	}
-	if (MPlayerGhosts) {
+	if (MultiplayerGhostsEnabled) {
 		ghostsbtn.Turn_On();
 		ghostsbtn.Set_Text(TXT_AI_PLAYERS_ON);
 	}
 	if (Special.IsCaptureTheFlag) {
-		MPlayerGhosts = 0;
+		MultiplayerGhostsEnabled = 0;
 		ghostsbtn.Turn_On();
 		ghostsbtn.Set_Text(TXT_CAPTURE_THE_FLAG);
 	}
 
-	sprintf(credbuf, "%d", MPlayerCredits);
+	sprintf(credbuf, "%d", MultiplayerCredits);
 	credit_edt.Set_Text(credbuf, CREDITSBUF_MAX);
-	old_cred = MPlayerCredits;
+	old_cred = MultiplayerCredits;
 
 	levelgauge.Set_Maximum(MPLAYER_BUILD_LEVEL_MAX - 1);
 	levelgauge.Set_Value(BuildLevel - 1);
 
-	countgauge.Set_Maximum(MPlayerCountMax[MPlayerBases] - MPlayerCountMin[MPlayerBases]);
-	countgauge.Set_Value(MPlayerUnitCount - MPlayerCountMin[MPlayerBases]);
+	countgauge.Set_Maximum(MultiplayerCountMax[MultiplayerBasesEnabled] - MultiplayerCountMin[MultiplayerBasesEnabled]);
+	countgauge.Set_Value(MultiplayerUnitCount - MultiplayerCountMin[MultiplayerBasesEnabled]);
 
 	/*........................................................................
 	Init other scenario parameters
 	........................................................................*/
-	Special.IsTGrowth = MPlayerTiberium;
-	Special.IsTSpread = MPlayerTiberium;
+	Special.IsTGrowth = MultiplayerTiberiumEnabled;
+	Special.IsTSpread = MultiplayerTiberiumEnabled;
 	transmit = 0;
 
 	/*........................................................................
 	Init scenario description list box
 	........................................................................*/
-	for (i = 0; i < MPlayerScenarios.Count(); i++) {
-		scenariolist.Add_Item (strupr(MPlayerScenarios[i]));
+	for (i = 0; i < MultiplayerScenarios.Count(); i++) {
+		scenariolist.Add_Item (strupr(MultiplayerScenarios[i]));
 	}
 	ScenarioIdx = 0;								// 1st scenario is selected
 
@@ -3068,7 +3068,7 @@ static int Net_New_Dialog(void)
 	for (i = 0; i < MAX_MPLAYER_COLORS; i++) {
 		ColorUsed[i] = 0;							// init all colors to available
 	}
-	ColorUsed[MPlayerColorIdx] = 1;			// set my color to used
+	ColorUsed[MultiplayerColorIndex] = 1;			// set my color to used
 	playerlist.Set_Selected_Style(ColorListClass::SELECT_BAR, CC_GREEN_SHADOW);
 
 	/*........................................................................
@@ -3089,12 +3089,12 @@ static int Net_New_Dialog(void)
 	the Vector & listbox are now 1 out of sync.
 	------------------------------------------------------------------------*/
 	item = new char [MPLAYER_NAME_MAX + 4];
-	if (MPlayerHouse==HOUSE_GOOD) {
-		sprintf(item,"%s\t%s",MPlayerName,Text_String(TXT_G_D_I));
+	if (MultiplayerHouse==HOUSE_GOOD) {
+		sprintf(item,"%s\t%s",MultiplayerName,Text_String(TXT_G_D_I));
 	} else {
-		sprintf(item,"%s\t%s",MPlayerName,Text_String(TXT_N_O_D));
+		sprintf(item,"%s\t%s",MultiplayerName,Text_String(TXT_N_O_D));
 	}
-	playerlist.Add_Item(item, MPlayerTColors[MPlayerColorIdx]);
+	playerlist.Add_Item(item, MultiplayerTColors[MultiplayerColorIndex]);
 
 	Load_Title_Screen("HTITLE.PCX", &HidPage, Palette);
 	HidPage.Blit(SeenBuff);
@@ -3130,7 +3130,7 @@ static int Net_New_Dialog(void)
 										d_count_x + d_count_w + 2*factor + 20,
 										d_count_y + 12,
 										0 );
-			sprintf(txt,"%d",MPlayerUnitCount);
+			sprintf(txt,"%d",MultiplayerUnitCount);
 			Fancy_Text_Print (txt, d_count_x + d_count_w + 2*factor, d_count_y,
 									CC_GREEN, TBLACK,
 									TPF_NOSHADOW | TPF_6PT_GRAD | TPF_USE_GRAD_PAL);
@@ -3174,7 +3174,7 @@ static int Net_New_Dialog(void)
 					CC_GREEN, TBLACK,
 					TPF_NOSHADOW | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_RIGHT);
 
-				sprintf(txt,"%d",MPlayerUnitCount);
+				sprintf(txt,"%d",MultiplayerUnitCount);
 				Fancy_Text_Print (txt, d_count_x + d_count_w + 2*factor, d_count_y,
 					CC_GREEN, TBLACK,
 					TPF_NOSHADOW | TPF_6PT_GRAD | TPF_USE_GRAD_PAL);
@@ -3240,7 +3240,7 @@ static int Net_New_Dialog(void)
 			case (BUTTON_SCENARIOLIST | KN_BUTTON):
 				if (scenariolist.Current_Index() != ScenarioIdx) {
 					ScenarioIdx = scenariolist.Current_Index();
-					MPlayerCredits = atoi(credbuf);
+					MultiplayerCredits = atoi(credbuf);
 					transmit = 1;
 				}
 				break;
@@ -3274,13 +3274,13 @@ static int Net_New_Dialog(void)
 			User adjusts max # units
 			------------------------------------------------------------------*/
 			case (BUTTON_COUNT | KN_BUTTON):
-				MPlayerUnitCount = countgauge.Get_Value() + MPlayerCountMin[MPlayerBases];
+				MultiplayerUnitCount = countgauge.Get_Value() + MultiplayerCountMin[MultiplayerBasesEnabled];
 
 				Hide_Mouse();
 				LogicPage->Fill_Rect (d_count_x + d_count_w + 2*factor, d_count_y,
 					d_count_x + d_count_w + 14*factor, d_count_y + 6*factor, BLACK);
 
-				sprintf(txt,"%d",MPlayerUnitCount);
+				sprintf(txt,"%d",MultiplayerUnitCount);
 				Fancy_Text_Print (txt, d_count_x + d_count_w + 2*factor, d_count_y,
 					CC_GREEN, TBLACK,
 					TPF_NOSHADOW | TPF_6PT_GRAD | TPF_USE_GRAD_PAL);
@@ -3318,7 +3318,7 @@ static int Net_New_Dialog(void)
 			User edits the credits value; retransmit new game options
 			------------------------------------------------------------------*/
 			case (BUTTON_CREDITS | KN_BUTTON):
-				MPlayerCredits = atoi(credbuf);
+				MultiplayerCredits = atoi(credbuf);
 				transmit = 1;
 				break;
 
@@ -3331,24 +3331,24 @@ static int Net_New_Dialog(void)
 			- Change the unit count gauge limit & value
 			------------------------------------------------------------------*/
 			case (BUTTON_BASES | KN_BUTTON):
-				if (MPlayerBases) {
-					MPlayerBases = 0;
+				if (MultiplayerBasesEnabled) {
+					MultiplayerBasesEnabled = 0;
 					basesbtn.Turn_Off();
 					basesbtn.Set_Text(TXT_BASES_OFF);
-					MPlayerUnitCount = Fixed_To_Cardinal (MPlayerCountMax[0]-MPlayerCountMin[0],
-						Cardinal_To_Fixed(MPlayerCountMax[1]-MPlayerCountMin[1],
-						MPlayerUnitCount-MPlayerCountMin[1])) + MPlayerCountMin[0];
+					MultiplayerUnitCount = Fixed_To_Cardinal (MultiplayerCountMax[0]-MultiplayerCountMin[0],
+						Cardinal_To_Fixed(MultiplayerCountMax[1]-MultiplayerCountMin[1],
+						MultiplayerUnitCount-MultiplayerCountMin[1])) + MultiplayerCountMin[0];
 				} else {
-					MPlayerBases = 1;
+					MultiplayerBasesEnabled = 1;
 					basesbtn.Turn_On();
 					basesbtn.Set_Text(TXT_BASES_ON);
-					MPlayerUnitCount = Fixed_To_Cardinal (MPlayerCountMax[1]-MPlayerCountMin[1],
-						Cardinal_To_Fixed(MPlayerCountMax[0]-MPlayerCountMin[0],
-						MPlayerUnitCount-MPlayerCountMin[0])) + MPlayerCountMin[1];
+					MultiplayerUnitCount = Fixed_To_Cardinal (MultiplayerCountMax[1]-MultiplayerCountMin[1],
+						Cardinal_To_Fixed(MultiplayerCountMax[0]-MultiplayerCountMin[0],
+						MultiplayerUnitCount-MultiplayerCountMin[0])) + MultiplayerCountMin[1];
 				}
-				MPlayerCredits = atoi(credbuf);
-				countgauge.Set_Maximum(MPlayerCountMax[MPlayerBases] - MPlayerCountMin[MPlayerBases]);
-				countgauge.Set_Value(MPlayerUnitCount - MPlayerCountMin[MPlayerBases]);
+				MultiplayerCredits = atoi(credbuf);
+				countgauge.Set_Maximum(MultiplayerCountMax[MultiplayerBasesEnabled] - MultiplayerCountMin[MultiplayerBasesEnabled]);
+				countgauge.Set_Value(MultiplayerUnitCount - MultiplayerCountMin[MultiplayerBasesEnabled]);
 				transmit = 1;
 				countgauge.Flag_To_Redraw();
 				display = REDRAW_UNIT_COUNT;
@@ -3358,20 +3358,20 @@ static int Net_New_Dialog(void)
 			Toggle tiberium
 			------------------------------------------------------------------*/
 			case (BUTTON_TIBERIUM | KN_BUTTON):
-				if (MPlayerTiberium) {
-					MPlayerTiberium = 0;
+				if (MultiplayerTiberiumEnabled) {
+					MultiplayerTiberiumEnabled = 0;
 					Special.IsTGrowth = 0;
 					Special.IsTSpread = 0;
 					tiberiumbtn.Turn_Off();
 					tiberiumbtn.Set_Text(TXT_TIBERIUM_OFF);
 				} else {
-					MPlayerTiberium = 1;
+					MultiplayerTiberiumEnabled = 1;
 					Special.IsTGrowth = 1;
 					Special.IsTSpread = 1;
 					tiberiumbtn.Turn_On();
 					tiberiumbtn.Set_Text(TXT_TIBERIUM_ON);
 				}
-				MPlayerCredits = atoi(credbuf);
+				MultiplayerCredits = atoi(credbuf);
 				transmit = 1;
 				break;
 
@@ -3379,16 +3379,16 @@ static int Net_New_Dialog(void)
 			Toggle goodies
 			------------------------------------------------------------------*/
 			case (BUTTON_GOODIES | KN_BUTTON):
-				if (MPlayerGoodies) {
-					MPlayerGoodies = 0;
+				if (MultiplayerGoodiesEnabled) {
+					MultiplayerGoodiesEnabled = 0;
 					goodiesbtn.Turn_Off();
 					goodiesbtn.Set_Text(TXT_CRATES_OFF);
 				} else {
-					MPlayerGoodies = 1;
+					MultiplayerGoodiesEnabled = 1;
 					goodiesbtn.Turn_On();
 					goodiesbtn.Set_Text(TXT_CRATES_ON);
 				}
-				MPlayerCredits = atoi(credbuf);
+				MultiplayerCredits = atoi(credbuf);
 				transmit = 1;
 				break;
 
@@ -3396,20 +3396,20 @@ static int Net_New_Dialog(void)
 			Toggle ghosts/capture-the-flag
 			------------------------------------------------------------------*/
 			case (BUTTON_GHOSTS | KN_BUTTON):
-				if (!MPlayerGhosts && !Special.IsCaptureTheFlag) {	// ghosts OFF => ghosts ON
-					MPlayerGhosts = 1;
+				if (!MultiplayerGhostsEnabled && !Special.IsCaptureTheFlag) {	// ghosts OFF => ghosts ON
+					MultiplayerGhostsEnabled = 1;
 					Special.IsCaptureTheFlag = 0;
 					ghostsbtn.Turn_On();
 					ghostsbtn.Set_Text(TXT_AI_PLAYERS_ON);
 				} else {
-					if (MPlayerGhosts) {					// ghosts ON => capture-flag
-						MPlayerGhosts = 0;
+					if (MultiplayerGhostsEnabled) {					// ghosts ON => capture-flag
+						MultiplayerGhostsEnabled = 0;
 						Special.IsCaptureTheFlag = 1;
 						ghostsbtn.Turn_On();
 						ghostsbtn.Set_Text(TXT_CAPTURE_THE_FLAG);
 					} else {
 						if (Special.IsCaptureTheFlag) {		// capture-flag => AI OFF
-							MPlayerGhosts = 0;
+							MultiplayerGhostsEnabled = 0;
 							Special.IsCaptureTheFlag = 0;
 							ghostsbtn.Turn_Off();
 							ghostsbtn.Set_Text(TXT_AI_PLAYERS_OFF);
@@ -3417,7 +3417,7 @@ static int Net_New_Dialog(void)
 					}
 				}
 
-				MPlayerCredits = atoi(credbuf);
+				MultiplayerCredits = atoi(credbuf);
 				transmit = 1;
 				break;
 
@@ -3437,7 +3437,7 @@ static int Net_New_Dialog(void)
 				/*...............................................................
 				If there are at least 2 players, go ahead & play; error otherwise
 				...............................................................*/
-				if (MPlayerSolo || Players.Count() > 0) {
+				if (MultiplayerSoloAllowed || Players.Count() > 0) {
 					rc = TRUE;
 					process = FALSE;
 				} else {
@@ -3459,7 +3459,7 @@ static int Net_New_Dialog(void)
 				memset (&GPacket, 0, sizeof(GlobalPacketType));
 
 				GPacket.Command = NET_SIGN_OFF;
-				strcpy (GPacket.Name, MPlayerName);
+				strcpy (GPacket.Name, MultiplayerName);
 
 				/*...............................................................
 				Broadcast my sign-off over my network
@@ -3495,7 +3495,7 @@ static int Net_New_Dialog(void)
 					NetMgr.Service();
 				}
 				Drain_Global_Send_Queue();
-				MPlayerGameName[0] = 0;
+				MultiplayerGameName[0] = 0;
 				process = false;
 				rc = false;
 				break;
@@ -3514,7 +3514,7 @@ static int Net_New_Dialog(void)
 
 						strcpy(txt,Text_String(TXT_TO_ALL));	// "To All:"
 
-						Messages.Add_Edit (MPlayerTColors[MPlayerColorIdx],
+						Messages.Add_Edit (MultiplayerTColors[MultiplayerColorIndex],
 							TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_FULLSHADOW, txt, d_message_w-70*factor);
 
 						credit_edt.Clear_Focus();
@@ -3577,7 +3577,7 @@ static int Net_New_Dialog(void)
 					while ( sent_so_far < message_length ){
 						memset (&GPacket, 0, sizeof(GlobalPacketType));
 						GPacket.Command = NET_MESSAGE;
-						strcpy (GPacket.Name, MPlayerName);
+						strcpy (GPacket.Name, MultiplayerName);
 						memcpy (GPacket.Message.Buf, Messages.Get_Edit_Buf()+sent_so_far, COMPAT_MESSAGE_LENGTH-5);
 
 						/*
@@ -3604,8 +3604,8 @@ static int Net_New_Dialog(void)
 						*(GPacket.Message.Buf + COMPAT_MESSAGE_LENGTH-5) = 0;
 						*((unsigned short*)(GPacket.Message.Buf + COMPAT_MESSAGE_LENGTH-4)) = magic_number;
 						*((unsigned short*)(GPacket.Message.Buf + COMPAT_MESSAGE_LENGTH-2)) = crc;
-						GPacket.Message.ID = Build_MPlayerID (MPlayerColorIdx, MPlayerHouse);
-						GPacket.Message.NameCRC = Compute_Name_CRC(MPlayerGameName);
+						GPacket.Message.ID = Build_MultiplayerID(MultiplayerColorIndex, MultiplayerHouse);
+						GPacket.Message.NameCRC = Compute_Name_CRC(MultiplayerGameName);
 
 						/*..................................................................
 						Send the message to every player in our player list.
@@ -3619,8 +3619,8 @@ static int Net_New_Dialog(void)
 						Add the message to our own list, since we're not in the player list
 						on this dialog.
 						..................................................................*/
-						sprintf(txt,Text_String (TXT_FROM), MPlayerName, GPacket.Message.Buf);
-						Messages.Add_Message (txt, MPlayerTColors[MPlayerColorIdx],
+						sprintf(txt,Text_String (TXT_FROM), MultiplayerName, GPacket.Message.Buf);
+						Messages.Add_Message (txt, MultiplayerTColors[MultiplayerColorIndex],
 							TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_FULLSHADOW, 1200, magic_number, crc);
 
 						magic_number++;
@@ -3636,9 +3636,9 @@ static int Net_New_Dialog(void)
 		---------------------------------------------------------------------*/
 		if (atoi(credbuf) != old_cred) {
 			old_cred = Bound(atoi(credbuf), 0, 9999);
-			MPlayerCredits = old_cred;
+			MultiplayerCredits = old_cred;
 			transmit = 1;
-			sprintf(credbuf, "%d", MPlayerCredits);
+			sprintf(credbuf, "%d", MultiplayerCredits);
 			credit_edt.Set_Text(credbuf, CREDITSBUF_MAX);
 		}
 
@@ -3663,14 +3663,14 @@ static int Net_New_Dialog(void)
 				memset (&GPacket, 0, sizeof(GlobalPacketType));
 
 				GPacket.Command = NET_GAME_OPTIONS;
-				GPacket.ScenarioInfo.Scenario = MPlayerFilenum[ScenarioIdx];
-				GPacket.ScenarioInfo.Credits = MPlayerCredits;
-				GPacket.ScenarioInfo.IsBases = MPlayerBases;
-				GPacket.ScenarioInfo.IsTiberium = MPlayerTiberium;
-				GPacket.ScenarioInfo.IsGoodies = MPlayerGoodies;
-				GPacket.ScenarioInfo.IsGhosties = MPlayerGhosts;
+				GPacket.ScenarioInfo.Scenario = MultiplayerFileNum[ScenarioIdx];
+				GPacket.ScenarioInfo.Credits = MultiplayerCredits;
+				GPacket.ScenarioInfo.IsBases = MultiplayerBasesEnabled;
+				GPacket.ScenarioInfo.IsTiberium = MultiplayerTiberiumEnabled;
+				GPacket.ScenarioInfo.IsGoodies = MultiplayerGoodiesEnabled;
+				GPacket.ScenarioInfo.IsGhosties = MultiplayerGhostsEnabled;
 				GPacket.ScenarioInfo.BuildLevel = BuildLevel;
-				GPacket.ScenarioInfo.UnitCount = MPlayerUnitCount;
+				GPacket.ScenarioInfo.UnitCount = MultiplayerUnitCount;
 				GPacket.ScenarioInfo.Seed = Seed;
 				GPacket.ScenarioInfo.Special = Special;
 				GPacket.ScenarioInfo.GameSpeed = Options.GameSpeed;
@@ -3715,20 +3715,20 @@ static int Net_New_Dialog(void)
 		/*.....................................................................
 		Set the number of players in this game, and my ID
 		.....................................................................*/
-		MPlayerCount = Players.Count() + 1;
-		MPlayerLocalID = Build_MPlayerID (MPlayerColorIdx, MPlayerHouse);
+		MultiplayerPlayerCount = Players.Count() + 1;
+		MultiplayerLocalID = Build_MultiplayerID(MultiplayerColorIndex, MultiplayerHouse);
 
 		/*.....................................................................
 		Get the scenario filename
 		.....................................................................*/
-		Scenario = MPlayerFilenum[ScenarioIdx];
+		Scenario = MultiplayerFileNum[ScenarioIdx];
 
 		/*.....................................................................
 		Compute frame delay value for packet transmissions:
 		- Divide global channel's response time by 8 (2 to convert to 1-way
 		  value, 4 more to convert from ticks to frames)
 		.....................................................................*/
-		MPlayerMaxAhead = MAX( (Current_Global_Response_Time() / 8), 2);
+		MultiplayerMaxAhead = MAX( (Current_Global_Response_Time() / 8), 2);
 
 		/*.....................................................................
 		Send all players the NET_GO packet.  Wait until all ACK's have been
@@ -3736,7 +3736,7 @@ static int Net_New_Dialog(void)
 		.....................................................................*/
 		memset (&GPacket, 0, sizeof(GlobalPacketType));
 		GPacket.Command = NET_GO;
-		GPacket.ResponseTime.OneWay = MPlayerMaxAhead;
+		GPacket.ResponseTime.OneWay = MultiplayerMaxAhead;
 		for (i = 0; i < Players.Count(); i++) {
 			NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 				1, &(Players[i]->Address) );
@@ -3753,40 +3753,40 @@ static int Net_New_Dialog(void)
 		Fill in 'tmp_id' while we're doing this.
 		.....................................................................*/
 		for (i = 0; i < Players.Count(); i++) {
-			id = Build_MPlayerID (Players[i]->Player.Color,
+			id = Build_MultiplayerID (Players[i]->Player.Color,
 				Players[i]->Player.House);
 
 			tmp_id[i] = id;
 
 			NetMgr.Create_Connection(id, Players[i]->Name, &(Players[i]->Address) );
 		}
-		tmp_id[i] = MPlayerLocalID;
+		tmp_id[i] = MultiplayerLocalID;
 
 		/*.....................................................................
-		Store every player's ID in the MPlayerID[] array.  This array will
+		Store every player's ID in the MultiplayerID[] array.  This array will
 		determine the order of event execution, so the ID's must be stored
 		in the same order on all systems.
 		.....................................................................*/
-		for (i = 0; i < MPlayerCount; i++) {
+		for (i = 0; i < MultiplayerPlayerCount; i++) {
 			min_index = 0;
 			min_id = 0xff;
-			for (j = 0; j < MPlayerCount; j++) {
+			for (j = 0; j < MultiplayerPlayerCount; j++) {
 				if (tmp_id[j] < min_id) {
 					min_id = tmp_id[j];
 					min_index = j;
 				}
 			}
-			MPlayerID[i] = tmp_id[min_index];
+			MultiplayerID[i] = tmp_id[min_index];
 			tmp_id[min_index] = 0xff;
 		}
 		/*.....................................................................
 		Fill in the array of player names, including my own.
 		.....................................................................*/
-		for (i = 0; i < MPlayerCount; i++) {
-			if (MPlayerID[i] == MPlayerLocalID) {
-				strcpy (MPlayerNames[i], MPlayerName);
+		for (i = 0; i < MultiplayerPlayerCount; i++) {
+			if (MultiplayerID[i] == MultiplayerLocalID) {
+				strcpy (MultiplayerNames[i], MultiplayerName);
 			} else {
-				strcpy (MPlayerNames[i], NetMgr.Connection_Name(MPlayerID[i]));
+				strcpy (MultiplayerNames[i], NetMgr.Connection_Name(MultiplayerID[i]));
 			}
 		}
 	}
@@ -3892,14 +3892,14 @@ static JoinEventType Get_NewGame_Responses(ColorListClass *playerlist)
 				break;
 			}
 		}
-		if (!strcmp (MPlayerName, GPacket.Name)) {
+		if (!strcmp (MultiplayerName, GPacket.Name)) {
 			found = 1;
 		}
 
 		/*.....................................................................
 		Reject if name is a duplicate, or if there are too many players:
 		.....................................................................*/
-		if (found || (Players.Count() >= (MPlayerMax - 1) && !resend) ) {
+		if (found || (Players.Count() >= (MultiplayerMaxPlayers - 1) && !resend) ) {
 			memset (&GPacket, 0, sizeof(GlobalPacketType));
 
 			GPacket.Command = NET_REJECT_JOIN;
@@ -3948,7 +3948,7 @@ static JoinEventType Get_NewGame_Responses(ColorListClass *playerlist)
 			} else {
 				sprintf(item,"%s\t%s",GPacket.Name,Text_String(TXT_N_O_D));
 			}
-			playerlist->Add_Item (item, MPlayerTColors[who->Player.Color]);
+			playerlist->Add_Item (item, MultiplayerTColors[who->Player.Color]);
 
 			/*..................................................................
 			Send a confirmation packet
@@ -3956,7 +3956,7 @@ static JoinEventType Get_NewGame_Responses(ColorListClass *playerlist)
 			memset (&GPacket, 0, sizeof(GlobalPacketType));
 
 			GPacket.Command = NET_CONFIRM_JOIN;
-			strcpy(GPacket.Name,MPlayerName);
+			strcpy(GPacket.Name,MultiplayerName);
 			GPacket.PlayerInfo.House = who->Player.House;
 			GPacket.PlayerInfo.Color = who->Player.Color;
 
@@ -4005,8 +4005,8 @@ static JoinEventType Get_NewGame_Responses(ColorListClass *playerlist)
 		sprintf(txt,Text_String (TXT_FROM), GPacket.Name, GPacket.Message.Buf);
 		magic_number = *((unsigned short*)(GPacket.Message.Buf + COMPAT_MESSAGE_LENGTH-4));
 		crc = *((unsigned short*)(GPacket.Message.Buf + COMPAT_MESSAGE_LENGTH-2));
-		color = MPlayerID_To_ColorIndex(GPacket.Message.ID);
-		Messages.Add_Message (txt, MPlayerTColors[color],
+		color = MultiplayerID_To_ColorIndex(GPacket.Message.ID);
+		Messages.Add_Message (txt, MultiplayerTColors[color],
 			TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_FULLSHADOW, 1200, magic_number, crc);
 		retval = EV_MESSAGE;
 	}
@@ -4342,12 +4342,12 @@ static int Net_Fake_New_Dialog(void)
 	----------------------------- Various Inits ------------------------------
 	*/
 
-	sprintf(credbuf, "%d", MPlayerCredits);
+	sprintf(credbuf, "%d", MultiplayerCredits);
 	/*........................................................................
 	Init other scenario parameters
 	........................................................................*/
-	Special.IsTGrowth = MPlayerTiberium;
-	Special.IsTSpread = MPlayerTiberium;
+	Special.IsTGrowth = MultiplayerTiberiumEnabled;
+	Special.IsTSpread = MultiplayerTiberiumEnabled;
 	transmit = 0;
 
 	/*........................................................................
@@ -4356,7 +4356,7 @@ static int Net_Fake_New_Dialog(void)
 	for (i = 0; i < MAX_MPLAYER_COLORS; i++) {
 		ColorUsed[i] = 0;							// init all colors to available
 	}
-	ColorUsed[MPlayerColorIdx] = 1;			// set my color to used
+	ColorUsed[MultiplayerColorIndex] = 1;			// set my color to used
 	playerlist.Set_Selected_Style(ColorListClass::SELECT_BAR, CC_GREEN_SHADOW);
 
 	/*........................................................................
@@ -4371,12 +4371,12 @@ static int Net_Fake_New_Dialog(void)
 	the Vector & listbox are now 1 out of sync.
 	------------------------------------------------------------------------*/
 	item = new char [MPLAYER_NAME_MAX + 4];
-	if (MPlayerHouse==HOUSE_GOOD) {
-		sprintf(item,"%s\t%s",MPlayerName,Text_String(TXT_G_D_I));
+	if (MultiplayerHouse==HOUSE_GOOD) {
+		sprintf(item,"%s\t%s",MultiplayerName,Text_String(TXT_G_D_I));
 	} else {
-		sprintf(item,"%s\t%s",MPlayerName,Text_String(TXT_N_O_D));
+		sprintf(item,"%s\t%s",MultiplayerName,Text_String(TXT_N_O_D));
 	}
-	playerlist.Add_Item(item, MPlayerTColors[MPlayerColorIdx]);
+	playerlist.Add_Item(item, MultiplayerTColors[MultiplayerColorIndex]);
 
 	Wait_For_Focus();
 
@@ -4404,7 +4404,7 @@ static int Net_Fake_New_Dialog(void)
 	memset (&GPacket, 0, sizeof(GlobalPacketType));
 
 	GPacket.Command = (NetCommandType)50;		//Invalid command
-	strcpy (GPacket.Name, MPlayerName);
+	strcpy (GPacket.Name, MultiplayerName);
 	NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType), 0, NULL);
 #endif	//VIRTUAL_SUBNET_SERVER
 
@@ -4484,7 +4484,7 @@ static int Net_Fake_New_Dialog(void)
 				memset (&GPacket, 0, sizeof(GlobalPacketType));
 
 				GPacket.Command = NET_SIGN_OFF;
-				strcpy (GPacket.Name, MPlayerName);
+				strcpy (GPacket.Name, MultiplayerName);
 
 				/*...............................................................
 				Broadcast my sign-off over my network
@@ -4514,7 +4514,7 @@ static int Net_Fake_New_Dialog(void)
 					NetMgr.Service();
 				}
 				Drain_Global_Send_Queue();
-				MPlayerGameName[0] = 0;
+				MultiplayerGameName[0] = 0;
 				process = false;
 				rc = false;
 				GameStatisticsPacketSent = false;
@@ -4562,7 +4562,7 @@ CCDebugString ("C&C95 - Join timer expired\n");
 					/*...............................................................
 					If there are at least 2 players, go ahead & play; error otherwise
 					...............................................................*/
-					if (MPlayerSolo || Players.Count() > 0) {
+					if (MultiplayerSoloAllowed || Players.Count() > 0) {
 						rc = TRUE;
 						process = FALSE;
 					} else {
@@ -4595,13 +4595,13 @@ CCDebugString ("C&C95 - Join timer expired\n");
 
 				GPacket.Command = NET_GAME_OPTIONS;
 				GPacket.ScenarioInfo.Scenario = ScenarioIdx;	//MPlayerFilenum[ScenarioIdx];
-				GPacket.ScenarioInfo.Credits = MPlayerCredits;
-				GPacket.ScenarioInfo.IsBases = MPlayerBases;
-				GPacket.ScenarioInfo.IsTiberium = MPlayerTiberium;
-				GPacket.ScenarioInfo.IsGoodies = MPlayerGoodies;
-				GPacket.ScenarioInfo.IsGhosties = MPlayerGhosts;
+				GPacket.ScenarioInfo.Credits = MultiplayerCredits;
+				GPacket.ScenarioInfo.IsBases = MultiplayerBasesEnabled;
+				GPacket.ScenarioInfo.IsTiberium = MultiplayerTiberiumEnabled;
+				GPacket.ScenarioInfo.IsGoodies = MultiplayerGoodiesEnabled;
+				GPacket.ScenarioInfo.IsGhosties = MultiplayerGhostsEnabled;
 				GPacket.ScenarioInfo.BuildLevel = BuildLevel;
-				GPacket.ScenarioInfo.UnitCount = MPlayerUnitCount;
+				GPacket.ScenarioInfo.UnitCount = MultiplayerUnitCount;
 				GPacket.ScenarioInfo.Seed = Seed;
 				GPacket.ScenarioInfo.Special = Special;
 				GPacket.ScenarioInfo.GameSpeed = Options.GameSpeed;
@@ -4648,13 +4648,13 @@ CCDebugString ("C&C95 - Exited process loop\n");
 		/*.....................................................................
 		Set the number of players in this game, and my ID
 		.....................................................................*/
-		MPlayerCount = Players.Count() + 1;
-		MPlayerLocalID = Build_MPlayerID (MPlayerColorIdx, MPlayerHouse);
+		MultiplayerPlayerCount = Players.Count() + 1;
+		MultiplayerLocalID = Build_MultiplayerID(MultiplayerColorIndex, MultiplayerHouse);
 
 		/*.....................................................................
 		Get the scenario filename
 		.....................................................................*/
-		Scenario = ScenarioIdx;	//PlayerFilenum[ScenarioIdx]; We are passed actual number now from wchat not index from
+		Scenario = ScenarioIdx;	// Multplayer launch flow now passes actual scenario number, not list index.
 		//Scenario = MPlayerFilenum[ScenarioIdx];
 
 		/*.....................................................................
@@ -4662,7 +4662,7 @@ CCDebugString ("C&C95 - Exited process loop\n");
 		- Divide global channel's response time by 8 (2 to convert to 1-way
 		  value, 4 more to convert from ticks to frames)
 		.....................................................................*/
-		MPlayerMaxAhead = MAX( (Current_Global_Response_Time() / 8), 2);
+		MultiplayerMaxAhead = MAX( (Current_Global_Response_Time() / 8), 2);
 
 		/*.....................................................................
 		Send all players the NET_GO packet.  Wait until all ACK's have been
@@ -4671,7 +4671,7 @@ CCDebugString ("C&C95 - Exited process loop\n");
 CCDebugString ("C&C95 - Sending the 'GO' packet\n");
 		memset (&GPacket, 0, sizeof(GlobalPacketType));
 		GPacket.Command = NET_GO;
-		GPacket.ResponseTime.OneWay = MPlayerMaxAhead;
+		GPacket.ResponseTime.OneWay = MultiplayerMaxAhead;
 		for (i = 0; i < Players.Count(); i++) {
 char flopbuf [128];
 sprintf (flopbuf, "Sending 'GO' packet to address %d\n", *((unsigned short*)&(Players[i]->Address)));
@@ -4693,7 +4693,7 @@ CCDebugString (flopbuf);
 		Fill in 'tmp_id' while we're doing this.
 		.....................................................................*/
 		for (i = 0; i < Players.Count(); i++) {
-			id = Build_MPlayerID (Players[i]->Player.Color,
+			id = Build_MultiplayerID (Players[i]->Player.Color,
 				Players[i]->Player.House);
 
 			tmp_id[i] = id;
@@ -4716,33 +4716,33 @@ CCDebugString ("C&C95 - Creating connection to the VSS\n");
 			NetMgr.Create_Connection( VSS_ID, "VSS", &vss_global_address);
 		}
 #endif	//VIRTUAL_SUBNET_SERVER
-		tmp_id[i] = MPlayerLocalID;
+		tmp_id[i] = MultiplayerLocalID;
 
 		/*.....................................................................
 		Store every player's ID in the MPlayerID[] array.  This array will
 		determine the order of event execution, so the ID's must be stored
 		in the same order on all systems.
 		.....................................................................*/
-		for (i = 0; i < MPlayerCount; i++) {
+		for (i = 0; i < MultiplayerPlayerCount; i++) {
 			min_index = 0;
 			min_id = 0xff;
-			for (j = 0; j < MPlayerCount; j++) {
+			for (j = 0; j < MultiplayerPlayerCount; j++) {
 				if (tmp_id[j] < min_id) {
 					min_id = tmp_id[j];
 					min_index = j;
 				}
 			}
-			MPlayerID[i] = tmp_id[min_index];
+			MultiplayerID[i] = tmp_id[min_index];
 			tmp_id[min_index] = 0xff;
 		}
 		/*.....................................................................
 		Fill in the array of player names, including my own.
 		.....................................................................*/
-		for (i = 0; i < MPlayerCount; i++) {
-			if (MPlayerID[i] == MPlayerLocalID) {
-				strcpy (MPlayerNames[i], MPlayerName);
+		for (i = 0; i < MultiplayerPlayerCount; i++) {
+			if (MultiplayerID[i] == MultiplayerLocalID) {
+				strcpy (MultiplayerNames[i], MultiplayerName);
 			} else {
-				strcpy (MPlayerNames[i], NetMgr.Connection_Name(MPlayerID[i]));
+				strcpy (MultiplayerNames[i], NetMgr.Connection_Name(MultiplayerID[i]));
 			}
 		}
 	}
@@ -5052,7 +5052,7 @@ static int Net_Fake_Join_Dialog(void)
 				memset (&GPacket, 0, sizeof(GlobalPacketType));
 
 				GPacket.Command = NET_SIGN_OFF;
-				strcpy(GPacket.Name,MPlayerName);
+				strcpy(GPacket.Name,MultiplayerName);
 
 				/*...............................................................
 				If we're joined to a game, make extra sure the other players in
@@ -5108,7 +5108,7 @@ static int Net_Fake_Join_Dialog(void)
 					process = false;
 					rc = -1;
 				} else {
-					MPlayerGameName[0] = 0;
+					MultiplayerGameName[0] = 0;
 					joinstate = JOIN_NOTHING;
 					display = REDRAW_ALL;
 				}
@@ -5117,14 +5117,14 @@ static int Net_Fake_Join_Dialog(void)
 
 			/*------------------------------------------------------------------
 			JOIN: send a join request packet & switch to waiting-for-confirmation
-			mode.  (Request_To_Join fills in MPlayerName with my namebuf.)
+			mode.  (Request_To_Join fills in MultiplayerName with my namebuf.)
 			------------------------------------------------------------------*/
 			default:
 				if (joinstate == JOIN_NOTHING && Games.Count()!=0){
 					gamelist.Set_Selected_Index(0);
 					join_index = gamelist.Current_Index();
-					if (Request_To_Join (MPlayerName, join_index, &playerlist, MPlayerHouse,
-						MPlayerColorIdx)) {
+					if (Request_To_Join (MultiplayerName, join_index, &playerlist, MultiplayerHouse,
+						MultiplayerColorIndex)) {
 						joinstate = JOIN_WAIT_CONFIRM;
 					} else {
 						display = REDRAW_ALL;
@@ -5165,18 +5165,18 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 					Clear_Player_List(&playerlist);
 
 					item = new char [MPLAYER_NAME_MAX + 4];
-					if (MPlayerHouse==HOUSE_GOOD) {
-						sprintf(item,"%s\t%s",MPlayerName,Text_String(TXT_G_D_I));
+					if (MultiplayerHouse==HOUSE_GOOD) {
+						sprintf(item,"%s\t%s",MultiplayerName,Text_String(TXT_G_D_I));
 					} else {
-						sprintf(item,"%s\t%s",MPlayerName,Text_String(TXT_N_O_D));
+						sprintf(item,"%s\t%s",MultiplayerName,Text_String(TXT_N_O_D));
 					}
-					playerlist.Add_Item (item, MPlayerTColors[MPlayerColorIdx]);
+					playerlist.Add_Item (item, MultiplayerTColors[MultiplayerColorIndex]);
 
 					who = new NodeNameType;
-					strcpy(who->Name, MPlayerName);
+					strcpy(who->Name, MultiplayerName);
 					who->Address = UDPAddressClass();
-					who->Player.House = MPlayerHouse;
-					who->Player.Color = MPlayerColorIdx;
+					who->Player.House = MultiplayerHouse;
+					who->Player.Color = MultiplayerColorIndex;
 					Players.Add (who);
 
 					Send_Join_Queries (game_index, 0, 1);
@@ -5329,7 +5329,7 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 			memset (&GPacket, 0, sizeof(GlobalPacketType));
 
 			GPacket.Command = NET_SIGN_OFF;
-			strcpy (GPacket.Name, MPlayerName);
+			strcpy (GPacket.Name, MultiplayerName);
 
 			for (i = 0; i < Players.Count(); i++) {
 				NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 1,
@@ -5358,13 +5358,13 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 			/*..................................................................
 			Set the number of players in this game, and my ID
 			..................................................................*/
-			MPlayerCount = Players.Count();
-			MPlayerLocalID = Build_MPlayerID (MPlayerColorIdx, MPlayerHouse);
+			MultiplayerPlayerCount = Players.Count();
+			MultiplayerLocalID = Build_MultiplayerID(MultiplayerColorIndex, MultiplayerHouse);
 
 			/*..................................................................
 			Get the scenario number
 			..................................................................*/
-			Scenario = ScenarioIdx;	//PlayerFilenum[ScenarioIdx]; We are passed actual number now from wchat not index from
+			Scenario = ScenarioIdx;	// Launcher flow now passes actual scenario number, not list index.
 
 			/*..................................................................
 			Form connections with all other players.  Form the IPX Connection ID
@@ -5377,15 +5377,15 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 				/*...............................................................
 				Only create the connection if it's not myself!
 				...............................................................*/
-				if (strcmp (MPlayerName, Players[i]->Name)) {
-					id = Build_MPlayerID(Players[i]->Player.Color,
+				if (strcmp (MultiplayerName, Players[i]->Name)) {
+					id = Build_MultiplayerID(Players[i]->Player.Color,
 						Players[i]->Player.House);
 
 					tmp_id[i] = id;
 
 					NetMgr.Create_Connection((int)id, Players[i]->Name, &(Players[i]->Address) );
 				} else {
-					tmp_id[i] = MPlayerLocalID;
+					tmp_id[i] = MultiplayerLocalID;
 				}
 			}
 
@@ -5405,30 +5405,30 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 #endif	//VIRTUAL_SUBNET_SERVER
 
 			/*..................................................................
-			Store every player's ID in the MPlayerID[] array.  This array will
+			Store every player's ID in the MultiplayerID[] array.  This array will
 			determine the order of event execution, so the ID's must be stored
 			in the same order on all systems.
 			..................................................................*/
-			for (i = 0; i < MPlayerCount; i++) {
+			for (i = 0; i < MultiplayerPlayerCount; i++) {
 				min_index = 0;
 				min_id = 0xff;
-				for (j = 0; j < MPlayerCount; j++) {
+				for (j = 0; j < MultiplayerPlayerCount; j++) {
 					if (tmp_id[j] < min_id) {
 						min_id = tmp_id[j];
 						min_index = j;
 					}
 				}
-				MPlayerID[i] = tmp_id[min_index];
+				MultiplayerID[i] = tmp_id[min_index];
 				tmp_id[min_index] = 0xff;
 			}
 			/*..................................................................
 			Fill in the array of player names, including my own.
 			..................................................................*/
-			for (i = 0; i < MPlayerCount; i++) {
-				if (MPlayerID[i] == MPlayerLocalID) {
-					strcpy (MPlayerNames[i], MPlayerName);
+			for (i = 0; i < MultiplayerPlayerCount; i++) {
+				if (MultiplayerID[i] == MultiplayerLocalID) {
+					strcpy (MultiplayerNames[i], MultiplayerName);
 				} else {
-					strcpy (MPlayerNames[i], NetMgr.Connection_Name(MPlayerID[i]));
+					strcpy (MultiplayerNames[i], NetMgr.Connection_Name(MultiplayerID[i]));
 				}
 			}
 		}

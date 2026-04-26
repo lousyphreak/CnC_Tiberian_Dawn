@@ -37,7 +37,6 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "FUNCTION.H"
-#include "CCDDE.H"
 
 /*****************************
 **	Function prototypes

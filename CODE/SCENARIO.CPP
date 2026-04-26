@@ -330,7 +330,7 @@ void Do_Win(void)
 	** to game queries any more (in Call_Back)
 	*/
 	if (GameToPlay != GAME_NORMAL) {
-		MPlayerGameName[0] = 0;
+		MultiplayerGameName[0] = 0;
 	}
 
 	/*
@@ -359,11 +359,11 @@ void Do_Win(void)
 	*/
 	if (GameToPlay != GAME_NORMAL) {
 		if (!PlaybackGame) {
-			MPlayerGamesPlayed++;
+			MultiplayerGamesPlayed++;
 			Multi_Score_Presentation();
-			MPlayerCurGame++;
-			if (MPlayerCurGame >= MAX_MULTI_GAMES) {
-				MPlayerCurGame = MAX_MULTI_GAMES - 1;
+			MultiplayerCurrentGame++;
+			if (MultiplayerCurrentGame >= MAX_MULTI_GAMES) {
+				MultiplayerCurrentGame = MAX_MULTI_GAMES - 1;
 			}
 		}
 		GameActive = 0;
@@ -552,7 +552,7 @@ void Do_Lose(void)
 	** to game queries any more (in Call_Back)
 	*/
 	if (GameToPlay != GAME_NORMAL) {
-		MPlayerGameName[0] = 0;
+		MultiplayerGameName[0] = 0;
 	}
 
 	/*
@@ -587,11 +587,11 @@ void Do_Lose(void)
 	*/
 	if (GameToPlay != GAME_NORMAL) {
 		if (!PlaybackGame) {
-			MPlayerGamesPlayed++;
+			MultiplayerGamesPlayed++;
 			Multi_Score_Presentation();
-			MPlayerCurGame++;
-			if (MPlayerCurGame >= MAX_MULTI_GAMES) {
-				MPlayerCurGame = MAX_MULTI_GAMES - 1;
+			MultiplayerCurrentGame++;
+			if (MultiplayerCurrentGame >= MAX_MULTI_GAMES) {
+				MultiplayerCurrentGame = MAX_MULTI_GAMES - 1;
 			}
 		}
 		GameActive = 0;

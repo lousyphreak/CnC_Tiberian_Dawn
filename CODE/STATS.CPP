@@ -214,40 +214,40 @@ void Send_Statistics_Packet(void)
 		}
 
 		/*
-		** Game ID. A unique game identifier assigned by WChat.
+		** Game ID. A unique game identifier assigned by the internet lobby service.
 		*/
 		stats.Add_Field(FIELD_GAME_ID, static_cast<uint32_t>(PlanetWestwoodGameID));
 
 		/*
 		** Start credits.
 		*/
-		stats.Add_Field(FIELD_START_CREDITS, static_cast<uint32_t>(MPlayerCredits));
+		stats.Add_Field(FIELD_START_CREDITS, static_cast<uint32_t>(MultiplayerCredits));
 
 		/*
 		** Bases (On/Off)
 		*/
-		stats.Add_Field(FIELD_BASES, MPlayerBases ? "ON" : "OFF");
+		stats.Add_Field(FIELD_BASES, MultiplayerBasesEnabled ? "ON" : "OFF");
 
 		/*
 		** Tiberium (On/Off)
 		*/
-		stats.Add_Field(FIELD_TIBERIUM, MPlayerTiberium ? "ON" : "OFF");
+		stats.Add_Field(FIELD_TIBERIUM, MultiplayerTiberiumEnabled ? "ON" : "OFF");
 
 		/*
 		** Crates (On/Off)
 		*/
-		stats.Add_Field(FIELD_CRATES, MPlayerGoodies ? "ON" : "OFF");
+		stats.Add_Field(FIELD_CRATES, MultiplayerGoodiesEnabled ? "ON" : "OFF");
 
 		/*
 		** AI Players (On/Off/Capture the flag)
 		*/
-		stats.Add_Field(FIELD_AI_PLAYERS, MPlayerGhosts ? "ON" : "OFF");
+		stats.Add_Field(FIELD_AI_PLAYERS, MultiplayerGhostsEnabled ? "ON" : "OFF");
 		stats.Add_Field(FIELD_CAPTURE_THE_FLAG, Special.IsCaptureTheFlag ? "ON" : "OFF");
 
 		/*
 		** Start unit count
 		*/
-		stats.Add_Field(FIELD_START_UNIT_COUNT, static_cast<uint32_t>(MPlayerUnitCount));
+		stats.Add_Field(FIELD_START_UNIT_COUNT, static_cast<uint32_t>(MultiplayerUnitCount));
 
 		/*
 		** Tech level.
@@ -285,8 +285,8 @@ void Send_Statistics_Packet(void)
 		**
 		*/
 		CCDebugString ("C&C95 - Adding stats field for completion status.\n");
-		HouseClass *player1 = HouseClass::As_Pointer(MPlayerHouses[0]);
-		HouseClass *player2 = HouseClass::As_Pointer(MPlayerHouses[1]);
+		HouseClass *player1 = HouseClass::As_Pointer(MultiplayerHouses[0]);
+		HouseClass *player2 = HouseClass::As_Pointer(MultiplayerHouses[1]);
 
 		int completion = -1;
 
@@ -354,7 +354,7 @@ void Send_Statistics_Packet(void)
 		/*
 		** Game start time (GMT or Pacific?)
 		**
-		** Passed from WChat
+		** Passed from the internet lobby service
 		*/
 		stats.Add_Field (FIELD_START_TIME, static_cast<uint32_t>(PlanetWestwoodStartTime));
 
@@ -437,14 +437,14 @@ void Send_Statistics_Packet(void)
 		*/
 		for (int house = 0 ; house < 2 ; house++){
 
-			player = HouseClass::As_Pointer(MPlayerHouses[house]);
+			player = HouseClass::As_Pointer(MultiplayerHouses[house]);
 
 			if (player){
 				/*
 				** Player handle.
 				*/
 				field_player_handle[3] = '1' + (char)house;
-				stats.Add_Field (field_player_handle, (char*) MPlayerNames[house]);
+				stats.Add_Field (field_player_handle, (char*) MultiplayerNames[house]);
 
 				/*
 				** Player team. (NOD or GDI)
@@ -613,7 +613,7 @@ void Send_Statistics_Packet(void)
 	/*
 	** Send it.....
 	*/
-	CCDebugString ("C&C95 - Legacy WChat/DDE stats upload removed; discarding packet.\n");
+	CCDebugString ("C&C95 - Legacy external stats upload removed; discarding packet.\n");
 
 
 	/*

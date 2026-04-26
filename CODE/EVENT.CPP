@@ -47,7 +47,6 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "FUNCTION.H"
-#include "CCDDE.H"
 
 /***************************************************************************
 ** Table of what data is really used in the EventClass struct for different
@@ -120,7 +119,7 @@ EventClass::EventClass(void)
 	, Frame(0)
 	, ID(0)
 	, IsExecuted(0)
-	, MPlayerID(0)
+	, MultiplayerID(0)
 	, Data{}
 {
 }
@@ -135,7 +134,7 @@ int EventClass::operator == (EventClass const & q) const
 		&& Frame == q.Frame
 		&& ID == q.ID
 		&& IsExecuted == q.IsExecuted
-		&& MPlayerID == q.MPlayerID
+		&& MultiplayerID == q.MultiplayerID
 		&& memcmp(&Data, &q.Data, sizeof(Data)) == 0);
 }
 
@@ -454,7 +453,7 @@ CCDebugString (tempbuf);
 sprintf (tempbuf, "	Frame = %d\n", Frame);
 CCDebugString (tempbuf);
 
-sprintf (tempbuf, "	MPlayer ID = %d\n", MPlayerID);
+sprintf (tempbuf, "	MPlayer ID = %d\n", MultiplayerID);
 CCDebugString (tempbuf);
 
 }
@@ -494,7 +493,7 @@ CCDebugString ("C&C95 - Resignation packet received\n");
 				HouseClass * house = Houses.Raw_Ptr(ID);
 
 				sprintf(txt, Text_String(TXT_SPECIAL_WARNING), house->Name);
-				Messages.Add_Message(txt, MPlayerTColors[house->RemapColor],
+				Messages.Add_Message(txt, MultiplayerTColors[house->RemapColor],
 					TPF_6PT_GRAD|TPF_USE_GRAD_PAL|TPF_FULLSHADOW, 1200, 0, 0);
 				Map.Flag_To_Redraw(false);
 			}
@@ -731,7 +730,7 @@ CCDebugString ("C&C95 - Game speed packet received\n");
 char flip[128];
 sprintf (flip, "C&C95 - Changing MaxAhead to %d frames\n", Data.FrameInfo.Delay);
 CCDebugString (flip);
-			MPlayerMaxAhead = Data.FrameInfo.Delay;
+			MultiplayerMaxAhead = Data.FrameInfo.Delay;
 			break;
 
 		//
@@ -749,14 +748,14 @@ CCDebugString ("C&C95 - Timing packet received\n");
 			// period of vulnerability's frame start & end values, so we
 			// can reschedule these events to execute after it's over.
 			//
-			if (Data.Timing.MaxAhead > MPlayerMaxAhead) {
+			if (Data.Timing.MaxAhead > MultiplayerMaxAhead) {
 				NewMaxAheadFrame1 = Frame;
 				NewMaxAheadFrame2 = Frame + Data.Timing.MaxAhead;
 			}
 //#endif
 
 			DesiredFrameRate = Data.Timing.DesiredFrameRate;
-			MPlayerMaxAhead = Data.Timing.MaxAhead;
+			MultiplayerMaxAhead = Data.Timing.MaxAhead;
 
 sprintf (flip, "C&C95 -  Timing packet: DesiredFrameRate = %d\n", Data.Timing.DesiredFrameRate);
 CCDebugString (flip);
@@ -771,8 +770,8 @@ CCDebugString (flip);
 		// for the game.
 		//
 		case PROCESS_TIME:
-			for (i = 0; i < MPlayerCount; i++) {
-				if (MPlayerID == ::MPlayerID[i]) {
+			for (i = 0; i < MultiplayerPlayerCount; i++) {
+				if (MultiplayerID == ::MultiplayerID[i]) {
 					TheirProcessTime[i] = Data.ProcessTime.AverageTicks;
 
 char flip[128];

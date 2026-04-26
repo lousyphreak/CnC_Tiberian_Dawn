@@ -122,7 +122,7 @@
  *			   UDPConnClass     			        ------------------------			*
  *						|							     |                      |			*
  *						|							     |                      |			*
- *		   UDPGlobalConnClass        NullModemConnClass       ModemConnClass	*
+ *		   UDPGlobalConnClass                                                *
  *																									*
  *																									*
  *	ConnectionClass:																			*
@@ -175,20 +175,6 @@
  *					   address from the packet												*
  *		Inherits: * Sequenced ACK/Retry logic, Service routines, Queue &		*
  *						PacketBuf, timeout variables, IPX-specific routines		*
- *																									*
- *	NullModemConnClass:																		*
- *		Provides: * Hardware-dependent Serial-communication routines, which	*
- *						allow Service_Send_Queue() & Service_Receive_Queue() to 	*
- *						do their job															*
- *		Inherits: * Non-Sequenced ACK/Retry logic, Service routines, Queue &	*
- *						PacketBuf, timeout variables										*
- *																									*
- *	ModemConnClass:																			*
- *		Provides: * Hardware-dependent Modem-communication routines, which	*
- *						allow Service_Send_Queue() & Service_Receive_Queue() to 	*
- *						do their job															*
- *		Inherits: * Non-Sequenced ACK/Retry logic, Service routines, Queue &	*
- *						PacketBuf, timeout variables										*
  *																									*
  *	So, do ya think this header is long enough, or what?							*
  *																									*

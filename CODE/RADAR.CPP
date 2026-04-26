@@ -1887,7 +1887,7 @@ void RadarClass::Draw_Names(void)
 
 	y += 2*factor;
 
-	for (house = HOUSE_MULTI1; house < (HOUSE_MULTI1 + MPlayerMax); house++) {
+	for (house = HOUSE_MULTI1; house < (HOUSE_MULTI1 + MultiplayerMaxPlayers); house++) {
 		ptr = HouseClass::As_Pointer(house);
 
 		if (!ptr)
@@ -1902,7 +1902,7 @@ void RadarClass::Draw_Names(void)
 			color = GREY;
 			style = TPF_6PT_GRAD | TPF_NOSHADOW | TPF_USE_GRAD_PAL;
 		} else {
-			color = MPlayerTColors[c_idx];
+			color = MultiplayerTColors[c_idx];
 			style = TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW;
 		}
 
@@ -1923,10 +1923,10 @@ void RadarClass::Draw_Names(void)
 			**	- Compute the multiplayer ID for this house
 			**	- find the name for this player
 			*/
-			id = Build_MPlayerID (c_idx,ptr->ActLike);
-			for (i = 0; i < MPlayerCount; i++) {
-				if (id == MPlayerID[i]) {
-					sprintf(txt,"%s",MPlayerNames[i]);
+			id = Build_MultiplayerID (c_idx,ptr->ActLike);
+			for (i = 0; i < MultiplayerPlayerCount; i++) {
+				if (id == MultiplayerID[i]) {
+					sprintf(txt,"%s",MultiplayerNames[i]);
 					break;
 				}
 			}

@@ -266,8 +266,7 @@
 #define TXT_ERROR_SAVING_GAME    	247	// Error saving game!
 #define TXT_DELETE_FILE_QUERY    	248	// Delete this file?
 #define TXT_EMPTY_SLOT           	249	// [EMPTY SLOT]
-#define TXT_SELECT_MPLAYER_GAME  	250	// Select Multiplayer Game
-#define TXT_MODEM_SERIAL         	251	// Modem/Serial
+#define TXT_SELECT_MULTIPLAYER_GAME  	250	// Select Multiplayer Game
 #define TXT_NETWORK              	252	// Network
 #define TXT_INIT_NET_ERROR       	253	// Unable to initialize
 #define TXT_JOIN_NETWORK_GAME    	254	// Join Network Game
@@ -317,12 +316,7 @@
 #define TXT_PLAYER_DEFEATED      	298	// %s has been defeated!
 #define TXT_WAITING_CONNECT      	299	// Waiting to Connect...
 #define TXT_NULL_CONNERR_CHECK_CABLES	300	// Connection error! Check
-#define TXT_MODEM_CONNERR_REDIALING	301	// Connection
-#define TXT_MODEM_CONNERR_WAITING	302	// Connection error! Waiting
 #define TXT_SELECT_SERIAL_GAME   	303	// Select Serial Game
-#define TXT_DIAL_MODEM           	304	// Dial Modem
-#define TXT_ANSWER_MODEM         	305	// Answer Modem
-#define TXT_NULL_MODEM           	306	// Null Modem
 #define TXT_SETTINGS             	307	// Settings
 #define TXT_PORT_COLON           	308	// Port:
 #define TXT_IRQ_COLON            	309	// IRQ:
@@ -331,10 +325,8 @@
 #define TXT_CWAIT_STRING         	312	// Call Waiting String:
 #define TXT_TONE_BUTTON          	313	// Tone Dialing
 #define TXT_PULSE_BUTTON         	314	// Pulse Dialing
-#define TXT_HOST_SERIAL_GAME     	315	// Host Serial Game
 #define TXT_OPPONENT_COLON       	316	// Opponent:
 #define TXT_USER_SIGNED_OFF      	317	// User signed off!
-#define TXT_JOIN_SERIAL_GAME     	318	// Join Serial Game
 #define TXT_PHONE_LIST           	319	// Phone List
 #define TXT_ADD                  	320	// Add
 #define TXT_EDIT                 	321	// Edit
@@ -345,7 +337,6 @@
 #define TXT_PHONE_LISTING        	326	// Phone Listing
 #define TXT_NAME_COLON           	327	// Name:
 #define TXT_NUMBER_COLON         	328	// Number:
-#define TXT_UNABLE_FIND_MODEM    	329	// Unable to find modem. Check
 #define TXT_NO_CARRIER           	330	// No carrier.
 #define TXT_LINE_BUSY            	331	// Line busy.
 #define TXT_NUMBER_INVALID       	332	// Number invalid.
@@ -627,7 +618,6 @@
 #define TXT_TIBERIUM_SPREAD      	608	// Tiberium will spread.
 #define TXT_ROAD_PIECES          	609	// Disable building "bib"
 #define TXT_SCATTER              	610	// Allow running from
-#define TXT_MODEM_OR_LOOPBACK    	611	// Not a Null Modem Cable
 #define TXT_MAP                  	612	// Map
 #define TXT_FROM_COMPUTER        	613	// From Computer:
 #define TXT_COMP_MSG1            	614	// Prepare to die!
@@ -696,7 +686,6 @@
 #define TXT_RESIGN               	677	// Resign Game
 #define TXT_TIBERIUM_FAST        	678	// Tiberium grows quickly.
 #define TXT_ANSWERING            	679	// Answering...
-#define TXT_INITIALIZING_MODEM   	680	// Initializing Modem...
 #define TXT_SCENARIOS_DO_NOT_MATCH	681	// Scenarios don't match.
 #define TXT_POWER_OUTPUT         	682	// Power Output
 #define TXT_POWER_OUTPUT_LOW     	683	// Power Output (low)
@@ -737,22 +726,16 @@
 #define TXT_CD_DIALOG_3          	718	// Please insert the Covert
 #define TXT_THEME_RECON          	719	// Recon
 #define TXT_THEME_VOICE          	720	// Voice Rhythm
-#define TXT_ERROR_NO_INIT        	721	// Error - modem did not
-#define TXT_NO_FLOW_CONTROL_RESPONSE	722	// Error - Modem failed to
-#define TXT_NO_COMPRESSION_RESPONSE	723	// Error - Modem failed to
-#define TXT_NO_ERROR_CORRECTION_RESPONSE	724	// Error - Modem failed to
 #define TXT_ERROR_NO_DISABLE     	725	// Error - unable to disable
 #define TXT_ERROR_TOO_MANY       	726	// Error - Too many errors
 #define TXT_IGNORE               	727	// Ignore
 #define TXT_CONNECTING           	728	// Connecting... Please Wait.
 #define TXT_EXPLAIN_REGISTRATION 	729	// To play Command & Conquer
 #define TXT_REGISTER             	730	// Register
-#define TXT_ERROR_UNABLE_TO_RUN_WCHAT	731	// Wchat not installed. Please
 #define TXT_INTERNET             	732	// Internet Game
 #define TXT_UNABLE_TO_SET_VIDEO_MODE	733	// Error - Unable to set the
 #define TXT_UNABLE_TO_ALLOCATE_PRIMARY_VIDEO_BUFFER	734	// Error - Unable to allocate
 #define TXT_NO_DIAL_TONE         	735	// No dial tone. Ensure your
-#define TXT_MODEM_INITIALISATION 	736	// Modem Initialization
 #define TXT_DATA_COMPRESSION     	737	// Data Compression
 #define TXT_ERROR_CORRECTION     	738	// Error Correction
 #define TXT_HARDWARE_FLOW_CONTROL	739	// Hardware Flow Control

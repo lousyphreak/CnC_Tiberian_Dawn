@@ -16,3 +16,8 @@ _Last updated: 2026-04-26_
 	- force a local-player `Update_Buildables()` + `Map.Recalc()` refresh in `BuildingClass::Grand_Opening(...)` to keep progression unlocks (e.g. power -> barracks) in sync.
 - Missing multiplayer/internet option state can silently collapse the tech tree:
 	- `Read_Game_Options(...)` must not default `BuildLevel` to `0` when `Options/BuildLevel` is absent.
+- Legacy WChat/DDE and modem/null-modem modules are intentionally removed from this SDL3 port baseline:
+	- active runtime code should not include or depend on `CCDDE.*` or `NULL*` modules.
+- Keep internet multiplayer role/timing state on neutral internet-specific symbols in active code:
+	- role: `InternetGameRole`
+	- timing: `InternetMaxAhead`, `InternetSendRate`

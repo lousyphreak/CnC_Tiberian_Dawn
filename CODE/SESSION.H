@@ -89,10 +89,9 @@ class CellClass;
 #define	MAX_MULTI_GAMES	4		// max # games (columns) on the score screen
 
 //...........................................................................
-// Min value for MaxAhead, for both net & modem; only applies for
+// Min value for MaxAhead for network play; only applies for
 // COMM_PROTOCOL_MULTI_E_COMP.
 //...........................................................................
-#define MODEM_MIN_MAX_AHEAD			5
 #define NETWORK_MIN_MAX_AHEAD			2
 
 //...........................................................................
@@ -101,7 +100,7 @@ class CellClass;
 #define DEFAULT_FRAME_SEND_RATE		3
 
 //...........................................................................
-// Modem-specific constants
+// Legacy serial-link constants
 //...........................................................................
 #define	PORTBUF_MAX						5		// dialog field sizes
 #define	IRQBUF_MAX						3
@@ -119,8 +118,6 @@ class CellClass;
 //...........................................................................
 typedef enum GameEnum {
 	GAME_NORMAL,									// not multiplayer
-	GAME_MODEM,										// legacy modem game
-	GAME_NULL_MODEM,								// legacy NULL-modem
 	GAME_UDP,										// UDP direct game
 	GAME_INTERNET,									// TCP direct game
 	GAME_WOL										// Westwood Online game
@@ -131,11 +128,6 @@ typedef enum InternetTransportEnum {
 	INTERNET_TRANSPORT_TCP,
 	INTERNET_TRANSPORT_WOL
 } InternetTransportType;
-
-inline bool Is_Legacy_Serial_Game(GameType game)
-{
-	return game == GAME_MODEM || game == GAME_NULL_MODEM;
-}
 
 inline bool Is_Online_Game(GameType game)
 {
@@ -148,7 +140,7 @@ inline bool Is_Network_Game(GameType game)
 }
 
 //...........................................................................
-// Various Modem-specific enums
+// Legacy serial-link enums
 //...........................................................................
 typedef enum DetectPortType {
 	PORT_VALID = 0,
@@ -178,14 +170,10 @@ typedef enum CallWaitStringType {
 	CALL_WAIT_STRINGS_NUM
 } CallWaitStringType;
 
-typedef enum ModemGameType {
-	MODEM_NULL_HOST = 0,
-	MODEM_NULL_JOIN,
-	MODEM_DIALER,
-	MODEM_ANSWERER,
-	INTERNET_HOST = MODEM_NULL_HOST,
-	INTERNET_JOIN = MODEM_NULL_JOIN
-} ModemGameType;
+typedef enum InternetRoleType {
+	INTERNET_HOST = 0,
+	INTERNET_JOIN
+} InternetRoleType;
 
 //...........................................................................
 // Commands sent over the serial Global Channel
@@ -234,7 +222,7 @@ typedef struct {
 	int Wins;
 	int Kills[MAX_MULTI_GAMES];
 	int Color;
-} MPlayerScoreType;
+} MultiplayerScoreType;
 
 //...........................................................................
 // Settings for the serial port
@@ -480,7 +468,7 @@ class SessionClass
 		int LoadGame;
 
 		//.....................................................................
-		// This flag is set when the modem game saves the game due to a lost
+		// This flag is set when the game saves due to a lost
 		// connection.
 		//.....................................................................
 		int EmergencySave;
@@ -497,12 +485,11 @@ class SessionClass
 		MessageListClass Messages;
 		UDPAddressClass MessageAddress;
 		char LastMessage[MAX_MESSAGE_LENGTH];
-		int WWChat		: 1;	// 1 = go into special WW Chat mode
 
 		//.....................................................................
 		// This is the multiplayer scorekeeping system
 		//.....................................................................
-		MPlayerScoreType Score[MAX_MULTI_NAMES];
+		MultiplayerScoreType Score[MAX_MULTI_NAMES];
 		int GamesPlayed;		// # games played this run
 		int NumScores;			// # active entries in MPlayerScore
 		int Winner;				// index of winner of last game
@@ -547,18 +534,6 @@ class SessionClass
 		DynamicVectorClass <NodeNameType *> Chat;		// list of chat nodes
 
 		//.....................................................................
-		// Modem-specific variables
-		//.....................................................................
-		bool ModemService		: 1;				// 1 = service modem in Call_Back
-		int CurPhoneIdx;							// phone listing index
-		SerialSettingsType SerialDefaults;	// default serial settings
-		ModemGameType ModemType;				// caller or answerer?
-
-		DynamicVectorClass<PhoneEntryClass *> PhoneBook;
-		DynamicVectorClass <char *> InitStrings;
-		static char * DialMethodCheck[ DIAL_METHODS ];
-		static char * CallWaitStrings[ CALL_WAIT_STRINGS_NUM ];
-
 		//.....................................................................
 		// For finding Sync Bugs
 		//.....................................................................

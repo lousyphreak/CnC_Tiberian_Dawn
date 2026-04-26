@@ -1232,7 +1232,7 @@ void HouseClass::AI(void)
 	*/
 	if (GameToPlay != GAME_NORMAL && !IsDefeated &&
 		!ActiveBScan && !ActiveAScan && !UScan && !ActiveIScan && Frame > 0) {
-		MPlayer_Defeated();
+		Multiplayer_Defeated();
 	}
 
 	for (int index = 0; index < HouseTriggers[Class->House].Count(); index++) {
@@ -1870,7 +1870,7 @@ void HouseClass::Make_Ally(HousesType house)
 			}
 
 			sprintf(buffer, Text_String(TXT_HAS_ALLIED), Name, HouseClass::As_Pointer(house)->Name);
-			Messages.Add_Message(buffer, MPlayerTColors[RemapColor], TPF_6PT_GRAD|TPF_USE_GRAD_PAL|TPF_FULLSHADOW, 1200, 0, 0);
+			Messages.Add_Message(buffer, MultiplayerTColors[RemapColor], TPF_6PT_GRAD|TPF_USE_GRAD_PAL|TPF_FULLSHADOW, 1200, 0, 0);
 			Map.Flag_To_Redraw(false);
 		}
 	}
@@ -1907,7 +1907,7 @@ void HouseClass::Make_Enemy(HousesType house)
 			char buffer[80];
 
 			sprintf(buffer, Text_String(TXT_AT_WAR), Name, enemy->Name);
-			Messages.Add_Message(buffer, MPlayerTColors[RemapColor], TPF_6PT_GRAD|TPF_USE_GRAD_PAL|TPF_FULLSHADOW, 600, 0, 0);
+			Messages.Add_Message(buffer, MultiplayerTColors[RemapColor], TPF_6PT_GRAD|TPF_USE_GRAD_PAL|TPF_FULLSHADOW, 600, 0, 0);
 			Map.Flag_To_Redraw(false);
 		}
 	}
@@ -2469,7 +2469,7 @@ bool HouseClass::Place_Special_Blast(SpecialWeaponType id, CELL cell)
 				if (GameToPlay == GAME_NORMAL) {
 					strike = Bound(BuildLevel/3, 1, 3);
 				} else {
-					strike = Bound(MPlayerUnitCount/5, 1, 3);
+					strike = Bound(MultiplayerUnitCount/5, 1, 3);
 				}
 				Create_Air_Reinforcement(this, AIRCRAFT_A10, strike, MISSION_HUNT, ::As_Target(cell), TARGET_NONE);
 				if (this == PlayerPtr) {
@@ -3636,7 +3636,7 @@ bool HouseClass::Flag_Attach(UnitClass * object, bool set_home)
  * HISTORY:                                                                *
  *   05/25/1995 BRR : Created.                                             *
  *=========================================================================*/
-void HouseClass::MPlayer_Defeated(void)
+void HouseClass::Multiplayer_Defeated(void)
 {
 	Validate();
 	char txt[80];
@@ -3680,7 +3680,7 @@ void HouseClass::MPlayer_Defeated(void)
 	- Add my defeat message
 	------------------------------------------------------------------------*/
 	if (PlayerPtr == this) {
-		MPlayerObiWan = 1;
+		MultiplayerObiWan = 1;
 		Debug_Unshroud = true;
 		HiddenPage.Clear();
 		Map.Flag_To_Redraw(true);
@@ -3688,8 +3688,8 @@ void HouseClass::MPlayer_Defeated(void)
 		/*.....................................................................
 		Pop up a message showing that I was defeated
 		.....................................................................*/
-		sprintf(txt,Text_String(TXT_PLAYER_DEFEATED), MPlayerName);
-		Messages.Add_Message(txt, MPlayerTColors[MPlayerColorIdx], TPF_6PT_GRAD|TPF_USE_GRAD_PAL|TPF_FULLSHADOW, 600, 0, 0);
+		sprintf(txt,Text_String(TXT_PLAYER_DEFEATED), MultiplayerName);
+		Messages.Add_Message(txt, MultiplayerTColors[MultiplayerColorIndex], TPF_6PT_GRAD|TPF_USE_GRAD_PAL|TPF_FULLSHADOW, 600, 0, 0);
 		Map.Flag_To_Redraw(false);
 
 	} else {
@@ -3700,15 +3700,15 @@ void HouseClass::MPlayer_Defeated(void)
 		if (IsHuman) {
 			sprintf(txt, Text_String(TXT_PLAYER_DEFEATED), Text_String(TXT_UNKNOWN));
 			id = 0;
-			for (i = 0; i < MPlayerCount; i++) {
-				house = MPlayerHouses[i];
+			for (i = 0; i < MultiplayerPlayerCount; i++) {
+				house = MultiplayerHouses[i];
 				if (HouseClass::As_Pointer(house) == this) {
-					sprintf (txt,Text_String(TXT_PLAYER_DEFEATED), MPlayerNames[i]);
-					id = MPlayerID[i];
+					sprintf (txt,Text_String(TXT_PLAYER_DEFEATED), MultiplayerNames[i]);
+					id = MultiplayerID[i];
 				}
 			}
 
-			Messages.Add_Message(txt, MPlayerTColors[MPlayerID_To_ColorIndex(id)],
+			Messages.Add_Message(txt, MultiplayerTColors[MultiplayerID_To_ColorIndex(id)],
 				TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_FULLSHADOW, 600, 0, 0);
 			Map.Flag_To_Redraw(false);
 		}
@@ -3719,7 +3719,7 @@ void HouseClass::MPlayer_Defeated(void)
 	------------------------------------------------------------------------*/
 	num_alive = 0;
 	num_humans = 0;
-	for (i = 0; i < MPlayerMax; i++) {
+	for (i = 0; i < MultiplayerMaxPlayers; i++) {
 		hptr = HouseClass::As_Pointer((HousesType)(HOUSE_MULTI1 + i));
 		if (hptr && hptr->IsDefeated==0) {
 			if (hptr->IsHuman)
@@ -3733,7 +3733,7 @@ void HouseClass::MPlayer_Defeated(void)
 	there's only one player left:
 	------------------------------------------------------------------------*/
 	all_allies = 1;
-	for (i = 0; i < MPlayerMax; i++) {
+	for (i = 0; i < MultiplayerMaxPlayers; i++) {
 		/*.....................................................................
 		Get a pointer to this house
 		.....................................................................*/
@@ -3745,7 +3745,7 @@ void HouseClass::MPlayer_Defeated(void)
 		Loop through all houses; if there's one left alive that this house
 		isn't allied with, then all_allies will be false
 		.....................................................................*/
-		for (j = 0; j < MPlayerMax; j++) {
+		for (j = 0; j < MultiplayerMaxPlayers; j++) {
 			hptr2 = HouseClass::As_Pointer((HousesType)(HOUSE_MULTI1 + j));
 			if (!hptr2)
 				continue;
@@ -3767,7 +3767,7 @@ void HouseClass::MPlayer_Defeated(void)
 	If there's only one human player left or no humans left, the game is over:
 	- Determine whether this player wins or loses, based on the state of the
 	  MPlayerObiWan flag
-	- Find all players' indices in the MPlayerScore array
+	- Find all players' indices in the MultiplayerScore array
 	- Tally up scores for this game
 	------------------------------------------------------------------------*/
 	if (num_alive == 1 || num_humans == 0) {
@@ -3780,14 +3780,14 @@ void HouseClass::MPlayer_Defeated(void)
 		/*---------------------------------------------------------------------
 		Find each player's score index
 		---------------------------------------------------------------------*/
-		for (i = 0; i < MPlayerCount; i++) {
+		for (i = 0; i < MultiplayerPlayerCount; i++) {
 			score_index[i] = -1;
 
 			/*..................................................................
-			Search for this player's name in the MPlayerScore array
+			Search for this player's name in the MultiplayerScore array
 			..................................................................*/
-			for (j = 0; j < MPlayerNumScores; j++) {
-				if (!stricmp(MPlayerNames[i],MPlayerScore[j].Name)) {
+			for (j = 0; j < MultiplayerNumScores; j++) {
+				if (!stricmp(MultiplayerNames[i],MultiplayerScore[j].Name)) {
 					score_index[i] = j;
 					break;
 				}
@@ -3797,9 +3797,9 @@ void HouseClass::MPlayer_Defeated(void)
 			If the index is still -1, the name wasn't found; add a new entry.
 			..................................................................*/
 			if (score_index[i] == -1) {
-				if (MPlayerNumScores < MAX_MULTI_NAMES) {
-					score_index[i] = MPlayerNumScores;
-					MPlayerNumScores++;
+				if (MultiplayerNumScores < MAX_MULTI_NAMES) {
+					score_index[i] = MultiplayerNumScores;
+					MultiplayerNumScores++;
 				} else {
 
 					/*...............................................................
@@ -3809,10 +3809,10 @@ void HouseClass::MPlayer_Defeated(void)
 					...............................................................*/
 					max_index = 0;
 					max_count = 0;
-					for (j = 0; j < MPlayerNumScores; j++) {
+					for (j = 0; j < MultiplayerNumScores; j++) {
 						count = 0;
-						for (k = MPlayerNumScores - 1; k >= 0; k--) {
-							if (MPlayerScore[j].Kills[k]==-1) {
+						for (k = MultiplayerNumScores - 1; k >= 0; k--) {
+							if (MultiplayerScore[j].Kills[k]==-1) {
 								count++;
 							} else {
 								break;
@@ -3829,22 +3829,22 @@ void HouseClass::MPlayer_Defeated(void)
 				/*...............................................................
 				Initialize this score entry
 				...............................................................*/
-				MPlayerScore[score_index[i]].Wins = 0;
-				strcpy (MPlayerScore[score_index[i]].Name,MPlayerNames[i]);
+				MultiplayerScore[score_index[i]].Wins = 0;
+				strcpy (MultiplayerScore[score_index[i]].Name,MultiplayerNames[i]);
 				for (j = 0; j < MAX_MULTI_GAMES; j++)
-					MPlayerScore[score_index[i]].Kills[j] = -1;
+					MultiplayerScore[score_index[i]].Kills[j] = -1;
 			}
 
 			/*..................................................................
 			Init this player's Kills to 0 (-1 means he didn't play this round;
 			0 means he played but got no kills).
 			..................................................................*/
-			MPlayerScore[score_index[i]].Kills[MPlayerCurGame] = 0;
+			MultiplayerScore[score_index[i]].Kills[MultiplayerCurrentGame] = 0;
 
 			/*..................................................................
 			Init this player's color to his last-used color index
 			..................................................................*/
-			MPlayerScore[score_index[i]].Color = MPlayerID_To_ColorIndex(MPlayerID[i]);
+			MultiplayerScore[score_index[i]].Color = MultiplayerID_To_ColorIndex(MultiplayerID[i]);
 		}
 
 #if 0	// (This is the old method of tallying scores:
@@ -3855,7 +3855,7 @@ void HouseClass::MPlayer_Defeated(void)
 		  - If this house was defeated, find out who did it & increment their
 		    Kills value.
 		---------------------------------------------------------------------*/
-		for (house = HOUSE_MULTI1; house < (HOUSE_MULTI1 + MPlayerMax); house++) {
+		for (house = HOUSE_MULTI1; house < (HOUSE_MULTI1 + MultiplayerMaxPlayers); house++) {
 			hptr = HouseClass::As_Pointer(house);
 			if (!hptr) continue;
 
@@ -3866,10 +3866,10 @@ void HouseClass::MPlayer_Defeated(void)
 				their 'Wins' value
 				...............................................................*/
 				if (hptr->IsHuman) {
-					for (i = 0; i < MPlayerCount; i++) {
-						if (house == MPlayerHouses[i]) {
-							MPlayerScore[score_index[i]].Wins++;
-							MPlayerWinner = score_index[i];
+					for (i = 0; i < MultiplayerPlayerCount; i++) {
+						if (house == MultiplayerHouses[i]) {
+							MultiplayerScore[score_index[i]].Wins++;
+							MultiplayerWinner = score_index[i];
 						}
 					}
 				}
@@ -3879,9 +3879,9 @@ void HouseClass::MPlayer_Defeated(void)
 				This house was defeated; find which player who defeated him & increment
 				his 'Kills' value for this game
 				..................................................................*/
-				for (i = 0; i < MPlayerCount; i++) {
-					if (hptr->WhoLastHurtMe == MPlayerHouses[i]) {
-						MPlayerScore[score_index[i]].Kills[MPlayerCurGame]++;
+				for (i = 0; i < MultiplayerPlayerCount; i++) {
+					if (hptr->WhoLastHurtMe == MultiplayerHouses[i]) {
+						MultiplayerScore[score_index[i]].Kills[MultiplayerCurrentGame]++;
 					}
 				}
 			}
@@ -3895,16 +3895,16 @@ void HouseClass::MPlayer_Defeated(void)
 		  - If this player is undefeated this round, he's the winner
 		  - Each player's Kills value is the sum of the unit's they killed
 		---------------------------------------------------------------------*/
-		for (i = 0; i < MPlayerCount; i++) {
-			hptr = HouseClass::As_Pointer(MPlayerHouses[i]);
+		for (i = 0; i < MultiplayerPlayerCount; i++) {
+			hptr = HouseClass::As_Pointer(MultiplayerHouses[i]);
 
 			/*..................................................................
 			If this house was undefeated, it must have been the winner.  (If
 			no human houses are undefeated, the computer won.)
 			..................................................................*/
 			if (!hptr->IsDefeated) {
-				MPlayerScore[score_index[i]].Wins++;
-				MPlayerWinner = score_index[i];
+				MultiplayerScore[score_index[i]].Wins++;
+				MultiplayerWinner = score_index[i];
 			}
 
 			/*..................................................................
@@ -3912,10 +3912,10 @@ void HouseClass::MPlayer_Defeated(void)
 			..................................................................*/
 			for (house = HOUSE_FIRST; house < HOUSE_COUNT; house++) {
 
-				MPlayerScore[score_index[i]].Kills[MPlayerCurGame] +=
+				MultiplayerScore[score_index[i]].Kills[MultiplayerCurrentGame] +=
 					hptr->UnitsKilled[house];
 
-				MPlayerScore[score_index[i]].Kills[MPlayerCurGame] +=
+				MultiplayerScore[score_index[i]].Kills[MultiplayerCurrentGame] +=
 					hptr->BuildingsKilled[house];
 			}
 		}
@@ -3933,7 +3933,7 @@ void HouseClass::MPlayer_Defeated(void)
 				id = net->Connection_ID(0);
 				net->Delete_Connection(id);
 			}
-			MPlayerCount = 0;
+			MultiplayerPlayerCount = 0;
 		}
 	}
 

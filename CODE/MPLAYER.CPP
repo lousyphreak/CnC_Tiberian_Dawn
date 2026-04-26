@@ -416,7 +416,7 @@ static bool Configure_TCP_Direct_Game(void)
 	PlanetWestwoodIsHost = host_game;
 	InternetMaxPlayers = 2;
 	UseVirtualSubnetServer = false;
-	ModemGameToPlay = host_game ? INTERNET_HOST : INTERNET_JOIN;
+	InternetGameRole = host_game ? INTERNET_HOST : INTERNET_JOIN;
 	Winsock.Set_Protocol_UDP(FALSE);
 
 	return true;
@@ -437,7 +437,7 @@ static bool Configure_TCP_Direct_Game(void)
  * HISTORY:                                                                                    *
  *   02/14/1995 BR : Created.                                                                  *
  *=============================================================================================*/
-GameType Select_MPlayer_Game (void)
+GameType Select_Multiplayer_Game (void)
 {
 	if (!Choose_Internet_Game(InternetTransport)) {
 		return GAME_NORMAL;
@@ -476,13 +476,7 @@ GameType Select_MPlayer_Game (void)
 void Read_MultiPlayer_Settings (void)
 {
 	char *buffer;							// INI staging buffer pointer.
-	char *tbuffer;							// Accumulation buffer of trigger IDs.
-	int len;									// Length of data in buffer.
-	char *tokenptr;						// ptr to token
-	PhoneEntryClass *phone;				// a phone book entry
-	char *entry;							// a phone book entry
 	char buf[128];							// buffer for parsing INI entry
-	int i;
 	CELL cell;
 
 	/*------------------------------------------------------------------------
@@ -493,22 +487,6 @@ void Read_MultiPlayer_Settings (void)
 	------------------------------------------------------------------------*/
 	buffer = (char *)_ShapeBuffer;
 	memset(buffer, '\0', _ShapeBufferSize);
-
-	/*------------------------------------------------------------------------
-	Clear the initstring entries
-	------------------------------------------------------------------------*/
-	for (i = 0; i < InitStrings.Count(); i++) {
-		delete[] InitStrings[i];
-	}
-	InitStrings.Clear();
-
-	/*------------------------------------------------------------------------
-	Clear the dialing entries
-	------------------------------------------------------------------------*/
-	for (i = 0; i < PhoneBook.Count(); i++) {
-		delete PhoneBook[i];
-	}
-	PhoneBook.Clear();
 
 	/*------------------------------------------------------------------------
 	Create filename and read the file.
@@ -524,255 +502,19 @@ void Read_MultiPlayer_Settings (void)
 	/*------------------------------------------------------------------------
 	Get the player's last-used Handle
 	------------------------------------------------------------------------*/
-	WWGetPrivateProfileString("MultiPlayer", "Handle", "Noname", MPlayerName,
-		sizeof(MPlayerName), buffer);
+	WWGetPrivateProfileString("MultiPlayer", "Handle", "Noname", MultiplayerName,
+		sizeof(MultiplayerName), buffer);
 
 	/*------------------------------------------------------------------------
 	Get the player's last-used Color
 	------------------------------------------------------------------------*/
-	MPlayerPrefColor = WWGetPrivateProfileInt("MultiPlayer", "Color", 0, buffer);
-	MPlayerHouse = (HousesType)WWGetPrivateProfileInt("MultiPlayer", "Side",
+	MultiplayerPreferredColor = WWGetPrivateProfileInt("MultiPlayer", "Color", 0, buffer);
+	MultiplayerHouse = (HousesType)WWGetPrivateProfileInt("MultiPlayer", "Side",
 		HOUSE_GOOD, buffer);
-	CurPhoneIdx = WWGetPrivateProfileInt("MultiPlayer", "PhoneIndex", -1, buffer);
 
 #if 1
 	TrapCheckHeap = WWGetPrivateProfileInt( "MultiPlayer", "CheckHeap", 0, buffer);
 #endif
-
-	/*------------------------------------------------------------------------
-	Read in default serial settings
-	------------------------------------------------------------------------*/
-	WWGetPrivateProfileString ("SerialDefaults", "ModemName", "NoName", SerialDefaults.ModemName, MODEM_NAME_MAX, buffer);
-	if (!strcmp ( SerialDefaults.ModemName, "NoName")) {
-		SerialDefaults.ModemName[0] = 0;
-	}
-	WWGetPrivateProfileString ("SerialDefaults", "Port", "0", buf, 5, buffer);
-	sscanf (buf, "%x", &SerialDefaults.Port);
-	SerialDefaults.IRQ = WWGetPrivateProfileInt("SerialDefaults", "IRQ", -1, buffer);
-	SerialDefaults.Baud = WWGetPrivateProfileInt("SerialDefaults", "Baud", -1, buffer);
-	SerialDefaults.Init = WWGetPrivateProfileInt("SerialDefaults", "Init", 0, buffer);
-	SerialDefaults.Compression = WWGetPrivateProfileInt ("SerialDefaults", "Compression", 0, buffer);
-	SerialDefaults.ErrorCorrection = WWGetPrivateProfileInt ("SerialDefaults", "ErrorCorrection", 0, buffer);
-	SerialDefaults.HardwareFlowControl = WWGetPrivateProfileInt ("SerialDefaults", "HardwareFlowControl", 1, buffer);
-	WWGetPrivateProfileString ("SerialDefaults", "DialMethod", "T",
-		buf, 2, buffer);
-
-
-	// find dial method
-
-	for (i = 0; i < DIAL_METHODS; i++) {
-		if ( !strcmpi( buf, DialMethodCheck[ i ]) ) {
-			SerialDefaults.DialMethod = (DialMethodType)i;
-			break;
-		}
-	}
-
-	// if method not found set to touch tone
-
-	if (i == DIAL_METHODS) {
-		SerialDefaults.DialMethod = DIAL_TOUCH_TONE;
-	}
-
-	SerialDefaults.InitStringIndex =
-											WWGetPrivateProfileInt("SerialDefaults",
-												"InitStringIndex", 0, buffer);
-
-	SerialDefaults.CallWaitStringIndex =
-											WWGetPrivateProfileInt("SerialDefaults",
-												"CallWaitStringIndex", CALL_WAIT_CUSTOM,
-												buffer);
-
-	WWGetPrivateProfileString ("SerialDefaults", "CallWaitString", "",
-		SerialDefaults.CallWaitString, CWAITSTRBUF_MAX, buffer);
-
-	if (SerialDefaults.IRQ == 0 ||
-		SerialDefaults.Baud == 0) {
-
-		SerialDefaults.Port = 0;
-		SerialDefaults.IRQ = -1;
-		SerialDefaults.Baud = -1;
-	}
-
-	/*------------------------------------------------------------------------
-	Set 'tbuffer' to point past the actual INI data
-	------------------------------------------------------------------------*/
-	len = strlen(buffer) + 2;
-	tbuffer = buffer + len;
-
-	/*------------------------------------------------------------------------
-	Read all Base-Scenario names into 'tbuffer'
-	------------------------------------------------------------------------*/
-	WWGetPrivateProfileString("InitStrings", NULL, NULL, tbuffer,
-		ShapeBufferSize-len, buffer);
-
-	/*------------------------------------------------------------------------
-	Read in & store each entry
-	------------------------------------------------------------------------*/
-	while (*tbuffer != '\0') {
-		entry = new char[ INITSTRBUF_MAX ];
-
-		entry[0] = 0;
-
-		WWGetPrivateProfileString("InitStrings", tbuffer, NULL, entry,
-			INITSTRBUF_MAX, buffer);
-
-		strupr( entry );
-
-		InitStrings.Add( entry );
-
-		tbuffer += strlen(tbuffer) + 1;
-	}
-
-	// if no entries then have at least one
-
-	if ( tbuffer == (buffer + len) ) {
-		entry = new char[ INITSTRBUF_MAX ];
-		strcpy( entry, "ATZ" );
-		InitStrings.Add( entry );
-		SerialDefaults.InitStringIndex = 0;
-	} else {
-		len = strlen(buffer) + 2;
-	}
-
-	/*------------------------------------------------------------------------
-	Repeat the process for the phonebook
-	------------------------------------------------------------------------*/
-	tbuffer = buffer + len;
-
-	/*------------------------------------------------------------------------
-	Read in all phone book listings.
-	Format: Name=PhoneNum,Port,IRQ,Baud,InitString
-	------------------------------------------------------------------------*/
-
-	/*........................................................................
-	Read the entry names in
-	........................................................................*/
-	WWGetPrivateProfileString("PhoneBook", NULL, NULL, tbuffer,
-		ShapeBufferSize-len, buffer);
-
-	while (*tbuffer != '\0') {
-		/*.....................................................................
-		Create a new phone book entry
-		.....................................................................*/
-		phone = new PhoneEntryClass();
-
-		/*.....................................................................
-		Read the entire entry in
-		.....................................................................*/
-		WWGetPrivateProfileString("PhoneBook", tbuffer, NULL, buf, 128, buffer);
-
-		/*.....................................................................
-		Extract name, phone # & serial port settings
-		.....................................................................*/
-		tokenptr = strtok( buf, "|" );
-		if (tokenptr) {
-			strcpy( phone->Name, tokenptr );
-			strupr( phone->Name );
-		} else {
-			phone->Name[0] = 0;
-		}
-
-		tokenptr = strtok( NULL, "|" );
-		if (tokenptr) {
-			strcpy( phone->Number, tokenptr );
-			strupr( phone->Number );
-		} else {
-			phone->Number[0] = 0;
-		}
-
-		tokenptr = strtok( NULL, "|" );
-		if (tokenptr) {
-			sscanf( tokenptr, "%x", &phone->Settings.Port );
-		} else {
-			phone->Settings.Port = 0;
-		}
-
-		tokenptr = strtok( NULL, "|" );
-		if (tokenptr) {
-			phone->Settings.IRQ = atoi( tokenptr );
-		} else {
-			phone->Settings.IRQ = -1;
-		}
-
-		tokenptr = strtok( NULL, "|" );
-		if (tokenptr) {
-			phone->Settings.Baud = atoi( tokenptr );
-		} else {
-			phone->Settings.Baud = -1;
-		}
-
-		tokenptr = strtok( NULL, "|" );
-		if (tokenptr) {
-			phone->Settings.Compression = atoi( tokenptr );
-		} else {
-			phone->Settings.Compression = 0;
-		}
-
-		tokenptr = strtok( NULL, "|" );
-		if (tokenptr) {
-			phone->Settings.ErrorCorrection = atoi( tokenptr );
-		} else {
-			phone->Settings.ErrorCorrection = 0;
-		}
-
-		tokenptr = strtok( NULL, "|" );
-		if (tokenptr) {
-			phone->Settings.HardwareFlowControl = atoi( tokenptr );
-		} else {
-			phone->Settings.HardwareFlowControl = 1;
-		}
-
-
-		tokenptr = strtok( NULL, "|" );
-		if (tokenptr) {
-			strcpy( buf, tokenptr );
-
-			// find dial method
-
-			for (i = 0; i < DIAL_METHODS; i++) {
-				if ( !strcmpi( buf, DialMethodCheck[ i ]) ) {
-					phone->Settings.DialMethod = (DialMethodType)i;
-					break;
-				}
-			}
-
-			// if method not found set to touch tone
-
-			if (i == DIAL_METHODS) {
-				phone->Settings.DialMethod = DIAL_TOUCH_TONE;
-			}
-		} else {
-			phone->Settings.DialMethod = DIAL_TOUCH_TONE;
-		}
-
-		tokenptr = strtok( NULL, "|" );
-		if (tokenptr) {
-			phone->Settings.InitStringIndex = atoi( tokenptr );
-		} else {
-			phone->Settings.InitStringIndex = 0;
-		}
-
-		tokenptr = strtok( NULL, "|" );
-		if (tokenptr) {
-			phone->Settings.CallWaitStringIndex = atoi( tokenptr );
-		} else {
-			phone->Settings.CallWaitStringIndex = CALL_WAIT_CUSTOM;
-		}
-
-		tokenptr = strtok( NULL, "|" );
-		if (tokenptr) {
-			strcpy (phone->Settings.CallWaitString, tokenptr);
-		} else {
-			phone->Settings.CallWaitString[0] = 0;
-		}
-
-		/*.....................................................................
-		Add it to our list
-		.....................................................................*/
-		PhoneBook.Add(phone);
-
-		tbuffer += strlen(tbuffer) + 1;
-	}
 
 	/*------------------------------------------------------------------------
 	Read special recording playback values, to help find sync bugs
@@ -832,9 +574,6 @@ void Write_MultiPlayer_Settings (void)
 {
 	char * buffer;			// INI staging buffer pointer.
 	CCFileClass file;
-	int i;
-	char entrytext[12];
-	char buf[128];							// buffer for parsing INI entry
 
 	/*------------------------------------------------------------------------
 	Get a working pointer to the INI staging buffer. Make sure that the buffer
@@ -853,75 +592,9 @@ void Write_MultiPlayer_Settings (void)
 	/*------------------------------------------------------------------------
 	Save the player's last-used Handle & Color
 	------------------------------------------------------------------------*/
-	WWWritePrivateProfileInt("MultiPlayer", "PhoneIndex", CurPhoneIdx, buffer);
-	WWWritePrivateProfileInt ("MultiPlayer", "Color", MPlayerPrefColor, buffer);
-	WWWritePrivateProfileInt ("MultiPlayer", "Side", MPlayerHouse, buffer);
-	WWWritePrivateProfileString("MultiPlayer", "Handle", MPlayerName, buffer);
-
-	/*------------------------------------------------------------------------
-	Clear all existing SerialDefault entries.
-	------------------------------------------------------------------------*/
-	WWWritePrivateProfileString ("SerialDefaults", NULL, NULL, buffer);
-
-	/*------------------------------------------------------------------------
-	Save default serial settings in opposite order you want to see them
-	------------------------------------------------------------------------*/
-	WWWritePrivateProfileString("SerialDefaults", "CallWaitString",
-		SerialDefaults.CallWaitString, buffer);
-	WWWritePrivateProfileInt ("SerialDefaults", "CallWaitStringIndex", SerialDefaults.CallWaitStringIndex, buffer);
-	WWWritePrivateProfileInt ("SerialDefaults", "InitStringIndex", SerialDefaults.InitStringIndex, buffer);
-	WWWritePrivateProfileInt ("SerialDefaults", "Init", SerialDefaults.Init, buffer);
-	WWWritePrivateProfileString("SerialDefaults", "DialMethod",
-		DialMethodCheck[ SerialDefaults.DialMethod ], buffer);
-	WWWritePrivateProfileInt ("SerialDefaults", "Baud", SerialDefaults.Baud, buffer);
-	WWWritePrivateProfileInt ("SerialDefaults", "IRQ", SerialDefaults.IRQ, buffer);
-	sprintf(buf, "%x", SerialDefaults.Port);
-	WWWritePrivateProfileString("SerialDefaults", "Port", buf, buffer);
-	WWWritePrivateProfileString("SerialDefaults", "ModemName", SerialDefaults.ModemName, buffer);
-	WWWritePrivateProfileInt ("SerialDefaults", "Compression", SerialDefaults.Compression , buffer);
-	WWWritePrivateProfileInt ("SerialDefaults", "ErrorCorrection", SerialDefaults.ErrorCorrection, buffer);
-	WWWritePrivateProfileInt ("SerialDefaults", "HardwareFlowControl", SerialDefaults.HardwareFlowControl, buffer);
-
-	/*------------------------------------------------------------------------
-	Clear all existing InitString entries.
-	------------------------------------------------------------------------*/
-	WWWritePrivateProfileString ("InitStrings", NULL, NULL, buffer);
-
-	/*------------------------------------------------------------------------
-	Save all InitString entries.  In descending order so they come out in
-	ascending order.
-	------------------------------------------------------------------------*/
-	for (i = (InitStrings.Count() - 1); i >= 0; i--) {
-		sprintf( buf, "%03d", i);
-		WWWritePrivateProfileString ("InitStrings", buf, InitStrings[i], buffer);
-	}
-
-	/*------------------------------------------------------------------------
-	Clear all existing Phone Book entries.
-	------------------------------------------------------------------------*/
-	WWWritePrivateProfileString ("PhoneBook", NULL, NULL, buffer);
-
-	/*------------------------------------------------------------------------
-	Save all Phone Book entries.
-	Format: Entry=Name,PhoneNum,Port,IRQ,Baud,InitString
-	------------------------------------------------------------------------*/
-	for (i = (PhoneBook.Count() - 1); i >= 0; i--) {
-		sprintf(buf,"%s|%s|%x|%d|%d|%d|%d|%d|%s|%d|%d|%s",
-			PhoneBook[i]->Name,
-			PhoneBook[i]->Number,
-			PhoneBook[i]->Settings.Port,
-			PhoneBook[i]->Settings.IRQ,
-			PhoneBook[i]->Settings.Baud,
-			PhoneBook[i]->Settings.Compression,
-			PhoneBook[i]->Settings.ErrorCorrection,
-			PhoneBook[i]->Settings.HardwareFlowControl,
-			DialMethodCheck[ PhoneBook[i]->Settings.DialMethod ],
-			PhoneBook[i]->Settings.InitStringIndex,
-			PhoneBook[i]->Settings.CallWaitStringIndex,
-			PhoneBook[i]->Settings.CallWaitString);
-		snprintf(entrytext, sizeof(entrytext), "%03d", i);
-		WWWritePrivateProfileString ("PhoneBook", entrytext, buf, buffer);
-	}
+	WWWritePrivateProfileInt ("MultiPlayer", "Color", MultiplayerPreferredColor, buffer);
+	WWWritePrivateProfileInt ("MultiPlayer", "Side", MultiplayerHouse, buffer);
+	WWWritePrivateProfileString("MultiPlayer", "Handle", MultiplayerName, buffer);
 
 	/*------------------------------------------------------------------------
 	Write the INI data out to a file.
@@ -957,21 +630,21 @@ void Read_Scenario_Descriptions (void)
 	/*------------------------------------------------------------------------
 	Clear the scenario description lists
 	------------------------------------------------------------------------*/
-	MPlayerScenarios.Clear();
-	MPlayerFilenum.Clear();
+	MultiplayerScenarios.Clear();
+	MultiplayerFileNum.Clear();
 
 	/*------------------------------------------------------------------------
 	Loop through all possible scenario numbers; if a file is available, add
 	its number to the FileNum list.
 	------------------------------------------------------------------------*/
 	for (i = 0; i < 100; i++) {
-		Set_Scenario_Name(ScenarioName, i, SCEN_PLAYER_MPLAYER,
+		Set_Scenario_Name(ScenarioName, i, SCEN_PLAYER_MULTIPLAYER,
 			SCEN_DIR_EAST, SCEN_VAR_A);
 		snprintf(fname, sizeof(fname), "%s.INI", ScenarioName);
 		file.Set_Name (fname);
 
 		if (file.Is_Available()) {
-			MPlayerFilenum.Add(i);
+			MultiplayerFileNum.Add(i);
 		}
 	}
 
@@ -979,7 +652,7 @@ void Read_Scenario_Descriptions (void)
 	Now, for every file in the FileNum list, read in the INI file, and extract
 	its description.
 	------------------------------------------------------------------------*/
-	for (i = 0; i < MPlayerFilenum.Count(); i++) {
+	for (i = 0; i < MultiplayerFileNum.Count(); i++) {
 		/*.....................................................................
 		Fetch working pointer to the INI staging buffer. Make sure that the
 		buffer is cleared out before proceeding.
@@ -990,7 +663,7 @@ void Read_Scenario_Descriptions (void)
 		/*.....................................................................
 		Create filename and read the file.
 		.....................................................................*/
-		Set_Scenario_Name(ScenarioName, MPlayerFilenum[i], SCEN_PLAYER_MPLAYER,
+		Set_Scenario_Name(ScenarioName, MultiplayerFileNum[i], SCEN_PLAYER_MULTIPLAYER,
 			SCEN_DIR_EAST, SCEN_VAR_A);
 		snprintf(fname, sizeof(fname), "%s.INI", ScenarioName);
 		file.Set_Name (fname);
@@ -1001,8 +674,8 @@ void Read_Scenario_Descriptions (void)
 		Extract description & add it to the list.
 		.....................................................................*/
 		WWGetPrivateProfileString("Basic", "Name", "Nulls-Ville",
-			MPlayerDescriptions[i], 40, buffer);
-		MPlayerScenarios.Add(MPlayerDescriptions[i]);
+			MultiplayerDescriptions[i], 40, buffer);
+		MultiplayerScenarios.Add(MultiplayerDescriptions[i]);
 	}
 }
 
@@ -1024,29 +697,11 @@ void Read_Scenario_Descriptions (void)
  *=============================================================================================*/
 void Free_Scenario_Descriptions(void)
 {
-	int i;
-
 	/*------------------------------------------------------------------------
 	Clear the scenario descriptions & filenames
 	------------------------------------------------------------------------*/
-	MPlayerScenarios.Clear();
-	MPlayerFilenum.Clear();
-
-	/*------------------------------------------------------------------------
-	Clear the initstring entries
-	------------------------------------------------------------------------*/
-	for (i = 0; i < InitStrings.Count(); i++) {
-		delete InitStrings[i];
-	}
-	InitStrings.Clear();
-
-	/*------------------------------------------------------------------------
-	Clear the dialing entries
-	------------------------------------------------------------------------*/
-	for (i = 0; i < PhoneBook.Count(); i++) {
-		delete PhoneBook[i];
-	}
-	PhoneBook.Clear();
+	MultiplayerScenarios.Clear();
+	MultiplayerFileNum.Clear();
 }
 
 
@@ -1075,7 +730,7 @@ void Computer_Message(void)
 	/*------------------------------------------------------------------------
 	Find the computer house that the message will be from
 	------------------------------------------------------------------------*/
-	for (house = HOUSE_MULTI1; house < (HOUSE_MULTI1 + MPlayerMax); house++) {
+	for (house = HOUSE_MULTI1; house < (HOUSE_MULTI1 + MultiplayerMaxPlayers); house++) {
 		ptr = HouseClass::As_Pointer(house);
 
 		if (!ptr || ptr->IsHuman || ptr->IsDefeated) {
@@ -1085,7 +740,7 @@ void Computer_Message(void)
 		/*.....................................................................
 		Decode this house's color
 		.....................................................................*/
-		color = MPlayerTColors[ptr->RemapColor];
+		color = MultiplayerTColors[ptr->RemapColor];
 
 		/*.....................................................................
 		We now have a 1/4 chance of echoing one of the human players' messages

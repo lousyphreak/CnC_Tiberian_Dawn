@@ -297,7 +297,6 @@ int32_t Desired_Facing256(int32_t x1, int32_t y1, int32_t x2, int32_t y2);
 #include "UDPMGR.H"
 #include	"COMBUF.H"
 #include	"CONNECT.H"
-#include "CCDDE.H"
 #include	"CONNMGR.H"
 #include	"NOSEQCON.H"
 #include "MSGLIST.H"
@@ -556,7 +555,7 @@ int Main_Menu(uint32_t timeout);
 /*
 ** MPLAYER.CPP
 */
-GameType Select_MPlayer_Game (void);
+GameType Select_Multiplayer_Game (void);
 void Read_MultiPlayer_Settings (void);
 void Write_MultiPlayer_Settings (void);
 ConnManClass *Current_Network_Manager(void);
@@ -575,19 +574,6 @@ void Destroy_Connection(int id, int error);
 bool Process_Global_Packet(GlobalPacketType *packet, UDPAddressClass *address);
 uint32_t Compute_Name_CRC(char *name);
 void Net_Reconnect_Dialog(int reconn, int fresh, int oldest_index, uint32_t timeval);
-
-/*
-** NULLDLG.CPP
-*/
-int Init_Null_Modem( SerialSettingsType *settings );
-void Shutdown_Modem( void );
-void Modem_Signoff( void );
-int Test_Null_Modem( void );
-int Reconnect_Modem( void );
-void Destroy_Null_Connection(int id, int error);
-GameType Select_Serial_Dialog( void );
-int Com_Scenario_Dialog(void);
-int Com_Show_Scenario_Dialog(void);
 
 void Smart_Printf( char const *format, ... );
 void Hex_Dump_Data( char *buffer, int length );
@@ -796,9 +782,9 @@ template<class T> inline T Sim_Random_Pick(T a, T b)
 /*
 ** These routines are for coding & decoding multiplayer ID's
 */
-inline PlayerColorType MPlayerID_To_ColorIndex(unsigned short id) {return (PlayerColorType)(id >> 4);}
-inline HousesType MPlayerID_To_HousesType(unsigned short id) {return ((HousesType)(id & 0x000f)); }
-inline unsigned short Build_MPlayerID(int c_idx, HousesType htype) { return ((c_idx << 4) | htype); }
+inline PlayerColorType MultiplayerID_To_ColorIndex(unsigned short id) {return (PlayerColorType)(id >> 4);}
+inline HousesType MultiplayerID_To_HousesType(unsigned short id) {return ((HousesType)(id & 0x000f)); }
+inline unsigned short Build_MultiplayerID(int c_idx, HousesType htype) { return ((c_idx << 4) | htype); }
 
 
 

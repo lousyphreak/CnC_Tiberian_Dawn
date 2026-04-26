@@ -128,9 +128,9 @@ typedef enum RetcodeEnum {
 	RC_PLAYER_READY,				// a new player has been heard from
 	RC_SCENARIO_MISMATCH,		// scenario mismatch
 	RC_DOLIST_FULL,				// DoList is full
-	RC_SERIAL_PROCESSED,			// modem: SERIAL packet was processed
-	RC_PLAYER_LEFT,				// modem: other player left the game
-	RC_HUNG_UP,						// modem has hung up
+	RC_SERIAL_PROCESSED,			// serial packet was processed
+	RC_PLAYER_LEFT,				// other player left the game
+	RC_HUNG_UP,						// serial link has hung up
 	RC_NOT_RESPONDING,			// other player not responding (timeout/hung up)
 	RC_CANCEL,						// user cancelled
 } RetcodeType;
@@ -491,13 +491,13 @@ static void Queue_AI_Normal(void)
  * NumPlayers.  This ensures all commands get executed, even if 				*
  * there isn't a human generating those commands.									*
  *                                                                         *
- * The modem works a little differently from the network in this respect:	*
+ * The serial-link path works a little differently from the network:		*
  * - The connection has to stay "alive" even if the other player exits to 	*
  *   the join dialog.  This prevents each system from timing out & hanging *
- *   the modem up.  Thus, packets are sent back & forth & just thrown away,*
+ *   the serial link up. Thus, packets are sent back & forth & thrown away,*
  *   but each system knows the other is still there.  Messages may be sent	*
  *   between systems, though. 															*
- * - Destroy_Null_Connection doesn't hang up the modem, so 						*
+ * - Destroy_Null_Connection doesn't hang up the serial link, so 			*
  *   Num_Connections() still reports a value of 1 even though the other 	*
  *   player has left.																		*
  * - Any waits on Num_Connections() must also check for 							*
@@ -664,7 +664,7 @@ static void Queue_AI_Multiplayer(void)
 			//
 			// The game "host" will transmit timing adjustment events.
 			//
-			if (MPlayerLocalID == MPlayerID[0]) {
+			if (MultiplayerLocalID == MultiplayerID[0]) {
 				Generate_Real_Timing_Event(net, my_sent);
 			}
 		} else {
@@ -700,7 +700,7 @@ static void Queue_AI_Multiplayer(void)
 	// Send our data packet(s); update my command-sent counter
 	//------------------------------------------------------------------------
 	my_sent += Send_Packets(net, multi_packet_buf, multi_packet_max,
-		MPlayerMaxAhead, my_sent);
+		MultiplayerMaxAhead, my_sent);
 
 	//------------------------------------------------------------------------
 	//	If this is our first time through, we're done.
@@ -716,7 +716,7 @@ static void Queue_AI_Multiplayer(void)
 	//	Frame-sync'ing: wait until it's OK to advance to the next frame.
 	//------------------------------------------------------------------------
 	rc = Wait_For_Players (0, net,
-		(MPlayerMaxAhead << 3),
+		(MultiplayerMaxAhead << 3),
 		MAX ( net->Response_Time() * 3, FRAMESYNC_DLG_TIME*timeout_factor ),
 		FRAMESYNC_TIMEOUT * (timeout_factor*2),
 		multi_packet_buf, my_sent, their_frame,
@@ -746,7 +746,7 @@ static void Queue_AI_Multiplayer(void)
 	//------------------------------------------------------------------------
 	// Execute the DoList; if an error occurs, bail out.
 	//------------------------------------------------------------------------
-	if (!Execute_DoList(MPlayerMax, HOUSE_MULTI1, net, NULL,
+	if (!Execute_DoList(MultiplayerMaxPlayers, HOUSE_MULTI1, net, NULL,
 		their_frame, their_sent, their_recv)) {
 		Stop_Game();
 		return;
@@ -884,14 +884,14 @@ static RetcodeType Wait_For_Players(int first_time, ConnManClass *net,
 				return (RC_NOT_RESPONDING);
 			}
 			//..................................................................
-			// Otherwise, we're in the middle of a game; so, the modem &
+			// Otherwise, we're in the middle of a game; so, network/serial flow
 			// network must deal with a timeout differently.
 			//..................................................................
 			else {
 				Update_Queue_Mono (net, 4);
 
 				if (Handle_Timeout(net, their_frame, their_sent, their_recv)) {
-					Map.Flag_To_Redraw(true);	// erase modem reconnect dialog
+					Map.Flag_To_Redraw(true);	// erase reconnect dialog
 					Map.Render();
 					retry_timer.Set (resend_delta, true);
 					dialog_timer.Set (dialog_time, true);
@@ -909,7 +909,7 @@ static RetcodeType Wait_For_Players(int first_time, ConnManClass *net,
 		// FRAMESYNC, but I didn't get his; he'll be at the next frame, and
 		// may be sending commands.
 		// We have to limit the number of incoming messages we handle; it's
-		// possible to go into an infinite loop processing modem messages.
+		// possible to go into an infinite loop processing serial-link messages.
 		//---------------------------------------------------------------------
 		messages_this_loop = 0;
 		while ( (messages_this_loop++ < 5) &&
@@ -949,7 +949,7 @@ static RetcodeType Wait_For_Players(int first_time, ConnManClass *net,
 		//---------------------------------------------------------------------
 		// Debug output
 		//---------------------------------------------------------------------
-		Print_Framesync_Values(Frame, MPlayerMaxAhead, net->Num_Connections(),
+		Print_Framesync_Values(Frame, MultiplayerMaxAhead, net->Num_Connections(),
 			their_recv, their_sent, my_sent);
 
 		//---------------------------------------------------------------------
@@ -967,7 +967,7 @@ static RetcodeType Wait_For_Players(int first_time, ConnManClass *net,
 		// their_frame, etc.
 		//.....................................................................
 		else {
-			if (Can_Advance(net, MPlayerMaxAhead, their_frame, their_sent,
+			if (Can_Advance(net, MultiplayerMaxAhead, their_frame, their_sent,
 				their_recv)) {
 				break;
 			}
@@ -1052,7 +1052,7 @@ static void Generate_Timing_Event(ConnManClass *net, int my_sent)
 		// If I'm the network "master", I'm also responsible for updating the
 		// MaxAhead value on all systems, so do that here too.
 		//.....................................................................
-		if (MPlayerLocalID == MPlayerID[0]) {
+		if (MultiplayerLocalID == MultiplayerID[0]) {
 			ev.Type = EventClass::RESPONSE_TIME;
 			//..................................................................
 			// For multi-frame compressed events, the MaxAhead must be an even
@@ -1118,7 +1118,7 @@ static void Generate_Real_Timing_Event(ConnManClass *net, int my_sent)
 	// Find the highest processing time we have stored
 	//
 	highest_ticks = 0;
-	for (i = 0; i < MPlayerCount; i++) {
+	for (i = 0; i < MultiplayerPlayerCount; i++) {
 		//
 		// If we haven't heard from all systems yet, bail out.
 		//
@@ -1301,7 +1301,7 @@ static int Process_Send_Period(ConnManClass *net)
  *                                                                         *
  * The 'cap' value is the max # of events we can send.  Ideally, it should	*
  * be based upon the bandwidth of our connection.  Currently, it's just		*
- * hardcoded to prevent the modem from having to resend "too much" data,	*
+ * hardcoded to prevent the serial-link path from resending too much data,	*
  * which is about 200 bytes per frame.													*
  *                                                                         *
  * INPUT:                                                                  *
@@ -1341,7 +1341,7 @@ static int Send_Packets(ConnManClass *net, char *multi_packet_buf,
 	//........................................................................
 	// If there are 2 or more packets queued, the entire packet we send must
 	// fit within a single ComQueue buffer, so limit # events to 5.
-	// (The Modem connection manager has a max buffer size of 200 bytes, which
+	// (The serial connection manager has a max buffer size of 200 bytes, which
 	// is large enough for 6 uncompressed events, which leaves room for 5
 	// events plus a FRAMEINFO.)
 	//........................................................................
@@ -1390,11 +1390,11 @@ static int Send_Packets(ConnManClass *net, char *multi_packet_buf,
 
 		//.....................................................................
 		//	If there are no commands this frame, we'll just be sending a FRAMEINFO
-		//	packet; no ack is required.  For the modem's sake, check
+		//	packet; no ack is required. For serial-link flow, check
 		// MPlayerCount; no ACK is needed if we're just sending to someone
 		// who's left the game.
 		//.....................................................................
-		if (cap == 0 || OutList.Count == 0 || MPlayerCount == 1) {
+		if (cap == 0 || OutList.Count == 0 || MultiplayerPlayerCount == 1) {
 			ack_req = 0;
 		}
 		else {
@@ -1460,24 +1460,24 @@ static void Send_FrameSync(ConnManClass *net, int cmd_count)
 	packet.Frame = 0;
 	packet.ID = 0;
 	packet.IsExecuted = 0;
-	packet.MPlayerID = 0;
+	packet.MultiplayerID = 0;
 	memset(&packet.Data, 0, sizeof(packet.Data));
 	packet.Type = EventClass::FRAMESYNC;
 	if (CommProtocol == COMM_PROTOCOL_MULTI_E_COMP) {
-		packet.Frame = ((Frame + MPlayerMaxAhead + (FrameSendRate - 1)) /
+		packet.Frame = ((Frame + MultiplayerMaxAhead + (FrameSendRate - 1)) /
 			 FrameSendRate) * FrameSendRate;
 	}
 	else {
-		packet.Frame = Frame + MPlayerMaxAhead;
+		packet.Frame = Frame + MultiplayerMaxAhead;
 	}
 	packet.ID = Houses.ID(PlayerPtr);
-	packet.MPlayerID = MPlayerLocalID;
+	packet.MultiplayerID = MultiplayerLocalID;
 	packet.Data.FrameInfo.CRC = ScenarioCRC;
 	packet.Data.FrameInfo.CommandCount = cmd_count;
-	packet.Data.FrameInfo.Delay = MPlayerMaxAhead;
+	packet.Data.FrameInfo.Delay = MultiplayerMaxAhead;
 
 	//------------------------------------------------------------------------
-	// Send the event.  For modem, this just sends to the other player;
+	// Send the event. For serial-link flow, this sends to the other player;
 	// for network, it sends to everyone we're connected to.
 	//------------------------------------------------------------------------
 	net->Send_Private_Message (&packet, (offsetof(EventClass, Data) +
@@ -1608,12 +1608,12 @@ static RetcodeType Process_Receive_Packet(ConnManClass *net,
 /***************************************************************************
  * Process_Serial_Packet -- Handles an incoming serial packet              *
  *                                                                         *
- * This routine is needed because the modem classes don't support a 			*
+ * This routine is needed because serial classes don't support a 				*
  * "global channel" like the network classes do, but that functionality is	*
- * still needed for modem communications.  Specifically, the modem dialogs	*
+ * still needed for serial communications. Specifically, serial dialogs		*
  * transmit their own special packets back & forth, and messages are sent	*
  * using a special packet type.  Thus, we have to call this routine when	*
- * we receive a modem packet, to allow it to process messages & dialog		*
+ * we receive a serial packet, to allow it to process messages & dialog		*
  * packets.																						*
  *                                                                         *
  * INPUT:                                                                  *
@@ -1627,8 +1627,8 @@ static RetcodeType Process_Receive_Packet(ConnManClass *net,
  * 								even if he's not in the game.							*
  *		RC_PLAYER_LEFT:		other player has left the game						*
  *		RC_HUNG_UP:				we're getting our own packets back; thus, the 	*
- * 								modem is mirroring our packets, which means the *
- * 								modem hung up!												*
+ * 								serial link is mirroring packets, which means it *
+ * 								has hung up!												*
  *                                                                         *
  * WARNINGS:                                                               *
  *		none.																						*
@@ -1672,7 +1672,7 @@ static RetcodeType Process_Receive_Packet(ConnManClass *net,
 		}
 	}
 	if (player_gone) {
-		Destroy_Null_Connection(serial_packet->Color, 0);
+		Destroy_Connection(serial_packet->Color, 0);
 		return (RC_PLAYER_LEFT);
 	}
 
@@ -1687,7 +1687,7 @@ static RetcodeType Process_Receive_Packet(ConnManClass *net,
 		crc = *((unsigned short*)(serial_packet->Message + COMPAT_MESSAGE_LENGTH-2));
 
 		Messages.Add_Message (txt,
-			MPlayerTColors[MPlayerID_To_ColorIndex(serial_packet->ID)],
+			MultiplayerTColors[MultiplayerID_To_ColorIndex(serial_packet->ID)],
 			TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_FULLSHADOW, 600, magic_number, crc);
 
 		//.....................................................................
@@ -1711,7 +1711,7 @@ static RetcodeType Process_Receive_Packet(ConnManClass *net,
 	//------------------------------------------------------------------------
 	if ( (serial_packet->Command >= SERIAL_CONNECT &&
 		serial_packet->Command < SERIAL_LAST_COMMAND) ||
-		MPlayerCount == 1) {
+		MultiplayerPlayerCount == 1) {
 		return (RC_SERIAL_PROCESSED);
 	}
 
@@ -1771,10 +1771,10 @@ static int Can_Advance(ConnManClass *net, int max_ahead, int32_t *their_frame,
 	int i;
 
 	//------------------------------------------------------------------------
-	// Special case for modem: if the other player has left, go ahead and
+	// Special case for serial-link play: if the other player left, go ahead and
 	// advance to the next frame; don't wait on him.
 	//------------------------------------------------------------------------
-	if (MPlayerCount == 1) {
+	if (MultiplayerPlayerCount == 1) {
 		return (1);
 	}
 	//------------------------------------------------------------------------
@@ -1892,10 +1892,10 @@ static int Process_Reconnect_Dialog(CountDownTimerClass *timeout_timer,
  * Handle_Timeout -- handles a timeout in the wait-for-players loop			*
  *                                                                         *
  * This routine "gracefully" handles a timeout in the frame-sync loop.		*
- * The timeout must be handled differently by a modem game or network 		*
+ * The timeout must be handled differently by serial-link or network play	*
  * game.																							*
  *                                                                         *
- * The modem game must detect if the other player is still connected			*
+ * The serial-link path must detect if the other player is still connected	*
  * physically, even if he's not playing the game any more; if so, this		*
  * routine returns an OK status.  If the other player isn't even 				*
  * physically connected, an error is returned.										*
@@ -1944,7 +1944,7 @@ static int Handle_Timeout(ConnManClass *net, int32_t *their_frame,
 		/*
 		** Send the game statistics packet now if the game is effectivly over
 		*/
-		if (MPlayerCount == 2 &&
+		if (MultiplayerPlayerCount == 2 &&
 				Is_Online_Game(GameToPlay) &&
 				!GameStatisticsPacketSent){
 			Register_Game_End_Time();
@@ -2063,7 +2063,7 @@ static int Build_Send_Packet(void *buf, int bufsize, int frame_delay,
 	// Fill in the rest of the event
 	//........................................................................
 	finfo->ID = Houses.ID(PlayerPtr);
-	finfo->MPlayerID = MPlayerLocalID;
+	finfo->MultiplayerID = MultiplayerLocalID;
 	finfo->Data.FrameInfo.CRC = GameCRC;
 	finfo->Data.FrameInfo.CommandCount = num_cmds;
 	finfo->Data.FrameInfo.Delay = frame_delay;
@@ -2165,7 +2165,7 @@ static int Add_Uncompressed_Events(void *buf, int bufsize, int frame_delay,
 		// Set the event's ID
 		//.....................................................................
 		OutList.First().ID = Houses.ID(PlayerPtr);
-		OutList.First().MPlayerID = MPlayerLocalID;
+		OutList.First().MultiplayerID = MultiplayerLocalID;
 
 		//.....................................................................
 		// Transfer the event in OutList to DoList, un-queue the OutList
@@ -2232,7 +2232,7 @@ static int Add_Compressed_Events(void *buf, int bufsize, int frame_delay,
 	prevevent.Frame = 0;
 	prevevent.ID = 0;
 	prevevent.IsExecuted = 0;
-	prevevent.MPlayerID = 0;
+	prevevent.MultiplayerID = 0;
 	memset(&prevevent.Data, 0, sizeof(prevevent.Data));
 
 	//------------------------------------------------------------------------
@@ -2356,7 +2356,7 @@ static int Add_Compressed_Events(void *buf, int bufsize, int frame_delay,
 		// Set the event's ID
 		//.....................................................................
 		OutList.First().ID = Houses.ID(PlayerPtr);
-		OutList.First().MPlayerID = MPlayerLocalID;
+		OutList.First().MultiplayerID = MultiplayerLocalID;
 
 		//.....................................................................
 		// Transfer the event in OutList to DoList, un-queue the OutList event.
@@ -2587,7 +2587,7 @@ static int Extract_Compressed_Events(void *buf, int bufsize)
 	eventdata.Frame = 0;
 	eventdata.ID = 0;
 	eventdata.IsExecuted = 0;
-	eventdata.MPlayerID = 0;
+	eventdata.MultiplayerID = 0;
 	memset(&eventdata.Data, 0, sizeof(eventdata.Data));
 
 	//------------------------------------------------------------------------
@@ -2613,7 +2613,7 @@ static int Extract_Compressed_Events(void *buf, int bufsize)
 			if (event->Type == EventClass::FRAMEINFO) {
 				eventdata.Frame = event->Frame;
 				eventdata.ID = event->ID;
-				eventdata.MPlayerID = event->MPlayerID;
+				eventdata.MultiplayerID = event->MultiplayerID;
 
 				//...............................................................
 				// Adjust position past the common data
@@ -2825,12 +2825,12 @@ static int Execute_DoList(int , HousesType ,
 	//	systems; so, execute them in the order of the MPlayerID array.  This
 	//	array is stored in the same order on all systems.
 	//------------------------------------------------------------------------
-	for (i = 0; i < MPlayerCount; i++) {
+	for (i = 0; i < MultiplayerPlayerCount; i++) {
 
 		HousesType house;
 		HouseClass *housep;
 
-		house = MPlayerHouses [i];
+		house = MultiplayerHouses [i];
 		housep= HouseClass::As_Pointer (house);
 
 		//.....................................................................
@@ -2864,7 +2864,7 @@ static int Execute_DoList(int , HousesType ,
 			//	If this event was from the currently-executing player ID, and it's
 			//	time to execute it, execute it.
 			//..................................................................
-			if (DoList[j].MPlayerID == MPlayerID[i] && Frame >= DoList[j].Frame &&
+			if (DoList[j].MultiplayerID == MultiplayerID[i] && Frame >= DoList[j].Frame &&
 				!DoList[j].IsExecuted) {
 
 				//...............................................................
@@ -2892,9 +2892,9 @@ CCDebugString ("C&C95 -  Received EXIT packet\n");
 						/*
 						** Flag that this house lost because it quit. ST - 6/5/96 0:29AM
 						*/
-						for (wibble = 0; wibble < MPlayerCount; wibble++) {
-							if (MPlayerID[wibble] == DoList[j].MPlayerID) {
-								house = MPlayerHouses[wibble];
+						for (wibble = 0; wibble < MultiplayerPlayerCount; wibble++) {
+							if (MultiplayerID[wibble] == DoList[j].MultiplayerID) {
+								house = MultiplayerHouses[wibble];
 								housep = HouseClass::As_Pointer (house);
 								housep->IGaveUp = true;
 								break;
@@ -2904,7 +2904,7 @@ CCDebugString ("C&C95 -  Received EXIT packet\n");
 						/*
 						** Send the game statistics packet now since the game is effectivly over
 						*/
-						if (MPlayerCount == 2 &&
+						if (MultiplayerPlayerCount == 2 &&
 								Is_Online_Game(GameToPlay) &&
 								!GameStatisticsPacketSent){
 							Register_Game_End_Time();
@@ -2925,7 +2925,7 @@ CCDebugString ("C&C95 -  Received EXIT packet\n");
 					//............................................................
 					else if (DoList[j].Type==EventClass::EXIT) {
 						if ((Is_Network_Game(GameToPlay)) && net) {
-							index = net->Connection_Index (DoList[j].MPlayerID);
+							index = net->Connection_Index (DoList[j].MultiplayerID);
 							if (index != -1) {
 								for (k = index; k < net->Num_Connections() - 1; k++) {
 									their_frame[k] = their_frame[k+1];
@@ -2934,7 +2934,7 @@ CCDebugString ("C&C95 -  Received EXIT packet\n");
 								}
 								CCDebugString ("C&C95 = Destroying connection due to exit event\n");
 #ifndef DEMO
-								Destroy_Connection(DoList[j].MPlayerID,0);
+								Destroy_Connection(DoList[j].MultiplayerID,0);
 #endif	//DEMO
 							}
 						}
@@ -3214,7 +3214,7 @@ static void Queue_Playback(void)
 		base_house = PlayerPtr->Class->House;
 	}
 	else {
-		max_houses = MPlayerMax;
+		max_houses = MultiplayerMaxPlayers;
 		base_house = HOUSE_MULTI1;
 	}
 	if (!Execute_DoList(max_houses, base_house, NULL, NULL, NULL, NULL, NULL)) {
@@ -4129,17 +4129,17 @@ void Dump_Packet_Too_Late_Stuff(EventClass *event)
 	fprintf(fp,"Type:       %s\n",EventClass::EventNames[event->Type]);
 	fprintf(fp,"Frame:      %d\n",event->Frame);
 	fprintf(fp,"ID:         %d\n",event->ID);
-	fprintf(fp,"MPlayerID:  %04x\n",event->MPlayerID);
+	fprintf(fp,"MPlayerID:  %04x\n",event->MultiplayerID);
 
-	for (i = 0; i < MPlayerCount; i++) {
-		if (event->MPlayerID == MPlayerID[i]) {
-			fprintf(fp,"Player's Name: %s",MPlayerNames[i]);
+	for (i = 0; i < MultiplayerPlayerCount; i++) {
+		if (event->MultiplayerID == MultiplayerID[i]) {
+			fprintf(fp,"Player's Name: %s",MultiplayerNames[i]);
 		}
 	}
 
 	fprintf(fp,"----------- My data: ------------------\n");
 	fprintf(fp,"Frame:%d\n",Frame);
-	fprintf(fp,"MaxAhead:%u\n",MPlayerMaxAhead);
+	fprintf(fp,"MaxAhead:%u\n",MultiplayerMaxAhead);
 
 	fclose(fp);
 }

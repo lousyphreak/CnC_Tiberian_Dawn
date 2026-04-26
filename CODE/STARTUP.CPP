@@ -39,7 +39,6 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include	"FUNCTION.H"
-#include  "CCDDE.H"
 #include "ra_messagebox.h"
 
 #include <SDL3/SDL_filesystem.h>
@@ -309,7 +308,7 @@ int main(int argc, char *argv[])
 	/*
 	** If we are already running then switch to the existing process and exit
 	*/
-	if (CC95AlreadyRunning) {	//Set in the DDEServer constructor
+	if (CC95AlreadyRunning) {
 		//MessageBox (NULL, "Error - attempt to restart C&C95 when already running.", "Command & Conquer", MB_ICONEXCLAMATION|MB_OK);
 
 		return (EXIT_SUCCESS);
@@ -613,7 +612,7 @@ int main(int argc, char *argv[])
 
 			Free(buffer);
 
-			CCDebugString ("C&C95 - Skipping legacy WChat startup packet path.\n");
+			CCDebugString ("C&C95 - Skipping legacy startup packet path.\n");
 
 			/*
 			**	If the intro is being run for the first time, then don't

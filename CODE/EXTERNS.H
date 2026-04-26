@@ -225,62 +225,50 @@ extern int						AllowAttract;
 class GetCDClass;
 extern GetCDClass				CDList;
 
-/*
-** Modem globals
-*/
-#include "NULLMGR.H"
-extern bool 											ModemService;
-extern NullModemClass 								NullModem;
-extern DynamicVectorClass<PhoneEntryClass *>	PhoneBook;
-extern int												CurPhoneIdx;
-extern DynamicVectorClass <char *>				InitStrings;
-extern SerialSettingsType							SerialDefaults;
-extern ModemGameType									ModemGameToPlay;
+extern InternetRoleType								InternetGameRole;
 extern InternetTransportType					InternetTransport;
-extern char const *									DialMethodCheck[ DIAL_METHODS ];
-extern char const *									CallWaitStrings[ CALL_WAIT_STRINGS_NUM ];
 
 /*
-** Network/Modem globals
+** Multiplayer network globals
 */
 extern int										ScenarioIdx;
 extern int										ColorUsed[];
-extern char										MPlayerName[MPLAYER_NAME_MAX];
-extern int										MPlayerGColors[];
-extern int										MPlayerTColors[];
-extern char 									MPlayerDescriptions[100][40];
-extern DynamicVectorClass <char *>		MPlayerScenarios;
-extern DynamicVectorClass <int>			MPlayerFilenum;
-extern int										MPlayerMax;
-extern int 										MPlayerPrefColor;
-extern int 										MPlayerColorIdx;
-extern HousesType								MPlayerHouse;
-extern unsigned char							MPlayerLocalID;
-extern int										MPlayerCount;
-extern int										MPlayerBases;
-extern int										MPlayerCredits;
-extern int										MPlayerTiberium;
-extern int										MPlayerGoodies;
-extern int										MPlayerGhosts;
-extern int										MPlayerSolo;
-extern int										MPlayerUnitCount;
-extern int										MPlayerCountMin[2];
-extern int										MPlayerCountMax[2];
-extern uint32_t									MPlayerMaxAhead;
+extern char										MultiplayerName[MPLAYER_NAME_MAX];
+extern int										MultiplayerGColors[];
+extern int										MultiplayerTColors[];
+extern char 									MultiplayerDescriptions[100][40];
+extern DynamicVectorClass <char *>		MultiplayerScenarios;
+extern DynamicVectorClass <int>			MultiplayerFileNum;
+extern int										MultiplayerMaxPlayers;
+extern int 										MultiplayerPreferredColor;
+extern int 										MultiplayerColorIndex;
+extern HousesType								MultiplayerHouse;
+extern unsigned char							MultiplayerLocalID;
+extern int										MultiplayerPlayerCount;
+extern int										MultiplayerBasesEnabled;
+extern int										MultiplayerCredits;
+extern int										MultiplayerTiberiumEnabled;
+extern int										MultiplayerGoodiesEnabled;
+extern int										MultiplayerGhostsEnabled;
+extern int										MultiplayerSoloAllowed;
+extern int										MultiplayerUnitCount;
+extern int										MultiplayerCountMin[2];
+extern int										MultiplayerCountMax[2];
+extern uint32_t									MultiplayerMaxAhead;
 extern uint32_t									FrameSendRate;
-extern unsigned char							MPlayerID[MAX_PLAYERS];
-extern HousesType								MPlayerHouses[MAX_PLAYERS];
-extern char										MPlayerNames [MAX_PLAYERS][MPLAYER_NAME_MAX];
+extern unsigned char							MultiplayerID[MAX_PLAYERS];
+extern HousesType								MultiplayerHouses[MAX_PLAYERS];
+extern char										MultiplayerNames [MAX_PLAYERS][MPLAYER_NAME_MAX];
 extern MessageListClass						Messages;
 extern UDPAddressClass						MessageAddress;
 extern char										LastMessage[MAX_MESSAGE_LENGTH];
-extern int										MPlayerBlitz;
-extern int										MPlayerObiWan;
-extern MPlayerScoreType						MPlayerScore[MAX_MULTI_NAMES];
-extern int										MPlayerGamesPlayed;
-extern int										MPlayerNumScores;
-extern int										MPlayerWinner;
-extern int										MPlayerCurGame;
+extern int										MultiplayerBlitz;
+extern int										MultiplayerObiWan;
+extern MultiplayerScoreType				MultiplayerScore[MAX_MULTI_NAMES];
+extern int										MultiplayerGamesPlayed;
+extern int										MultiplayerNumScores;
+extern int										MultiplayerWinner;
+extern int										MultiplayerCurrentGame;
 
 extern int										TheirProcessTime[MAX_PLAYERS - 1];
 extern int										DesiredFrameRate;
@@ -318,7 +306,7 @@ extern bool 									NetMaster;
 extern bool 									NetStealth;
 extern bool 									NetProtect;
 extern bool 									NetOpen;
-extern char										MPlayerGameName[MPLAYER_NAME_MAX];
+extern char										MultiplayerGameName[MPLAYER_NAME_MAX];
 extern GlobalPacketType						GPacket;
 extern int										GPacketlen;
 extern UDPAddressClass						GAddress;

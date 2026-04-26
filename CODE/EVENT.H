@@ -116,7 +116,7 @@ class EventClass
 		** High nybble: the color index of this player.
 		** Low nybble: the HousesType this player is "acting like" (GDI/NOD)
 		*/
-		unsigned char MPlayerID;
+		unsigned char MultiplayerID;
 
 		/*
 		**	This union contains the specific data that the event requires.

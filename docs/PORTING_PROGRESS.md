@@ -4,6 +4,42 @@ _Last updated: 2026-04-26_
 
 ## Current checkpoint
 
+- Multiplayer naming cleanup pass (2026-04-26):
+	- completed in this checkpoint:
+		- performed a broad symbol rename sweep to remove legacy `MPlayer*` identifiers from active runtime globals and helper routines, replacing them with `Multiplayer*` names (examples: player identity, colors, score tracking, option fields, and ID helper conversions).
+		- updated key call sites in gameplay/network code (`INIT.CPP`, `NETDLG.CPP`, `INTERNET.CPP`, `HOUSE.CPP`, and related headers) to use renamed symbols consistently.
+		- fixed rename-collision regressions introduced during the sweep (notably malformed `Build_MultiplayerID(...)` arguments in `NETDLG.CPP`/`INTERNET.CPP`).
+		- refreshed several stale comments that still referenced removed WChat/modem paths in edited files.
+	- why this mattered:
+		- it reduces legacy naming debt and makes the active SDL3 multiplayer path clearer by separating preserved gameplay networking from removed historical backends.
+	- validation result:
+		- `cmake --build build --target tiberian-dawn --parallel 4` succeeds after the rename/cleanup pass.
+
+- Legacy networking cleanup pass removed WChat / NullModem / Modem code paths from the active TD port (2026-04-26):
+	- completed in this checkpoint:
+		- removed active legacy include dependencies (`CCDDE`) from runtime files and common headers.
+		- removed legacy null-modem modules from the tree:
+			- `CODE/NULLCONN.CPP`
+			- `CODE/NULLCONN.H`
+			- `CODE/NULLDLG.CPP`
+			- `CODE/NULLMGR.CPP`
+			- `CODE/NULLMGR.H`
+			- `CODE/NULLSTUB.CPP`
+		- removed legacy DDE/WChat modules from the tree:
+			- `CODE/CCDDE.CPP`
+			- `CODE/CCDDE.H`
+		- replaced old role/timing symbols with internet-specific names in active paths:
+			- `ModemGameToPlay` -> `InternetGameRole`
+			- `WChatMaxAhead` -> `InternetMaxAhead`
+			- `WChatSendRate` -> `InternetSendRate`
+		- rewrote `CODE/INTERNET.CPP` to keep only internet/TCP lobby functionality used by the SDL3 port and dropped legacy external-chat spawn/packet paths.
+		- simplified `Read_MultiPlayer_Settings(...)` / `Write_MultiPlayer_Settings(...)` in `CODE/MPLAYER.CPP` by removing serial phonebook/init-string persistence tied to removed modem systems.
+	- why this mattered:
+		- these legacy subsystems were no longer in the supported SDL3 multiplayer path, but they still leaked stale symbols/types/headers into active runtime code.
+		- removing them reduces maintenance noise and avoids accidental coupling to dead connection flows.
+	- validation result:
+		- `cmake --build build --target tiberian-dawn --parallel 4` succeeds after the removals.
+
 - Post-power unlock follow-up: force completion-time sidebar/buildability refresh (2026-04-26):
 	- completed in this checkpoint:
 		- kept construction-yard deploy fixes intact, then added a targeted post-completion refresh in `BuildingClass::Grand_Opening(...)` for player-owned structures.

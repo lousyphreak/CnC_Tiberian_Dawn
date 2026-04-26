@@ -335,7 +335,7 @@ void MapEditClass::Popup_Controls(void)
 	/*
 	----------------------------- House buttons ------------------------------
 	*/
-	if (ScenPlayer == SCEN_PLAYER_MPLAYER) {
+	if (ScenPlayer == SCEN_PLAYER_MULTIPLAYER) {
 		if (Verify_House(HOUSE_NEUTRAL, &CurrentObject[0]->Class_Of())) {
 			Add_A_Button(*NeutralButton);
 		}

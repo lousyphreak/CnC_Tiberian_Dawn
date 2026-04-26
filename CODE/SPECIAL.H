@@ -70,7 +70,6 @@ class SpecialClass
 			IsNamed = false;
 			IsFromInstall = false;
 			IsSeparate = false;
-			IsFromWChat = false;
 		}
 
 		/*
@@ -231,10 +230,6 @@ class SpecialClass
 		*/
 		unsigned IsScrollMod:1;
 
-		/*
-		** Flag that we were spawned from WChat.
-		*/
-		unsigned IsFromWChat:1;
 };
 
 

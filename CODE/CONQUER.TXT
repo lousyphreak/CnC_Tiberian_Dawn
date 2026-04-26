@@ -498,9 +498,9 @@ Delete this file?
 [EMPTY SLOT]
 # TXT_EMPTY_SLOT
 Select Multiplayer Game
-# TXT_SELECT_MPLAYER_GAME
-Modem/Serial
-# TXT_MODEM_SERIAL
+# TXT_SELECT_MULTIPLAYER_GAME
+Legacy Serial
+# TXT_LEGACY_SERIAL
 Network
 # TXT_NETWORK
 Unable to initialize network!
@@ -599,18 +599,18 @@ Waiting to Connect...
 # TXT_WAITING_CONNECT
 Connection error!\rCheck your cables.\rAttempting to Reconnect...
 # TXT_NULL_CONNERR_CHECK_CABLES
-Connection error!\rRedialing...
-# TXT_MODEM_CONNERR_REDIALING
-Connection error!\rWaiting for Call...
-# TXT_MODEM_CONNERR_WAITING
+Connection error!\rRetrying...
+# TXT_LEGACY_CONNERR_RETRYING
+Connection error!\rWaiting for Connection...
+# TXT_LEGACY_CONNERR_WAITING
 Select Serial Game
 # TXT_SELECT_SERIAL_GAME
-Dial Modem
-# TXT_DIAL_MODEM
-Answer Modem
-# TXT_ANSWER_MODEM
-Null Modem
-# TXT_NULL_MODEM
+Dial Direct
+# TXT_DIAL_DIRECT
+Answer Direct
+# TXT_ANSWER_DIRECT
+Direct Serial
+# TXT_DIRECT_SERIAL
 Settings
 # TXT_SETTINGS
 Port:
@@ -655,8 +655,8 @@ Name:
 # TXT_NAME_COLON
 Number:
 # TXT_NUMBER_COLON
-Unable to find modem.\rCheck power and cables.
-# TXT_UNABLE_FIND_MODEM
+Unable to find serial adapter.\rCheck power and cables.
+# TXT_UNABLE_FIND_SERIAL
 No carrier.
 # TXT_NO_CARRIER
 Line busy.
@@ -1219,8 +1219,8 @@ Disable building "bib" pieces.
 # TXT_ROAD_PIECES
 Allow running from immediate threats.
 # TXT_SCATTER
-Not a Null Modem Cable Attached!\rIt is a modem or loopback cable.
-# TXT_MODEM_OR_LOOPBACK
+Invalid direct cable attached!\rDetected a non-supported loopback cable.
+# TXT_LEGACY_LOOPBACK_CABLE
 Map
 # TXT_MAP
 From Computer:
@@ -1357,8 +1357,8 @@ Tiberium grows quickly.
 # TXT_TIBERIUM_FAST
 Answering...
 # TXT_ANSWERING
-Initializing Modem...
-# TXT_INITIALIZING_MODEM
+Initializing Connection...
+# TXT_INITIALIZING_CONNECTION
 Scenarios don't match.
 # TXT_SCENARIOS_DO_NOT_MATCH
 Power Output
