@@ -36,6 +36,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "FUNCTION.H"
+#include "SDLINPUT.H"
 
 #ifdef NEWMENU
 
@@ -258,6 +259,10 @@ bool Expansion_Dialog(void)
 			default:
 				break;
 		}
+
+		if (process) {
+			SDL_GameInput_Delay(1);
+		}
 	}
 
 	/*
@@ -440,6 +445,10 @@ bool Bonus_Dialog(void)
 
 			default:
 				break;
+		}
+
+		if (process) {
+			SDL_GameInput_Delay(1);
 		}
 	}
 

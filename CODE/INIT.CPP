@@ -1307,6 +1307,10 @@ bool Select_Game(bool fade)
 				default:
 					break;
 			}
+
+			if (process) {
+				SDL_GameInput_Delay(1);
+			}
 		}
 	} else {
 

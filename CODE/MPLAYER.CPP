@@ -45,6 +45,7 @@
 
 #include "FUNCTION.H"
 #include "TCPIP.H"
+#include "SDLINPUT.H"
 
 static void Garble_Message(char *buf);
 
@@ -167,6 +168,7 @@ static bool Choose_Internet_Game(InternetTransportType& transport)
 		}
 
 		if (!pressed) {
+			SDL_GameInput_Delay(1);
 			continue;
 		}
 
@@ -298,6 +300,7 @@ static bool Get_Internet_Host_Or_Join(bool& host_game)
 		}
 
 		if (!pressed) {
+			SDL_GameInput_Delay(1);
 			continue;
 		}
 
@@ -395,6 +398,8 @@ static bool Get_IP_Address(char* address_buffer, bool required)
 			default:
 				break;
 		}
+
+		SDL_GameInput_Delay(1);
 	}
 }
 
@@ -1030,6 +1035,10 @@ int Surrender_Dialog(void)
 
 			default:
 				break;
+		}
+
+		if (process) {
+			SDL_GameInput_Delay(1);
 		}
 	}
 

@@ -37,6 +37,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "FUNCTION.H"
+#include "SDLINPUT.H"
 
 /***************************************************************************
  * Main_Menu -- Menu processing                                            *
@@ -521,6 +522,10 @@ int Main_Menu(uint32_t timeout)
 
 			default:
 				break;
+		}
+
+		if (process) {
+			SDL_GameInput_Delay(1);
 		}
 	}
 	return(retval);

@@ -39,6 +39,7 @@
 
 #include	"FUNCTION.H"
 #include	"CONFDLG.H"
+#include "SDLINPUT.H"
 
 
 bool ConfirmationClass::Process(int text)
@@ -247,6 +248,10 @@ bool ConfirmationClass::Process(char const * string)
 			}
 
 			pressed = false;
+		}
+
+		if (process) {
+			SDL_GameInput_Delay(1);
 		}
 	}
 	return(result);

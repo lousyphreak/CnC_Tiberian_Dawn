@@ -38,6 +38,7 @@
 
 #include	"FUNCTION.H"
 #include	"SOUNDDLG.H"
+#include "SDLINPUT.H"
 
 class MusicListClass : public ListClass
 {
@@ -391,6 +392,10 @@ void SoundControlsClass::Process(void)
 
 			default:
 				break;
+		}
+
+		if (process) {
+			SDL_GameInput_Delay(1);
 		}
 	}
 

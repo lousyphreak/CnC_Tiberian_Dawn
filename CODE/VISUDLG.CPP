@@ -39,6 +39,7 @@
 
 #include	"FUNCTION.H"
 #include	"VISUDLG.H"
+#include "SDLINPUT.H"
 int VisualControlsClass::Init(void)
 {
 	int factor 			= (SeenBuff.Get_Width() == 320) ? 1 : 2;
@@ -423,6 +424,10 @@ void VisualControlsClass::Process(void)
 			}
 
 			pressed = false;
+		}
+
+		if (process) {
+			SDL_GameInput_Delay(1);
 		}
 	}
 }

@@ -47,6 +47,7 @@
 #include "TEXTBTN.H"
 #include "CONFDLG.H"
 #include "DESCDLG.H"
+#include "SDLINPUT.H"
 
 void GameOptionsClass::Adjust_Variables_For_Resolution(void)
 {
@@ -473,6 +474,10 @@ void GameOptionsClass::Process(void)
 			//buttonsel[curbutton-1]->Turn_Off();
 			buttonsel[curbutton-1]->Turn_On();
 			buttonsel[curbutton-1]->Flag_To_Redraw();
+		}
+
+		if (process) {
+			SDL_GameInput_Delay(1);
 		}
 	}
 

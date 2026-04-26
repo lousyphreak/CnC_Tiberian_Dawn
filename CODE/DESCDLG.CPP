@@ -39,6 +39,7 @@
 
 #include	"FUNCTION.H"
 #include	"DESCDLG.H"
+#include "SDLINPUT.H"
 
 
 /***********************************************************************************************
@@ -184,6 +185,10 @@ void DescriptionClass::Process(char *string)
 
 			default:
 				break;
+		}
+
+		if (process) {
+			SDL_GameInput_Delay(1);
 		}
 	}
 }

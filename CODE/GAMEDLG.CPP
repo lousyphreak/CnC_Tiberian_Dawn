@@ -40,6 +40,7 @@
 #include	"GAMEDLG.H"
 #include "SOUNDDLG.H"
 #include "VISUDLG.H"
+#include "SDLINPUT.H"
 
 
 /***********************************************************************************************
@@ -411,6 +412,10 @@ void GameControlsClass::Process(void)
 			}
 
 			pressed = false;
+		}
+
+		if (process) {
+			SDL_GameInput_Delay(1);
 		}
 	}
 }

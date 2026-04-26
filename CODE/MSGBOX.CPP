@@ -40,6 +40,7 @@
 #include	"FUNCTION.H"
 #include	"MSGBOX.H"
 #include "GADGET.H"
+#include "SDLINPUT.H"
 
 #ifdef JAPANESE
 CCMessageBox::CCMessageBox(int caption, bool pict) : Caption(caption), IsPicture(pict)
@@ -81,7 +82,7 @@ int CCMessageBox::Process(const char *msg, const char *b1txt, const char *b2txt,
 #define BUFFSIZE (511)
 //#define BUFFSIZE (255)
 	char buffer[BUFFSIZE];
-	bool retval;
+	int retval = 0;
 	bool process;								// loop while true
 	KeyNumType input;							// user input
 	int selection;
@@ -105,7 +106,7 @@ int CCMessageBox::Process(const char *msg, const char *b1txt, const char *b2txt,
 	**	characters for each.
 	*/
 	Fancy_Text_Print(TXT_NONE, 0, 0, TBLACK, TBLACK, TPF_6PT_GRAD|TPF_NOSHADOW);
-	int bwidth, bheight;				// button width and height
+	int bwidth = 0, bheight = 0;				// button width and height
 	int numbuttons = 0;
 	if (b1txt) {
 		/*
@@ -386,6 +387,10 @@ int CCMessageBox::Process(const char *msg, const char *b1txt, const char *b2txt,
 
 				pressed = false;
 			}
+
+			if (process) {
+				SDL_GameInput_Delay(1);
+			}
 		}
 
 	} else {
@@ -399,6 +404,7 @@ int CCMessageBox::Process(const char *msg, const char *b1txt, const char *b2txt,
 		timer.Set(TICKS_PER_SECOND*4);
 		while (timer.Time() > 0) {
 			Call_Back();
+			SDL_GameInput_Delay(1);
 		}
 		Keyboard::Clear();
 	}

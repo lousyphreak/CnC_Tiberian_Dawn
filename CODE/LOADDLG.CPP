@@ -43,6 +43,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "FUNCTION.H"
+#include "SDLINPUT.H"
 
 
 /***********************************************************************************************
@@ -158,16 +159,6 @@ int LoadOptionsClass::Process(void)
 		BUTTON_LIST,
 		BUTTON_EDIT,
 	};
-
-	/*
-	**	Redraw values: in order from "top" to "bottom" layer of the dialog
-	*/
-	typedef enum {
-		REDRAW_NONE = 0,
-		REDRAW_BUTTONS,
-		REDRAW_BACKGROUND,
-		REDRAW_ALL = REDRAW_BACKGROUND
-	} RedrawType;
 
 	/*
 	**	Dialog variables
@@ -498,6 +489,10 @@ int LoadOptionsClass::Process(void)
 
 			default:
 				break;
+		}
+
+		if (process) {
+			SDL_GameInput_Delay(1);
 		}
 	}
 

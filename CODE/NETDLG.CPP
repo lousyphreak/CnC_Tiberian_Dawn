@@ -108,6 +108,7 @@
 #include <time.h>
 #include "TCPIP.H"
 #include "WSMGR.H"
+#include "SDLINPUT.H"
 #define SHOW_MONO		0
 
 extern int InternetMaxAhead;
@@ -181,7 +182,7 @@ static uint32_t Current_Global_Response_Time(void)
 static void Drain_Global_Send_Queue(void)
 {
 	while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) {
-		SDL_Delay(1);
+		SDL_GameInput_Delay(1);
 	}
 }
 
@@ -189,7 +190,7 @@ static void Wait_For_Global_Acks(void)
 {
 	while (NetMgr.Global_Num_Send() > 0) {
 		NetMgr.Service();
-		SDL_Delay(1);
+		SDL_GameInput_Delay(1);
 	}
 }
 
@@ -1787,6 +1788,10 @@ static int Net_Join_Dialog(void)
 		so Call_Back() doesn't intercept global messages from me!
 		---------------------------------------------------------------------*/
 		Call_Back();
+
+		if (process) {
+			SDL_GameInput_Delay(1);
+		}
 	}
 
 	/*------------------------------------------------------------------------
@@ -1919,6 +1924,7 @@ static int Net_Join_Dialog(void)
 		starttime = TickCount.Time();
 		while (TickCount.Time() - starttime < wait_time) {
 			NetMgr.Service();
+			SDL_GameInput_Delay(1);
 		}
 	}
 
@@ -2059,7 +2065,7 @@ static int Request_To_Join (char *playername, int join_index, ListClass *playerl
 {
 	int i;
 
-	playerlist = playerlist;	// shaddup, Mr stupid compiler!
+	(void)playerlist;	// shaddup, Mr stupid compiler!
 
 	/*
 	--------------------------- Validate join_index --------------------------
@@ -3389,8 +3395,10 @@ static int Net_New_Dialog(void)
 				a chance to know about this new guy)
 				...............................................................*/
 				i = MAX(Current_Global_Response_Time() * 2, 60);
-				while (TickCount.Time() - ok_timer < i)
+				while (TickCount.Time() - ok_timer < i) {
 					NetMgr.Service();
+					SDL_GameInput_Delay(1);
+				}
 
 				/*...............................................................
 				If there are at least 2 players, go ahead & play; error otherwise
@@ -3663,6 +3671,10 @@ static int Net_New_Dialog(void)
 		so Call_Back() doesn't intercept global messages from me!
 		---------------------------------------------------------------------*/
 		Call_Back();
+
+		if (process) {
+			SDL_GameInput_Delay(1);
+		}
 
 	}	/* end of while */
 
@@ -4050,7 +4062,7 @@ void Net_Reconnect_Dialog(int reconn, int fresh, int oldest_index,
 			sprintf(buf1,Text_String(TXT_RECONNECTING_TO),
 				NetMgr.Connection_Name(id));
 		} else {
-			sprintf(buf1,Text_String(TXT_WAITING_FOR_CONNECTIONS));
+			strcpy(buf1, Text_String(TXT_WAITING_FOR_CONNECTIONS));
 		}
 		sprintf(buf2,Text_String(TXT_TIME_ALLOWED), timeval + 1);
 		buf3 = Text_String(TXT_PRESS_ESC);
@@ -4514,8 +4526,10 @@ CCDebugString ("C&C95 - Join timer expired\n");
 					a chance to know about this new guy)
 					...............................................................*/
 					i = MAX(Current_Global_Response_Time() * 2, 120);
-					while (TickCount.Time() - ok_timer < i)
+					while (TickCount.Time() - ok_timer < i) {
 						NetMgr.Service();
+						SDL_GameInput_Delay(1);
+					}
 
 					/*...............................................................
 					If there are at least 2 players, go ahead & play; error otherwise
@@ -4594,6 +4608,10 @@ CCDebugString ("C&C95 - Join timer expired\n");
 		so Call_Back() doesn't intercept global messages from me!
 		---------------------------------------------------------------------*/
 		Call_Back();
+
+		if (process) {
+			SDL_GameInput_Delay(1);
+		}
 
 	}	/* end of while */
 
@@ -5247,6 +5265,10 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 		so Call_Back() doesn't intercept global messages from me!
 		---------------------------------------------------------------------*/
 		Call_Back();
+
+		if (process) {
+			SDL_GameInput_Delay(1);
+		}
 	}
 
 	/*------------------------------------------------------------------------
@@ -5390,6 +5412,7 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 		starttime = TickCount.Time();
 		while (TickCount.Time() - starttime < wait_time) {
 			NetMgr.Service();
+			SDL_GameInput_Delay(1);
 		}
 	}
 

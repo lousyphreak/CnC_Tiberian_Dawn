@@ -36,6 +36,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include	"FUNCTION.H"
+#include "SDLINPUT.H"
 
 #define	OPTION_WIDTH	236
 #define	OPTION_HEIGHT	162
@@ -262,6 +263,10 @@ void Special_Dialog(void)
 					}
 				}
 				break;
+		}
+
+		if (process) {
+			SDL_GameInput_Delay(1);
 		}
 	}
 
