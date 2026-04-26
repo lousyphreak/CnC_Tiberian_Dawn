@@ -53,6 +53,14 @@
 static HANDLE			hCCLibrary;
 static bool				BootstrapCoreMixfilesRegistered = false;
 
+static void Wait_For_Countdown_With_Callback(CountDownTimerClass& timer)
+{
+	while (timer.Time()) {
+		Call_Back();
+		SDL_GameInput_Delay(1);
+	}
+}
+
 /****************************************
 **	Function prototypes for this module **
 *****************************************/
@@ -1289,10 +1297,8 @@ bool Select_Game(bool fade)
 							Fade_Palette_To(Palette, FADE_PALETTE_MEDIUM, Call_Back);
 						}
 						Clear_KeyBuffer();
-						count.Set(TIMER_SECOND*3);
-						while (count.Time()) {
-							Call_Back();
-						}
+						count.Set(TIMER_SECOND*1);
+						Wait_For_Countdown_With_Callback(count);
 						Fade_Palette_To(BlackPalette, FADE_PALETTE_MEDIUM, Call_Back);
 
 						Play_Movie("TRAILER");	// Red Alert teaser.
@@ -1307,10 +1313,8 @@ bool Select_Game(bool fade)
 							Fade_Palette_To(Palette, FADE_PALETTE_MEDIUM, Call_Back);
 						}
 						Clear_KeyBuffer();
-						count.Set(TIMER_SECOND*3);
-						while (count.Time()) {
-							Call_Back();
-						}
+						count.Set(TIMER_SECOND*1);
+						Wait_For_Countdown_With_Callback(count);
 						Fade_Palette_To(BlackPalette, FADE_PALETTE_MEDIUM, Call_Back);
 
 						Play_Movie("SIZZLE");	// Red Alert teaser.
@@ -1325,10 +1329,8 @@ bool Select_Game(bool fade)
 							Fade_Palette_To(Palette, FADE_PALETTE_MEDIUM, Call_Back);
 						}
 						Clear_KeyBuffer();
-						count.Set(TIMER_SECOND*3);
-						while (count.Time()) {
-							Call_Back();
-						}
+						count.Set(TIMER_SECOND*1);
+						Wait_For_Countdown_With_Callback(count);
 						Fade_Palette_To(BlackPalette, FADE_PALETTE_MEDIUM, Call_Back);
 
 						Play_Movie("SIZZLE2");	// Red Alert teaser.
@@ -1343,9 +1345,7 @@ bool Select_Game(bool fade)
 					}
 					Clear_KeyBuffer();
 					count.Set(TIMER_SECOND*3);
-					while (count.Time()) {
-						Call_Back();
-					}
+					Wait_For_Countdown_With_Callback(count);
 					Fade_Palette_To(BlackPalette, FADE_PALETTE_MEDIUM, Call_Back);
 
 					Play_Movie("CC2TEASE");
