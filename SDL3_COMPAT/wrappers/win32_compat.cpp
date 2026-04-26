@@ -78,13 +78,30 @@ std::atomic<UINT> g_error_mode{0};
 
 namespace {
 
-constexpr int kStretchedGameWidth = 640;
-constexpr int kStretchedGameHeight = 400;
-constexpr int kDisplayHeightForStretchedGame = 480;
+struct AspectCorrectedMode {
+    int render_width;
+    int active_height;
+    int display_height;
+};
 
-bool uses_stretched_640x400_presentation(RAWindow* window)
+constexpr AspectCorrectedMode kAspectCorrectedModes[] = {
+    {320, 200, 240},
+    {640, 400, 480},
+};
+
+bool get_aspect_corrected_mode(int render_width, int render_height, AspectCorrectedMode* mode)
 {
-    return window != nullptr && window->width == kStretchedGameWidth && window->height == kDisplayHeightForStretchedGame;
+    for (const AspectCorrectedMode& candidate : kAspectCorrectedModes) {
+        if (render_width == candidate.render_width
+            && (render_height == candidate.active_height || render_height == candidate.display_height)) {
+            if (mode) {
+                *mode = candidate;
+            }
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool get_render_source_rect(RAWindow* window, SDL_FRect* rect)
@@ -98,12 +115,28 @@ bool get_render_source_rect(RAWindow* window, SDL_FRect* rect)
     rect->w = static_cast<float>(window->width);
     rect->h = static_cast<float>(window->height);
 
-    if (uses_stretched_640x400_presentation(window)) {
-        rect->h = static_cast<float>(kStretchedGameHeight);
+    AspectCorrectedMode mode{};
+    if (get_aspect_corrected_mode(window->width, window->height, &mode)) {
+        rect->h = static_cast<float>(mode.active_height);
         rect->y = (static_cast<float>(window->height) - rect->h) * 0.5f;
     }
 
     return true;
+}
+
+void get_presentation_logical_size(RAWindow* window, float* logical_width, float* logical_height)
+{
+    if (!window || !logical_width || !logical_height) {
+        return;
+    }
+
+    *logical_width = static_cast<float>(window->width);
+    *logical_height = static_cast<float>(window->height);
+
+    AspectCorrectedMode mode{};
+    if (get_aspect_corrected_mode(window->width, window->height, &mode)) {
+        *logical_height = static_cast<float>(mode.display_height);
+    }
 }
 
 void set_last_error(DWORD value)
@@ -169,7 +202,10 @@ RAWindow* RA_CreateWindow(const char* title, int width, int height, SDL_WindowFl
     window->title = title ? title : "Command & Conquer";
     window->width = width > 0 ? width : 640;
     window->height = height > 0 ? height : 480;
-    window->sdl_window = SDL_CreateWindow(window->title.c_str(), window->width, window->height, flags);
+    int display_width = window->width;
+    int display_height = window->height;
+    RA_GetDefaultWindowSizeForRenderSize(window->width, window->height, &display_width, &display_height);
+    window->sdl_window = SDL_CreateWindow(window->title.c_str(), display_width, display_height, flags);
     if (!window->sdl_window) {
         delete window;
         return nullptr;
@@ -202,14 +238,30 @@ bool RA_GetPresentationRect(RAWindow* window, SDL_FRect* rect)
         return false;
     }
 
-    const float logical_width = static_cast<float>(window->width);
-    const float logical_height = static_cast<float>(window->height);
+    float logical_width = 0.0f;
+    float logical_height = 0.0f;
+    get_presentation_logical_size(window, &logical_width, &logical_height);
     const float scale = std::min(static_cast<float>(window_width) / logical_width, static_cast<float>(window_height) / logical_height);
     rect->w = std::max(1.0f, logical_width * scale);
     rect->h = std::max(1.0f, logical_height * scale);
     rect->x = (static_cast<float>(window_width) - rect->w) * 0.5f;
     rect->y = (static_cast<float>(window_height) - rect->h) * 0.5f;
     return true;
+}
+
+void RA_GetDefaultWindowSizeForRenderSize(int render_width, int render_height, int* window_width, int* window_height)
+{
+    if (!window_width || !window_height) {
+        return;
+    }
+
+    *window_width = render_width > 0 ? render_width : 640;
+    *window_height = render_height > 0 ? render_height : 480;
+
+    AspectCorrectedMode mode{};
+    if (get_aspect_corrected_mode(*window_width, *window_height, &mode)) {
+        *window_height = mode.display_height;
+    }
 }
 
 bool RA_GetRenderSourceRect(RAWindow* window, SDL_FRect* rect)

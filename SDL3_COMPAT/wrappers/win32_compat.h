@@ -163,6 +163,7 @@ struct RAWindow {
 
 RAWindow* RA_CreateWindow(const char* title, int width, int height, SDL_WindowFlags flags);
 void RA_DestroyWindow(RAWindow* window);
+void RA_GetDefaultWindowSizeForRenderSize(int render_width, int render_height, int* window_width, int* window_height);
 bool RA_GetPresentationRect(RAWindow* window, SDL_FRect* rect);
 bool RA_GetRenderSourceRect(RAWindow* window, SDL_FRect* rect);
 bool RA_WindowToGamePoint(RAWindow* window, float window_x, float window_y, int* game_x, int* game_y);

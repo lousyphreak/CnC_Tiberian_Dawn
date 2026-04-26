@@ -368,10 +368,13 @@ HRESULT WWDraw::SetDisplayMode(int width, int height, int bits_per_pixel)
     bits_per_pixel_ = bits_per_pixel;
     window_ = ensure_window(window_, width_, height_);
     if (window_ && window_->sdl_window) {
+        int display_width = width_;
+        int display_height = height_;
         window_->width = width_;
         window_->height = height_;
+        RA_GetDefaultWindowSizeForRenderSize(width_, height_, &display_width, &display_height);
         SDL_SetWindowResizable(window_->sdl_window, true);
-        SDL_SetWindowSize(window_->sdl_window, width_, height_);
+        SDL_SetWindowSize(window_->sdl_window, display_width, display_height);
         SDL_ShowWindow(window_->sdl_window);
     }
     return WWDRAW_OK;
