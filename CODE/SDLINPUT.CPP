@@ -16,6 +16,7 @@
 
 #if defined(__EMSCRIPTEN__)
 #include <emscripten.h>
+#include <emscripten/html5.h>
 #endif
 
 #include <stdint.h>
@@ -87,6 +88,9 @@ bool g_mission_mouse_capture_requested = false;
 uint32_t g_mouse_capture_suppression_count = 0;
 bool g_mission_mouse_capture_applied = false;
 bool g_mission_relative_mouse_mode_applied = false;
+bool g_relative_mouse_position_valid = false;
+float g_relative_mouse_x = 0.0f;
+float g_relative_mouse_y = 0.0f;
 bool g_last_pointer_source_was_direct_touch = false;
 uint32_t g_active_direct_touch_contacts = 0;
 std::array<TouchFingerState, 4> g_touch_fingers{};
@@ -366,6 +370,21 @@ void update_mouse_position_locked(int x, int y)
 	g_mouse_y = y;
 }
 
+void clamp_relative_mouse_position_locked(float& x, float& y)
+{
+	x = std::clamp(x, 0.0f, static_cast<float>(std::max(0, SeenBuff.Get_Width() - 1)));
+	y = std::clamp(y, 0.0f, static_cast<float>(std::max(0, SeenBuff.Get_Height() - 1)));
+
+	if (!g_cursor_clip_active) {
+		return;
+	}
+
+	const float max_x = static_cast<float>(std::max<int>(g_cursor_clip.left, g_cursor_clip.right - 1));
+	const float max_y = static_cast<float>(std::max<int>(g_cursor_clip.top, g_cursor_clip.bottom - 1));
+	x = std::clamp(x, static_cast<float>(g_cursor_clip.left), max_x);
+	y = std::clamp(y, static_cast<float>(g_cursor_clip.top), max_y);
+}
+
 void handle_translated_mouse_motion(int x, int y, uint32_t button_state_mask)
 {
 	int mouse_x = x;
@@ -386,18 +405,52 @@ int scale_relative_mouse_delta(int delta)
 	return delta;
 }
 
-void handle_relative_mouse_motion(int x, int y, int xrel, int yrel, uint32_t button_state_mask)
+bool get_relative_mouse_scale(float& scale_x, float& scale_y)
 {
-	float window_x = static_cast<float>(x);
-	float window_y = static_cast<float>(y);
-	get_window_point_for_current_game_cursor(window_x, window_y);
+	if (MainWindow == NULL || MainWindow->sdl_window == NULL) {
+		return false;
+	}
 
-	window_x += static_cast<float>(scale_relative_mouse_delta(xrel));
-	window_y += static_cast<float>(scale_relative_mouse_delta(yrel));
+	SDL_FRect presentation{};
+	SDL_FRect source{};
+	if (!RA_GetPresentationRect(MainWindow, &presentation)
+		|| !RA_GetRenderSourceRect(MainWindow, &source)
+		|| presentation.w <= 0.0f
+		|| presentation.h <= 0.0f
+		|| source.w <= 0.0f
+		|| source.h <= 0.0f) {
+		return false;
+	}
 
-	int translated_x = static_cast<int>(window_x);
-	int translated_y = static_cast<int>(window_y);
-	translate_window_mouse_position(translated_x, translated_y);
+	scale_x = source.w / presentation.w;
+	scale_y = source.h / presentation.h;
+	return true;
+}
+
+void handle_relative_mouse_motion(int, int, int xrel, int yrel, uint32_t button_state_mask)
+{
+	float scale_x = 1.0f;
+	float scale_y = 1.0f;
+	get_relative_mouse_scale(scale_x, scale_y);
+
+	int translated_x = 0;
+	int translated_y = 0;
+	{
+		std::scoped_lock lock(g_input_mutex);
+		if (!g_relative_mouse_position_valid) {
+			g_relative_mouse_x = static_cast<float>(g_mouse_x);
+			g_relative_mouse_y = static_cast<float>(g_mouse_y);
+			clamp_relative_mouse_position_locked(g_relative_mouse_x, g_relative_mouse_y);
+			g_relative_mouse_position_valid = true;
+		}
+
+		g_relative_mouse_x += static_cast<float>(scale_relative_mouse_delta(xrel)) * scale_x;
+		g_relative_mouse_y += static_cast<float>(scale_relative_mouse_delta(yrel)) * scale_y;
+		clamp_relative_mouse_position_locked(g_relative_mouse_x, g_relative_mouse_y);
+
+		translated_x = static_cast<int>(g_relative_mouse_x + 0.5f);
+		translated_y = static_cast<int>(g_relative_mouse_y + 0.5f);
+	}
 	handle_translated_mouse_motion(translated_x, translated_y, button_state_mask);
 }
 
@@ -685,6 +738,54 @@ bool should_apply_relative_mouse_mode(void)
 	return !g_last_pointer_source_was_direct_touch && g_active_direct_touch_contacts == 0;
 }
 
+bool relative_mouse_mode_requested(void)
+{
+	return MainWindow != NULL
+		&& MainWindow->sdl_window != NULL
+		&& SDL_GetWindowRelativeMouseMode(MainWindow->sdl_window);
+}
+
+#if defined(__EMSCRIPTEN__)
+bool emscripten_pointer_lock_active_for_main_window(void)
+{
+	if (MainWindow == NULL || MainWindow->sdl_window == NULL) {
+		return false;
+	}
+
+	EmscriptenPointerlockChangeEvent pointer_lock_status{};
+	if (emscripten_get_pointerlock_status(&pointer_lock_status) != EMSCRIPTEN_RESULT_SUCCESS || !pointer_lock_status.isActive) {
+		return false;
+	}
+
+	const char* canvas_id = SDL_GetStringProperty(
+		SDL_GetWindowProperties(MainWindow->sdl_window),
+		SDL_PROP_WINDOW_EMSCRIPTEN_CANVAS_ID_STRING,
+		NULL);
+	if (canvas_id == NULL || canvas_id[0] == '\0') {
+		return false;
+	}
+
+	if (canvas_id[0] == '#') {
+		++canvas_id;
+	}
+
+	return SDL_strcmp(pointer_lock_status.id, canvas_id) == 0;
+}
+#endif
+
+bool relative_mouse_mode_active(void)
+{
+	if (!relative_mouse_mode_requested()) {
+		return false;
+	}
+
+#if defined(__EMSCRIPTEN__)
+	return emscripten_pointer_lock_active_for_main_window();
+#else
+	return true;
+#endif
+}
+
 bool get_window_point_for_current_game_cursor(float& window_x, float& window_y)
 {
 	if (MainWindow == NULL || MainWindow->sdl_window == NULL) {
@@ -852,8 +953,8 @@ void apply_mission_mouse_capture(void)
 	const bool should_relative_mode = should_capture && should_apply_relative_mouse_mode();
 
 	if (g_mission_relative_mouse_mode_applied != should_relative_mode) {
-		if (MainWindow != NULL && MainWindow->sdl_window != NULL && SDL_GetWindowRelativeMouseMode(MainWindow->sdl_window)) {
-			if (!g_last_pointer_source_was_direct_touch) {
+		if (MainWindow != NULL && MainWindow->sdl_window != NULL && relative_mouse_mode_requested()) {
+			if (relative_mouse_mode_active() && !g_last_pointer_source_was_direct_touch) {
 				float window_x = 0.0f;
 				float window_y = 0.0f;
 				if (get_window_point_for_current_game_cursor(window_x, window_y)) {
@@ -864,6 +965,10 @@ void apply_mission_mouse_capture(void)
 		}
 		if (should_relative_mode && MainWindow != NULL && MainWindow->sdl_window != NULL) {
 			SDL_SetWindowRelativeMouseMode(MainWindow->sdl_window, true);
+		}
+		{
+			std::scoped_lock lock(g_input_mutex);
+			g_relative_mouse_position_valid = false;
 		}
 		g_mission_relative_mouse_mode_applied = should_relative_mode;
 	}
@@ -1383,6 +1488,7 @@ void initialize_mouse_snapshot_locked(void)
 	int mouse_y = static_cast<int>(y);
 	translate_window_mouse_position(mouse_x, mouse_y);
 	update_mouse_position_locked(mouse_x, mouse_y);
+	g_relative_mouse_position_valid = false;
 	g_mouse_buttons = translate_mouse_button_state(buttons);
 }
 
@@ -1679,9 +1785,7 @@ void SDL_GameInput_Handle_Key(SDL_Scancode scancode, SDL_Keycode keycode, SDL_Ke
 
 void SDL_GameInput_Handle_Mouse_Motion(int x, int y, int xrel, int yrel, uint32_t button_state)
 {
-	if (MainWindow != NULL
-		&& MainWindow->sdl_window != NULL
-		&& SDL_GetWindowRelativeMouseMode(MainWindow->sdl_window)) {
+	if (relative_mouse_mode_active()) {
 		handle_relative_mouse_motion(x, y, xrel, yrel, translate_mouse_button_state(button_state));
 		return;
 	}
@@ -1691,9 +1795,7 @@ void SDL_GameInput_Handle_Mouse_Motion(int x, int y, int xrel, int yrel, uint32_
 
 void SDL_GameInput_Handle_Mouse_Button(int button, int x, int y, bool release)
 {
-	if (MainWindow != NULL
-		&& MainWindow->sdl_window != NULL
-		&& SDL_GetWindowRelativeMouseMode(MainWindow->sdl_window)) {
+	if (relative_mouse_mode_active()) {
 		int translated_x = 0;
 		int translated_y = 0;
 		{
@@ -1835,11 +1937,12 @@ int32_t SDL_GameInput_ClipCursor(const RECT* rect)
 		return (rect == NULL ? TRUE : FALSE);
 	}
 
+	const bool relative_mode_active_now = relative_mouse_mode_active();
 	const bool wayland_windowed = sdl_uses_wayland_video_driver()
 		&& (SDL_GetWindowFlags(MainWindow->sdl_window) & SDL_WINDOW_FULLSCREEN) == 0;
 
 	if (rect == NULL) {
-		if (wayland_windowed) {
+		if (wayland_windowed || relative_mode_active_now) {
 			SDL_SetWindowMouseRect(MainWindow->sdl_window, NULL);
 			SDL_GameInput_SetCursorClip(NULL);
 			return (TRUE);
@@ -1875,10 +1978,11 @@ int32_t SDL_GameInput_ClipCursor(const RECT* rect)
 		return (TRUE);
 	}
 
-	if (wayland_windowed) {
+	if (wayland_windowed || relative_mode_active_now) {
 		/*
-		** Hyprland/Wayland compositor move/resize gestures rely on the real
-		** pointer remaining unconstrained. Keep only the game's logical clip.
+		** Relative mode already owns the real pointer; keep only the logical
+		** gameplay clip so SDL doesn't fight the hidden cursor with extra
+		** warps/confinement updates.
 		*/
 		SDL_SetWindowMouseRect(MainWindow->sdl_window, NULL);
 		SDL_GameInput_SetCursorClip(rect);
@@ -1931,12 +2035,18 @@ void SDL_GameInput_SetCursorClip(const RECT* rect)
 	std::scoped_lock lock(g_input_mutex);
 	if (rect == NULL) {
 		g_cursor_clip_active = false;
+		if (g_relative_mouse_position_valid) {
+			clamp_relative_mouse_position_locked(g_relative_mouse_x, g_relative_mouse_y);
+		}
 		return;
 	}
 
 	g_cursor_clip_active = true;
 	g_cursor_clip = *rect;
 	update_mouse_position_locked(g_mouse_x, g_mouse_y);
+	if (g_relative_mouse_position_valid) {
+		clamp_relative_mouse_position_locked(g_relative_mouse_x, g_relative_mouse_y);
+	}
 }
 
 bool SDL_GameInput_IsModifierPressed(SDL_Keymod mod_mask)

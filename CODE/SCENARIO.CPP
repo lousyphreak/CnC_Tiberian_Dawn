@@ -323,6 +323,7 @@ void Clear_Scenario(void)
  *=============================================================================================*/
 void Do_Win(void)
 {
+	SDL_GameInput_SetMissionMouseCapture(false);
 	Map.Set_Default_Mouse(MOUSE_NORMAL);
 	Hide_Mouse();
 
@@ -533,6 +534,7 @@ void Do_Win(void)
  *=============================================================================================*/
 void Do_Lose(void)
 {
+	SDL_GameInput_SetMissionMouseCapture(false);
 	Map.Set_Default_Mouse(MOUSE_NORMAL);
 	Hide_Mouse();
 
@@ -623,6 +625,7 @@ void Do_Lose(void)
  *=============================================================================================*/
 void Do_Restart(void)
 {
+	SDL_GameInput_SetMissionMouseCapture(false);
 	bool hidden = Get_Mouse_State();
 
 	if (hidden) Show_Mouse();

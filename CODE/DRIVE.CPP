@@ -664,6 +664,9 @@ bool DriveClass::While_Moving(void)
 
 								Stop_Driver();
 								Per_Cell_Process(true);
+								if (!IsActive) {
+									return(false);
+								}
 								if (Start_Driver(c)) {
 									Set_Speed(oldspeed);
 									Mem_Copy(&Path[1], &Path[0], CONQUER_PATH_MAX-1);
@@ -706,6 +709,9 @@ bool DriveClass::While_Moving(void)
 				**	Perform "per cell" activities.
 				*/
 				Per_Cell_Process(true);
+				if (!IsActive) {
+					return(false);
+				}
 
 				break;
 			}

@@ -61,6 +61,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include	"FUNCTION.H"
+#include	"SDLINPUT.H"
 
 #include <climits>
 #include <filesystem>
@@ -73,8 +74,6 @@
 #include <malloc.h>
 
 #define SHAPE_TRANS		0x40
-
-void SDL_GameInput_Pump(void);
 
 void *Get_Shape_Header_Data(void *ptr);
 
@@ -190,6 +189,7 @@ void Main_Game(int argc, char *argv[])
 		**	Non-editor version of main-loop processing
 		*/
 		for (;;) {
+			SDL_GameInput_SetMissionMouseCapture(!PlaybackGame && !Debug_Map);
 			/*
 			**	Call the game's main loop
 			*/
@@ -205,6 +205,7 @@ void Main_Game(int argc, char *argv[])
 			*/
 			if (SpecialDialog != SDLG_NONE) {
 				//Stop_Profiler();
+				SDL_GameInput_PushMouseCaptureSuppression();
 				switch (SpecialDialog) {
 					case SDLG_SPECIAL:
 						Map.Help_Text(TXT_NONE);
@@ -235,9 +236,11 @@ void Main_Game(int argc, char *argv[])
 					default:
 						break;
 				}
+				SDL_GameInput_PopMouseCaptureSuppression();
 			}
 		}
 
+		SDL_GameInput_SetMissionMouseCapture(false);
 		//Stop_Profiler();
 		InMainLoop = false;
 
@@ -1712,6 +1715,7 @@ void Play_Movie(char const * name, ThemeType theme, bool clrscrn)
 	memset (&PaletteInterpolationTable[0][0],0,65536);
 
 	if (name) {
+		SDL_GameInput_PushMouseCaptureSuppression();
 		char fullname[_MAX_FNAME+_MAX_EXT];
 		char palname [_MAX_FNAME+_MAX_EXT];
 
@@ -1824,6 +1828,7 @@ void Play_Movie(char const * name, ThemeType theme, bool clrscrn)
 			Set_Palette(BlackPalette);
 		}
 		Show_Mouse();
+		SDL_GameInput_PopMouseCaptureSuppression();
 	}
 }
 

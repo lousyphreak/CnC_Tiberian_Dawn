@@ -61,6 +61,17 @@
 #define TD_ENABLE_WOL 1
 #endif
 
+static char* Multiplayer_Settings_Buffer(char* fallback, int32_t* size)
+{
+	if (_ShapeBuffer != NULL && _ShapeBufferSize > 1) {
+		*size = _ShapeBufferSize;
+		return((char*)_ShapeBuffer);
+	}
+
+	*size = SHAPE_BUFFER_SIZE;
+	return(fallback);
+}
+
 static void Garble_Message(char *buf);
 
 static bool Choose_Internet_Game(InternetTransportType& transport);
@@ -661,6 +672,8 @@ GameType Select_Multiplayer_Game (void)
 void Read_MultiPlayer_Settings (void)
 {
 	char *buffer;							// INI staging buffer pointer.
+	char fallback_buffer[SHAPE_BUFFER_SIZE];
+	int32_t buffer_size;
 	char buf[128];							// buffer for parsing INI entry
 	CELL cell;
 
@@ -670,8 +683,8 @@ void Read_MultiPlayer_Settings (void)
 	the HidPage may be needed for various uncompressions during the INI
 	parsing.)
 	------------------------------------------------------------------------*/
-	buffer = (char *)_ShapeBuffer;
-	memset(buffer, '\0', _ShapeBufferSize);
+	buffer = Multiplayer_Settings_Buffer(fallback_buffer, &buffer_size);
+	memset(buffer, '\0', buffer_size);
 
 	/*------------------------------------------------------------------------
 	Create filename and read the file.
@@ -680,7 +693,7 @@ void Read_MultiPlayer_Settings (void)
 	if (!file.Is_Available()) {
 		buffer[0] = '\0';
 	} else {
-		file.Read(buffer, _ShapeBufferSize-1);
+		file.Read(buffer, buffer_size-1);
 		file.Close();
 	}
 
@@ -777,19 +790,21 @@ void Read_MultiPlayer_Settings (void)
 void Write_MultiPlayer_Settings (void)
 {
 	char * buffer;			// INI staging buffer pointer.
+	char fallback_buffer[SHAPE_BUFFER_SIZE];
+	int32_t buffer_size;
 	CCFileClass file;
 
 	/*------------------------------------------------------------------------
 	Get a working pointer to the INI staging buffer. Make sure that the buffer
 	starts cleared out of any data.
 	------------------------------------------------------------------------*/
-	buffer = (char *)_ShapeBuffer;
-	memset(buffer, '\0', _ShapeBufferSize);
+	buffer = Multiplayer_Settings_Buffer(fallback_buffer, &buffer_size);
+	memset(buffer, '\0', buffer_size);
 
 	file.Set_Name("CONQUER.INI");
 	if (file.Is_Available()) {
 		file.Open(READ);
-		file.Read(buffer, _ShapeBufferSize-1);
+		file.Read(buffer, buffer_size-1);
 		file.Close();
 	}
 

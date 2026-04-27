@@ -93,6 +93,8 @@ int CCMessageBox::Process(const char *msg, const char *b1txt, const char *b2txt,
 	BOOL display;									// display level
 	int  realval[5];
 
+	SDL_GameInput_PushMouseCaptureSuppression();
+
 	GraphicBufferClass seen_buff_save(VisiblePage.Get_Width(),VisiblePage.Get_Height(),(void*)NULL);
 
 	int factor = (SeenBuff.Get_Width() == 320) ? 1 : 2;
@@ -423,6 +425,7 @@ int CCMessageBox::Process(const char *msg, const char *b1txt, const char *b2txt,
 		Show_Mouse();
 		WWDraw_Flush_Present();
 	}
+	SDL_GameInput_PopMouseCaptureSuppression();
 	return(retval);
 }
 
