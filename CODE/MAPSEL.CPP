@@ -195,6 +195,7 @@ void Map_Selection(void)
 	void *anim, *progress, *oldfont, *greyearth, *greyearth2;
 	unsigned char localpalette[768];
 	int scenario, lastscenario;
+	int oldfontxspacing = FontXSpacing;
 	int house = PlayerPtr->Class->House;
 	int attackxcoord = 0;
 
@@ -247,6 +248,7 @@ void Map_Selection(void)
 	grey2palette = new unsigned char[768];
 	progresspalette = new unsigned char[768];
 	oldfont = Set_Font(ScoreFontPtr);
+	FontXSpacing = 0;
 	Set_Font_Palette(_regpal);
 	Set_Palette(BlackPalette);
 
@@ -512,7 +514,6 @@ void Map_Selection(void)
 	Bit_It_In_Scale(0, 0, 320, 200, &SysMemPage, PseudoSeenBuff , &SeenBuff,1,1);
 	backpage.Blit(SysMemPage, 0,0, xcoord,11, 20*6,8);
 	if (!lastscenario) Call_Back_Delay(85);
-	Set_Font(oldfont);
 #ifdef FRENCH
 	PseudoSeenBuff->Fill_Rect(xcoord,12,xcoord+6*16+10,20,BLACK);
 	TextPrintBuffer->Fill_Rect(2*xcoord,2*12,2*(xcoord+6*16+10),2*20,BLACK);
@@ -659,13 +660,15 @@ void Map_Selection(void)
 		if (lastscenario) attackxcoord = 200;
 	}
 
-//	Set_Font(ScoreFontPtr);
+	Set_Font(ScoreFontPtr);
+	BlitList.Clear();
 	Play_Sample(text2, 255, Options.Normalize_Sound(90));
 	Alloc_Object(new ScorePrintClass(TXT_MAP_SELECT,attackxcoord,160,_greenpal));
 	Cycle_Call_Back_Delay(16,progresspalette);
 	Alloc_Object(new ScorePrintClass(TXT_MAP_TO_ATTACK,attackxcoord,170,_greenpal));
 	Cycle_Call_Back_Delay(24,progresspalette);
 	while (Get_Mouse_State() > 0) Show_Mouse();
+	Show_Mouse();
 
 	Keyboard::Clear();
 	while (!done) {
@@ -780,6 +783,8 @@ void Map_Selection(void)
 	delete TextPrintBuffer;
 	TextPrintBuffer = NULL;
 	BlitList.Clear();
+	Set_Font(oldfont);
+	FontXSpacing = oldfontxspacing;
 }
 
 
