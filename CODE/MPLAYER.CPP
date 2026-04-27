@@ -47,6 +47,10 @@
 #include "TCPIP.H"
 #include "SDLINPUT.H"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 #ifndef TD_ENABLE_UDP
 #define TD_ENABLE_UDP 1
 #endif
@@ -674,63 +678,84 @@ void Read_MultiPlayer_Settings (void)
 	------------------------------------------------------------------------*/
 	CCFileClass file ("CONQUER.INI");
 	if (!file.Is_Available()) {
-		return;
+		buffer[0] = '\0';
 	} else {
 		file.Read(buffer, _ShapeBufferSize-1);
+		file.Close();
 	}
-	file.Close();
 
-	/*------------------------------------------------------------------------
-	Get the player's last-used Handle
-	------------------------------------------------------------------------*/
-	WWGetPrivateProfileString("MultiPlayer", "Handle", "Noname", MultiplayerName,
-		sizeof(MultiplayerName), buffer);
+	if (buffer[0] != '\0') {
+		/*------------------------------------------------------------------------
+		Get the player's last-used Handle
+		------------------------------------------------------------------------*/
+		WWGetPrivateProfileString("MultiPlayer", "Handle", "Noname", MultiplayerName,
+			sizeof(MultiplayerName), buffer);
 
-	/*------------------------------------------------------------------------
-	Get the player's last-used Color
-	------------------------------------------------------------------------*/
-	MultiplayerPreferredColor = WWGetPrivateProfileInt("MultiPlayer", "Color", 0, buffer);
-	MultiplayerHouse = (HousesType)WWGetPrivateProfileInt("MultiPlayer", "Side",
-		HOUSE_GOOD, buffer);
+		WWGetPrivateProfileString("MultiPlayer", "WolServer", "", MultiplayerWolServer,
+			sizeof(MultiplayerWolServer), buffer);
 
-	TrapCheckHeap = WWGetPrivateProfileInt( "MultiPlayer", "CheckHeap", 0, buffer);
+		/*------------------------------------------------------------------------
+		Get the player's last-used Color
+		------------------------------------------------------------------------*/
+		MultiplayerPreferredColor = WWGetPrivateProfileInt("MultiPlayer", "Color", 0, buffer);
+		MultiplayerHouse = (HousesType)WWGetPrivateProfileInt("MultiPlayer", "Side",
+			HOUSE_GOOD, buffer);
 
-	/*------------------------------------------------------------------------
-	Read special recording playback values, to help find sync bugs
-	------------------------------------------------------------------------*/
-	if (PlaybackGame) {
-		TrapFrame = WWGetPrivateProfileInt ("SyncBug","Frame",0x7fffffff, buffer);
+		TrapCheckHeap = WWGetPrivateProfileInt( "MultiPlayer", "CheckHeap", 0, buffer);
 
-		TrapObjType = (RTTIType)WWGetPrivateProfileInt ("SyncBug","Type",RTTI_NONE, buffer);
-		WWGetPrivateProfileString ("SyncBug","Type","NONE",buf,80,buffer);
-		if (!stricmp(buf,"AIRCRAFT"))
-			TrapObjType = RTTI_AIRCRAFT;
-		else if (!stricmp(buf,"ANIM"))
-			TrapObjType = RTTI_ANIM;
-		else if (!stricmp(buf,"BUILDING"))
-			TrapObjType = RTTI_BUILDING;
-		else if (!stricmp(buf,"BULLET"))
-			TrapObjType = RTTI_BULLET;
-		else if (!stricmp(buf,"INFANTRY"))
-			TrapObjType = RTTI_INFANTRY;
-		else if (!stricmp(buf,"UNIT"))
-			TrapObjType = RTTI_UNIT;
-		else {
-			TrapObjType = RTTI_NONE;
-		}
+		/*------------------------------------------------------------------------
+		Read special recording playback values, to help find sync bugs
+		------------------------------------------------------------------------*/
+		if (PlaybackGame) {
+			TrapFrame = WWGetPrivateProfileInt ("SyncBug","Frame",0x7fffffff, buffer);
 
-		WWGetPrivateProfileString ("SyncBug","Coord","0",buf,80,buffer);
-		sscanf(buf,"%x",&TrapCoord);
+			TrapObjType = (RTTIType)WWGetPrivateProfileInt ("SyncBug","Type",RTTI_NONE, buffer);
+			WWGetPrivateProfileString ("SyncBug","Type","NONE",buf,80,buffer);
+			if (!stricmp(buf,"AIRCRAFT"))
+				TrapObjType = RTTI_AIRCRAFT;
+			else if (!stricmp(buf,"ANIM"))
+				TrapObjType = RTTI_ANIM;
+			else if (!stricmp(buf,"BUILDING"))
+				TrapObjType = RTTI_BUILDING;
+			else if (!stricmp(buf,"BULLET"))
+				TrapObjType = RTTI_BULLET;
+			else if (!stricmp(buf,"INFANTRY"))
+				TrapObjType = RTTI_INFANTRY;
+			else if (!stricmp(buf,"UNIT"))
+				TrapObjType = RTTI_UNIT;
+			else {
+				TrapObjType = RTTI_NONE;
+			}
 
-		WWGetPrivateProfileString ("SyncBug","this","0",buf,80,buffer);
-		TrapThis = reinterpret_cast<void *>(static_cast<uintptr_t>(strtoull(buf, NULL, 16)));
+			WWGetPrivateProfileString ("SyncBug","Coord","0",buf,80,buffer);
+			sscanf(buf,"%x",&TrapCoord);
 
-		WWGetPrivateProfileString ("SyncBug","Cell","0",buf,80,buffer);
-		cell = atoi(buf);
-		if (cell) {
-			TrapCell = &(Map[cell]);
+			WWGetPrivateProfileString ("SyncBug","this","0",buf,80,buffer);
+			TrapThis = reinterpret_cast<void *>(static_cast<uintptr_t>(strtoull(buf, NULL, 16)));
+
+			WWGetPrivateProfileString ("SyncBug","Cell","0",buf,80,buffer);
+			cell = atoi(buf);
+			if (cell) {
+				TrapCell = &(Map[cell]);
+			}
 		}
 	}
+
+#ifdef __EMSCRIPTEN__
+	char url[256];
+	int ok = EM_ASM_INT({
+		var loc = window.location;
+		var proto = loc.protocol === 'https:' ? 'wss' : 'ws';
+		var s = proto + '://' + loc.host + '/ws';
+		var bytes = lengthBytesUTF8(s) + 1;
+		if (bytes > $1) return 0;
+		stringToUTF8(s, $0, $1);
+		return 1;
+	}, (int)url, (int)sizeof(url));
+	if (ok) {
+		SDL_strlcpy(MultiplayerWolServer, url, sizeof(MultiplayerWolServer));
+	}
+#endif
 }
 
 
@@ -774,6 +799,7 @@ void Write_MultiPlayer_Settings (void)
 	WWWritePrivateProfileInt ("MultiPlayer", "Color", MultiplayerPreferredColor, buffer);
 	WWWritePrivateProfileInt ("MultiPlayer", "Side", MultiplayerHouse, buffer);
 	WWWritePrivateProfileString("MultiPlayer", "Handle", MultiplayerName, buffer);
+	WWWritePrivateProfileString("MultiPlayer", "WolServer", MultiplayerWolServer, buffer);
 
 	/*------------------------------------------------------------------------
 	Write the INI data out to a file.

@@ -392,6 +392,7 @@ int main(int argc, char *argv[])
 
 
 		WindowsTimer = new WinTimerClass(60,FALSE);
+		TickCount.Start();
 
 		uint32_t time_test = WindowsTimer->Get_System_Tick_Count();
 		SDL_Delay(1000);

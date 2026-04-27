@@ -14,6 +14,10 @@
 #include <cstring>
 #include <thread>
 
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+#endif
+
 namespace {
 
 static constexpr unsigned short TD_WOL_PRODUCT_ID = 0xaa01;
@@ -108,6 +112,12 @@ int WSManagerClass::Init(void)
 		Shutdown();
 	}
 
+#if defined(__EMSCRIPTEN__)
+	if (!emscripten_has_asyncify()) {
+		return false;
+	}
+#endif
+
 	if (!Connect(PendingUrl)) {
 		return false;
 	}
@@ -130,7 +140,11 @@ int WSManagerClass::Init(void)
 			return false;
 		}
 
+#if defined(__EMSCRIPTEN__)
+		emscripten_sleep(10);
+#else
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+#endif
 	}
 
 	if (!LoggedIn) {
@@ -150,7 +164,11 @@ int WSManagerClass::Init(void)
 		if (Client.Get_State() == WSClientClass::STATE_FAILED || Client.Get_State() == WSClientClass::STATE_DISCONNECTED) {
 			break;
 		}
+#if defined(__EMSCRIPTEN__)
+		emscripten_sleep(10);
+#else
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+#endif
 	}
 
 	return LoggedIn ? true : false;
@@ -158,6 +176,17 @@ int WSManagerClass::Init(void)
 
 void WSManagerClass::Shutdown(void)
 {
+	if (Connected && LoggedIn) {
+		Send_Game_Leave();
+		for (int spin = 0; spin < 10; ++spin) {
+			Service();
+#if defined(__EMSCRIPTEN__)
+			emscripten_sleep(10);
+#else
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+#endif
+		}
+	}
 	Client.Close();
 	Reset_Runtime_State();
 }
@@ -166,7 +195,14 @@ void WSManagerClass::Return_To_Lobby(void)
 {
 	if (LoggedIn) {
 		Send_Game_Leave();
-		Send_Channel_Join(TD_WOL_LOBBY_NAME);
+		for (int spin = 0; spin < 20; ++spin) {
+			Service();
+#if defined(__EMSCRIPTEN__)
+			emscripten_sleep(10);
+#else
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+#endif
+		}
 	}
 
 	Reset_Peers();
@@ -174,6 +210,10 @@ void WSManagerClass::Return_To_Lobby(void)
 	Clear_Queue(&PendingPrivateHead, &PendingPrivateTail, &PendingPrivateCount);
 	Clear_Queue(&GlobalHead, &GlobalTail, &GlobalCount);
 	Clear_Queue(&ControlHead, &ControlTail, &ControlCount);
+
+	if (LoggedIn) {
+		Send_Channel_Join(TD_WOL_LOBBY_NAME);
+	}
 }
 
 bool WSManagerClass::Send_Hello(char const *nickname)
@@ -659,7 +699,7 @@ int WSManagerClass::Connection_Index(int id)
 
 int WSManagerClass::Global_Num_Send(void)
 {
-	return Client.Has_Pending_Output() ? 1 : 0;
+	return 0;
 }
 
 int WSManagerClass::Global_Num_Receive(void)
@@ -669,7 +709,7 @@ int WSManagerClass::Global_Num_Receive(void)
 
 int WSManagerClass::Private_Num_Send(int)
 {
-	return Client.Has_Pending_Output() ? 1 : 0;
+	return 0;
 }
 
 int WSManagerClass::Private_Num_Receive(int id)
@@ -693,7 +733,7 @@ void WSManagerClass::Reset_Response_Time(void)
 
 uint32_t WSManagerClass::Response_Time(void)
 {
-	return 0;
+	return 60;
 }
 
 void WSManagerClass::Set_Timing(uint32_t, uint32_t, uint32_t)

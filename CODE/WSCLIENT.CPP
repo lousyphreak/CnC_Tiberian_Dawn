@@ -16,6 +16,277 @@
 #include <cstring>
 #include <ctime>
 
+#if defined(__EMSCRIPTEN__)
+
+#include <emscripten/websocket.h>
+
+namespace {
+
+struct QueuedBinaryMessage {
+	std::uint8_t *Data;
+	std::size_t Length;
+	QueuedBinaryMessage *Next;
+};
+
+struct EmscriptenClientType {
+	EMSCRIPTEN_WEBSOCKET_T Socket;
+	bool Opened;
+	bool Failed;
+	bool Closed;
+	QueuedBinaryMessage *ReceiveHead;
+	QueuedBinaryMessage *ReceiveTail;
+};
+
+void Free_Message_List(QueuedBinaryMessage **head, QueuedBinaryMessage **tail)
+{
+	while (*head != nullptr) {
+		QueuedBinaryMessage *next = (*head)->Next;
+		std::free((*head)->Data);
+		std::free(*head);
+		*head = next;
+	}
+
+	*tail = nullptr;
+}
+
+void Enqueue_Message(QueuedBinaryMessage **head, QueuedBinaryMessage **tail, std::uint8_t *data, std::size_t length)
+{
+	QueuedBinaryMessage *entry = static_cast<QueuedBinaryMessage *>(std::malloc(sizeof(QueuedBinaryMessage)));
+	if (entry == nullptr) {
+		std::free(data);
+		return;
+	}
+
+	entry->Data = data;
+	entry->Length = length;
+	entry->Next = nullptr;
+
+	if (*tail != nullptr) {
+		(*tail)->Next = entry;
+	} else {
+		*head = entry;
+	}
+
+	*tail = entry;
+}
+
+bool Dequeue_Message(QueuedBinaryMessage **head, QueuedBinaryMessage **tail, void **data, std::size_t *length)
+{
+	if (*head == nullptr || data == nullptr || length == nullptr) {
+		return false;
+	}
+
+	QueuedBinaryMessage *entry = *head;
+	*head = entry->Next;
+	if (*head == nullptr) {
+		*tail = nullptr;
+	}
+
+	*data = entry->Data;
+	*length = entry->Length;
+	std::free(entry);
+	return true;
+}
+
+int Count_Messages(QueuedBinaryMessage *head)
+{
+	int count = 0;
+	while (head != nullptr) {
+		++count;
+		head = head->Next;
+	}
+	return count;
+}
+
+void Reset_Client_State(EmscriptenClientType *client)
+{
+	if (client->Socket > 0) {
+		emscripten_websocket_close(client->Socket, 1000, "client closing");
+		emscripten_websocket_delete(client->Socket);
+		client->Socket = 0;
+	}
+	Free_Message_List(&client->ReceiveHead, &client->ReceiveTail);
+	client->Opened = false;
+	client->Failed = false;
+	client->Closed = false;
+}
+
+bool On_Open(int, EmscriptenWebSocketOpenEvent const *, void *user_data)
+{
+	EmscriptenClientType *client = static_cast<EmscriptenClientType *>(user_data);
+	client->Opened = true;
+	return true;
+}
+
+bool On_Message(int, EmscriptenWebSocketMessageEvent const *event, void *user_data)
+{
+	if (event == nullptr || event->isText) {
+		return true;
+	}
+
+	EmscriptenClientType *client = static_cast<EmscriptenClientType *>(user_data);
+	std::uint8_t *copy = nullptr;
+	if (event->numBytes > 0) {
+		copy = static_cast<std::uint8_t *>(std::malloc(event->numBytes));
+		if (copy == nullptr) {
+			client->Failed = true;
+			return true;
+		}
+		std::memcpy(copy, event->data, event->numBytes);
+	}
+	Enqueue_Message(&client->ReceiveHead, &client->ReceiveTail, copy, event->numBytes);
+	return true;
+}
+
+bool On_Error(int, EmscriptenWebSocketErrorEvent const *, void *user_data)
+{
+	EmscriptenClientType *client = static_cast<EmscriptenClientType *>(user_data);
+	client->Failed = true;
+	return true;
+}
+
+bool On_Close(int, EmscriptenWebSocketCloseEvent const *, void *user_data)
+{
+	EmscriptenClientType *client = static_cast<EmscriptenClientType *>(user_data);
+	client->Closed = true;
+	return true;
+}
+
+}
+
+WSClientClass::WSClientClass()
+{
+	State = STATE_DISCONNECTED;
+	Impl = std::calloc(1, sizeof(EmscriptenClientType));
+}
+
+WSClientClass::~WSClientClass()
+{
+	Close();
+	std::free(Impl);
+	Impl = nullptr;
+}
+
+bool WSClientClass::Connect(char const *url)
+{
+	EmscriptenClientType *client = static_cast<EmscriptenClientType *>(Impl);
+	Close();
+
+	if (url == nullptr || !emscripten_websocket_is_supported()) {
+		State = STATE_FAILED;
+		return false;
+	}
+
+	EmscriptenWebSocketCreateAttributes attr;
+	emscripten_websocket_init_create_attributes(&attr);
+	attr.url = url;
+	attr.protocols = nullptr;
+	attr.createOnMainThread = true;
+
+	const EMSCRIPTEN_WEBSOCKET_T socket = emscripten_websocket_new(&attr);
+	if (socket <= 0) {
+		State = STATE_FAILED;
+		return false;
+	}
+
+	client->Socket = socket;
+	emscripten_websocket_set_onopen_callback(socket, client, On_Open);
+	emscripten_websocket_set_onmessage_callback(socket, client, On_Message);
+	emscripten_websocket_set_onerror_callback(socket, client, On_Error);
+	emscripten_websocket_set_onclose_callback(socket, client, On_Close);
+	State = STATE_CONNECTING;
+	return true;
+}
+
+void WSClientClass::Close(void)
+{
+	EmscriptenClientType *client = static_cast<EmscriptenClientType *>(Impl);
+	Reset_Client_State(client);
+	State = STATE_DISCONNECTED;
+}
+
+int WSClientClass::Poll(void)
+{
+	EmscriptenClientType *client = static_cast<EmscriptenClientType *>(Impl);
+
+	if (client->Socket > 0) {
+		unsigned short ready = 3;
+		if (emscripten_websocket_get_ready_state(client->Socket, &ready) == EMSCRIPTEN_RESULT_SUCCESS) {
+			switch (ready) {
+				case 0:
+					State = STATE_CONNECTING;
+					break;
+				case 1:
+					State = STATE_OPEN;
+					client->Opened = true;
+					break;
+				case 2:
+					State = STATE_CLOSING;
+					break;
+				default:
+					State = (State == STATE_CONNECTING) ? STATE_FAILED : STATE_DISCONNECTED;
+					client->Closed = true;
+					break;
+			}
+		}
+	}
+
+	if (client->Failed) {
+		State = STATE_FAILED;
+	} else if (client->Closed && State != STATE_FAILED) {
+		State = STATE_DISCONNECTED;
+	} else if (client->Opened && State == STATE_CONNECTING) {
+		State = STATE_OPEN;
+	}
+	return Receive_Queue_Size();
+}
+
+bool WSClientClass::Send_Binary(void const *data, std::size_t length)
+{
+	EmscriptenClientType *client = static_cast<EmscriptenClientType *>(Impl);
+	if (State != STATE_OPEN || client->Socket <= 0) {
+		return false;
+	}
+	if (length > UINT32_MAX) {
+		State = STATE_FAILED;
+		return false;
+	}
+
+	EMSCRIPTEN_RESULT result = emscripten_websocket_send_binary(
+		client->Socket,
+		const_cast<void *>(data),
+		static_cast<std::uint32_t>(length));
+	if (result != EMSCRIPTEN_RESULT_SUCCESS) {
+		State = STATE_FAILED;
+		return false;
+	}
+	return true;
+}
+
+bool WSClientClass::Receive_Binary(void **data, std::size_t *length)
+{
+	EmscriptenClientType *client = static_cast<EmscriptenClientType *>(Impl);
+	return Dequeue_Message(&client->ReceiveHead, &client->ReceiveTail, data, length);
+}
+
+int WSClientClass::Receive_Queue_Size(void) const
+{
+	EmscriptenClientType *client = static_cast<EmscriptenClientType *>(Impl);
+	return Count_Messages(client->ReceiveHead);
+}
+
+bool WSClientClass::Has_Pending_Output(void) const
+{
+	EmscriptenClientType *client = static_cast<EmscriptenClientType *>(Impl);
+	if (client->Socket <= 0) {
+		return false;
+	}
+	std::size_t buffered = 0;
+	return emscripten_websocket_get_buffered_amount(client->Socket, &buffered) == EMSCRIPTEN_RESULT_SUCCESS && buffered > 0;
+}
+
+#else
+
 namespace {
 
 struct QueuedBinaryMessage {
@@ -1077,3 +1348,5 @@ bool WSClientClass::Has_Pending_Output(void) const
 	NativeClientType *client = static_cast<NativeClientType *>(Impl);
 	return client->OutputLength > 0;
 }
+
+#endif

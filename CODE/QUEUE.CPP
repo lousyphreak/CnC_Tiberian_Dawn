@@ -77,12 +77,33 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 #include	"FUNCTION.H"
 #include	"CONNMGR.H"
+#include	"SDLINPUT.H"
 #include 	"TCPIP.H"
 
 /********************************** Defines *********************************/
 #define SHOW_MONO	1
 
 int tmp_flag = 0;
+
+static void Zero_Event_Memory(EventClass &event)
+{
+	unsigned char *bytes = reinterpret_cast<unsigned char *>(&event);
+	for (size_t index = 0; index < sizeof(EventClass); ++index) {
+		bytes[index] = 0;
+	}
+}
+
+static EventClass::EventType Read_Event_Type(void const *buffer)
+{
+	EventClass::EventType type;
+	memcpy(&type, buffer, sizeof(type));
+	return(type);
+}
+
+static void Write_Event_Type(void *buffer, EventClass::EventType type)
+{
+	memcpy(buffer, &type, sizeof(type));
+}
 
 /********************************** Globals *********************************/
 //---------------------------------------------------------------------------
@@ -145,8 +166,8 @@ static void Queue_AI_Normal(void);
 static void Queue_AI_Multiplayer(void);
 static RetcodeType Wait_For_Players(int first_time, ConnManClass *net,
 	int resend_delta, int dialog_time, int timeout, char *multi_packet_buf,
-	int my_sent, int32_t *their_frame,  unsigned short *their_sent,
-	unsigned short *their_recv);
+	int multi_packet_max, int my_sent, int32_t *their_frame,
+	unsigned short *their_sent, unsigned short *their_recv);
 static void Generate_Timing_Event(ConnManClass *net, int my_sent);
 static void Generate_Real_Timing_Event(ConnManClass *net, int my_sent);
 static void Generate_Process_Time_Event(ConnManClass *net);
@@ -604,7 +625,7 @@ static void Queue_AI_Multiplayer(void)
 		// Wait for the other guys
 		//.....................................................................
 		rc = Wait_For_Players (1, net, MIXFILE_RESEND_DELTA, FRAMESYNC_DLG_TIME*timeout_factor,
-			MIXFILE_TIMEOUT, multi_packet_buf, my_sent, their_frame,
+			MIXFILE_TIMEOUT, multi_packet_buf, multi_packet_max, my_sent, their_frame,
 			their_sent, their_recv);
 
 		if (rc != RC_NORMAL) {
@@ -719,7 +740,7 @@ static void Queue_AI_Multiplayer(void)
 		(MultiplayerMaxAhead << 3),
 		MAX ( net->Response_Time() * 3, FRAMESYNC_DLG_TIME*timeout_factor ),
 		FRAMESYNC_TIMEOUT * (timeout_factor*2),
-		multi_packet_buf, my_sent, their_frame,
+		multi_packet_buf, multi_packet_max, my_sent, their_frame,
 		their_sent, their_recv);
 
 	if (rc != RC_NORMAL) {
@@ -797,8 +818,8 @@ static void Queue_AI_Multiplayer(void)
  *=========================================================================*/
 static RetcodeType Wait_For_Players(int first_time, ConnManClass *net,
 	int resend_delta, int dialog_time, int timeout, char *multi_packet_buf,
-	int my_sent, int32_t *their_frame, unsigned short *their_sent,
-	unsigned short *their_recv)
+	int multi_packet_max, int my_sent, int32_t *their_frame,
+	unsigned short *their_sent, unsigned short *their_recv)
 {
 	//........................................................................
 	// Variables for sending, receiving & parsing packets:
@@ -806,6 +827,7 @@ static RetcodeType Wait_For_Players(int first_time, ConnManClass *net,
 	int packetlen;							// size of meta-packet sent, & received
 	int id;									// id of other player
 	int messages_this_loop;				// to limit # messages processed each loop
+	int message_limit;					// max # messages we'll read this pass
 
 	//........................................................................
 	// Variables used only if 'first_time':
@@ -912,8 +934,15 @@ static RetcodeType Wait_For_Players(int first_time, ConnManClass *net,
 		// possible to go into an infinite loop processing serial-link messages.
 		//---------------------------------------------------------------------
 		messages_this_loop = 0;
-		while ( (messages_this_loop++ < 5) &&
-			net->Get_Private_Message (multi_packet_buf, &packetlen, &id) ) {
+		message_limit = 5;
+		if (Is_Online_Game(GameToPlay)) {
+			message_limit = MAX(message_limit, net->Private_Num_Receive());
+		}
+		while (messages_this_loop++ < message_limit) {
+			packetlen = multi_packet_max;
+			if (!net->Get_Private_Message(multi_packet_buf, &packetlen, &id)) {
+				break;
+			}
 			Update_Queue_Mono (net, 5);
 
 			/*..................................................................
@@ -990,6 +1019,10 @@ static RetcodeType Wait_For_Players(int first_time, ConnManClass *net,
 			Map.Render();
 		}
 
+#ifdef __EMSCRIPTEN__
+		SDL_GameInput_Delay(1);
+#endif
+
 	}	/* end of while */
 
 	//------------------------------------------------------------------------
@@ -1031,6 +1064,7 @@ static void Generate_Timing_Event(ConnManClass *net, int my_sent)
 {
 	uint32_t resp_time;			// connection response time, in ticks
 	EventClass ev;
+	Zero_Event_Memory(ev);
 
 	//------------------------------------------------------------------------
 	// Measure the current connection response time.  This time will be in
@@ -1101,6 +1135,7 @@ static void Generate_Real_Timing_Event(ConnManClass *net, int my_sent)
 {
 	uint32_t resp_time;			// connection response time, in ticks
 	EventClass ev;
+	Zero_Event_Memory(ev);
 	int highest_ticks;
 	int i;
 	int specified_frame_rate;
@@ -1211,6 +1246,7 @@ static void Generate_Real_Timing_Event(ConnManClass *net, int my_sent)
 static void Generate_Process_Time_Event(ConnManClass *net)
 {
 	EventClass ev;
+	Zero_Event_Memory(ev);
 	int avgticks;
 	uint32_t resp_time;			// connection response time, in ticks
 
@@ -1234,6 +1270,10 @@ static void Generate_Process_Time_Event(ConnManClass *net)
 		Mono_Set_Cursor(0,23);
 		Mono_Printf("Processing Ticks:%03d Frames:%03d\n", ProcessTicks,ProcessFrames);
 		MonoClass::Disable();
+	}
+
+	if (ProcessFrames <= 0) {
+		return;
 	}
 
 	avgticks = ProcessTicks / ProcessFrames;
@@ -1456,12 +1496,7 @@ static void Send_FrameSync(ConnManClass *net, int cmd_count)
 	// scenario-based CRC rather than a game-state-based CRC, to let the
 	// games compare scenario CRC's on startup.
 	//------------------------------------------------------------------------
-	packet.Type = EventClass::EMPTY;
-	packet.Frame = 0;
-	packet.ID = 0;
-	packet.IsExecuted = 0;
-	packet.MultiplayerID = 0;
-	memset(&packet.Data, 0, sizeof(packet.Data));
+	Zero_Event_Memory(packet);
 	packet.Type = EventClass::FRAMESYNC;
 	if (CommProtocol == COMM_PROTOCOL_MULTI_E_COMP) {
 		packet.Frame = ((Frame + MultiplayerMaxAhead + (FrameSendRate - 1)) /
@@ -1526,26 +1561,32 @@ static RetcodeType Process_Receive_Packet(ConnManClass *net,
 	char *multi_packet_buf, int id, int packetlen, int32_t *their_frame,
 	unsigned short *their_sent, unsigned short *their_recv)
 {
-	EventClass *event;
+	EventClass event;
 	int index;
 	RetcodeType retcode = RC_NORMAL;
 	int i;
+	const int frameinfo_size = offsetof(EventClass, Data) +
+		size_of(EventClass, Data.FrameInfo);
 
 	//------------------------------------------------------------------------
 	//	Get an event ptr to the incoming message
 	//------------------------------------------------------------------------
-	event = (EventClass *)multi_packet_buf;
+	Zero_Event_Memory(event);
+	memcpy(&event, multi_packet_buf, MIN(packetlen, frameinfo_size));
 
 	//------------------------------------------------------------------------
 	//	Get the index of the sender
 	//------------------------------------------------------------------------
 	index = net->Connection_Index(id);
+	if (index == ConnManClass::CONNECTION_NONE || index < 0 || index >= net->Num_Connections()) {
+		return (retcode);
+	}
 
 	//------------------------------------------------------------------------
 	//	Compute the other player's frame # (at the time this packet was sent)
 	//------------------------------------------------------------------------
 	if (their_frame[index] <
-		(int)(event->Frame - event->Data.FrameInfo.Delay)) {
+		(int)(event.Frame - event.Data.FrameInfo.Delay)) {
 
 		//.....................................................................
 		// If the original frame # for this player is -1, it means we've heard
@@ -1555,15 +1596,15 @@ static RetcodeType Process_Receive_Packet(ConnManClass *net,
 			retcode = RC_PLAYER_READY;
 		}
 
-		their_frame[index] = event->Frame - event->Data.FrameInfo.Delay;
+		their_frame[index] = event.Frame - event.Data.FrameInfo.Delay;
 	}
 
 	//------------------------------------------------------------------------
 	//	Extract the other player's CommandCount.  This count will include
 	//	the commands in this packet, if there are any.
 	//------------------------------------------------------------------------
-	if (event->Data.FrameInfo.CommandCount > their_sent[index]) {
-		their_sent[index] = event->Data.FrameInfo.CommandCount;
+	if (event.Data.FrameInfo.CommandCount > their_sent[index]) {
+		their_sent[index] = event.Data.FrameInfo.CommandCount;
 	}
 
 	//------------------------------------------------------------------------
@@ -1572,7 +1613,7 @@ static RetcodeType Process_Receive_Packet(ConnManClass *net,
 	//	- Increment our commands-received counter by the number of non-
 	//	  FRAMEINFO packets received
 	//------------------------------------------------------------------------
-	if (event->Type != EventClass::FRAMESYNC) {
+	if (event.Type != EventClass::FRAMESYNC) {
 		//.....................................................................
 		// Break up the packet into its component events.  A returned packet
 		// count of -1 indicates a fatal queue-full error.
@@ -1585,7 +1626,7 @@ static RetcodeType Process_Receive_Packet(ConnManClass *net,
 		// Compute the actual # commands in the packet by subtracting off the
 		// FRAMEINFO event
 		//.....................................................................
-		if ( (event->Type==EventClass::FRAMEINFO) && (i > 0)) {
+		if ( (event.Type==EventClass::FRAMEINFO) && (i > 0)) {
 			i--;
 		}
 
@@ -1596,7 +1637,7 @@ static RetcodeType Process_Receive_Packet(ConnManClass *net,
 	//	If the event was a FRAMESYNC packet, there will be no commands to add,
 	//	but we must check the ScenarioCRC value.
 	//------------------------------------------------------------------------
-	else if (event->Data.FrameInfo.CRC != ScenarioCRC) {
+	else if (event.Data.FrameInfo.CRC != ScenarioCRC) {
 		return (RC_SCENARIO_MISMATCH);
 	}
 
@@ -1836,7 +1877,7 @@ static int Process_Reconnect_Dialog(CountDownTimerClass *timeout_timer,
 {
 	static int displayed_time = 0;	// time value currently displayed
 	int new_time;
-	int oldest_index;						// index of person requiring a reconnect
+	int oldest_index = 0;				// index of person requiring a reconnect
 	int i,j;
 
 	//------------------------------------------------------------------------
@@ -2039,7 +2080,7 @@ static int Build_Send_Packet(void *buf, int bufsize, int frame_delay,
 	int num_cmds, int cap)
 {
 	int size = 0;
-	EventClass *finfo;
+	EventClass finfo;
 
 	//------------------------------------------------------------------------
 	// All events start with a FRAMEINFO event; fill this part in.
@@ -2047,26 +2088,26 @@ static int Build_Send_Packet(void *buf, int bufsize, int frame_delay,
 	//........................................................................
 	// Set the event type
 	//........................................................................
-	finfo = (EventClass *)buf;
-	finfo->Type = EventClass::FRAMEINFO;
+	Zero_Event_Memory(finfo);
+	finfo.Type = EventClass::FRAMEINFO;
 	//........................................................................
 	// Set the frame to execute this event on; this is protocol-specific
 	//........................................................................
 	if (CommProtocol == COMM_PROTOCOL_MULTI_E_COMP) {
-		finfo->Frame = ((Frame + frame_delay + (FrameSendRate - 1)) /
+		finfo.Frame = ((Frame + frame_delay + (FrameSendRate - 1)) /
 			 FrameSendRate) * FrameSendRate;
 	}
 	else {
-		finfo->Frame = Frame + frame_delay;
+		finfo.Frame = Frame + frame_delay;
 	}
 	//........................................................................
 	// Fill in the rest of the event
 	//........................................................................
-	finfo->ID = Houses.ID(PlayerPtr);
-	finfo->MultiplayerID = MultiplayerLocalID;
-	finfo->Data.FrameInfo.CRC = GameCRC;
-	finfo->Data.FrameInfo.CommandCount = num_cmds;
-	finfo->Data.FrameInfo.Delay = frame_delay;
+	finfo.ID = Houses.ID(PlayerPtr);
+	finfo.MultiplayerID = MultiplayerLocalID;
+	finfo.Data.FrameInfo.CRC = GameCRC;
+	finfo.Data.FrameInfo.CommandCount = num_cmds;
+	finfo.Data.FrameInfo.Delay = frame_delay;
 
 	//------------------------------------------------------------------------
 	// Initialize the # of bytes processed; this is protocol-specific
@@ -2078,6 +2119,7 @@ static int Build_Send_Packet(void *buf, int bufsize, int frame_delay,
 		size += (offsetof(EventClass, Data) +
 			size_of(EventClass, Data.FrameInfo));
 	}
+	memcpy(buf, &finfo, size);
 
 	//------------------------------------------------------------------------
 	//	Transfer all events from the OutList into the DoList, building our
@@ -2228,12 +2270,7 @@ static int Add_Compressed_Events(void *buf, int bufsize, int frame_delay,
 	//------------------------------------------------------------------------
 	// clear previous event
 	//------------------------------------------------------------------------
-	prevevent.Type = EventClass::EMPTY;
-	prevevent.Frame = 0;
-	prevevent.ID = 0;
-	prevevent.IsExecuted = 0;
-	prevevent.MultiplayerID = 0;
-	memset(&prevevent.Data, 0, sizeof(prevevent.Data));
+	Zero_Event_Memory(prevevent);
 
 	//------------------------------------------------------------------------
 	// Loop until there are no more events, we've processed our max # of
@@ -2376,7 +2413,7 @@ static int Add_Compressed_Events(void *buf, int bufsize, int frame_delay,
 			//..................................................................
 			case (EventClass::RESPONSE_TIME):
 
-				*(EventClass::EventType *)( ((char *)buf) + size) = eventtype;
+				Write_Event_Type(((char *)buf) + size, eventtype);
 
 				memcpy ( ((char *)buf) + size + sizeof(EventClass::EventType),
 					&OutList.First().Data.FrameInfo.Delay, datasize );
@@ -2410,7 +2447,7 @@ static int Add_Compressed_Events(void *buf, int bufsize, int frame_delay,
 				else {
 					*unitsptr = numunits;
 
-					*(EventClass::EventType *)( ((char *)buf) + size) = eventtype;
+					Write_Event_Type(((char *)buf) + size, eventtype);
 
 					memcpy ( ((char *)buf) + size +
 						sizeof(EventClass::EventType) + sizeof(numunits),
@@ -2424,7 +2461,7 @@ static int Add_Compressed_Events(void *buf, int bufsize, int frame_delay,
 			// Default case: Just copy over the data field from the union
 			//..................................................................
 			default:
-				*(EventClass::EventType *)( ((char *)buf) + size) = eventtype;
+				Write_Event_Type(((char *)buf) + size, eventtype);
 
 				memcpy ( ((char *)buf) + size + sizeof(EventClass::EventType),
 					&OutList.First().Data, datasize );
@@ -2574,21 +2611,18 @@ static int Extract_Compressed_Events(void *buf, int bufsize)
 {
 	int pos = 0;						// current buffer parsing position
 	int leftover = bufsize;			// # bytes left to process
-	EventClass *event;				// event ptr for parsing buffer
 	int count = 0;						// # events processed
 	int datasize = 0;					// size of data to copy
 	EventClass eventdata;			// stores Frame, ID, etc
+	EventClass frameinfo;
+	EventClass::EventType eventtype;
 	unsigned char numunits = 0;	// # units stored in compressed MegaMissions
 //int lasteventtype=0;
 	//------------------------------------------------------------------------
 	// Clear work event structure
 	//------------------------------------------------------------------------
-	eventdata.Type = EventClass::EMPTY;
-	eventdata.Frame = 0;
-	eventdata.ID = 0;
-	eventdata.IsExecuted = 0;
-	eventdata.MultiplayerID = 0;
-	memset(&eventdata.Data, 0, sizeof(eventdata.Data));
+	Zero_Event_Memory(eventdata);
+	Zero_Event_Memory(frameinfo);
 
 	//------------------------------------------------------------------------
 	// Assume the first event is a FRAMEINFO event
@@ -2598,22 +2632,25 @@ static int Extract_Compressed_Events(void *buf, int bufsize)
 	//------------------------------------------------------------------------
 	datasize = (offsetof(EventClass, Data) +
 		size_of(EventClass, Data.FrameInfo)) - sizeof(EventClass::EventType);
-	event = (EventClass *)(((char *)buf) + pos);
+	eventtype = Read_Event_Type(((char *)buf) + pos);
 
 	while (leftover >= (datasize + static_cast<int>(sizeof(EventClass::EventType))) ) {
 		//.....................................................................
 		// add event to the DoList, only if it's not a FRAMESYNC
 		// (but FRAMEINFO's do get added.)
 		//.....................................................................
-		if (event->Type != EventClass::FRAMESYNC) {
+		if (eventtype != EventClass::FRAMESYNC) {
 			//..................................................................
 			// initialize the common data from the FRAMEINFO event
 			// keeping IsExecuted 0
 			//..................................................................
-			if (event->Type == EventClass::FRAMEINFO) {
-				eventdata.Frame = event->Frame;
-				eventdata.ID = event->ID;
-				eventdata.MultiplayerID = event->MultiplayerID;
+			if (eventtype == EventClass::FRAMEINFO) {
+				Zero_Event_Memory(frameinfo);
+				memcpy(static_cast<void *>(reinterpret_cast<unsigned char *>(&frameinfo)), ((char *)buf) + pos,
+					offsetof(EventClass, Data) + size_of(EventClass, Data.FrameInfo));
+				eventdata.Frame = frameinfo.Frame;
+				eventdata.ID = frameinfo.ID;
+				eventdata.MultiplayerID = frameinfo.MultiplayerID;
 
 				//...............................................................
 				// Adjust position past the common data
@@ -2626,7 +2663,7 @@ static int Extract_Compressed_Events(void *buf, int bufsize)
 			//..................................................................
 			// if MEGAMISSION event get the number of units (events to generate)
 			//..................................................................
-			else if (event->Type == EventClass::MEGAMISSION) {
+			else if (eventtype == EventClass::MEGAMISSION) {
 				numunits = *(((unsigned char *)buf) + pos + sizeof(eventdata.Type));
 				pos += sizeof(numunits);
 				leftover -= sizeof(numunits);
@@ -2636,7 +2673,11 @@ static int Extract_Compressed_Events(void *buf, int bufsize)
 			// clear the union data portion of the event
 			//..................................................................
 			memset (&eventdata.Data, 0, sizeof(eventdata.Data));
-			eventdata.Type = event->Type;
+			if (static_cast<int>(eventtype) < 0 ||
+				static_cast<int>(eventtype) >= static_cast<int>(EventClass::LAST_EVENT)) {
+				break;
+			}
+			eventdata.Type = eventtype;
 			datasize = EventClass::EventLength[ eventdata.Type ];
 
 			switch (eventdata.Type) {
@@ -2714,10 +2755,14 @@ CCDebugString (flip);
 			pos += (datasize + sizeof(EventClass::EventType));
 			leftover -= (datasize + sizeof(EventClass::EventType));
 
-			if (leftover) {
-				event = (EventClass *)(((char *)buf) + pos);
-				datasize = EventClass::EventLength[ event->Type ];
-				if (event->Type == EventClass::MEGAMISSION) {
+			if (leftover >= static_cast<int>(sizeof(EventClass::EventType))) {
+				eventtype = Read_Event_Type(((char *)buf) + pos);
+				if (static_cast<int>(eventtype) < 0 ||
+					static_cast<int>(eventtype) >= static_cast<int>(EventClass::LAST_EVENT)) {
+					break;
+				}
+				datasize = EventClass::EventLength[eventtype];
+				if (eventtype == EventClass::MEGAMISSION) {
 					datasize += sizeof(numunits);
 				}
 			}
@@ -2729,7 +2774,9 @@ CCDebugString (flip);
 		else {
 			pos += (datasize + sizeof(EventClass::EventType));
 			leftover -= (datasize + sizeof(EventClass::EventType));
-			event = (EventClass *)(((char *)buf) + pos);
+			if (leftover >= static_cast<int>(sizeof(EventClass::EventType))) {
+				eventtype = Read_Event_Type(((char *)buf) + pos);
+			}
 
 			//..................................................................
 			// size of FRAMESYNC event - EventType size

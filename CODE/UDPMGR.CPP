@@ -675,6 +675,27 @@ int UDPManagerClass::Send_Global_Message(void *buf, int buflen,
 	int ack_req, UDPAddressClass *address)
 {
 	int rc;
+	if (Winsock.Uses_Reliable_Transport()) {
+		const int packet_len = buflen + sizeof(GlobalHeaderType);
+		char *packet = new char[packet_len];
+		GlobalHeaderType *header = (GlobalHeaderType *)packet;
+
+		header->Header.MagicNumber = GlobalChannel->Magic_Num();
+		header->Header.Code = ConnectionClass::PACKET_DATA_NOACK;
+		header->Header.PacketID = GlobalChannel->Queue->Send_Total();
+		header->Address = address != NULL ? *address : UDPAddressClass();
+		header->ProductID = ProductID;
+		memcpy(packet + sizeof(GlobalHeaderType), buf, buflen);
+
+		if (getenv("TD_TRACE_NETWORK") != NULL) {
+			fprintf(stderr, "[udpmgr] Send_Global_Message via Winsock buflen=%d\n", packet_len);
+			fflush(stderr);
+		}
+
+		Winsock.Write(packet, packet_len);
+		delete [] packet;
+		return(true);
+	}
 
 	/*
 	------------ Error if IPX not installed or not Listening -----------------
@@ -742,6 +763,9 @@ int UDPManagerClass::Send_Private_Message(void *buf, int buflen, int ack_req,
 {
 	int i;						// loop counter
 	int connect_idx;			// index of channel to send to, if specified
+	if (Winsock.Uses_Reliable_Transport()) {
+		ack_req = 0;
+	}
 
 	/*
 	------------ Error if IPX not installed or not Listening -----------------
@@ -956,7 +980,15 @@ int UDPManagerClass::Service(void)
 	** Always service Winsock first so direct TCP listeners can accept
 	** clients even before the connection is marked established.
 	*/
-	Winsock.Service();
+	if (Winsock.Using_TCP()) {
+		Winsock.Service();
+		if (Winsock.Get_Connection_Status() == TcpipManagerClass::CONNECTION_LOST) {
+			BadConnection = (NumConnections > 0) ? Connection[0]->ID : UDPConnClass::CONNECTION_NONE;
+			return 0;
+		}
+	} else {
+		Winsock.Service();
+	}
 
 	if (Winsock.Get_Connected()){
 
@@ -991,7 +1023,11 @@ int UDPManagerClass::Service(void)
 			/*.....................................................................
 			Extract the sender's address from the IPX header
 			.....................................................................*/
-			address.Set_Address (CurHeaderBuf);
+			if (Winsock.Using_TCP()) {
+				Winsock.Get_Remote_Address(&address);
+			} else {
+				address.Set_Address (CurHeaderBuf);
+			}
 
 			/*.....................................................................
 			Examine the Magic Number of the received packet to determine if this

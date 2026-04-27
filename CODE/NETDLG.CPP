@@ -142,6 +142,15 @@ static void NetDlg_Trace(char const* format, ...)
 	va_end(arguments);
 }
 
+static bool Direct_TCP_Autostart_Enabled(void)
+{
+	static int enabled = -1;
+	if (enabled == -1) {
+		enabled = (getenv("TD_DIRECT_TCP_AUTOSTART") != NULL) ? 1 : 0;
+	}
+	return(enabled != 0);
+}
+
 
 #ifndef DEMO
 
@@ -190,7 +199,7 @@ static void Wol_Reset_Game_Ids(void);
 static void Wol_Remove_Game_Id(int index);
 static uint32_t Wol_Game_Id(int index);
 static bool Wol_Join_Server_Game(int game_index);
-static JoinEventType Drain_Wol_Lobby_Control(ListClass *gamelist);
+static JoinEventType Drain_Wol_Lobby_Control(ListClass *gamelist, ColorListClass *playerlist, int selected_game);
 
 ConnManClass *Current_Network_Manager(void)
 {
@@ -212,6 +221,11 @@ static uint32_t Current_Global_Response_Time(void)
 }
 
 #define NetMgr (*Current_Network_Manager())
+
+static bool Is_Direct_TCP_Client(void)
+{
+	return GameToPlay == GAME_INTERNET && InternetTransport == INTERNET_TRANSPORT_TCP && InternetGameRole == INTERNET_JOIN;
+}
 
 static void Drain_Global_Send_Queue(void)
 {
@@ -241,6 +255,11 @@ static void Drain_Global_Send_Queue(void)
 
 static void Wait_For_Global_Acks(void)
 {
+	if (GameToPlay == GAME_WOL) {
+		Drain_Global_Send_Queue();
+		return;
+	}
+
 	while (NetMgr.Global_Num_Send() > 0) {
 		NetMgr.Service();
 		SDL_GameInput_Delay(1);
@@ -735,8 +754,8 @@ bool Client_Remote_Connect(void)
 	*/
 	MultiplayerGameName[0] = 0;
 
-	if (Internet_Has_Command_Line_Connect()) {
-		if (Internet_Command_Line_Is_Host()) {
+	if (Is_Direct_TCP_Client()) {
+		if (Internet_Has_Command_Line_Connect() && Internet_Command_Line_Is_Host()) {
 			NetDlg_Trace("Client_Remote_Connect command line role mismatch (expected client)");
 			Write_MultiPlayer_Settings();
 			NetStealth = stealth;
@@ -1471,6 +1490,15 @@ static int Net_Join_Dialog(void)
 					break;
 				}
 			case (BUTTON_CANCEL | KN_BUTTON):
+				if (namebuf[0] != '\0' && strcmp(MultiplayerName, namebuf) != 0) {
+					SDL_strlcpy(MultiplayerName, namebuf, sizeof(MultiplayerName));
+					Write_MultiPlayer_Settings();
+				}
+
+				if (GameToPlay == GAME_WOL && (joinstate == JOIN_CONFIRMED || joinstate == JOIN_WAIT_CONFIRM)) {
+					Wol.Send_Game_Leave();
+				}
+
 				memset (&GPacket, 0, sizeof(GlobalPacketType));
 
 				GPacket.Command = NET_SIGN_OFF;
@@ -1567,6 +1595,7 @@ static int Net_Join_Dialog(void)
 				*/
 				strcpy(MultiplayerName,namebuf);
 				strcpy(MultiplayerGameName,namebuf);
+				Write_MultiPlayer_Settings();
 
 				name_edt.Clear_Focus();
 				name_edt.Flag_To_Redraw();
@@ -2150,9 +2179,7 @@ static int Request_To_Join (char *playername, int join_index, ListClass *playerl
 	HousesType house, int color)
 {
 	int i;
-	const bool direct_tcp_client = (GameToPlay == GAME_INTERNET
-		&& Internet_Has_Command_Line_Connect()
-		&& !Internet_Command_Line_Is_Host());
+	const bool direct_tcp_client = Is_Direct_TCP_Client();
 
 	(void)playerlist;	// shaddup, Mr stupid compiler!
 
@@ -2203,11 +2230,11 @@ static int Request_To_Join (char *playername, int join_index, ListClass *playerl
 #else
 	v = Version_Number();
 #endif
-	if (!direct_tcp_client && Games[join_index]->Game.Version > v) {
+	if (GameToPlay != GAME_WOL && !direct_tcp_client && Games[join_index]->Game.Version > v) {
 		CCMessageBox().Process (TXT_YOURGAME_OUTDATED);
 		return(false);
 	} else {
-		if (!direct_tcp_client && Games[join_index]->Game.Version < v) {
+		if (GameToPlay != GAME_WOL && !direct_tcp_client && Games[join_index]->Game.Version < v) {
 			CCMessageBox().Process (TXT_DESTGAME_OUTDATED);
 			return(false);
 		}
@@ -2216,7 +2243,10 @@ static int Request_To_Join (char *playername, int join_index, ListClass *playerl
 	/*
 	----------------------------- Save game name -----------------------------
 	*/
-	strcpy (MultiplayerName,playername);
+	if (playername != MultiplayerName) {
+		SDL_strlcpy(MultiplayerName, playername, sizeof(MultiplayerName));
+		Write_MultiPlayer_Settings();
+	}
 
 	/*
 	---------------- Register this client with the server-hosted game --------
@@ -2551,7 +2581,101 @@ static JoinEventType Wol_Reconcile_Game_List(ListClass *gamelist, uint8_t const 
 	return(retcode);
 }
 
-static JoinEventType Drain_Wol_Lobby_Control(ListClass *gamelist)
+static JoinEventType Wol_Update_Player_Node(ColorListClass *playerlist, int selected_game, char const *name, uint32_t client_id)
+{
+	if (playerlist == NULL || selected_game < -1 || selected_game >= Games.Count() || name == NULL || name[0] == '\0') {
+		return(EV_NONE);
+	}
+
+	UDPAddressClass address;
+	WSManagerClass::Client_Id_To_Address(client_id, &address);
+
+	if (Wol.My_Client_Id() == client_id || !strcmp(name, MultiplayerName)) {
+		return(EV_NONE);
+	}
+
+	for (int i = 0; i < Players.Count(); i++) {
+		if (Players[i]->Address == address) {
+			SDL_strlcpy(Players[i]->Name, name, sizeof(Players[i]->Name));
+			return(EV_NONE);
+		}
+	}
+
+	NodeNameType *who = new NodeNameType;
+	SDL_strlcpy(who->Name, name, sizeof(who->Name));
+	who->Address = address;
+	who->Player.House = HOUSE_GOOD;
+	who->Player.Color = 0;
+	Players.Add(who);
+
+	char *item = new char[MPLAYER_NAME_MAX + 4];
+	sprintf(item, "%s\t%s", name, Text_String(TXT_G_D_I));
+	playerlist->Add_Item(item, MultiplayerTColors[who->Player.Color]);
+	playerlist->Flag_To_Redraw();
+	return(EV_NEW_PLAYER);
+}
+
+static JoinEventType Wol_Remove_Player_Node(ColorListClass *playerlist, uint32_t client_id)
+{
+	if (playerlist == NULL) {
+		return(EV_NONE);
+	}
+
+	UDPAddressClass address;
+	WSManagerClass::Client_Id_To_Address(client_id, &address);
+
+	for (int i = 0; i < Players.Count(); i++) {
+		if (Players[i]->Address == address) {
+			char *item = (char *)playerlist->Get_Item(i);
+			if (item != NULL) {
+				playerlist->Remove_Item(item);
+				delete [] item;
+			}
+			delete Players[i];
+			Players.Delete(Players[i]);
+			playerlist->Flag_To_Redraw();
+			return(EV_PLAYER_SIGNOFF);
+		}
+	}
+
+	return(EV_NONE);
+}
+
+static JoinEventType Wol_Reconcile_Game_Members(ColorListClass *playerlist, int selected_game, uint8_t const *&p, uint8_t const *end)
+{
+	if (playerlist == NULL || selected_game < 0 || selected_game >= Games.Count() || end - p < 10) {
+		return(EV_NONE);
+	}
+
+	uint32_t game_id = WolProto::Read_U32(p);
+	(void) WolProto::Read_U32(p);
+	uint16_t count = WolProto::Read_U16(p);
+	if (Wol_Game_Id(selected_game) != game_id) {
+		return(EV_NONE);
+	}
+
+	JoinEventType retcode = EV_NONE;
+	for (uint16_t index = 0; index < count; index++) {
+		if (end - p < 4) {
+			break;
+		}
+
+		uint32_t cid = WolProto::Read_U32(p);
+		char nick[MPLAYER_NAME_MAX];
+		if (!Wol_Read_Control_String(p, end, nick, sizeof(nick))) {
+			break;
+		}
+
+		JoinEventType event = Wol_Update_Player_Node(playerlist, selected_game, nick, cid);
+		if (retcode == EV_NONE && event != EV_NONE) {
+			retcode = event;
+		}
+	}
+
+	return(retcode);
+}
+
+static JoinEventType Drain_Wol_Lobby_Control(ListClass *gamelist, ColorListClass *playerlist, int selected_game)
 {
 	uint8_t buffer[4096];
 	JoinEventType retcode = EV_NONE;
@@ -2565,8 +2689,60 @@ static JoinEventType Drain_Wol_Lobby_Control(ListClass *gamelist)
 
 		uint8_t const *p = buffer;
 		uint8_t const *end = buffer + buffer_len;
-		if (opcode == WolProto::OP_GAME_LIST_REPLY) {
+		if (opcode == WolProto::OP_CHANNEL_JOINED) {
+			char channel_name[64];
+			if (!Wol_Read_Control_String(p, end, channel_name, sizeof(channel_name)) || end - p < 2) {
+				continue;
+			}
+			uint16_t count = WolProto::Read_U16(p);
+			for (uint16_t index = 0; index < count; index++) {
+				if (end - p < 4) {
+					break;
+				}
+				uint32_t cid = WolProto::Read_U32(p);
+				char nick[MPLAYER_NAME_MAX];
+				if (!Wol_Read_Control_String(p, end, nick, sizeof(nick))) {
+					break;
+				}
+				if (selected_game == -1) {
+					JoinEventType event = Wol_Update_Player_Node(playerlist, selected_game, nick, cid);
+					if (retcode == EV_NONE && event != EV_NONE) {
+						retcode = event;
+					}
+				}
+			}
+		} else if (opcode == WolProto::OP_CHANNEL_USER_JOIN) {
+			if (end - p >= 4) {
+				uint32_t cid = WolProto::Read_U32(p);
+				char nick[MPLAYER_NAME_MAX];
+				if (selected_game == -1 && Wol_Read_Control_String(p, end, nick, sizeof(nick))) {
+					JoinEventType event = Wol_Update_Player_Node(playerlist, selected_game, nick, cid);
+					if (retcode == EV_NONE && event != EV_NONE) {
+						retcode = event;
+					}
+				}
+			}
+		} else if (opcode == WolProto::OP_CHANNEL_USER_LEAVE) {
+			if (end - p >= 4 && selected_game == -1) {
+				JoinEventType event = Wol_Remove_Player_Node(playerlist, WolProto::Read_U32(p));
+				if (retcode == EV_NONE && event != EV_NONE) {
+					retcode = event;
+				}
+			}
+		} else if (opcode == WolProto::OP_PEER_LEFT) {
+			if (end - p >= 4) {
+				JoinEventType event = Wol_Remove_Player_Node(playerlist, WolProto::Read_U32(p));
+				if (retcode == EV_NONE && event != EV_NONE) {
+					retcode = event;
+				}
+			}
+		} else if (opcode == WolProto::OP_GAME_LIST_REPLY) {
 			JoinEventType event = Wol_Reconcile_Game_List(gamelist, p, end);
+			if (retcode == EV_NONE && event != EV_NONE) {
+				retcode = event;
+			}
+		} else if (opcode == WolProto::OP_GAME_MEMBERS) {
+			JoinEventType event = Wol_Reconcile_Game_Members(playerlist, selected_game, p, end);
 			if (retcode == EV_NONE && event != EV_NONE) {
 				retcode = event;
 			}
@@ -2628,14 +2804,18 @@ static JoinEventType Get_Join_Responses(JoinStateType *joinstate, ListClass *gam
 	unsigned short magic_number;
 	unsigned short	crc;
 
+	if (GameToPlay == GAME_WOL) {
+		JoinEventType control_event = Drain_Wol_Lobby_Control(gamelist, playerlist, gamelist != NULL ? gamelist->Current_Index() : join_index);
+		if (control_event != EV_NONE) {
+			return(control_event);
+		}
+	}
+
 	/*------------------------------------------------------------------------
 	If there is no incoming packet, just return
 	------------------------------------------------------------------------*/
 	rc = NetMgr.Get_Global_Message (&GPacket, &GPacketlen, &GAddress, &GProductID);
 	if (!rc || GProductID != UDPGlobalConnClass::COMMAND_AND_CONQUER) {
-		if (GameToPlay == GAME_WOL) {
-			return(Drain_Wol_Lobby_Control(gamelist));
-		}
 		return(EV_NONE);
 	}
 
@@ -2807,6 +2987,10 @@ static JoinEventType Get_Join_Responses(JoinStateType *joinstate, ListClass *gam
 	------------------------------------------------------------------------*/
 	else if (GPacket.Command==NET_REJECT_JOIN) {
 		if ( (*joinstate) != JOIN_REJECTED) {
+			if (GameToPlay == GAME_WOL && ((*joinstate) == JOIN_CONFIRMED || (*joinstate) == JOIN_WAIT_CONFIRM)) {
+				Wol.Send_Game_Leave();
+			}
+
 			memset (&GPacket, 0, sizeof(GlobalPacketType));
 
 			GPacket.Command = NET_SIGN_OFF;
@@ -2867,6 +3051,7 @@ static JoinEventType Get_Join_Responses(JoinStateType *joinstate, ListClass *gam
 				}
 			}
 
+			NetDlg_Trace("Get_Join_Responses NET_GAME_OPTIONS scenario=%d", ScenarioIdx);
 			retcode = EV_GAME_OPTIONS;
 		}
 	}
@@ -2951,6 +3136,7 @@ static JoinEventType Get_Join_Responses(JoinStateType *joinstate, ListClass *gam
 			MultiplayerMaxAhead = GPacket.ResponseTime.OneWay;
 			(*joinstate) = JOIN_GAME_START;
 			retcode = EV_STATE_CHANGE;
+			NetDlg_Trace("Get_Join_Responses NET_GO maxahead=%d", MultiplayerMaxAhead);
 CCDebugString ("C&C95 - Received the 'GO' packet\n");
 		}
 	}
@@ -4013,6 +4199,16 @@ static int Net_New_Dialog(void)
 			transmit = 0;
 		}
 
+		if (Direct_TCP_Autostart_Enabled() &&
+			GameToPlay == GAME_INTERNET &&
+			InternetTransport == INTERNET_TRANSPORT_TCP &&
+			InternetGameRole == INTERNET_HOST &&
+			Players.Count() > 0) {
+			NetDlg_Trace("Net_New_Dialog direct TCP autostart players=%d", Players.Count() + 1);
+			rc = TRUE;
+			process = FALSE;
+		}
+
 		/*---------------------------------------------------------------------
 		Ping every player in my game, to force the Global Channel to measure
 		the connection response time.
@@ -4191,6 +4387,13 @@ static JoinEventType Get_NewGame_Responses(ColorListClass *playerlist)
 	unsigned short magic_number;
 	unsigned short crc;
 
+	if (GameToPlay == GAME_WOL) {
+		JoinEventType control_event = Drain_Wol_Lobby_Control(NULL, playerlist, -2);
+		if (control_event != EV_NONE) {
+			return(control_event);
+		}
+	}
+
 	/*------------------------------------------------------------------------
 	If there is no incoming packet, just return
 	------------------------------------------------------------------------*/
@@ -4302,6 +4505,16 @@ static JoinEventType Get_NewGame_Responses(ColorListClass *playerlist)
 
 			NetMgr.Send_Global_Message (&GPacket, sizeof (GlobalPacketType),
 				1, &GAddress);
+
+			if (GameToPlay == GAME_INTERNET && InternetTransport == INTERNET_TRANSPORT_TCP) {
+				memset (&GPacket, 0, sizeof(GlobalPacketType));
+				GPacket.Command = NET_ANSWER_PLAYER;
+				strcpy(GPacket.Name, MultiplayerName);
+				GPacket.PlayerInfo.House = MultiplayerHouse;
+				GPacket.PlayerInfo.Color = MultiplayerColorIndex;
+				GPacket.PlayerInfo.NameCRC = Compute_Name_CRC(MultiplayerGameName);
+				NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 1, &GAddress);
+			}
 
 			retval = EV_NEW_PLAYER;
 		}
@@ -5149,11 +5362,8 @@ CCDebugString ("C&C95 - Creating connection to the VSS\n");
 static int Net_Fake_Join_Dialog(void)
 {
 	int factor			= (SeenBuff.Get_Width() == 320) ? 1 : 2;
-	const bool direct_tcp_client = (GameToPlay == GAME_INTERNET
-		&& Internet_Has_Command_Line_Connect()
-		&& !Internet_Command_Line_Is_Host());
+	const bool direct_tcp_client = Is_Direct_TCP_Client();
 	bool direct_join_sent = false;
-	CountDownTimerClass direct_join_timeout;
 	NetDlg_Trace("Net_Fake_Join_Dialog begin direct_tcp_client=%d cmdline=%d host=%d",
 		direct_tcp_client ? 1 : 0,
 		Internet_Has_Command_Line_Connect() ? 1 : 0,
@@ -5190,6 +5400,7 @@ static int Net_Fake_Join_Dialog(void)
 	int d_cancel_y = d_dialog_y + d_dialog_h - 20*factor;
 
 	bool ready_to_go = false;
+	bool received_game_options = false;
 
 #if (GERMAN | FRENCH)
 	int	width=160*factor;
@@ -5306,7 +5517,6 @@ static int Net_Fake_Join_Dialog(void)
 		Send_Join_Queries (game_index, 1, 0);
 	} else {
 		CCDebugString ("C&C95 - Direct TCP client mode: lobby discovery disabled.\n");
-		direct_join_timeout.Set(20 * 60, true);
 	}
 
 	if (!Internet_Has_Command_Line_Connect()) {
@@ -5550,7 +5760,16 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 					who->Player.Color = MultiplayerColorIndex;
 					Players.Add (who);
 
-					if (!direct_tcp_client) {
+					if (direct_tcp_client) {
+						UDPAddressClass direct_address;
+						direct_address.Set_Address((IPXHeaderType *)NULL);
+						memset(&GPacket, 0, sizeof(GlobalPacketType));
+						GPacket.Command = NET_QUERY_PLAYER;
+						strcpy(GPacket.Name, MultiplayerGameName);
+						NetMgr.Send_Global_Message(&GPacket, sizeof(GlobalPacketType), 0, &direct_address);
+						Drain_Global_Send_Queue();
+						NetDlg_Trace("Net_Fake_Join_Dialog direct player query game=%s", MultiplayerGameName);
+					} else {
 						Send_Join_Queries (game_index, 0, 1);
 					}
 				} else {
@@ -5597,6 +5816,7 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 		If the game options have changed, print them.
 		.....................................................................*/
 		if (event == EV_GAME_OPTIONS) {
+			received_game_options = true;
 			display = REDRAW_MESSAGE;
 		} else
 
@@ -5632,6 +5852,11 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 		Service the Udp connections
 		---------------------------------------------------------------------*/
 		NetMgr.Service();
+		if (direct_tcp_client && Winsock.Get_Connection_Status() == TcpipManagerClass::CONNECTION_LOST) {
+			NetDlg_Trace("Net_Fake_Join_Dialog direct TCP connection lost");
+			rc = -1;
+			process = false;
+		}
 
 		/*---------------------------------------------------------------------
 		Clean out the Game List; if an old entry is found:
@@ -5662,14 +5887,12 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 //char ddkks[128];
 //sprintf (ddkks, "C&C95 - Players.Count() = %d\n", Players.Count());
 //CCDebugString (ddkks);
-		if (ready_to_go){	// && Players.Count() == InternetMaxPlayers){
+		if (ready_to_go && (!direct_tcp_client || (received_game_options && Players.Count() > 1))){	// && Players.Count() == InternetMaxPlayers){
+			NetDlg_Trace("Net_Fake_Join_Dialog ready to start scenario=%d players=%d",
+				ScenarioIdx, Players.Count());
 			rc = 0;
 			process = false;
-		}
-
-		if (direct_tcp_client && direct_join_sent && !direct_join_timeout.Time() && !ready_to_go) {
-			rc = -1;
-			process = false;
+			break;
 		}
 
 		/*---------------------------------------------------------------------
@@ -5738,6 +5961,9 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 
 		} else {
 
+			NetDlg_Trace("Net_Fake_Join_Dialog establishing connections players=%d local=%s",
+				Players.Count(), MultiplayerName);
+
 			/*..................................................................
 			Set the number of players in this game, and my ID
 			..................................................................*/
@@ -5766,6 +5992,8 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 
 					tmp_id[i] = id;
 
+					NetDlg_Trace("Net_Fake_Join_Dialog create connection id=%d name=%s",
+						static_cast<int>(id), Players[i]->Name);
 					NetMgr.Create_Connection((int)id, Players[i]->Name, &(Players[i]->Address) );
 				} else {
 					tmp_id[i] = MultiplayerLocalID;
@@ -5814,17 +6042,22 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 					strcpy (MultiplayerNames[i], NetMgr.Connection_Name(MultiplayerID[i]));
 				}
 			}
+			NetDlg_Trace("Net_Fake_Join_Dialog connection setup complete count=%d local_id=%d",
+				MultiplayerPlayerCount, static_cast<int>(MultiplayerLocalID));
 		}
 		/*---------------------------------------------------------------------
 		Wait a while, polling the IPX service routines, to give our ACK
 		a chance to get to the other system.  If he doesn't get our ACK, he'll
 		be waiting the whole time we load MIX files.
 		---------------------------------------------------------------------*/
-		const uint32_t wait_time = static_cast<uint32_t>(MAX(Current_Global_Response_Time() * 2, 120));
-		starttime = TickCount.Time();
-		while (TickCount.Time() - starttime < wait_time) {
-			NetMgr.Service();
-			SDL_GameInput_Delay(1);
+		if (!direct_tcp_client) {
+			const uint32_t wait_time = static_cast<uint32_t>(MAX(Current_Global_Response_Time() * 2, 120));
+			starttime = TickCount.Time();
+			while (TickCount.Time() - starttime < wait_time) {
+				NetMgr.Service();
+				SDL_GameInput_Delay(1);
+			}
+			NetDlg_Trace("Net_Fake_Join_Dialog post-start wait complete wait=%u", wait_time);
 		}
 	}
 
@@ -5832,14 +6065,17 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 	Init network timing values, using previous response times as a measure
 	of what our retry delta & timeout should be.
 	------------------------------------------------------------------------*/
+	NetDlg_Trace("Net_Fake_Join_Dialog setting timing response=%d", Current_Global_Response_Time());
 	NetMgr.Set_Timing (Current_Global_Response_Time() + 2, -1,
 		Current_Global_Response_Time() * 4);
+	NetDlg_Trace("Net_Fake_Join_Dialog timing set");
 
 	/*------------------------------------------------------------------------
 	Clear all lists
 	------------------------------------------------------------------------*/
 	Clear_Game_List(&gamelist);
 	Clear_Player_List(&playerlist);
+	NetDlg_Trace("Net_Fake_Join_Dialog returning rc=%d", rc);
 
 	/*------------------------------------------------------------------------
 	Restore screen

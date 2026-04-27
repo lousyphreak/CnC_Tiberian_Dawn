@@ -1271,24 +1271,14 @@ bool Select_Game(bool fade)
 							break;
 
 						case GAME_WOL: {
-							char server_url[256];
-							char const *server_host = PlanetWestwoodIPAddress[0] ? PlanetWestwoodIPAddress : "127.0.0.1";
 							char const *nickname = MultiplayerName[0] ? MultiplayerName : "Noname";
 
 							Read_MultiPlayer_Settings();
 							if (Internet_Has_Command_Line_Name()) {
 								Internet_Apply_Command_Line_Name();
 							}
-							server_host = PlanetWestwoodIPAddress[0] ? PlanetWestwoodIPAddress : "127.0.0.1";
 							nickname = MultiplayerName[0] ? MultiplayerName : "Noname";
-
-							if (SDL_strstr(server_host, "://") != NULL) {
-								SDL_strlcpy(server_url, server_host, sizeof(server_url));
-							} else {
-								SDL_snprintf(server_url, sizeof(server_url), "ws://%s:%u/ws", server_host, PlanetWestwoodPortNumber);
-							}
-
-							Wol.Configure(server_url, nickname);
+							Wol.Configure(MultiplayerWolServer, nickname);
 
 							if (!Init_Network()) {
 								GameToPlay = GAME_NORMAL;
@@ -1474,12 +1464,11 @@ bool Select_Game(bool fade)
 		}
 	}
 	CCDebugString ("C&C95 - About to start game initialisation.\n");
-#ifdef FORCE_WINSOCK
 	if (Is_Online_Game(GameToPlay)){
+		const uint32_t wol_send_rate = (InternetSendRate > 0) ? static_cast<uint32_t>(InternetSendRate) : 3;
 		CommProtocol = COMM_PROTOCOL_MULTI_E_COMP;
-		FrameSendRate = (GameToPlay == GAME_WOL) ? InternetSendRate : 5;
+		FrameSendRate = (GameToPlay == GAME_WOL) ? wol_send_rate : 5;
 	}
-#endif	//FORCE_WINSOCK
 	/*
 	**	Don't carry stray keystrokes into game.
 	*/
@@ -1604,16 +1593,16 @@ bool Select_Game(bool fade)
 	** Special hack initialization of 'MultiplayerMaxAhead' to accommodate the
 	** compression protocol technology.
 	*/
-#ifdef FORCE_WINSOCK
 	if (CommProtocol==COMM_PROTOCOL_MULTI_E_COMP && GameToPlay!=GAME_NORMAL) {
 		if (GameToPlay == GAME_WOL) {
-			MultiplayerMaxAhead = InternetMaxAhead;
-			FrameSendRate = InternetSendRate;
+			const uint32_t wol_send_rate = (InternetSendRate > 0) ? static_cast<uint32_t>(InternetSendRate) : 3;
+			const uint32_t wol_max_ahead = (InternetMaxAhead > 0) ? static_cast<uint32_t>(InternetMaxAhead) : 9;
+			MultiplayerMaxAhead = wol_max_ahead;
+			FrameSendRate = wol_send_rate;
 		} else {
 			MultiplayerMaxAhead = FrameSendRate * 3;	//2;
 		}
 	}
-#endif	//FORCE_WINSOCK
 
 	if (Debug_Map) {
 		while (Get_Mouse_State() > 1) {
@@ -1950,6 +1939,19 @@ bool Parse_Command_Line(int argc, char *argv[])
 
 			Internet_Set_Command_Line_Name(argv[index + 1]);
 			Network_Trace("Command line: multiplayer name=%s", argv[index + 1]);
+			++index;
+			continue;
+		}
+
+		if (argv[index] != NULL && stricmp(argv[index], "-wol-server") == 0) {
+			if (index + 1 >= argc || argv[index + 1] == NULL || argv[index + 1][0] == '\0' ||
+				strlen(argv[index + 1]) >= sizeof(MultiplayerWolServer)) {
+				return(false);
+			}
+
+			SDL_strlcpy(MultiplayerWolServer, argv[index + 1], sizeof(MultiplayerWolServer));
+			Write_MultiPlayer_Settings();
+			Network_Trace("Command line: WOL server=%s", argv[index + 1]);
 			++index;
 			continue;
 		}

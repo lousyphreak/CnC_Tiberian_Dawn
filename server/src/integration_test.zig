@@ -300,6 +300,62 @@ test "end-to-end: two clients, game relay" {
     _ = try rg.readU32();
     try std.testing.expect(host_cid != guest_cid);
 
+    // Both clients join the shared lobby and can see each other.
+    var join_lobby_h: std.ArrayList(u8) = .{};
+    defer join_lobby_h.deinit(allocator);
+    const lobby_hw: proto.PayloadWriter = .{ .buf = &join_lobby_h, .allocator = allocator };
+    try lobby_hw.writeStr("td-lobby");
+    try host.sendApp(.channel_join, join_lobby_h.items);
+    const host_joined = try host.recvApp();
+    defer allocator.free(host_joined.payload);
+    try std.testing.expectEqual(@as(u16, @intFromEnum(proto.Opcode.channel_joined)), host_joined.opcode);
+    const host_empty_games = try host.recvApp();
+    defer allocator.free(host_empty_games.payload);
+    try std.testing.expectEqual(@as(u16, @intFromEnum(proto.Opcode.game_list_reply)), host_empty_games.opcode);
+
+    var join_lobby_g: std.ArrayList(u8) = .{};
+    defer join_lobby_g.deinit(allocator);
+    const lobby_gw: proto.PayloadWriter = .{ .buf = &join_lobby_g, .allocator = allocator };
+    try lobby_gw.writeStr("td-lobby");
+    try guest.sendApp(.channel_join, join_lobby_g.items);
+    const guest_joined = try guest.recvApp();
+    defer allocator.free(guest_joined.payload);
+    try std.testing.expectEqual(@as(u16, @intFromEnum(proto.Opcode.channel_joined)), guest_joined.opcode);
+    var gjr = proto.PayloadReader{ .buf = guest_joined.payload };
+    try std.testing.expectEqualSlices(u8, "td-lobby", try gjr.readStr(32));
+    try std.testing.expectEqual(@as(u16, 2), try gjr.readU16());
+    try std.testing.expectEqual(host_cid, try gjr.readU32());
+    try std.testing.expectEqualSlices(u8, "HOST", try gjr.readStr(32));
+    try std.testing.expectEqual(guest_cid, try gjr.readU32());
+    try std.testing.expectEqualSlices(u8, "GUEST", try gjr.readStr(32));
+    const guest_empty_games = try guest.recvApp();
+    defer allocator.free(guest_empty_games.payload);
+    try std.testing.expectEqual(@as(u16, @intFromEnum(proto.Opcode.game_list_reply)), guest_empty_games.opcode);
+    const host_sees_guest = try host.recvApp();
+    defer allocator.free(host_sees_guest.payload);
+    try std.testing.expectEqual(@as(u16, @intFromEnum(proto.Opcode.channel_user_join)), host_sees_guest.opcode);
+    var hsg = proto.PayloadReader{ .buf = host_sees_guest.payload };
+    try std.testing.expectEqual(guest_cid, try hsg.readU32());
+    try std.testing.expectEqualSlices(u8, "GUEST", try hsg.readStr(32));
+
+    // Lobby chat is relayed through the server to all channel members.
+    var chat: std.ArrayList(u8) = .{};
+    defer chat.deinit(allocator);
+    const chatw: proto.PayloadWriter = .{ .buf = &chat, .allocator = allocator };
+    try chatw.writeU32(0);
+    try chatw.writeStr("hello lobby");
+    try guest.sendApp(.chat, chat.items);
+    const host_chat = try host.recvApp();
+    defer allocator.free(host_chat.payload);
+    try std.testing.expectEqual(@as(u16, @intFromEnum(proto.Opcode.chat)), host_chat.opcode);
+    var hcr = proto.PayloadReader{ .buf = host_chat.payload };
+    try std.testing.expectEqual(guest_cid, try hcr.readU32());
+    try std.testing.expectEqual(@as(u32, 0), try hcr.readU32());
+    try std.testing.expectEqualSlices(u8, "hello lobby", try hcr.readStr(512));
+    const guest_chat = try guest.recvApp();
+    defer allocator.free(guest_chat.payload);
+    try std.testing.expectEqual(@as(u16, @intFromEnum(proto.Opcode.chat)), guest_chat.opcode);
+
     // Host creates game.
     var pl: std.ArrayList(u8) = .{};
     defer pl.deinit(allocator);
@@ -350,7 +406,54 @@ test "end-to-end: two clients, game relay" {
     defer allocator.free(hm.payload);
     try std.testing.expectEqual(@as(u16, @intFromEnum(proto.Opcode.game_members)), hm.opcode);
 
-    // Host relays broadcast → guest receives relay_from with host's cid.
+    // Host starts the game. Members are notified, the game list flips to
+    // started, and late join attempts are rejected.
+    try host.sendApp(.game_start, &.{});
+    const hs = try host.recvApp();
+    defer allocator.free(hs.payload);
+    try std.testing.expectEqual(@as(u16, @intFromEnum(proto.Opcode.game_started)), hs.opcode);
+    var hsr = proto.PayloadReader{ .buf = hs.payload };
+    try std.testing.expectEqual(@as(u16, 2), try hsr.readU16());
+    try std.testing.expectEqual(host_cid, try hsr.readU32());
+    try std.testing.expectEqual(guest_cid, try hsr.readU32());
+    const gs = try guest.recvApp();
+    defer allocator.free(gs.payload);
+    try std.testing.expectEqual(@as(u16, @intFromEnum(proto.Opcode.game_started)), gs.opcode);
+    const host_started_list = try host.recvApp();
+    defer allocator.free(host_started_list.payload);
+    try std.testing.expectEqual(@as(u16, @intFromEnum(proto.Opcode.game_list_reply)), host_started_list.opcode);
+    const guest_started_list = try guest.recvApp();
+    defer allocator.free(guest_started_list.payload);
+    try std.testing.expectEqual(@as(u16, @intFromEnum(proto.Opcode.game_list_reply)), guest_started_list.opcode);
+    var gslr = proto.PayloadReader{ .buf = guest_started_list.payload };
+    try std.testing.expectEqual(@as(u16, 1), try gslr.readU16());
+    try std.testing.expectEqual(gid, try gslr.readU32());
+    _ = try gslr.readStr(64);
+    _ = try gslr.readU32();
+    _ = try gslr.readU8();
+    try std.testing.expectEqual(@as(u8, 1), try gslr.readU8());
+
+    var late = try Client.connect(allocator, WOL_PORT);
+    defer late.deinit();
+    try late.handshake();
+    const hello_l = try helloPayload(allocator, "LATE");
+    defer allocator.free(hello_l);
+    try late.sendApp(.hello, hello_l);
+    const welc_l = try late.recvApp();
+    defer allocator.free(welc_l.payload);
+    var late_join: std.ArrayList(u8) = .{};
+    defer late_join.deinit(allocator);
+    const latew: proto.PayloadWriter = .{ .buf = &late_join, .allocator = allocator };
+    try latew.writeU32(gid);
+    try late.sendApp(.game_join, late_join.items);
+    const late_err = try late.recvApp();
+    defer allocator.free(late_err.payload);
+    try std.testing.expectEqual(@as(u16, @intFromEnum(proto.Opcode.err)), late_err.opcode);
+    var ler = proto.PayloadReader{ .buf = late_err.payload };
+    try std.testing.expectEqual(@as(u16, @intFromEnum(proto.ErrorCode.game_started)), try ler.readU16());
+
+    // Host relays broadcast → guest receives relay_from with host's cid,
+    // proving gameplay traffic goes through the server after start.
     try host.sendApp(.relay_broadcast, "hello guest");
     const rf = try guest.recvApp();
     defer allocator.free(rf.payload);
@@ -551,7 +654,7 @@ test "http static hosting supports redirect health and range" {
     try std.testing.expect(std.mem.indexOf(u8, manifest_resp.body, "\"Tiberian Dawn\"") != null);
 }
 
-test "http basic auth protects static files and websocket upgrade" {
+test "http basic auth protects static files but allows websocket upgrade" {
     const allocator = std.testing.allocator;
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
@@ -589,11 +692,10 @@ test "http basic auth protects static files and websocket upgrade" {
     defer health_resp.deinit(allocator);
     try std.testing.expectEqual(@as(u16, 200), health_resp.status);
 
-    const auth_header = try basicAuthHeaderValue(allocator, "tiberian", "change-me");
-    defer allocator.free(auth_header);
-
     var auth_client = try Client.connect(allocator, AUTH_PORT);
     defer auth_client.deinit();
+    const auth_header = try basicAuthHeaderValue(allocator, "tiberian", "change-me");
+    defer allocator.free(auth_header);
     const auth_request = try std.fmt.allocPrint(
         allocator,
         "GET /tiberian-dawn.html HTTP/1.1\r\nHost: 127.0.0.1\r\nAuthorization: {s}\r\nConnection: close\r\n\r\n",
@@ -615,9 +717,8 @@ test "http basic auth protects static files and websocket upgrade" {
             "Upgrade: websocket\r\n" ++
             "Connection: Upgrade\r\n" ++
             "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n" ++
-            "Sec-WebSocket-Version: 13\r\n" ++
-            "Authorization: {s}\r\n\r\n",
-        .{auth_header},
+            "Sec-WebSocket-Version: 13\r\n\r\n",
+        .{},
     );
     defer allocator.free(ws_request);
     try ws_client.writeAll(ws_request);

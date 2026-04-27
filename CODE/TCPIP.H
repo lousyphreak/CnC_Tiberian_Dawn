@@ -40,6 +40,8 @@ extern bool Server;
 #define IP_ADDRESS_MAX 40
 #define PORT_NUMBER_MAX 6
 
+class UDPAddressClass;
+
 class TcpipManagerClass {
 
 	public:
@@ -59,10 +61,16 @@ class TcpipManagerClass {
 		int32_t Add_Client(void);
 		void Close(void);
 		void Set_Host_Address(char const* address);
+		void Set_Port_Number(uint16_t port);
+		void Get_Remote_Address(UDPAddressClass* address) const;
 		void Set_Protocol_UDP(int32_t state);
+		void Set_Protocol_TCP(int32_t state);
 		void Clear_Socket_Error(SocketHandle socket);
 
 		inline int32_t Get_Connected(void) { return Connected; }
+		inline int32_t Using_TCP(void) const { return !UseUDP; }
+		inline int32_t Using_UDP(void) const { return UseUDP; }
+		inline int32_t Uses_Reliable_Transport(void) const { return Connected && !UseUDP; }
 
 		typedef enum ConnectStatusEnum {
 			CONNECTED_OK = 0,

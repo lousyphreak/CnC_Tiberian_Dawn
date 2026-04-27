@@ -241,6 +241,7 @@ if(EMSCRIPTEN)
     "-sMAX_WEBGL_VERSION=2"
     "-sMIN_WEBGL_VERSION=1"
     "-sENVIRONMENT=web"
+    "-lwebsocket.js"
     "--shell-file" "${TD_EMSCRIPTEN_SHELL_FILE}"
   )
   if(TD_EMSCRIPTEN_DIAGNOSTIC)

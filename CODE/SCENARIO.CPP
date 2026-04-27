@@ -47,6 +47,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include	"FUNCTION.H"
+#include	"SDLINPUT.H"
 extern int PreserveVQAScreen;
 
 
@@ -352,6 +353,9 @@ void Do_Win(void)
 	Speak(VOX_ACCOMPLISHED);
 	while (CountDownTimer.Time() || Is_Speaking()) {
 		Call_Back();
+#ifdef __EMSCRIPTEN__
+		SDL_GameInput_Delay(1);
+#endif
 	}
 
 	/*
@@ -557,6 +561,9 @@ void Do_Lose(void)
 	Speak(VOX_FAIL);
 	while (CountDownTimer.Time() || Is_Speaking()) {
 		Call_Back();
+#ifdef __EMSCRIPTEN__
+		SDL_GameInput_Delay(1);
+#endif
 	}
 
 	/*

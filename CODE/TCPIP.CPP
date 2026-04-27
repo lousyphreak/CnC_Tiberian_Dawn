@@ -533,6 +533,38 @@ void TcpipManagerClass::Set_Host_Address(char const* address)
 	Tcpip_Trace("Set_Host_Address %s", PlanetWestwoodIPAddress);
 }
 
+void TcpipManagerClass::Set_Port_Number(uint16_t port)
+{
+	PlanetWestwoodPortNumber = port;
+}
+
+void TcpipManagerClass::Get_Remote_Address(UDPAddressClass* address) const
+{
+	NetNumType net;
+	NetNodeType node;
+	memset(net, 0, sizeof(net));
+	memset(node, 0, sizeof(node));
+
+	if (address == NULL) {
+		return;
+	}
+
+	if (Connected && ConnectSocket != INVALID_SOCKET_HANDLE) {
+		SocketAddress peer_address;
+		if (Socket_Get_Peer_Address(ConnectSocket, &peer_address)) {
+			memcpy(net, &peer_address.Address, sizeof(peer_address.Address));
+			memcpy(node, &peer_address.Port, sizeof(peer_address.Port));
+			address->Set_Address(net, node);
+			return;
+		}
+	}
+
+	uint16_t peer_port = Socket_Host_To_Network16(PlanetWestwoodPortNumber);
+	memcpy(net, &UDPIPAddress, sizeof(UDPIPAddress));
+	memcpy(node, &peer_port, sizeof(peer_port));
+	address->Set_Address(net, node);
+}
+
 void TcpipManagerClass::Start_Client(void)
 {
 	SocketAddress addr;
@@ -699,6 +731,11 @@ void TcpipManagerClass::Close_Socket(SocketHandle s)
 void TcpipManagerClass::Set_Protocol_UDP(int32_t state)
 {
 	UseUDP = state;
+}
+
+void TcpipManagerClass::Set_Protocol_TCP(int32_t state)
+{
+	UseUDP = !state;
 }
 
 void TcpipManagerClass::Clear_Socket_Error(SocketHandle socket)

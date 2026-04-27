@@ -368,6 +368,7 @@ pub const Server = struct {
     }
 
     fn authorizeRequest(self: *Server, req: http.Request) bool {
+        if (std.mem.eql(u8, req.path, "/ws")) return true;
         const expected = self.basic_auth_header orelse return true;
         return req.authorization != null and std.mem.eql(u8, req.authorization.?, expected);
     }

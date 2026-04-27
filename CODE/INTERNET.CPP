@@ -25,8 +25,8 @@ uint32_t PlanetWestwoodGameID;
 uint32_t PlanetWestwoodStartTime;
 bool UseVirtualSubnetServer;
 int InternetMaxPlayers;
-int InternetMaxAhead;
-int InternetSendRate;
+int InternetMaxAhead = 9;
+int InternetSendRate = 3;
 
 bool Internet_Parse_Port(char const* text, uint16_t* port)
 {
@@ -155,8 +155,18 @@ int Read_Game_Options(char* name)
 	Options.GameSpeed = 0;
 	MultiplayerLocalID = Build_MultiplayerID(MultiplayerColorIndex, MultiplayerHouse);
 
-	MultiplayerMaxAhead = InternetMaxAhead = WWGetPrivateProfileInt("Timing", "MaxAhead", 9, buffer);
-	FrameSendRate = InternetSendRate = WWGetPrivateProfileInt("Timing", "SendRate", 3, buffer);
+	InternetMaxAhead = WWGetPrivateProfileInt("Timing", "MaxAhead", 9, buffer);
+	if (InternetMaxAhead <= 0) {
+		InternetMaxAhead = 9;
+	}
+
+	InternetSendRate = WWGetPrivateProfileInt("Timing", "SendRate", 3, buffer);
+	if (InternetSendRate <= 0) {
+		InternetSendRate = 3;
+	}
+
+	MultiplayerMaxAhead = InternetMaxAhead;
+	FrameSendRate = InternetSendRate;
 
 	return 1;
 }

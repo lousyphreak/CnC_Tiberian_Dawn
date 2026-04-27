@@ -132,7 +132,7 @@ extern uint32_t 	PlanetWestwoodStartTime;
 
 bool			GameTimerInUse = false;
 TimerClass	GameTimer;
-long			GameEndTime;
+int32_t			GameEndTime;
 void			*PacketLater = NULL;
 
 /***********************************************************************************************

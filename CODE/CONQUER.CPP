@@ -1408,6 +1408,7 @@ bool Main_Loop()
 		PlayerRestarts = false;
 		Map.Help_Text(TXT_NONE);
 		Do_Win();
+		return(true);
 	}
 	if (PlayerLoses) {
 
@@ -1422,6 +1423,7 @@ bool Main_Loop()
 		PlayerRestarts = false;
 		Map.Help_Text(TXT_NONE);
 		Do_Lose();
+		return(true);
 	}
 	if (PlayerRestarts) {
 		WWMouse->Erase_Mouse(&HidPage, TRUE);
@@ -1430,6 +1432,7 @@ bool Main_Loop()
 		PlayerRestarts = false;
 		Map.Help_Text(TXT_NONE);
 		Do_Restart();
+		return(true);
 	}
 
 	/*

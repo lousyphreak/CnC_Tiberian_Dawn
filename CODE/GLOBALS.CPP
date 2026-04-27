@@ -465,6 +465,8 @@ int ColorUsed[MAX_MPLAYER_COLORS];
 */
 char MultiplayerName[MPLAYER_NAME_MAX];
 
+char MultiplayerWolServer[256];
+
 
 /***************************************************************************
 **	This is the array of remap colors.  Each player in a network game is

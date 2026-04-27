@@ -220,6 +220,7 @@ extern InternetTransportType					InternetTransport;
 extern int										ScenarioIdx;
 extern int										ColorUsed[];
 extern char										MultiplayerName[MPLAYER_NAME_MAX];
+extern char										MultiplayerWolServer[256];
 extern int										MultiplayerGColors[];
 extern int										MultiplayerTColors[];
 extern char 									MultiplayerDescriptions[100][40];
