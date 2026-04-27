@@ -1,0 +1,15 @@
+.git
+.github
+.copilot
+build
+build-asan
+build-emscripten
+build-em
+build-tests
+server/.zig-cache
+server/zig-out
+*.log
+GameData/redalert
+GameData/redalert-asan
+dbuild.sh
+k8s

@@ -3,5 +3,17 @@
   "short_name": "Tiberian Dawn",
   "display": "standalone",
   "background_color": "#000000",
-  "theme_color": "#151a12"
+  "theme_color": "#151a12",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/favicon-256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    }
+  ]
 }

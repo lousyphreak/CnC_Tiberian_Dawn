@@ -20,6 +20,13 @@ option(TD_EMSCRIPTEN_PACKAGE_GAMEDATA "Package the GameData directory into the e
 option(TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA "Load GameData over HTTP on demand in the emscripten build" ON)
 option(TD_EMSCRIPTEN_DIAGNOSTIC "Enable Emscripten diagnostic build (ASSERTIONS, SAFE_HEAP, stack checks, symbol names)" OFF)
 
+set(TD_ICON_DIR "${CMAKE_SOURCE_DIR}/resources/icons")
+set(TD_WINDOWS_ICON_FILE "${TD_ICON_DIR}/tiberian-dawn.ico")
+set(TD_WINDOW_ICON_FILE "${TD_ICON_DIR}/tiberian-dawn-window-icon.png")
+set(TD_WEB_ICON_DIR "${CMAKE_SOURCE_DIR}/web/icons")
+set(TD_WEB_MANIFEST_FILE "${CMAKE_SOURCE_DIR}/web/site.webmanifest")
+set(TD_WINDOWS_RESOURCE_FILE "${CMAKE_SOURCE_DIR}/resources/windows/tiberian-dawn.rc")
+
 if(NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/SDL3/CMakeLists.txt")
   message(FATAL_ERROR "SDL3 submodule is missing. Run: git submodule update --init --recursive")
 endif()
@@ -165,6 +172,9 @@ target_compile_definitions(win32lib PUBLIC ${TD_COMMON_DEFINITIONS})
 add_executable(tiberian-dawn ${TD_GAME_SOURCES})
 target_include_directories(tiberian-dawn PRIVATE ${TD_COMMON_INCLUDE_DIRS})
 target_compile_definitions(tiberian-dawn PRIVATE ${TD_COMMON_DEFINITIONS})
+if(WIN32)
+  target_sources(tiberian-dawn PRIVATE "${TD_WINDOWS_RESOURCE_FILE}")
+endif()
 
 set(TD_BUILD_TARGETS sdl3_compat win32lib tiberian-dawn)
 
@@ -193,7 +203,6 @@ endif()
 if(EMSCRIPTEN)
   set_target_properties(tiberian-dawn PROPERTIES SUFFIX ".html")
   set(TD_EMSCRIPTEN_SHELL_FILE "${CMAKE_SOURCE_DIR}/web/shell.html")
-  set(TD_WEB_MANIFEST_FILE "${CMAKE_SOURCE_DIR}/web/site.webmanifest")
   target_link_options(tiberian-dawn PRIVATE
     "-sASYNCIFY"
     "-sASYNCIFY_IMPORTS=ra_set_web_soft_keyboard_active"
@@ -243,9 +252,29 @@ if(EMSCRIPTEN)
   endif()
   set_property(TARGET tiberian-dawn APPEND PROPERTY LINK_DEPENDS "${TD_EMSCRIPTEN_SHELL_FILE}")
   add_custom_command(TARGET tiberian-dawn POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:tiberian-dawn>/icons"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      "${TD_WEB_ICON_DIR}/favicon-16.png"
+      "${TD_WEB_ICON_DIR}/favicon-32.png"
+      "${TD_WEB_ICON_DIR}/favicon-256.png"
+      "${TD_WEB_ICON_DIR}/icon-192.png"
+      "${TD_WEB_ICON_DIR}/apple-touch-icon.png"
+      "$<TARGET_FILE_DIR:tiberian-dawn>/icons"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       "${TD_WEB_MANIFEST_FILE}"
       "$<TARGET_FILE_DIR:tiberian-dawn>"
+    VERBATIM
+  )
+else()
+  add_custom_command(TARGET tiberian-dawn POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:tiberian-dawn>/resources/icons"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      "${TD_WINDOW_ICON_FILE}"
+      "$<TARGET_FILE_DIR:tiberian-dawn>/resources/icons"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_SOURCE_DIR}/GameData/resources/icons"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      "${TD_WINDOW_ICON_FILE}"
+      "${CMAKE_SOURCE_DIR}/GameData/resources/icons"
     VERBATIM
   )
 endif()
