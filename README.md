@@ -12,6 +12,47 @@ If you wish to rebuild the source code and tools successfully you will need to f
 - Greenleaf Communications Library (GCL)
 - Human Machine Interface (HMI) “Sound Operating System” (SOS)
 
+## SDL3/CMake Android build
+
+This branch now includes a repo-owned Android packaging path for the SDL3/CMake port.
+
+Use the Arch-style SDK/NDK layout directly:
+
+```sh
+source /etc/profile.d/android-ndk.sh
+export ANDROID_HOME=/opt/android-sdk
+export ANDROID_SDK_ROOT=/opt/android-sdk
+
+cmake -S . -B build-android \
+  -DCMAKE_BUILD_TYPE=Debug \
+  -DCMAKE_TOOLCHAIN_FILE=/opt/android-ndk/build/cmake/android.toolchain.cmake \
+  -DANDROID_ABI=arm64-v8a \
+  -DANDROID_PLATFORM=android-26
+
+cmake --build build-android --target tiberian-dawn-apk -j
+```
+
+That produces:
+
+- `build-android/libtiberian-dawn.so`
+- `build-android/tiberian-dawn-code.apk`
+- `build-android/tiberian-dawn-data.apk`
+
+For the common build/deploy loop on a connected device, run:
+
+```sh
+./launcha.sh
+```
+
+The launcher script bootstraps the SDK/NDK environment from the Arch package locations, configures `build-android` if needed, builds `tiberian-dawn-apk`, installs the code/data APKs with direct `adb` commands, and starts `com.ea.tiberiandawn/.TiberianDawnActivity`.
+
+
+## Touch controls
+
+- **Single tap / drag during gameplay:** left click and drag-select.
+- **Two-finger tap during gameplay:** right click, which also gives the usual deselect behavior.
+- **Two-finger drag during gameplay:** pans the battlefield by driving the existing edge-scroll behavior.
+- **Double tap during movies:** cancels/skips the current movie, like `Esc` or `Return`.
 
 
 ## Compiling (Win32 Only)

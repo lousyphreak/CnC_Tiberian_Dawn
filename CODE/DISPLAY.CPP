@@ -2896,6 +2896,7 @@ int DisplayClass::TacticalClass::Action(unsigned flags, KeyNumType & key)
 		**	held down and moved a certain minimum distance.
 		*/
 		if (!edge && (flags & LEFTPRESS)) {
+			Map.Mouse_Left_Up(shadow, object, action);
 			Map.Mouse_Left_Press(x, y);
 		}
 

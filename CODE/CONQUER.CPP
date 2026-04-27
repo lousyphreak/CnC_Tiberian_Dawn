@@ -86,6 +86,10 @@ void Keyboard_Process(KeyNumType & input);
 static void Message_Input(KeyNumType &input);
 #endif
 static bool Color_Cycle(void);
+static void Reset_Main_Loop_Frame_State(void);
+static int Main_Loop_Frame_Interval(void);
+static bool Main_Loop_Frame_Ready(int frameinterval);
+static bool Run_Game_Frame(void);
 bool Map_Edit_Loop(void);
 void Trap_Object(void);
 
@@ -102,6 +106,7 @@ extern "C" {
 	extern char *__nheapbeg;
 }
 bool InMainLoop = false;
+static uint32_t MainLoopLastServiceTick = 0;
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(a)	(sizeof(a)/sizeof(a[0]))
@@ -173,6 +178,8 @@ void Main_Game(int argc, char *argv[])
 		} else {
 			Show_Mouse();
 		}
+
+		Reset_Main_Loop_Frame_State();
 
 		SpecialDialog = SDLG_NONE;
 		//Start_Profiler();
@@ -1017,6 +1024,8 @@ void Call_Back(void)
 	}
 
 #endif
+
+	WWDraw_Flush_Present();
 }
 
 
@@ -1199,136 +1208,49 @@ FacingType KN_To_Facing(int input)
  *   01/04/1995 JLB : Created.                                                                 *
  *   03/06/1995 JLB : Fixed.                                                                   *
  *=============================================================================================*/
-static void Sync_Delay(void)
+static void Reset_Main_Loop_Frame_State(void)
 {
-	/*
-	**	Delay one tick and keep a record that one tick was "wasted" here.
-	**	This accumulates into a running histogram of performance.
-	*/
-	SpareTicks += FrameTimer.Time();
-	while (FrameTimer.Time()) {
-		Color_Cycle();
-		Call_Back();
-
-		if (SpecialDialog == SDLG_NONE) {
-			WWMouse->Erase_Mouse(&HidPage, TRUE);
-			KeyNumType input = KN_NONE;
-			int x, y;
-			WWMouse->Erase_Mouse(&HidPage, TRUE);
-			Map.Input(input, x, y);
-			if (input) {
-				Keyboard_Process(input);
-			}
-			Map.Render();
-		}
-	}
-	Color_Cycle();
-	Call_Back();
+	FrameTimer.Set(0);
+	MainLoopLastServiceTick = 0;
 }
 
-
-/***********************************************************************************************
- * Main_Loop -- This is the main game loop (as a single loop).                                 *
- *                                                                                             *
- *    This function will perform one game loop.                                                *
- *                                                                                             *
- * INPUT:   none                                                                               *
- *                                                                                             *
- * OUTPUT:  bool; Should the game end?                                                         *
- *                                                                                             *
- * WARNINGS:   none                                                                            *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   10/01/1994 JLB : Created.                                                                 *
- *=============================================================================================*/
-extern void Check_For_Focus_Loss(void);
-void Reallocate_Big_Shape_Buffer(void);
-
-
-bool Main_Loop()
+static int Main_Loop_Frame_Interval(void)
 {
-	KeyNumType	input;					// Player input.
-	int 			x;
-	int 			y;
-	int framedelay;
-
-//	InMainLoop = true;
-
-	/*
-	** I think I'm gonna cry if this makes it work
-	*/
-	if (Get_Mouse_State())Show_Mouse();
-
-	/*
-	** Call the focus loss handler
-	*/
-	Check_For_Focus_Loss();
-
-	/*
-	** Allocate extra memory for uncompressed shapes as needed
-	*/
-	Reallocate_Big_Shape_Buffer();
-
-	/*
-	** Sync-bug trapping code
-	*/
-	if (Frame >= TrapFrame) {
-		Trap_Object();
-	}
-
-	//
-	// Initialize our AI processing timer
-	//
-	ProcessTimer.Set(0, true);
-
-	if (TrapCheckHeap) {
-		Debug_Trap_Check_Heap = true;
-	}
-
-#ifdef CHEAT_KEYS
- Heap_Dump_Check( "After Trap" );
-
-	/*
-	**	Update the running status debug display.
-	*/
-	Self_Regulate();
-#endif
-
-	/*
-	**	If there is no theme playing, but it looks like one is required, then start one
-	**	playing. This is usually the symptom of there being no transition score.
-	*/
-	if (SampleType && Theme.What_Is_Playing() == THEME_NONE) {
-		Theme.Queue_Song(THEME_PICK_ANOTHER);
-	}
-
-	/*
-	**	Setup the timer so that the Main_Loop function processes at the correct rate.
-	*/
 	if (GameToPlay != GAME_NORMAL && CommProtocol == COMM_PROTOCOL_MULTI_E_COMP) {
-		framedelay = 60 / DesiredFrameRate;
-		FrameTimer.Set(framedelay);
-	} else {
-		FrameTimer.Set(Options.GameSpeed);
-	}
-
-	/*
-	**	Update the display, unless we're inside a dialog.
-	*/
-	if (!PlaybackGame) {
-		if (SpecialDialog == SDLG_NONE && GameInFocus) {
-
-			WWMouse->Erase_Mouse(&HidPage, TRUE);
-			Map.Input(input, x, y);
-			if (input) {
-				Keyboard_Process(input);
-			}
-//			HidPage.Lock();
-			Map.Render();
-//			HidPage.Unlock();
+		if (DesiredFrameRate == 0) {
+			return(0);
 		}
+		return(MAX(60 / DesiredFrameRate, 0));
 	}
 
+	return(MAX(Options.GameSpeed, 0));
+}
+
+static bool Main_Loop_Frame_Ready(int frameinterval)
+{
+	const uint32_t now = static_cast<uint32_t>(TickCount.Time());
+
+	if (MainLoopLastServiceTick != 0 && now >= MainLoopLastServiceTick && FrameTimer.Time() != 0) {
+		SpareTicks += static_cast<int32_t>(now - MainLoopLastServiceTick);
+	}
+
+	if (FrameTimer.Time() == 0) {
+		FrameTimer.Set(frameinterval);
+		MainLoopLastServiceTick = now;
+		return(true);
+	}
+
+	if (now < MainLoopLastServiceTick) {
+		MainLoopLastServiceTick = now;
+		return(false);
+	}
+
+	MainLoopLastServiceTick = now;
+	return(false);
+}
+
+static bool Run_Game_Frame(void)
+{
 	/*
 	** Save map's position & selected objects, if we're recording the game.
 	*/
@@ -1345,14 +1267,10 @@ bool Main_Loop()
 	*/
 	Map.Layer[LAYER_GROUND].Sort();
 
-//	Heap_Dump_Check( "Before Logic.AI" );
-
 	/*
 	**	AI logic operations are performed here.
 	*/
 	Logic.AI();
-
-//	Heap_Dump_Check( "After Logic.AI" );
 
 	/*
 	**	Manage the inter-player message list.  If Manage() returns true, it means
@@ -1369,14 +1287,10 @@ bool Main_Loop()
 	ProcessTicks += ProcessTimer.Time();
 	ProcessFrames++;
 
-//	Heap_Dump_Check( "Before Queue_AI" );
-
 	/*
 	**	Process all commands that are ready to be processed.
 	*/
 	Queue_AI();
-
-// Heap_Dump_Check( "After Queue_AI" );
 
 	/*
 	**	Keep track of elapsed time in the game.
@@ -1384,8 +1298,6 @@ bool Main_Loop()
 	Score.ElapsedTime += TIMER_SECOND / TICKS_PER_SECOND;
 
 	Call_Back();
-
-// Heap_Dump_Check( "After Call_Back" );
 
 	/*
 	**	Perform any win/lose code as indicated by the global control flags.
@@ -1395,9 +1307,6 @@ bool Main_Loop()
 	/*
 	**	Check for player wins or loses according to global event flag.
 	*/
-
-
-
 	if (PlayerWins) {
 
 		if (Is_Online_Game(GameToPlay) && !GameStatisticsPacketSent){
@@ -1470,7 +1379,155 @@ bool Main_Loop()
 		}
 	}
 
-	Sync_Delay();
+	return(!GameActive);
+}
+
+
+/***********************************************************************************************
+ * Main_Loop -- This is the main game loop (as a single loop).                                 *
+ *                                                                                             *
+ *    This function will perform one game loop.                                                *
+ *                                                                                             *
+ * INPUT:   none                                                                               *
+ *                                                                                             *
+ * OUTPUT:  bool; Should the game end?                                                         *
+ *                                                                                             *
+ * WARNINGS:   none                                                                            *
+ *                                                                                             *
+ * HISTORY:                                                                                    *
+ *   10/01/1994 JLB : Created.                                                                 *
+ *=============================================================================================*/
+extern void Check_For_Focus_Loss(void);
+void Reallocate_Big_Shape_Buffer(void);
+
+
+bool Main_Loop()
+{
+	KeyNumType	input;					// Player input.
+	int 			x;
+	int 			y;
+	const bool callback_scheduler = SDL_GameInput_Is_AppCallbacks_Mode();
+	const bool update_map = (!PlaybackGame && SpecialDialog == SDLG_NONE && GameInFocus);
+
+//	InMainLoop = true;
+
+	/*
+	** I think I'm gonna cry if this makes it work
+	*/
+	if (Get_Mouse_State())Show_Mouse();
+
+	/*
+	** Call the focus loss handler
+	*/
+	Check_For_Focus_Loss();
+
+	/*
+	** Allocate extra memory for uncompressed shapes as needed
+	*/
+	Reallocate_Big_Shape_Buffer();
+
+	/*
+	** Sync-bug trapping code
+	*/
+	if (Frame >= TrapFrame) {
+		Trap_Object();
+	}
+
+	//
+	// Initialize our AI processing timer
+	//
+	ProcessTimer.Set(0, true);
+
+	if (TrapCheckHeap) {
+		Debug_Trap_Check_Heap = true;
+	}
+
+#ifdef CHEAT_KEYS
+ Heap_Dump_Check( "After Trap" );
+
+	/*
+	**	Update the running status debug display.
+	*/
+	Self_Regulate();
+#endif
+
+	/*
+	**	If there is no theme playing, but it looks like one is required, then start one
+	**	playing. This is usually the symptom of there being no transition score.
+	*/
+	if (SampleType && Theme.What_Is_Playing() == THEME_NONE) {
+		Theme.Queue_Song(THEME_PICK_ANOTHER);
+	}
+
+	/*
+	**	Update the display, unless we're inside a dialog.
+	*/
+	if (update_map) {
+		WWMouse->Erase_Mouse(&HidPage, TRUE);
+		Map.Input(input, x, y);
+		if (input) {
+			Keyboard_Process(input);
+		}
+	}
+
+	if (callback_scheduler) {
+		const bool frame_ready = Main_Loop_Frame_Ready(Main_Loop_Frame_Interval());
+
+		if (frame_ready) {
+			if (Run_Game_Frame()) {
+				return(!GameActive);
+			}
+		}
+
+		Color_Cycle();
+
+		if (update_map) {
+			Map.Render();
+		}
+
+		if (frame_ready) {
+			WWDraw_Flush_Present();
+		} else {
+			Call_Back();
+		}
+
+		return(!GameActive);
+	}
+
+	/*
+	**	Setup the timer so that the Main_Loop function processes at the correct rate.
+	*/
+	FrameTimer.Set(Main_Loop_Frame_Interval());
+
+	if (update_map) {
+//			HidPage.Lock();
+		Map.Render();
+//			HidPage.Unlock();
+	}
+
+	if (Run_Game_Frame()) {
+		return(!GameActive);
+	}
+
+	SpareTicks += FrameTimer.Time();
+	while (FrameTimer.Time()) {
+		Color_Cycle();
+		Call_Back();
+
+		if (SpecialDialog == SDLG_NONE) {
+			WWMouse->Erase_Mouse(&HidPage, TRUE);
+			KeyNumType wait_input = KN_NONE;
+			int wait_x, wait_y;
+			WWMouse->Erase_Mouse(&HidPage, TRUE);
+			Map.Input(wait_input, wait_x, wait_y);
+			if (wait_input) {
+				Keyboard_Process(wait_input);
+			}
+			Map.Render();
+		}
+	}
+	Color_Cycle();
+	Call_Back();
 //	InMainLoop = false;
 	return(!GameActive);
 }
@@ -2342,7 +2399,8 @@ int32_t VQ_Call_Back(unsigned char *, int32_t)
 	Interpolate_2X_Scale(&SysMemPage,&SeenBuff,NULL);
 	WWDraw_Flush_Present();
 	//Call_Back();
-	if ((BreakoutAllowed || Debug_Flag) && key == KN_ESC) {
+	const int plain_key = key & 0xFF;
+	if ((BreakoutAllowed || Debug_Flag) && (plain_key == KN_ESC || plain_key == KN_RETURN)) {
 		Keyboard::Clear();
 		Brokeout = true;
 		return(true);

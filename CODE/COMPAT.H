@@ -112,7 +112,9 @@ typedef enum MenuIndexType {
 #define FMINEXP     -37
 
 #define MAXDOUBLE   1.797693E+308
+#ifndef MAXFLOAT
 #define MAXFLOAT    3.37E+38F
+#endif
 #define MINDOUBLE   2.225074E-308
 #define MINFLOAT    8.43E-37F
 

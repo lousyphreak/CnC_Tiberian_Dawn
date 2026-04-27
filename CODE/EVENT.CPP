@@ -47,6 +47,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "FUNCTION.H"
+#include "SDLINPUT.H"
 
 /***************************************************************************
 ** Table of what data is really used in the EventClass struct for different
@@ -693,6 +694,9 @@ CCDebugString ("C&C95 - Exit game packet received\n");
 			Speak(VOX_CONTROL_EXIT);
 			while (Is_Speaking()) {
 				Call_Back();
+#ifdef __EMSCRIPTEN__
+				SDL_GameInput_Delay(1);
+#endif
 			}
 			GameActive = false;
 			break;

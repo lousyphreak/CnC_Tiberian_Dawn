@@ -35,7 +35,7 @@
  * Functions:                                                                                  *
  *   Delete_Swap_Files -- Deletes previously existing swap files.                              *
  *   Prog_End -- Cleans up library systems in prep for game exit.                              *
- *   main -- Initial startup routine (preps library systems).                                  *
+ *   TiberianDawn_Main -- Initial startup routine (preps library systems).                     *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include	"FUNCTION.H"
@@ -255,7 +255,7 @@ void print_missing_game_data_error(int argc, char* argv[], const char* executabl
 
 
 /***********************************************************************************************
- * main -- Initial startup routine (preps library systems).                                    *
+ * TiberianDawn_Main -- Initial startup routine (preps library systems).                       *
  *                                                                                             *
  *    This is the routine that is first called when the program starts up. It basically        *
  *    handles the command line parsing and setting up library systems.                         *
@@ -278,7 +278,7 @@ void Move_Point(short &x, short &y, DirType dir, unsigned short distance);
 
 void Check_Use_Compressed_Shapes (void);
 
-int main(int argc, char *argv[])
+int TiberianDawn_Main(int argc, char *argv[])
 {
 // Heap_Dump_Check( "first thing in main" );
 //	malloc(1);

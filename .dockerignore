@@ -2,10 +2,7 @@
 .github
 .copilot
 build
-build-asan
-build-emscripten
-build-em
-build-tests
+build-*
 server/.zig-cache
 server/zig-out
 *.log
