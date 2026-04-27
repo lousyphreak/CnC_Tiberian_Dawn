@@ -942,6 +942,12 @@ int WSClientClass::Poll(void)
 
 	if (State == STATE_CONNECTING && (!client->ConnectPending || Socket_Is_Write_Ready(client->Socket))) {
 		client->ConnectPending = false;
+		if (Socket_Get_Error(client->Socket) != 0) {
+			Reset_Stream_Buffers(client);
+			Close_Socket_Only(client);
+			State = STATE_FAILED;
+			return Receive_Queue_Size();
+		}
 		if (!client->HandshakeSent && !Begin_Handshake(client)) {
 			Reset_Stream_Buffers(client);
 			Close_Socket_Only(client);

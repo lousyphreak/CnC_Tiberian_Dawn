@@ -128,6 +128,22 @@ extern TcpipManagerClass Winsock;
 extern char PlanetWestwoodIPAddress[IP_ADDRESS_MAX];
 extern uint16_t PlanetWestwoodPortNumber;
 extern bool PlanetWestwoodIsHost;
+typedef enum InternetCommandLineEnum {
+	INTERNET_CMDLINE_NONE,
+	INTERNET_CMDLINE_HOST,
+	INTERNET_CMDLINE_CONNECT,
+} InternetCommandLineType;
+extern InternetCommandLineType PlanetWestwoodCommandLine;
+bool Internet_Parse_Port(char const* text, uint16_t* port);
+void Internet_Clear_Command_Line_Connect(void);
+void Internet_Clear_Command_Line_Name(void);
+void Internet_Set_Command_Line_Host(uint16_t port);
+void Internet_Set_Command_Line_Connect(char const* address, uint16_t port);
+void Internet_Set_Command_Line_Name(char const* name);
+bool Internet_Has_Command_Line_Name(void);
+void Internet_Apply_Command_Line_Name(void);
+bool Internet_Has_Command_Line_Connect(void);
+bool Internet_Command_Line_Is_Host(void);
 extern int Read_Game_Options(char*);
 extern bool UseVirtualSubnetServer;
 extern int InternetMaxPlayers;

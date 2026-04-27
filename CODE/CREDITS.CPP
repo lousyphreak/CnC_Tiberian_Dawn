@@ -137,6 +137,15 @@ void CreditClass::Graphic_Logic(bool forced)
  *=============================================================================================*/
 void CreditClass::AI(bool forced)
 {
+	if (!PlayerPtr) {
+		Credits = 0;
+		if (forced) {
+			Current = 0;
+		}
+		IsAudible = false;
+		return;
+	}
+
 	Credits = PlayerPtr->Available_Money();
 
 	/*

@@ -251,13 +251,19 @@ int Socket_Set_Linger(SocketHandle socket_handle, bool enabled, int seconds)
 	return setsockopt(To_Native_Socket(socket_handle), SOL_SOCKET, SO_LINGER, reinterpret_cast<char const*>(&linger_value), sizeof(linger_value));
 }
 
-void Socket_Clear_Error(SocketHandle socket_handle)
+int Socket_Get_Error(SocketHandle socket_handle)
 {
 	int error_code = 0;
 	int length = sizeof(error_code);
-	getsockopt(To_Native_Socket(socket_handle), SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&error_code), &length);
-	error_code = 0;
-	setsockopt(To_Native_Socket(socket_handle), SOL_SOCKET, SO_ERROR, reinterpret_cast<char const*>(&error_code), length);
+	if (getsockopt(To_Native_Socket(socket_handle), SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&error_code), &length) != 0) {
+		return WSAGetLastError();
+	}
+	return error_code;
+}
+
+void Socket_Clear_Error(SocketHandle socket_handle)
+{
+	Socket_Get_Error(socket_handle);
 }
 
 bool Socket_Is_Write_Ready(SocketHandle socket_handle)

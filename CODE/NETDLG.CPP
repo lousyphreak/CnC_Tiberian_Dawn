@@ -106,12 +106,41 @@
 #include "FUNCTION.H"
 #include <SDL3/SDL_timer.h>
 #include <time.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "TCPIP.H"
 #include "WSMGR.H"
 #include "SDLINPUT.H"
+#include "WOL_PROTO.H"
 #define SHOW_MONO		0
 
 extern int InternetMaxAhead;
+
+static bool NetDlg_Trace_Enabled(void)
+{
+	static int enabled = -1;
+	if (enabled == -1) {
+		enabled = (getenv("TD_TRACE_NETWORK") != NULL) ? 1 : 0;
+	}
+	return(enabled != 0);
+}
+
+static void NetDlg_Trace(char const* format, ...)
+{
+	va_list arguments;
+
+	if (!NetDlg_Trace_Enabled()) {
+		return;
+	}
+
+	va_start(arguments, format);
+	fprintf(stderr, "[netdlg] ");
+	vfprintf(stderr, format, arguments);
+	fprintf(stderr, "\n");
+	fflush(stderr);
+	va_end(arguments);
+}
 
 
 #ifndef DEMO
@@ -157,6 +186,11 @@ static int Net_New_Dialog(void);
 static JoinEventType Get_NewGame_Responses(ColorListClass *playerlist);
 static int Net_Fake_New_Dialog(void) __attribute__((unused));
 static int Net_Fake_Join_Dialog(void) __attribute__((unused));
+static void Wol_Reset_Game_Ids(void);
+static void Wol_Remove_Game_Id(int index);
+static uint32_t Wol_Game_Id(int index);
+static bool Wol_Join_Server_Game(int game_index);
+static JoinEventType Drain_Wol_Lobby_Control(ListClass *gamelist);
 
 ConnManClass *Current_Network_Manager(void)
 {
@@ -181,7 +215,26 @@ static uint32_t Current_Global_Response_Time(void)
 
 static void Drain_Global_Send_Queue(void)
 {
+	const uint64_t start_ms = SDL_GetTicks();
+	const uint64_t max_wait_ms = 3000;
+	const uint64_t stall_wait_ms = 750;
+	int last_pending = NetMgr.Global_Num_Send();
+	uint64_t last_progress_ms = start_ms;
+	int spins = 0;
+
 	while (NetMgr.Global_Num_Send() > 0 && NetMgr.Service() != 0) {
+		const int pending = NetMgr.Global_Num_Send();
+		if (pending < last_pending) {
+			last_pending = pending;
+			last_progress_ms = SDL_GetTicks();
+		}
+		const uint64_t now_ms = SDL_GetTicks();
+		if ((now_ms - start_ms) > max_wait_ms
+			|| (now_ms - last_progress_ms) > stall_wait_ms
+			|| ++spins > 3000) {
+			break;
+		}
+		Call_Back();
 		SDL_GameInput_Delay(1);
 	}
 }
@@ -566,6 +619,7 @@ bool Remote_Connect(void)
 bool Server_Remote_Connect(void)
 {
 	int stealth;				// original state of NetStealth flag
+	NetDlg_Trace("Server_Remote_Connect enter");
 
 	/*------------------------------------------------------------------------
 	Init network timing parameters; these values should work for both a "real"
@@ -592,6 +646,9 @@ bool Server_Remote_Connect(void)
 	Read the default values from the INI file
 	------------------------------------------------------------------------*/
 	Read_MultiPlayer_Settings ();
+	if (Internet_Has_Command_Line_Name()) {
+		Internet_Apply_Command_Line_Name();
+	}
 
 	/*
 	** Match the visible host lobby flow: the host advertises the game under
@@ -599,7 +656,19 @@ bool Server_Remote_Connect(void)
 	*/
 	SDL_strlcpy(MultiplayerGameName, MultiplayerName, sizeof(MultiplayerGameName));
 
-	if (!Net_New_Dialog()){
+	if (Internet_Has_Command_Line_Connect() && !Internet_Command_Line_Is_Host()) {
+		NetDlg_Trace("Server_Remote_Connect command line role mismatch (expected host)");
+		NetOpen = 0;
+		NetStealth = stealth;
+		Write_MultiPlayer_Settings();
+		return(false);
+	}
+
+	const int rc = Net_New_Dialog();
+	NetDlg_Trace("Server_Remote_Connect Net_New_Dialog rc=%d", rc);
+	if (!rc){
+		NetOpen = 0;
+		NetStealth = stealth;
 		Write_MultiPlayer_Settings ();
 		return (false);
 	}
@@ -628,8 +697,8 @@ bool Server_Remote_Connect(void)
  *=============================================================================================*/
 bool Client_Remote_Connect(void)
 {
-	int rc;
 	int stealth;				// original state of NetStealth flag
+	NetDlg_Trace("Client_Remote_Connect enter");
 
 	/*------------------------------------------------------------------------
 	Init network timing parameters; these values should work for both a "real"
@@ -656,6 +725,9 @@ bool Client_Remote_Connect(void)
 	Read the default values from the INI file
 	------------------------------------------------------------------------*/
 	Read_MultiPlayer_Settings ();
+	if (Internet_Has_Command_Line_Name()) {
+		Internet_Apply_Command_Line_Name();
+	}
 
 	/*
 	** The client is not part of an advertised game yet, so clear any stale
@@ -663,20 +735,33 @@ bool Client_Remote_Connect(void)
 	*/
 	MultiplayerGameName[0] = 0;
 
-	/*---------------------------------------------------------------------
-	Pop up the network Join/New dialog
-	---------------------------------------------------------------------*/
-	rc = Net_Join_Dialog();
+	if (Internet_Has_Command_Line_Connect()) {
+		if (Internet_Command_Line_Is_Host()) {
+			NetDlg_Trace("Client_Remote_Connect command line role mismatch (expected client)");
+			Write_MultiPlayer_Settings();
+			NetStealth = stealth;
+			NetOpen = 0;
+			return(false);
+		}
+
+		const int fake_rc = Net_Fake_Join_Dialog();
+		NetDlg_Trace("Client_Remote_Connect Net_Fake_Join_Dialog rc=%d", fake_rc);
+		Write_MultiPlayer_Settings();
+
+		NetStealth = stealth;
+		NetOpen = 0;
+
+		return(fake_rc == 0);
+	}
+
+	const int rc = Net_Join_Dialog();
+	NetDlg_Trace("Client_Remote_Connect Net_Join_Dialog rc=%d", rc);
 	Write_MultiPlayer_Settings ();
 
 	NetStealth = stealth;
 	NetOpen = 0;
 
-	if (rc == -1) {
-		return(false);
-	} else {
-		return(true);
-	}
+	return(rc == 0);
 }
 
 
@@ -1992,6 +2077,7 @@ static void Clear_Game_List (ListClass *gamelist)
 		delete Games[i];
 
 	Games.Clear();
+	Wol_Reset_Game_Ids();
 
 }	/* end of Clear_Game_List */
 
@@ -2064,13 +2150,16 @@ static int Request_To_Join (char *playername, int join_index, ListClass *playerl
 	HousesType house, int color)
 {
 	int i;
+	const bool direct_tcp_client = (GameToPlay == GAME_INTERNET
+		&& Internet_Has_Command_Line_Connect()
+		&& !Internet_Command_Line_Is_Host());
 
 	(void)playerlist;	// shaddup, Mr stupid compiler!
 
 	/*
 	--------------------------- Validate join_index --------------------------
 	*/
-	if ( (Games.Count()==0) || join_index > Games.Count() || join_index < 0) {
+	if (!direct_tcp_client && ((Games.Count()==0) || join_index > Games.Count() || join_index < 0)) {
 		CCMessageBox().Process (TXT_NOTHING_TO_JOIN);
 		return(false);
 	}
@@ -2086,7 +2175,7 @@ static int Request_To_Join (char *playername, int join_index, ListClass *playerl
 	/*
 	------------------------- The game must be open --------------------------
 	*/
-	if (!Games[join_index]->Game.IsOpen) {
+	if (!direct_tcp_client && !Games[join_index]->Game.IsOpen) {
 		CCMessageBox().Process(TXT_GAME_IS_CLOSED);
 		return (false);
 	}
@@ -2114,11 +2203,11 @@ static int Request_To_Join (char *playername, int join_index, ListClass *playerl
 #else
 	v = Version_Number();
 #endif
-	if (Games[join_index]->Game.Version > v) {
+	if (!direct_tcp_client && Games[join_index]->Game.Version > v) {
 		CCMessageBox().Process (TXT_YOURGAME_OUTDATED);
 		return(false);
 	} else {
-		if (Games[join_index]->Game.Version < v) {
+		if (!direct_tcp_client && Games[join_index]->Game.Version < v) {
 			CCMessageBox().Process (TXT_DESTGAME_OUTDATED);
 			return(false);
 		}
@@ -2130,6 +2219,14 @@ static int Request_To_Join (char *playername, int join_index, ListClass *playerl
 	strcpy (MultiplayerName,playername);
 
 	/*
+	---------------- Register this client with the server-hosted game --------
+	*/
+	if (GameToPlay == GAME_WOL && !Wol_Join_Server_Game(join_index)) {
+		CCMessageBox().Process(TXT_GAME_IS_CLOSED);
+		return(false);
+	}
+
+	/*
 	----------------------- Send packet to game's owner ----------------------
 	*/
 	memset (&GPacket, 0, sizeof(GlobalPacketType));
@@ -2139,8 +2236,20 @@ static int Request_To_Join (char *playername, int join_index, ListClass *playerl
 	GPacket.PlayerInfo.House = house;
 	GPacket.PlayerInfo.Color = color;
 
-	NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 1,
-		&(Games[join_index]->Address));
+	if (direct_tcp_client) {
+		int send_rc;
+		UDPAddressClass direct_address;
+		direct_address.Set_Address((IPXHeaderType *)NULL);
+		send_rc = NetMgr.Send_Global_Message(&GPacket, sizeof(GlobalPacketType), 1, &direct_address);
+		Drain_Global_Send_Queue();
+		NetDlg_Trace("Request_To_Join direct TCP send name=%s house=%d color=%d", MultiplayerName,
+			static_cast<int>(house), color);
+		NetDlg_Trace("Request_To_Join direct TCP send rc=%d", send_rc);
+	} else {
+		NetMgr.Send_Global_Message (&GPacket, sizeof(GlobalPacketType), 1,
+			&(Games[join_index]->Address));
+		NetDlg_Trace("Request_To_Join send via game list index=%d name=%s", join_index, MultiplayerName);
+	}
 
 	return(true);
 }
@@ -2227,6 +2336,247 @@ static void Send_Join_Queries(int curgame, int gamenow, int playernow)
 }	/* end of Send_Join_Queries */
 
 
+static uint32_t *WolGameIds = NULL;
+static int WolGameIdCount = 0;
+static int WolGameIdCapacity = 0;
+
+static bool Wol_Reserve_Game_Ids(int count)
+{
+	if (count <= WolGameIdCapacity) {
+		return(true);
+	}
+
+	int new_capacity = (WolGameIdCapacity > 0) ? WolGameIdCapacity : 8;
+	while (new_capacity < count) {
+		new_capacity *= 2;
+	}
+
+	uint32_t *new_ids = new uint32_t[new_capacity];
+	if (new_ids == NULL) {
+		return(false);
+	}
+
+	for (int index = 0; index < new_capacity; index++) {
+		new_ids[index] = (index < WolGameIdCount) ? WolGameIds[index] : 0;
+	}
+	delete [] WolGameIds;
+	WolGameIds = new_ids;
+	WolGameIdCapacity = new_capacity;
+	return(true);
+}
+
+static void Wol_Reset_Game_Ids(void)
+{
+	delete [] WolGameIds;
+	WolGameIds = NULL;
+	WolGameIdCount = 0;
+	WolGameIdCapacity = 0;
+}
+
+static void Wol_Add_Game_Id(uint32_t game_id)
+{
+	if (!Wol_Reserve_Game_Ids(WolGameIdCount + 1)) {
+		return;
+	}
+	WolGameIds[WolGameIdCount++] = game_id;
+}
+
+static void Wol_Remove_Game_Id(int index)
+{
+	if (index >= 0 && index < WolGameIdCount) {
+		if (index + 1 < WolGameIdCount) {
+			memmove(WolGameIds + index, WolGameIds + index + 1, (WolGameIdCount - index - 1) * sizeof(uint32_t));
+		}
+		WolGameIdCount--;
+	}
+}
+
+static void Wol_Set_Game_Id(int index, uint32_t game_id)
+{
+	if (index < 0 || !Wol_Reserve_Game_Ids(index + 1)) {
+		return;
+	}
+	while (WolGameIdCount <= index) {
+		WolGameIds[WolGameIdCount++] = 0;
+	}
+	WolGameIds[index] = game_id;
+}
+
+static uint32_t Wol_Game_Id(int index)
+{
+	if (index < 0 || index >= WolGameIdCount) {
+		return(0);
+	}
+	return(WolGameIds[index]);
+}
+
+static bool Wol_Join_Server_Game(int game_index)
+{
+	uint32_t game_id = Wol_Game_Id(game_index);
+	if (game_id == 0) {
+		return(false);
+	}
+	return Wol.Send_Game_Join(game_id);
+}
+
+static bool Wol_Read_Control_String(uint8_t const *&p, uint8_t const *end, char *out, int out_size)
+{
+	if (out == NULL || out_size <= 0 || end - p < 2) {
+		return(false);
+	}
+
+	uint16_t len = WolProto::Read_U16(p);
+	if (end - p < len) {
+		return(false);
+	}
+
+	int copy = (len < static_cast<uint16_t>(out_size - 1)) ? len : out_size - 1;
+	if (copy > 0) {
+		memcpy(out, p, copy);
+	}
+	out[copy] = '\0';
+	p += len;
+	return(true);
+}
+
+static JoinEventType Wol_Update_Game_Node(ListClass *gamelist, char const *name, uint32_t game_id, uint32_t host_cid, bool is_open)
+{
+	if (gamelist == NULL || name == NULL || name[0] == '\0') {
+		return(EV_NONE);
+	}
+
+	UDPAddressClass address;
+	WSManagerClass::Client_Id_To_Address(host_cid, &address);
+
+	for (int i = 0; i < Games.Count(); i++) {
+		if (Wol_Game_Id(i) == game_id || !strcmp(Games[i]->Name, name)) {
+			SDL_strlcpy(Games[i]->Name, name, sizeof(Games[i]->Name));
+			Games[i]->Address = address;
+			Games[i]->Game.LastTime = TickCount.Time();
+			Games[i]->Game.Version = Version_Number();
+			Wol_Set_Game_Id(i, game_id);
+			if (Games[i]->Game.IsOpen != is_open) {
+				char *item = (char *)gamelist->Get_Item(i);
+				if (is_open) {
+					sprintf(item, Text_String(TXT_THATGUYS_GAME), name);
+				} else {
+					sprintf(item, Text_String(TXT_THATGUYS_GAME_BRACKET), name);
+				}
+				Games[i]->Game.IsOpen = is_open;
+				gamelist->Flag_To_Redraw();
+				return(EV_NEW_GAME);
+			}
+			return(EV_NONE);
+		}
+	}
+
+	NodeNameType *who = new NodeNameType;
+	SDL_strlcpy(who->Name, name, sizeof(who->Name));
+	who->Address = address;
+	who->Game.Version = Version_Number();
+	who->Game.IsOpen = is_open ? 1 : 0;
+	who->Game.LastTime = TickCount.Time();
+	Games.Add(who);
+	Wol_Add_Game_Id(game_id);
+
+	char *item = new char[MPLAYER_NAME_MAX + 9];
+	if (is_open) {
+		sprintf(item, Text_String(TXT_THATGUYS_GAME), name);
+	} else {
+		sprintf(item, Text_String(TXT_THATGUYS_GAME_BRACKET), name);
+	}
+	gamelist->Add_Item(item);
+	gamelist->Flag_To_Redraw();
+	return(EV_NEW_GAME);
+}
+
+static JoinEventType Wol_Reconcile_Game_List(ListClass *gamelist, uint8_t const *&p, uint8_t const *end)
+{
+	if (gamelist == NULL || end - p < 2) {
+		return(EV_NONE);
+	}
+
+	uint16_t count = WolProto::Read_U16(p);
+	int existing_count = Games.Count();
+	unsigned char *seen = new unsigned char[existing_count > 0 ? existing_count : 1];
+	memset(seen, 0, existing_count > 0 ? existing_count : 1);
+
+	JoinEventType retcode = EV_NONE;
+	for (uint16_t index = 0; index < count; index++) {
+		if (end - p < 4) {
+			break;
+		}
+
+		uint32_t game_id = WolProto::Read_U32(p);
+		char game_name[MPLAYER_NAME_MAX];
+		if (!Wol_Read_Control_String(p, end, game_name, sizeof(game_name)) || end - p < 8) {
+			break;
+		}
+
+		uint32_t host_cid = WolProto::Read_U32(p);
+		WolProto::Read_U8(p);
+		uint8_t started = WolProto::Read_U8(p);
+		WolProto::Read_U16(p);
+
+		for (int i = 0; i < existing_count; i++) {
+			if (Wol_Game_Id(i) == game_id || !strcmp(Games[i]->Name, game_name)) {
+				seen[i] = 1;
+				break;
+			}
+		}
+
+		JoinEventType event = Wol_Update_Game_Node(gamelist, game_name, game_id, host_cid, started == 0);
+		if (retcode == EV_NONE && event != EV_NONE) {
+			retcode = event;
+		}
+	}
+
+	for (int i = existing_count - 1; i >= 0; i--) {
+		if (seen[i]) {
+			continue;
+		}
+
+		delete Games[i];
+		Games.Delete(Games[i]);
+		Wol_Remove_Game_Id(i);
+
+		char *item = (char *)gamelist->Get_Item(i);
+		gamelist->Remove_Item(item);
+		delete [] item;
+		gamelist->Flag_To_Redraw();
+		retcode = EV_GAME_SIGNOFF;
+	}
+
+	delete [] seen;
+	return(retcode);
+}
+
+static JoinEventType Drain_Wol_Lobby_Control(ListClass *gamelist)
+{
+	uint8_t buffer[4096];
+	JoinEventType retcode = EV_NONE;
+
+	while (true) {
+		int buffer_len = sizeof(buffer);
+		uint16_t opcode = Wol.Next_Control_Frame(buffer, &buffer_len);
+		if (opcode == 0) {
+			break;
+		}
+
+		uint8_t const *p = buffer;
+		uint8_t const *end = buffer + buffer_len;
+		if (opcode == WolProto::OP_GAME_LIST_REPLY) {
+			JoinEventType event = Wol_Reconcile_Game_List(gamelist, p, end);
+			if (retcode == EV_NONE && event != EV_NONE) {
+				retcode = event;
+			}
+		}
+	}
+
+	return(retcode);
+}
+
+
 /***********************************************************************************************
  * Get_Join_Responses -- sends queries for the Join Dialog												  *
  *                                                                         						  *
@@ -2282,8 +2632,12 @@ static JoinEventType Get_Join_Responses(JoinStateType *joinstate, ListClass *gam
 	If there is no incoming packet, just return
 	------------------------------------------------------------------------*/
 	rc = NetMgr.Get_Global_Message (&GPacket, &GPacketlen, &GAddress, &GProductID);
-	if (!rc || GProductID != UDPGlobalConnClass::COMMAND_AND_CONQUER)
+	if (!rc || GProductID != UDPGlobalConnClass::COMMAND_AND_CONQUER) {
+		if (GameToPlay == GAME_WOL) {
+			return(Drain_Wol_Lobby_Control(gamelist));
+		}
 		return(EV_NONE);
+	}
 
 	/*------------------------------------------------------------------------
 	If we're joined in a game, handle the packet in a standard way; otherwise,
@@ -2561,6 +2915,7 @@ static JoinEventType Get_Join_Responses(JoinStateType *joinstate, ListClass *gam
 				................. Remove game name from game list ...............
 				*/
 				Games.Delete(Games[i]);
+				Wol_Remove_Game_Id(i);
 				item = (char *)(gamelist->Get_Item (i));
 				gamelist->Remove_Item (item);
 				delete [] item;
@@ -3060,6 +3415,14 @@ static int Net_New_Dialog(void)
 	}
 	playerlist.Add_Item(item, MultiplayerTColors[MultiplayerColorIndex]);
 
+	if (GameToPlay == GAME_WOL) {
+		Wol.Send_Game_Leave();
+		uint8_t max_players = (MultiplayerMaxPlayers > 255) ? 255 : static_cast<uint8_t>(MultiplayerMaxPlayers);
+		if (!Wol.Send_Game_Create(MultiplayerGameName, max_players)) {
+			return(false);
+		}
+	}
+
 	Load_Title_Screen("HTITLE.PCX", &HidPage, Palette);
 	HidPage.Blit(SeenBuff);
 	Set_Palette(Palette);
@@ -3423,6 +3786,9 @@ static int Net_New_Dialog(void)
 				}
 			case (BUTTON_CANCEL | KN_BUTTON):
 				memset (&GPacket, 0, sizeof(GlobalPacketType));
+				if (GameToPlay == GAME_WOL) {
+					Wol.Send_Game_Leave();
+				}
 
 				GPacket.Command = NET_SIGN_OFF;
 				strcpy (GPacket.Name, MultiplayerName);
@@ -3705,6 +4071,9 @@ static int Net_New_Dialog(void)
 		received.
 		.....................................................................*/
 		memset (&GPacket, 0, sizeof(GlobalPacketType));
+		if (GameToPlay == GAME_WOL) {
+			Wol.Send_Game_Start();
+		}
 		GPacket.Command = NET_GO;
 		GPacket.ResponseTime.OneWay = MultiplayerMaxAhead;
 		for (i = 0; i < Players.Count(); i++) {
@@ -3841,6 +4210,7 @@ static JoinEventType Get_NewGame_Responses(ColorListClass *playerlist)
 	NET_QUERY_JOIN:
 	------------------------------------------------------------------------*/
 	if (GPacket.Command==NET_QUERY_JOIN) {
+		NetDlg_Trace("Get_NewGame_Responses NET_QUERY_JOIN from=%s", GPacket.Name);
 		/*.....................................................................
 		See if this name is unique:
 		- If the name matches, but the address is different, reject this player
@@ -4348,7 +4718,9 @@ static int Net_Fake_New_Dialog(void)
 	}
 	playerlist.Add_Item(item, MultiplayerTColors[MultiplayerColorIndex]);
 
-	Wait_For_Focus();
+	if (!Internet_Has_Command_Line_Connect()) {
+		Wait_For_Focus();
+	}
 
 	CCDebugString ("C&C95 - About to uncompress title page.\n");
 	Load_Title_Screen("HTITLE.PCX", &HidPage, Palette);
@@ -4744,7 +5116,9 @@ CCDebugString ("C&C95 - Creating connection to the VSS\n");
 	Show_Mouse();
 
 	if (rc){
-		Wait_For_Focus();
+		if (!Internet_Has_Command_Line_Connect()) {
+			Wait_For_Focus();
+		}
 	}
 
 	return(rc);
@@ -4775,6 +5149,15 @@ CCDebugString ("C&C95 - Creating connection to the VSS\n");
 static int Net_Fake_Join_Dialog(void)
 {
 	int factor			= (SeenBuff.Get_Width() == 320) ? 1 : 2;
+	const bool direct_tcp_client = (GameToPlay == GAME_INTERNET
+		&& Internet_Has_Command_Line_Connect()
+		&& !Internet_Command_Line_Is_Host());
+	bool direct_join_sent = false;
+	CountDownTimerClass direct_join_timeout;
+	NetDlg_Trace("Net_Fake_Join_Dialog begin direct_tcp_client=%d cmdline=%d host=%d",
+		direct_tcp_client ? 1 : 0,
+		Internet_Has_Command_Line_Connect() ? 1 : 0,
+		Internet_Command_Line_Is_Host() ? 1 : 0);
 	/*........................................................................
 	Dialog & button dimensions
 	........................................................................*/
@@ -4918,10 +5301,17 @@ static int Net_Fake_Join_Dialog(void)
 	/*
 	--------------------------- Send network query ---------------------------
 	*/
-	CCDebugString ("C&C95 - About to call Send_Join_Queries.\n");
-	Send_Join_Queries (game_index, 1, 0);
+	if (!direct_tcp_client) {
+		CCDebugString ("C&C95 - About to call Send_Join_Queries.\n");
+		Send_Join_Queries (game_index, 1, 0);
+	} else {
+		CCDebugString ("C&C95 - Direct TCP client mode: lobby discovery disabled.\n");
+		direct_join_timeout.Set(20 * 60, true);
+	}
 
-	Wait_For_Focus();
+	if (!Internet_Has_Command_Line_Connect()) {
+		Wait_For_Focus();
+	}
 
 	CCDebugString ("C&C95 - About to uncompress title page.\n");
 	Load_Title_Screen("HTITLE.PCX", &HidPage, Palette);
@@ -5087,7 +5477,19 @@ static int Net_Fake_Join_Dialog(void)
 			mode.  (Request_To_Join fills in MultiplayerName with my namebuf.)
 			------------------------------------------------------------------*/
 			default:
-				if (joinstate == JOIN_NOTHING && Games.Count()!=0){
+				if (direct_tcp_client && joinstate == JOIN_NOTHING && !direct_join_sent) {
+					NetDlg_Trace("Net_Fake_Join_Dialog attempting direct join joinstate=%d", (int)joinstate);
+					if (Request_To_Join(MultiplayerName, 0, &playerlist, MultiplayerHouse,
+						MultiplayerColorIndex)) {
+						joinstate = JOIN_WAIT_CONFIRM;
+						direct_join_sent = true;
+						NetDlg_Trace("Net_Fake_Join_Dialog direct join dispatched");
+					} else {
+						NetDlg_Trace("Net_Fake_Join_Dialog direct join dispatch failed");
+						rc = -1;
+						process = false;
+					}
+				} else if (!direct_tcp_client && joinstate == JOIN_NOTHING && Games.Count()!=0){
 					gamelist.Set_Selected_Index(0);
 					join_index = gamelist.Current_Index();
 					if (Request_To_Join (MultiplayerName, join_index, &playerlist, MultiplayerHouse,
@@ -5104,7 +5506,9 @@ static int Net_Fake_Join_Dialog(void)
 		/*---------------------------------------------------------------------
 		Resend our query packets
 		---------------------------------------------------------------------*/
-		Send_Join_Queries(game_index, 0, 0);
+		if (!direct_tcp_client) {
+			Send_Join_Queries(game_index, 0, 0);
+		}
 
 		/*---------------------------------------------------------------------
 		Process incoming packets
@@ -5146,7 +5550,9 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 					who->Player.Color = MultiplayerColorIndex;
 					Players.Add (who);
 
-					Send_Join_Queries (game_index, 0, 1);
+					if (!direct_tcp_client) {
+						Send_Join_Queries (game_index, 0, 1);
+					}
 				} else {
 
 					/*..................................................................
@@ -5181,7 +5587,7 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 		If a new game is detected, and it's the first game on our list,
 		automatically send out a player query for that game.
 		.....................................................................*/
-		if (event == EV_NEW_GAME && gamelist.Count()==1) {
+		if (!direct_tcp_client && event == EV_NEW_GAME && gamelist.Count()==1) {
 			gamelist.Set_Selected_Index(0);
 			game_index = gamelist.Current_Index();
 			Send_Join_Queries (game_index, 0, 1);
@@ -5209,7 +5615,7 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 		If we're joined in a game, we must decrement our game_index to keep
 		it aligned with the game we're joined to.
 		.....................................................................*/
-		if (event == EV_GAME_SIGNOFF) {
+		if (!direct_tcp_client && event == EV_GAME_SIGNOFF) {
 			if (joinstate==JOIN_CONFIRMED) {
 				game_index--;
 				join_index--;
@@ -5236,6 +5642,7 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 		for (i = 0; i < Games.Count(); i++) {
 			if (TickCount.Time() - Games[i]->Game.LastTime > 400) {
 				Games.Delete(Games[i]);
+				Wol_Remove_Game_Id(i);
 				item = (char *)(gamelist.Get_Item (i));
 				gamelist.Remove_Item (item);
 				delete [] item;
@@ -5257,6 +5664,11 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 //CCDebugString (ddkks);
 		if (ready_to_go){	// && Players.Count() == InternetMaxPlayers){
 			rc = 0;
+			process = false;
+		}
+
+		if (direct_tcp_client && direct_join_sent && !direct_join_timeout.Time() && !ready_to_go) {
+			rc = -1;
 			process = false;
 		}
 
@@ -5438,7 +5850,9 @@ CCDebugString ("C&C95 - Received 'GO' packet\n");
 	Show_Mouse();
 
 	if (rc != -1){
-		Wait_For_Focus();
+		if (!Internet_Has_Command_Line_Connect()) {
+			Wait_For_Focus();
+		}
 	}
 
 	return(rc);

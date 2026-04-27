@@ -50,11 +50,116 @@
 #include	"TCPIP.H"
 #include	"WSMGR.H"
 
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+
 static bool				BootstrapCoreMixfilesRegistered = false;
+
+namespace {
+
+bool Network_Trace_Enabled(void)
+{
+	static int enabled = -1;
+	if (enabled == -1) {
+		enabled = (getenv("TD_TRACE_NETWORK") != NULL) ? 1 : 0;
+	}
+	return(enabled != 0);
+}
+
+void Network_Trace(char const* format, ...)
+{
+	va_list arguments;
+
+	if (!Network_Trace_Enabled()) {
+		return;
+	}
+
+	va_start(arguments, format);
+	std::fprintf(stderr, "[net-init] ");
+	std::vfprintf(stderr, format, arguments);
+	std::fprintf(stderr, "\n");
+	std::fflush(stderr);
+	va_end(arguments);
+}
+
+char const* Connect_Status_Name(TcpipManagerClass::ConnectStatusEnum status)
+{
+	switch (status) {
+		case TcpipManagerClass::CONNECTED_OK:
+			return("CONNECTED_OK");
+		case TcpipManagerClass::NOT_CONNECTING:
+			return("NOT_CONNECTING");
+		case TcpipManagerClass::CONNECTING:
+			return("CONNECTING");
+		case TcpipManagerClass::UNABLE_TO_CONNECT_TO_SERVER:
+			return("UNABLE_TO_CONNECT_TO_SERVER");
+		case TcpipManagerClass::CONTACTING_SERVER:
+			return("CONTACTING_SERVER");
+		case TcpipManagerClass::SERVER_ADDRESS_LOOKUP_FAILED:
+			return("SERVER_ADDRESS_LOOKUP_FAILED");
+		case TcpipManagerClass::RESOLVING_HOST_ADDRESS:
+			return("RESOLVING_HOST_ADDRESS");
+		case TcpipManagerClass::UNABLE_TO_ACCEPT_CLIENT:
+			return("UNABLE_TO_ACCEPT_CLIENT");
+		case TcpipManagerClass::UNABLE_TO_CONNECT:
+			return("UNABLE_TO_CONNECT");
+		case TcpipManagerClass::CONNECTION_LOST:
+			return("CONNECTION_LOST");
+	}
+
+	return("UNKNOWN");
+}
+
+}
 
 static void Wait_For_Countdown_With_Callback(CountDownTimerClass& timer)
 {
 	while (timer.Time()) {
+		Call_Back();
+		SDL_GameInput_Delay(1);
+	}
+}
+
+static bool Wait_For_Direct_TCP_Connect(bool server)
+{
+	const uint32_t start = TickCount.Time();
+	TcpipManagerClass::ConnectStatusEnum last_status = TcpipManagerClass::NOT_CONNECTING;
+	Network_Trace("Wait_For_Direct_TCP_Connect start role=%s", server ? "host" : "join");
+
+	for (;;) {
+		Winsock.Service();
+		TcpipManagerClass::ConnectStatusEnum status = Winsock.Get_Connection_Status();
+		if (status != last_status) {
+			Network_Trace("TCP status -> %s", Connect_Status_Name(status));
+			last_status = status;
+		}
+
+		if (server) {
+			const bool ready = status == TcpipManagerClass::CONNECTING || status == TcpipManagerClass::CONNECTED_OK;
+			if (ready) {
+				Network_Trace("Host TCP listener ready status=%s", Connect_Status_Name(status));
+			}
+			return ready;
+		}
+
+		if (status == TcpipManagerClass::CONNECTED_OK) {
+			Network_Trace("Client TCP connect complete");
+			return true;
+		}
+		if (status == TcpipManagerClass::SERVER_ADDRESS_LOOKUP_FAILED ||
+			status == TcpipManagerClass::UNABLE_TO_CONNECT ||
+			status == TcpipManagerClass::UNABLE_TO_CONNECT_TO_SERVER ||
+			status == TcpipManagerClass::CONNECTION_LOST ||
+			status == TcpipManagerClass::NOT_CONNECTING) {
+			Network_Trace("Client TCP connect failed status=%s", Connect_Status_Name(status));
+			return false;
+		}
+		if (TickCount.Time() - start > 600) {
+			Network_Trace("Client TCP connect timed out after %u ticks", TickCount.Time() - start);
+			return false;
+		}
+
 		Call_Back();
 		SDL_GameInput_Delay(1);
 	}
@@ -689,6 +794,7 @@ void Uninit_Game(void)
 		delete Houses.Ptr(0);
 	}
 	Houses.Set_Heap(0);
+	PlayerPtr = NULL;
 
 	delete [] _ShapeBuffer;
 	Set_Shape_Buffer(NULL, 0);
@@ -1046,7 +1152,7 @@ bool Select_Game(bool fade)
 				**	network play.
 				*/
 				case SEL_MULTIPLAYER_GAME:
-
+				{
 #ifdef DEMO
 					Hide_Mouse();
 					Set_Palette(BlackPalette);
@@ -1064,6 +1170,7 @@ bool Select_Game(bool fade)
 					fade = true;
 					selection = SEL_NONE;
 #else
+					bool multiplayer_setup_complete = false;
 					switch (GameToPlay) {
 
 						/*
@@ -1088,6 +1195,7 @@ bool Select_Game(bool fade)
 							}
 
 							if (Remote_Connect()) {
+								multiplayer_setup_complete = true;
 								break;
 							}
 
@@ -1106,9 +1214,24 @@ bool Select_Game(bool fade)
 							}
 
 							Read_MultiPlayer_Settings();
+							if (Internet_Has_Command_Line_Name()) {
+								Internet_Apply_Command_Line_Name();
+							}
+							if (Internet_Has_Command_Line_Connect()) {
+								PlanetWestwoodIsHost = Internet_Command_Line_Is_Host();
+								InternetTransport = INTERNET_TRANSPORT_TCP;
+								InternetGameRole = PlanetWestwoodIsHost ? INTERNET_HOST : INTERNET_JOIN;
+								UseVirtualSubnetServer = false;
+								InternetMaxPlayers = 2;
+							}
 							Server = PlanetWestwoodIsHost;
 							Winsock.Set_Protocol_UDP(GameToPlay != GAME_INTERNET);
-							Winsock.Set_Host_Address(PlanetWestwoodIPAddress);
+							Winsock.Set_Host_Address(Server ? "" : PlanetWestwoodIPAddress);
+							Network_Trace("GAME_INTERNET setup role=%s host_addr=%s port=%u cmdline=%d",
+								Server ? "host" : "join",
+								Server ? "" : PlanetWestwoodIPAddress,
+								static_cast<unsigned>(PlanetWestwoodPortNumber),
+								Internet_Has_Command_Line_Connect() ? 1 : 0);
 
 							if (Server) {
 								InternetGameRole = INTERNET_HOST;
@@ -1116,6 +1239,16 @@ bool Select_Game(bool fade)
 							} else {
 								InternetGameRole = INTERNET_JOIN;
 								Winsock.Start_Client();
+							}
+
+							if (!Wait_For_Direct_TCP_Connect(Server)) {
+								CCMessageBox().Process("Unable to establish direct TCP connection.", TXT_OK);
+								Network_Trace("Direct TCP handshake failed");
+								Winsock.Close();
+								GameToPlay = GAME_NORMAL;
+								selection = SEL_NONE;
+								display = true;
+								break;
 							}
 
 							if (!Init_Network()) {
@@ -1127,6 +1260,7 @@ bool Select_Game(bool fade)
 							}
 
 							if ((Server && Server_Remote_Connect()) || (!Server && Client_Remote_Connect())) {
+								multiplayer_setup_complete = true;
 								break;
 							}
 
@@ -1142,6 +1276,9 @@ bool Select_Game(bool fade)
 							char const *nickname = MultiplayerName[0] ? MultiplayerName : "Noname";
 
 							Read_MultiPlayer_Settings();
+							if (Internet_Has_Command_Line_Name()) {
+								Internet_Apply_Command_Line_Name();
+							}
 							server_host = PlanetWestwoodIPAddress[0] ? PlanetWestwoodIPAddress : "127.0.0.1";
 							nickname = MultiplayerName[0] ? MultiplayerName : "Noname";
 
@@ -1161,6 +1298,7 @@ bool Select_Game(bool fade)
 							}
 
 							if (Remote_Connect()) {
+								multiplayer_setup_complete = true;
 								break;
 							}
 
@@ -1175,25 +1313,28 @@ bool Select_Game(bool fade)
 							break;
 						}
 
-						switch (GameToPlay) {
+						if (multiplayer_setup_complete) {
+							switch (GameToPlay) {
 						/*
 						**	Modern direct-connect and WOL-style games
 						*/
-						case GAME_INTERNET:
-						case GAME_WOL:
-						case GAME_UDP:
-							Theme.Fade_Out();
-							ScenPlayer = SCEN_PLAYER_2PLAYER;
-							ScenDir = SCEN_DIR_EAST;
-							process = false;
-							Options.ScoreVolume = 0;
-							break;
+							case GAME_INTERNET:
+							case GAME_WOL:
+							case GAME_UDP:
+								Theme.Fade_Out();
+								ScenPlayer = SCEN_PLAYER_2PLAYER;
+								ScenDir = SCEN_DIR_EAST;
+								process = false;
+								Options.ScoreVolume = 0;
+								break;
 
-						default:
-							break;
-					}
+							default:
+								break;
+							}
+						}
 #endif
 					break;
+				}
 
 				/*
 				**	Play a VQ
@@ -1746,6 +1887,8 @@ bool Parse_Command_Line(int argc, char *argv[])
 	Debug_Map = false;
 //	Debug_Play_Map = false;
 	Debug_Unshroud = false;
+	Internet_Clear_Command_Line_Connect();
+	Internet_Clear_Command_Line_Name();
 
 	for (int index = 1; index < argc; index++) {
 		char * string;		// Pointer to argument.
@@ -1754,6 +1897,60 @@ bool Parse_Command_Line(int argc, char *argv[])
 			if (index + 1 < argc) {
 				++index;
 			}
+			continue;
+		}
+
+		if (argv[index] != NULL && stricmp(argv[index], "-host") == 0) {
+			uint16_t port = PlanetWestwoodPortNumber;
+
+			if (Internet_Has_Command_Line_Connect()) {
+				return(false);
+			}
+
+			if (index + 1 < argc && argv[index + 1] != NULL && argv[index + 1][0] != '\0' && argv[index + 1][0] != '-') {
+				if (!Internet_Parse_Port(argv[index + 1], &port)) {
+					return(false);
+				}
+				++index;
+			}
+
+			Internet_Set_Command_Line_Host(port);
+			InternetTransport = INTERNET_TRANSPORT_TCP;
+			GameToPlay = GAME_INTERNET;
+			InternetGameRole = INTERNET_HOST;
+			Network_Trace("Command line: host TCP on port %u", static_cast<unsigned>(port));
+			continue;
+		}
+
+		if (argv[index] != NULL && stricmp(argv[index], "-connect") == 0) {
+			uint16_t port = 0;
+
+			if (Internet_Has_Command_Line_Connect() ||
+				index + 2 >= argc ||
+				argv[index + 1] == NULL || argv[index + 1][0] == '\0' ||
+				argv[index + 2] == NULL || argv[index + 2][0] == '\0' ||
+				!Internet_Parse_Port(argv[index + 2], &port)) {
+				return(false);
+			}
+
+			Internet_Set_Command_Line_Connect(argv[index + 1], port);
+			InternetTransport = INTERNET_TRANSPORT_TCP;
+			GameToPlay = GAME_INTERNET;
+			InternetGameRole = INTERNET_JOIN;
+			Network_Trace("Command line: connect TCP to %s:%u", argv[index + 1], static_cast<unsigned>(port));
+			index += 2;
+			continue;
+		}
+
+		if (argv[index] != NULL && stricmp(argv[index], "-name") == 0) {
+			if (index + 1 >= argc || argv[index + 1] == NULL || argv[index + 1][0] == '\0' ||
+				strlen(argv[index + 1]) >= sizeof(MultiplayerName)) {
+				return(false);
+			}
+
+			Internet_Set_Command_Line_Name(argv[index + 1]);
+			Network_Trace("Command line: multiplayer name=%s", argv[index + 1]);
+			++index;
 			continue;
 		}
 
@@ -1792,6 +1989,9 @@ bool Parse_Command_Line(int argc, char *argv[])
 						"Parameters:\r\n"
 						"  -DESTNET  = Specify Network Number of destination system\r\n"
 						"              (Syntax: DESTNETxx.xx.xx.xx)\r\n"
+					"  -HOST [port] = Host direct TCP multiplayer (default from INI)\r\n"
+					"  -CONNECT <addr> <port> = Join direct TCP multiplayer\r\n"
+					"  -NAME <name> = Set multiplayer player name\r\n"
 						"  -SOCKET   = Network Socket ID (0 - 16383)\n"
 						"  -STEALTH  = Hide multiplayer names (\"Boss mode\")\r\n"
 						"  -MESSAGES = Allow messages from outside this game.\r\n"

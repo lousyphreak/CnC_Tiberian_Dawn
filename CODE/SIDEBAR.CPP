@@ -730,8 +730,10 @@ void SidebarClass::Draw_It(bool complete)
 	**	Draw the side strip elements by calling their respective draw functions.
 	*/
 	if (IsSidebarActive){
-		Column[0].Draw_It(complete);
-		Column[1].Draw_It(complete);
+		if (PlayerPtr) {
+			Column[0].Draw_It(complete);
+			Column[1].Draw_It(complete);
+		}
 		Repair.Draw_Me(true);
 		Upgrade.Draw_Me(true);
 		Zoom.Draw_Me(true);
@@ -774,7 +776,7 @@ void SidebarClass::AI(KeyNumType & input, int x, int y)
 		Activate(-1);
 	}
 
-	if (!Debug_Map) {
+	if (!Debug_Map && PlayerPtr) {
 		Column[0].AI(input, x, y);
 		Column[1].AI(input, x, y);
 	}
@@ -799,7 +801,7 @@ void SidebarClass::AI(KeyNumType & input, int x, int y)
 		**	If there are any buildings in the payer's inventory, then allow the repair
 		**	option.
 		*/
-		if (PlayerPtr->BScan) {
+		if (PlayerPtr && PlayerPtr->BScan) {
 			Activate_Repair(true);
 		} else {
 			Activate_Repair(false);

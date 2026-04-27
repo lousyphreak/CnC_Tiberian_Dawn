@@ -78,6 +78,7 @@ int Socket_Write_To(SocketHandle socket_handle, void const* buffer, int buffer_l
 int Socket_Set_NonBlocking(SocketHandle socket_handle, bool nonblocking);
 int Socket_Set_Integer_Option(SocketHandle socket_handle, int option_name, int value);
 int Socket_Set_Linger(SocketHandle socket_handle, bool enabled, int seconds);
+int Socket_Get_Error(SocketHandle socket_handle);
 void Socket_Clear_Error(SocketHandle socket_handle);
 bool Socket_Is_Write_Ready(SocketHandle socket_handle);
 bool Socket_Get_Peer_Address(SocketHandle socket_handle, SocketAddress* address);

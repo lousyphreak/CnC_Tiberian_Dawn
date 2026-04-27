@@ -760,9 +760,23 @@ static void Assign_Houses(void)
 	HousesType house2;
 	HouseClass *housep2;
 
-char wibble [256];
-sprintf (wibble, "C&C95 - In 'Assign_Houses'. Number of players:%d\n",MultiplayerPlayerCount);
-CCDebugString (wibble);
+	char wibble [256];
+	sprintf (wibble, "C&C95 - In 'Assign_Houses'. Number of players:%d\n",MultiplayerPlayerCount);
+	CCDebugString (wibble);
+
+	/*
+	**	Always rebuild PlayerPtr from current multiplayer assignments.
+	*/
+	PlayerPtr = NULL;
+
+	/*
+	**	Clamp player count to a valid range so assignment cannot underflow/overflow.
+	*/
+	if (MultiplayerPlayerCount < 1) {
+		MultiplayerPlayerCount = 1;
+	} else if (MultiplayerPlayerCount > MultiplayerMaxPlayers) {
+		MultiplayerPlayerCount = MultiplayerMaxPlayers;
+	}
 
 	/*
 	**	Init the 'used' flag for all houses & colors to 0
@@ -796,6 +810,9 @@ CCDebugString (wibble);
 		pref_house = MultiplayerID_To_HousesType(MultiplayerID[i]);
 		color = MultiplayerID_To_ColorIndex(MultiplayerID[i]);
 		housep = HouseClass::As_Pointer(house);
+		if (!housep) {
+			continue;
+		}
 		MultiplayerHouses[i] = house;
 
 		/*
@@ -821,6 +838,14 @@ CCDebugString (wibble);
 	}
 
 	/*
+	**	Fallback to the first assigned human player when MultiplayerLocalID was
+	**	not present in MultiplayerID[] (or IDs are not initialized yet).
+	*/
+	if (!PlayerPtr && MultiplayerPlayerCount > 0) {
+		PlayerPtr = HouseClass::As_Pointer(MultiplayerHouses[0]);
+	}
+
+	/*
 	**	For all houses not assigned to a player, set them up for computer use
 	*/
 	for (i = 0; i < MultiplayerMaxPlayers; i++) {
@@ -839,6 +864,9 @@ CCDebugString (wibble);
 				}
 			}
 			housep = HouseClass::As_Pointer (house);
+			if (!housep) {
+				continue;
+			}
 
 			/*
 			**	Mark this house & color as used
@@ -852,6 +880,14 @@ CCDebugString (wibble);
 			housep->IsHuman = false;
 			housep->Init_Data(color, pref_house, MultiplayerCredits);
 		}
+	}
+
+	/*
+	**	Final safety net: keep UI/game logic from dereferencing a null player
+	**	house even when multiplayer identity data is incomplete.
+	*/
+	if (!PlayerPtr) {
+		PlayerPtr = HouseClass::As_Pointer(HOUSE_MULTI1);
 	}
 
 	/*

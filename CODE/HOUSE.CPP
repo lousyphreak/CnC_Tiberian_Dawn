@@ -744,6 +744,7 @@ void HouseClass::Init(void)
 		delete Houses.Ptr(0);
 	}
 	Houses.Free_All();
+	PlayerPtr = NULL;
 
 	for (HousesType index = HOUSE_FIRST; index < HOUSE_COUNT; index++) {
 		HouseTriggers[index].Clear();

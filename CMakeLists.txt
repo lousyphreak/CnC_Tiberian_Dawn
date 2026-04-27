@@ -16,6 +16,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(TD_ENABLE_ASAN "Enable AddressSanitizer" OFF)
 option(TD_ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
+option(TD_ENABLE_UDP "Enable UDP multiplayer transport" ON)
+option(TD_ENABLE_TCP "Enable TCP direct multiplayer transport" ON)
+option(TD_ENABLE_WOL "Enable WebSocket (WOL replacement) multiplayer transport" ON)
 option(TD_EMSCRIPTEN_PACKAGE_GAMEDATA "Package the GameData directory into the emscripten output" OFF)
 option(TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA "Load GameData over HTTP on demand in the emscripten build" ON)
 option(TD_EMSCRIPTEN_DIAGNOSTIC "Enable Emscripten diagnostic build (ASSERTIONS, SAFE_HEAP, stack checks, symbol names)" OFF)
@@ -26,6 +29,12 @@ set(TD_WINDOW_ICON_FILE "${TD_ICON_DIR}/tiberian-dawn-window-icon.png")
 set(TD_WEB_ICON_DIR "${CMAKE_SOURCE_DIR}/web/icons")
 set(TD_WEB_MANIFEST_FILE "${CMAKE_SOURCE_DIR}/web/site.webmanifest")
 set(TD_WINDOWS_RESOURCE_FILE "${CMAKE_SOURCE_DIR}/resources/windows/tiberian-dawn.rc")
+
+if(EMSCRIPTEN)
+  set(TD_ENABLE_UDP OFF CACHE BOOL "Enable UDP multiplayer transport" FORCE)
+  set(TD_ENABLE_TCP OFF CACHE BOOL "Enable TCP direct multiplayer transport" FORCE)
+  set(TD_ENABLE_WOL ON CACHE BOOL "Enable WebSocket (WOL replacement) multiplayer transport" FORCE)
+endif()
 
 if(NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/SDL3/CMakeLists.txt")
   message(FATAL_ERROR "SDL3 submodule is missing. Run: git submodule update --init --recursive")
@@ -62,6 +71,24 @@ set(TD_COMMON_DEFINITIONS
   ENGLISH=1
   NOMINMAX
 )
+
+if(TD_ENABLE_UDP)
+  list(APPEND TD_COMMON_DEFINITIONS TD_ENABLE_UDP=1)
+else()
+  list(APPEND TD_COMMON_DEFINITIONS TD_ENABLE_UDP=0)
+endif()
+
+if(TD_ENABLE_TCP)
+  list(APPEND TD_COMMON_DEFINITIONS TD_ENABLE_TCP=1)
+else()
+  list(APPEND TD_COMMON_DEFINITIONS TD_ENABLE_TCP=0)
+endif()
+
+if(TD_ENABLE_WOL)
+  list(APPEND TD_COMMON_DEFINITIONS TD_ENABLE_WOL=1)
+else()
+  list(APPEND TD_COMMON_DEFINITIONS TD_ENABLE_WOL=0)
+endif()
 
 if(EMSCRIPTEN)
   list(APPEND TD_COMMON_DEFINITIONS INTERNET_OFF)

@@ -335,7 +335,7 @@ void RadarClass::Draw_It(bool forced)
 	if (!forced && !IsToRedraw && !FullRedraw) return;
 
 	static HousesType _house = HOUSE_NONE;
-	if (PlayerPtr->ActLike != _house) {
+	if (PlayerPtr && PlayerPtr->ActLike != _house) {
 		char name[_MAX_NAME + _MAX_EXT];
 
 		if (Special.IsJurassic && AreThingiesEnabled) {

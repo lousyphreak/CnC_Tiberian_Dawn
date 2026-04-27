@@ -19,7 +19,36 @@
 #include "FUNCTION.H"
 #include "TCPIP.H"
 
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 namespace {
+
+bool Tcpip_Trace_Enabled(void)
+{
+	static int enabled = -1;
+	if (enabled == -1) {
+		enabled = (getenv("TD_TRACE_NETWORK") != NULL) ? 1 : 0;
+	}
+	return(enabled != 0);
+}
+
+void Tcpip_Trace(char const* format, ...)
+{
+	va_list arguments;
+
+	if (!Tcpip_Trace_Enabled()) {
+		return;
+	}
+
+	va_start(arguments, format);
+	fprintf(stderr, "[tcpip] ");
+	vfprintf(stderr, format, arguments);
+	fprintf(stderr, "\n");
+	fflush(stderr);
+	va_end(arguments);
+}
 
 uint32_t Decode_Frame_Length(const std::vector<uint8_t>& stream_buffer)
 {
@@ -78,6 +107,7 @@ TcpipManagerClass::~TcpipManagerClass(void)
 
 void TcpipManagerClass::Close(void)
 {
+	Tcpip_Trace("Close sockets begin connected=%d", Connected ? 1 : 0);
 	if (ConnectSocket != INVALID_SOCKET_HANDLE) {
 		Close_Socket(ConnectSocket);
 		ConnectSocket = INVALID_SOCKET_HANDLE;
@@ -110,6 +140,7 @@ void TcpipManagerClass::Close(void)
 	Server.Address = 0;
 	Server.Name[0] = '\0';
 	Server.DotAddr[0] = '\0';
+	Tcpip_Trace("Close sockets complete");
 }
 
 int32_t TcpipManagerClass::Init(void)
@@ -195,13 +226,14 @@ void TcpipManagerClass::Service(void)
 				ConnectInProgress = FALSE;
 			}
 		} else if (ConnectInProgress && ConnectSocket != INVALID_SOCKET_HANDLE && Socket_Is_Write_Ready(ConnectSocket)) {
+			int socket_error = 0;
 			Socket_Clear_Error(ConnectSocket);
-			const int socket_error = Socket_Get_Last_Error();
+			socket_error = Socket_Get_Last_Error();
 			if (socket_error == 0) {
 				ConnectStatus = CONNECTED_OK;
 				Connected = TRUE;
 				ConnectInProgress = FALSE;
-			} else if (!Socket_Error_Is_Would_Block(socket_error)) {
+			} else if (socket_error != 0 && !Socket_Error_Is_Would_Block(socket_error)) {
 				ConnectStatus = UNABLE_TO_CONNECT;
 				Close_Socket(ConnectSocket);
 				ConnectSocket = INVALID_SOCKET_HANDLE;
@@ -218,6 +250,7 @@ void TcpipManagerClass::Service(void)
 	for (;;) {
 		const int rc = Socket_Read(ConnectSocket, receive_buffer, sizeof(receive_buffer));
 		if (rc > 0) {
+			Tcpip_Trace("Service read stream bytes=%d", rc);
 			StreamReceiveBuffer.insert(StreamReceiveBuffer.end(), receive_buffer, receive_buffer + rc);
 			while (StreamReceiveBuffer.size() >= sizeof(uint32_t)) {
 				const uint32_t frame_length = Decode_Frame_Length(StreamReceiveBuffer);
@@ -279,6 +312,7 @@ void TcpipManagerClass::Service(void)
 			reinterpret_cast<const char*>(StreamSendBuffer) + StreamSendOffset,
 			StreamSendLength - StreamSendOffset);
 		if (rc > 0) {
+			Tcpip_Trace("Service wrote stream bytes=%d", rc);
 			StreamSendOffset += rc;
 			if (StreamSendOffset >= StreamSendLength) {
 				TransmitBuffers[TXBufferTail].InUse = false;
@@ -315,6 +349,7 @@ void TcpipManagerClass::Start_Server(void)
 {
 	int i;
 	SocketAddress addr;
+	Tcpip_Trace("Start_Server udp=%d port=%u", UseUDP ? 1 : 0, static_cast<unsigned>(PlanetWestwoodPortNumber));
 
 	if (!Init()) {
 		ConnectStatus = NOT_CONNECTING;
@@ -367,6 +402,7 @@ void TcpipManagerClass::Start_Server(void)
 	ListenSocket = Socket_Open(SOCKET_TYPE_STREAM, SOCKET_PROTOCOL_TCP);
 	if (ListenSocket == INVALID_SOCKET_HANDLE) {
 		ConnectStatus = NOT_CONNECTING;
+		Tcpip_Trace("Start_Server failed: unable to open listen socket");
 		return;
 	}
 
@@ -377,6 +413,9 @@ void TcpipManagerClass::Start_Server(void)
 		Close_Socket(ListenSocket);
 		ListenSocket = INVALID_SOCKET_HANDLE;
 		ConnectStatus = NOT_CONNECTING;
+		Tcpip_Trace("Start_Server failed: listen setup error");
+	} else {
+		Tcpip_Trace("Start_Server listening on port %u", static_cast<unsigned>(PlanetWestwoodPortNumber));
 	}
 }
 
@@ -424,6 +463,7 @@ int32_t TcpipManagerClass::Add_Client(void)
 		}
 		return FALSE;
 	}
+	Tcpip_Trace("Add_Client accepted remote=%u", static_cast<unsigned>(addr.Address));
 
 	Socket_Set_Integer_Option(ConnectSocket, SOCKET_OPTION_TCP_NO_DELAY, delay);
 	Socket_Set_Integer_Option(ConnectSocket, SOCKET_OPTION_RECEIVE_BUFFER, SocketReceiveBuffer);
@@ -490,6 +530,7 @@ void TcpipManagerClass::Set_Host_Address(char const* address)
 	char const* resolved = address != NULL ? address : "";
 	SDL_strlcpy(HostAddress, resolved, sizeof(HostAddress));
 	SDL_strlcpy(PlanetWestwoodIPAddress, resolved, sizeof(PlanetWestwoodIPAddress));
+	Tcpip_Trace("Set_Host_Address %s", PlanetWestwoodIPAddress);
 }
 
 void TcpipManagerClass::Start_Client(void)
@@ -497,6 +538,8 @@ void TcpipManagerClass::Start_Client(void)
 	SocketAddress addr;
 	int i;
 	SocketHostEntry host_entry;
+	Tcpip_Trace("Start_Client udp=%d host=%s port=%u", UseUDP ? 1 : 0, PlanetWestwoodIPAddress,
+		static_cast<unsigned>(PlanetWestwoodPortNumber));
 
 	if (!Init()) {
 		ConnectStatus = NOT_CONNECTING;
@@ -545,6 +588,7 @@ void TcpipManagerClass::Start_Client(void)
 			Server.Name[0] = '\0';
 			strcpy(Server.DotAddr, "????");
 			ConnectStatus = SERVER_ADDRESS_LOOKUP_FAILED;
+			Tcpip_Trace("Start_Client failed: empty host address");
 			return;
 		}
 
@@ -554,6 +598,7 @@ void TcpipManagerClass::Start_Client(void)
 			Server.Name[0] = '\0';
 			strcpy(Server.DotAddr, "????");
 			ConnectStatus = SERVER_ADDRESS_LOOKUP_FAILED;
+			Tcpip_Trace("Start_Client failed: host lookup failed for %s", PlanetWestwoodIPAddress);
 			return;
 		} else {
 			Server.Address = host_entry.Addresses[0];
@@ -568,6 +613,7 @@ void TcpipManagerClass::Start_Client(void)
 		ConnectSocket = Socket_Open(SOCKET_TYPE_STREAM, SOCKET_PROTOCOL_TCP);
 		if (ConnectSocket == INVALID_SOCKET_HANDLE) {
 			ConnectStatus = NOT_CONNECTING;
+			Tcpip_Trace("Start_Client failed: unable to open TCP socket");
 			return;
 		}
 
@@ -578,6 +624,7 @@ void TcpipManagerClass::Start_Client(void)
 			Close_Socket(ConnectSocket);
 			ConnectSocket = INVALID_SOCKET_HANDLE;
 			ConnectStatus = NOT_CONNECTING;
+			Tcpip_Trace("Start_Client failed: unable to set TCP nonblocking mode");
 			return;
 		}
 
@@ -586,15 +633,18 @@ void TcpipManagerClass::Start_Client(void)
 			ConnectStatus = CONNECTED_OK;
 			Connected = TRUE;
 			ConnectInProgress = FALSE;
+			Tcpip_Trace("Start_Client connected immediately");
 		} else {
 			const int error_code = Socket_Get_Last_Error();
 			if (Socket_Error_Is_Would_Block(error_code)) {
 				ConnectStatus = CONTACTING_SERVER;
 				ConnectInProgress = TRUE;
+				Tcpip_Trace("Start_Client connect in progress");
 			} else {
 				ConnectStatus = UNABLE_TO_CONNECT;
 				Close_Socket(ConnectSocket);
 				ConnectSocket = INVALID_SOCKET_HANDLE;
+				Tcpip_Trace("Start_Client failed: connect error=%d", error_code);
 			}
 		}
 		return;

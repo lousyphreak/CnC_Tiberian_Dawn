@@ -50,6 +50,9 @@
 #include "IPX95.H"
 #include "TCPIP.H"
 
+#include <stdio.h>
+#include <stdlib.h>
+
 /*
 ********************************* Globals ***********************************
 */
@@ -540,6 +543,10 @@ int UDPConnClass::Send_To(char *buf, int buflen, UDPAddressClass *address,
 	unsigned char	send_address[6];
 
 	if (Winsock.Get_Connected()){
+		if (getenv("TD_TRACE_NETWORK") != NULL) {
+			fprintf(stderr, "[udpconn] Send_To via Winsock buflen=%d\n", buflen);
+			fflush(stderr);
+		}
 
 #ifdef VIRTUAL_SUBNET_SERVER
 		if (immed){
@@ -618,6 +625,10 @@ int UDPConnClass::Broadcast(char *buf, int buflen)
 {
 
 	if (Winsock.Get_Connected()){
+		if (getenv("TD_TRACE_NETWORK") != NULL) {
+			fprintf(stderr, "[udpconn] Broadcast via Winsock buflen=%d\n", buflen);
+			fflush(stderr);
+		}
 #ifdef VIRTUAL_SUBNET_SERVER
 		char *tempsend = new char [buflen + sizeof (unsigned short)];
 		memcpy (tempsend+2, buf, buflen);

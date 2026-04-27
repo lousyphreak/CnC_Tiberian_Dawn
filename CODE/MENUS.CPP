@@ -174,11 +174,6 @@ int Main_Menu(uint32_t timeout)
 	starty += ystep;
 #endif	//BONUS_MISSIONS
 
-	TextButtonClass internetbutton(BUTTON_INTERNET, TXT_INTERNET,
-		TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
-		D_INTERNET_X, starty, D_INTERNET_W, D_INTERNET_H);
-	starty += ystep;
-
 	TextButtonClass loadbtn (BUTTON_LOAD, TXT_LOAD_MISSION,
 		TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
 		D_LOAD_X, starty, D_LOAD_W, D_LOAD_H);
@@ -280,9 +275,6 @@ int Main_Menu(uint32_t timeout)
 #endif	//BONUS_MISSIONS
 
 
-#ifndef DEMO
-	internetbutton.Add_Tail(*commands);
-#endif	//DEMO
 	loadbtn.Add_Tail(*commands);
 	multibtn.Add_Tail(*commands);
 	introbtn.Add_Tail(*commands);
@@ -304,7 +296,6 @@ int Main_Menu(uint32_t timeout)
 #ifdef BONUS_MISSIONS
 	buttons[butt++] = &bonusbtn;
 #endif	//BONUS_MISSIONS
-	buttons[butt++] = &internetbutton;
 	buttons[butt++] = &loadbtn;
 	buttons[butt++] = &multibtn;
 	buttons[butt++] = &introbtn;

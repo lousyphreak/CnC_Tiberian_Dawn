@@ -16,15 +16,88 @@
 */
 char PlanetWestwoodHandle[] = {"Handle"};
 char PlanetWestwoodPassword[] = {"Password"};
-char PlanetWestwoodIPAddress[IP_ADDRESS_MAX] = {"206.154.108.87"};
+char PlanetWestwoodIPAddress[IP_ADDRESS_MAX] = {"127.0.0.1"};
 uint16_t PlanetWestwoodPortNumber = 1234;
 bool PlanetWestwoodIsHost = false;
+InternetCommandLineType PlanetWestwoodCommandLine = INTERNET_CMDLINE_NONE;
+static char PlanetWestwoodCommandLineName[MPLAYER_NAME_MAX] = {""};
 uint32_t PlanetWestwoodGameID;
 uint32_t PlanetWestwoodStartTime;
 bool UseVirtualSubnetServer;
 int InternetMaxPlayers;
 int InternetMaxAhead;
 int InternetSendRate;
+
+bool Internet_Parse_Port(char const* text, uint16_t* port)
+{
+	char* end = NULL;
+	long value;
+
+	if (text == NULL || port == NULL || text[0] == '\0') {
+		return(false);
+	}
+
+	value = strtol(text, &end, 10);
+	if (end == NULL || *end != '\0' || value <= 0 || value > 65535) {
+		return(false);
+	}
+
+	*port = (uint16_t)value;
+	return(true);
+}
+
+void Internet_Clear_Command_Line_Connect(void)
+{
+	PlanetWestwoodCommandLine = INTERNET_CMDLINE_NONE;
+}
+
+void Internet_Clear_Command_Line_Name(void)
+{
+	PlanetWestwoodCommandLineName[0] = '\0';
+}
+
+void Internet_Set_Command_Line_Host(uint16_t port)
+{
+	PlanetWestwoodCommandLine = INTERNET_CMDLINE_HOST;
+	PlanetWestwoodIsHost = true;
+	PlanetWestwoodIPAddress[0] = '\0';
+	PlanetWestwoodPortNumber = port;
+}
+
+void Internet_Set_Command_Line_Connect(char const* address, uint16_t port)
+{
+	PlanetWestwoodCommandLine = INTERNET_CMDLINE_CONNECT;
+	PlanetWestwoodIsHost = false;
+	SDL_strlcpy(PlanetWestwoodIPAddress, address != NULL ? address : "", sizeof(PlanetWestwoodIPAddress));
+	PlanetWestwoodPortNumber = port;
+}
+
+void Internet_Set_Command_Line_Name(char const* name)
+{
+	SDL_strlcpy(PlanetWestwoodCommandLineName, name != NULL ? name : "", sizeof(PlanetWestwoodCommandLineName));
+}
+
+bool Internet_Has_Command_Line_Name(void)
+{
+	return(PlanetWestwoodCommandLineName[0] != '\0');
+}
+
+void Internet_Apply_Command_Line_Name(void)
+{
+	if (PlanetWestwoodCommandLineName[0] != '\0') {
+		SDL_strlcpy(MultiplayerName, PlanetWestwoodCommandLineName, sizeof(MultiplayerName));
+	}
+}
+
+bool Internet_Has_Command_Line_Connect(void)
+{
+	return(PlanetWestwoodCommandLine != INTERNET_CMDLINE_NONE);
+}
+
+bool Internet_Command_Line_Is_Host(void)
+{
+	return(PlanetWestwoodCommandLine == INTERNET_CMDLINE_HOST);
+}
 
 int Read_Game_Options(char* name)
 {

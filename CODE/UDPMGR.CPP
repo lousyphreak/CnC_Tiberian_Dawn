@@ -952,6 +952,12 @@ int UDPManagerClass::Service(void)
 	unsigned char temp_receive_buffer[1024];
 	int	recv_length;
 
+	/*
+	** Always service Winsock first so direct TCP listeners can accept
+	** clients even before the connection is marked established.
+	*/
+	Winsock.Service();
+
 	if (Winsock.Get_Connected()){
 
 		while ((recv_length = Winsock.Read(temp_receive_buffer, 1024))!=0){

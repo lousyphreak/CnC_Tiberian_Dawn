@@ -47,29 +47,68 @@
 #include "TCPIP.H"
 #include "SDLINPUT.H"
 
+#ifndef TD_ENABLE_UDP
+#define TD_ENABLE_UDP 1
+#endif
+#ifndef TD_ENABLE_TCP
+#define TD_ENABLE_TCP 1
+#endif
+#ifndef TD_ENABLE_WOL
+#define TD_ENABLE_WOL 1
+#endif
+
 static void Garble_Message(char *buf);
 
 static bool Choose_Internet_Game(InternetTransportType& transport);
 static bool Get_Internet_Host_Or_Join(bool& host_game);
 static bool Get_IP_Address(char* address_buffer, bool required);
+static bool Get_Port_Number(uint16_t& port_number);
 static bool Configure_TCP_Direct_Game(void);
 
 static bool Choose_Internet_Game(InternetTransportType& transport)
 {
 	int factor = (SeenBuff.Get_Width() == 320) ? 1 : 2;
+	int transport_count = 0;
+#if TD_ENABLE_UDP
+	transport_count++;
+#endif
+#if TD_ENABLE_TCP
+	transport_count++;
+#endif
+#if TD_ENABLE_WOL
+	transport_count++;
+#endif
+	if (transport_count == 0) {
+		return false;
+	}
+
 	int dialog_w = 180 * factor;
-	int dialog_h = 76 * factor;
+	int dialog_h = (43 + ((transport_count + 1) * 11)) * factor;
 	int dialog_x = (320 * factor - dialog_w) / 2;
 	int dialog_y = (136 * factor - dialog_h) / 2;
 	int dialog_cx = dialog_x + (dialog_w / 2);
 	int margin = 6 * factor;
+#if TD_ENABLE_UDP || TD_ENABLE_TCP || TD_ENABLE_WOL
 	int button_w = 78 * factor;
+#endif
 	int button_h = 9 * factor;
+#if TD_ENABLE_UDP || TD_ENABLE_TCP || TD_ENABLE_WOL
 	int button_x = dialog_cx - (button_w / 2);
-	int udp_y = dialog_y + 20 * factor;
-	int tcp_y = udp_y + button_h + 2 * factor;
-	int wol_y = tcp_y + button_h + 2 * factor;
-	int cancel_y = wol_y + button_h + margin;
+#endif
+	int next_y = dialog_y + 20 * factor;
+#if TD_ENABLE_UDP
+	int udp_y = next_y;
+	next_y += button_h + 2 * factor;
+#endif
+#if TD_ENABLE_TCP
+	int tcp_y = next_y;
+	next_y += button_h + 2 * factor;
+#endif
+#if TD_ENABLE_WOL
+	int wol_y = next_y;
+	next_y += button_h + 2 * factor;
+#endif
+	int cancel_y = next_y + margin;
 
 	enum {
 		BUTTON_UDP = 100,
@@ -79,22 +118,47 @@ static bool Choose_Internet_Game(InternetTransportType& transport)
 	};
 
 	ControlClass* commands = nullptr;
+#if TD_ENABLE_UDP
 	TextButtonClass udpbtn(BUTTON_UDP, "UDP Direct", TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
 		button_x, udp_y, button_w, button_h);
+#endif
+#if TD_ENABLE_TCP
 	TextButtonClass tcpbtn(BUTTON_TCP, "TCP Direct", TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
 		button_x, tcp_y, button_w, button_h);
+#endif
+#if TD_ENABLE_WOL
 	TextButtonClass wolbtn(BUTTON_WOL, "Westwood Online", TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
 		button_x, wol_y, button_w, button_h);
+#endif
 	TextButtonClass cancelbtn(BUTTON_CANCEL, TXT_CANCEL, TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
 		dialog_cx - (60 * factor / 2), cancel_y, 60 * factor, button_h);
-	TextButtonClass* buttons[] = {&udpbtn, &tcpbtn, &wolbtn, &cancelbtn};
+	TextButtonClass* buttons[4];
+	int button_count = 0;
 	int current_button = 0;
 	bool display = true;
 
+#if TD_ENABLE_UDP
 	commands = &udpbtn;
-	tcpbtn.Add_Tail(*commands);
-	wolbtn.Add_Tail(*commands);
+	buttons[button_count++] = &udpbtn;
+#endif
+#if TD_ENABLE_TCP
+	if (commands == nullptr) {
+		commands = &tcpbtn;
+	} else {
+		tcpbtn.Add_Tail(*commands);
+	}
+	buttons[button_count++] = &tcpbtn;
+#endif
+#if TD_ENABLE_WOL
+	if (commands == nullptr) {
+		commands = &wolbtn;
+	} else {
+		wolbtn.Add_Tail(*commands);
+	}
+	buttons[button_count++] = &wolbtn;
+#endif
 	cancelbtn.Add_Tail(*commands);
+	buttons[button_count++] = &cancelbtn;
 	buttons[current_button]->Turn_On();
 
 	Set_Logic_Page(SeenBuff);
@@ -129,9 +193,15 @@ static bool Choose_Internet_Game(InternetTransportType& transport)
 		bool pressed = false;
 
 		switch ((int)input) {
+#if TD_ENABLE_UDP
 			case BUTTON_UDP | KN_BUTTON:
+#endif
+#if TD_ENABLE_TCP
 			case BUTTON_TCP | KN_BUTTON:
+#endif
+#if TD_ENABLE_WOL
 			case BUTTON_WOL | KN_BUTTON:
+#endif
 			case BUTTON_CANCEL | KN_BUTTON:
 				selection = input & 0x7fff;
 				pressed = true;
@@ -140,7 +210,7 @@ static bool Choose_Internet_Game(InternetTransportType& transport)
 			case KN_UP:
 				buttons[current_button]->Turn_Off();
 				buttons[current_button]->Flag_To_Redraw();
-				current_button = (current_button + 3) % 4;
+				current_button = (current_button + button_count - 1) % button_count;
 				buttons[current_button]->Turn_On();
 				buttons[current_button]->Flag_To_Redraw();
 				break;
@@ -148,7 +218,7 @@ static bool Choose_Internet_Game(InternetTransportType& transport)
 			case KN_DOWN:
 				buttons[current_button]->Turn_Off();
 				buttons[current_button]->Flag_To_Redraw();
-				current_button = (current_button + 1) % 4;
+				current_button = (current_button + 1) % button_count;
 				buttons[current_button]->Turn_On();
 				buttons[current_button]->Flag_To_Redraw();
 				break;
@@ -173,17 +243,23 @@ static bool Choose_Internet_Game(InternetTransportType& transport)
 		}
 
 		switch (selection) {
+#if TD_ENABLE_UDP
 			case BUTTON_UDP:
 				transport = INTERNET_TRANSPORT_UDP;
 				return true;
+#endif
 
+#if TD_ENABLE_TCP
 			case BUTTON_TCP:
 				transport = INTERNET_TRANSPORT_TCP;
 				return true;
+#endif
 
+#if TD_ENABLE_WOL
 			case BUTTON_WOL:
 				transport = INTERNET_TRANSPORT_WOL;
 				return true;
+#endif
 
 			default:
 				return false;
@@ -403,6 +479,100 @@ static bool Get_IP_Address(char* address_buffer, bool required)
 	}
 }
 
+static bool Get_Port_Number(uint16_t& port_number)
+{
+	int factor = (SeenBuff.Get_Width() == 320) ? 1 : 2;
+	int dialog_w = 180 * factor;
+	int dialog_h = 64 * factor;
+	int dialog_x = (320 * factor - dialog_w) / 2;
+	int dialog_y = (136 * factor - dialog_h) / 2;
+	int dialog_cx = dialog_x + (dialog_w / 2);
+	int field_w = 50 * factor;
+	int field_x = dialog_cx - (field_w / 2);
+	int field_y = dialog_y + 24 * factor;
+	int button_w = 45 * factor;
+	int button_h = 9 * factor;
+	int ok_x = dialog_cx - button_w - 5 * factor;
+	int cancel_x = dialog_cx + 5 * factor;
+	int button_y = field_y + 16 * factor;
+
+	enum {
+		BUTTON_OK = 100,
+		BUTTON_CANCEL,
+		BUTTON_PORT
+	};
+
+	char port_buffer[PORT_NUMBER_MAX];
+	snprintf(port_buffer, sizeof(port_buffer), "%u", port_number);
+
+	ControlClass* commands = nullptr;
+	EditClass port_edt(BUTTON_PORT, port_buffer, PORT_NUMBER_MAX,
+		TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
+		field_x, field_y, field_w, -1, EditClass::ALPHANUMERIC);
+	TextButtonClass okbtn(BUTTON_OK, TXT_OK, TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
+		ok_x, button_y, button_w, button_h);
+	TextButtonClass cancelbtn(BUTTON_CANCEL, TXT_CANCEL, TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW,
+		cancel_x, button_y, button_w, button_h);
+	bool display = true;
+
+	commands = &okbtn;
+	cancelbtn.Add_Tail(*commands);
+	port_edt.Add_Tail(*commands);
+	port_edt.Set_Focus();
+
+	Set_Logic_Page(SeenBuff);
+	Keyboard::Clear();
+
+	while (true) {
+		if (AllSurfaces.SurfacesRestored) {
+			AllSurfaces.SurfacesRestored = FALSE;
+			display = true;
+		}
+
+		Call_Back();
+
+		if (display) {
+			Hide_Mouse();
+			Load_Title_Screen("HTITLE.PCX", &HidPage, Palette);
+			HidPage.Blit(SeenBuff);
+			Dialog_Box(dialog_x, dialog_y, dialog_w, dialog_h);
+			Draw_Caption(TXT_INTERNET, dialog_x, dialog_y, dialog_w);
+			Fancy_Text_Print("Port number", dialog_cx, dialog_y + 12 * factor, CC_GREEN, TBLACK,
+				TPF_CENTER | TPF_6PT_GRAD | TPF_USE_GRAD_PAL | TPF_NOSHADOW);
+			commands->Flag_List_To_Redraw();
+			Show_Mouse();
+			WWDraw_Flush_Present();
+			display = false;
+		}
+
+		Set_Logic_Page(SeenBuff);
+		KeyNumType input = commands->Input();
+		WWDraw_Flush_Present();
+		switch (static_cast<int>(input)) {
+			case KN_RETURN:
+			case BUTTON_OK | KN_BUTTON: {
+				strtrim(port_buffer);
+				char* end = nullptr;
+				unsigned long value = strtoul(port_buffer, &end, 10);
+				if (port_buffer[0] != '\0' && end != nullptr && *end == '\0' && value > 0 && value <= 65535) {
+					port_number = static_cast<uint16_t>(value);
+					return true;
+				}
+				break;
+			}
+
+			case KN_ESC:
+			case BUTTON_CANCEL | KN_BUTTON:
+				return false;
+
+			default:
+				break;
+		}
+
+		SDL_GameInput_Delay(1);
+	}
+}
+
 static bool Configure_TCP_Direct_Game(void)
 {
 	bool host_game = true;
@@ -412,12 +582,18 @@ static bool Configure_TCP_Direct_Game(void)
 		return false;
 	}
 
-	SDL_strlcpy(address_buffer, PlanetWestwoodIPAddress, sizeof(address_buffer));
-	if (!Get_IP_Address(address_buffer, !host_game)) {
-		return false;
+	if (host_game) {
+		if (!Get_Port_Number(PlanetWestwoodPortNumber)) {
+			return false;
+		}
+		PlanetWestwoodIPAddress[0] = '\0';
+	} else {
+		SDL_strlcpy(address_buffer, PlanetWestwoodIPAddress, sizeof(address_buffer));
+		if (!Get_IP_Address(address_buffer, true) || !Get_Port_Number(PlanetWestwoodPortNumber)) {
+			return false;
+		}
+		SDL_strlcpy(PlanetWestwoodIPAddress, address_buffer, sizeof(PlanetWestwoodIPAddress));
 	}
-
-	SDL_strlcpy(PlanetWestwoodIPAddress, address_buffer, sizeof(PlanetWestwoodIPAddress));
 	PlanetWestwoodIsHost = host_game;
 	InternetMaxPlayers = 2;
 	UseVirtualSubnetServer = false;

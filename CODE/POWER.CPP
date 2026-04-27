@@ -220,10 +220,10 @@ void PowerClass::Draw_It(bool complete)
 				if (power_height) {
 					power_color = 0;	//green
 
-					if (PlayerPtr->Drain > PlayerPtr->Power) {
+					if (PlayerPtr && PlayerPtr->Drain > PlayerPtr->Power) {
 						power_color = 2;
 					}
-					if (PlayerPtr->Drain > (PlayerPtr->Power * 2)) {
+					if (PlayerPtr && PlayerPtr->Drain > (PlayerPtr->Power * 2)) {
 						power_color = 4;
 					}
 
@@ -275,6 +275,11 @@ void PowerClass::Draw_It(bool complete)
  *=============================================================================================*/
 void PowerClass::AI(KeyNumType &input, int x, int y)
 {
+	if (!PlayerPtr) {
+		RadarClass::AI(input, x, y);
+		return;
+	}
+
 //	if (!IsActive) {
 //		IsActive = true;
 //		IsToRedraw = true;
@@ -450,7 +455,7 @@ int PowerClass::PowerButtonClass::Action(unsigned flags, KeyNumType & key)
 	**	radar map.
 	*/
 	Map.Override_Mouse_Shape(MOUSE_NORMAL);
-	if (PlayerPtr->Power_Fraction() < 0x0100 && PlayerPtr->Power > 0) {
+	if (PlayerPtr && PlayerPtr->Power_Fraction() < 0x0100 && PlayerPtr->Power > 0) {
 		Map.Help_Text(TXT_POWER_OUTPUT_LOW, -1, -1, CC_GREEN);
 	} else {
 		Map.Help_Text(TXT_POWER_OUTPUT, -1, -1, CC_GREEN);
@@ -458,5 +463,4 @@ int PowerClass::PowerButtonClass::Action(unsigned flags, KeyNumType & key)
 	GadgetClass::Action(flags, key);
 	return(true);
 }
-
 

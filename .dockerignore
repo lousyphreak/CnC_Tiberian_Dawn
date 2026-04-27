@@ -9,7 +9,7 @@ build-tests
 server/.zig-cache
 server/zig-out
 *.log
-GameData/redalert
-GameData/redalert-asan
+GameData/tiberian-dawn
+GameData/tiberian-dawn-asan
 dbuild.sh
 k8s

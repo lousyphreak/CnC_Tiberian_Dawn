@@ -220,7 +220,7 @@ bool WSManagerClass::Send_Channel_Join(char const *channel_name)
 bool WSManagerClass::Send_Game_Create(char const *game_name, std::uint8_t max_players)
 {
 	const std::uint16_t name_length = static_cast<std::uint16_t>(std::strlen(game_name != nullptr ? game_name : ""));
-	const std::size_t payload_length = 2 + name_length + 1;
+	const std::size_t payload_length = 2 + name_length + 1 + 4;
 	std::uint8_t *payload = static_cast<std::uint8_t *>(std::malloc(payload_length));
 	if (payload == nullptr) {
 		return false;
@@ -233,6 +233,7 @@ bool WSManagerClass::Send_Game_Create(char const *game_name, std::uint8_t max_pl
 		cursor += name_length;
 	}
 	Write_U8(cursor, max_players);
+	Write_U32(cursor, 0);
 
 	const bool sent = Send_Frame(OP_GAME_CREATE, payload, payload_length);
 	std::free(payload);
