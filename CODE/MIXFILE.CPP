@@ -126,6 +126,7 @@ MixFileClass::~MixFileClass(void)
 	/*
 	**	Deallocate any allocated memory.
 	*/
+	Free_Resident_Blocks();
 	if (Filename) {
 		free((char *)Filename);
 	}
@@ -174,6 +175,7 @@ MixFileClass::MixFileClass(char const *filename)
 	Data = 0;
 	Count = 0;
 	Buffer = 0;
+	Resident = 0;
 	file.Set_Name(filename);
 	Filename = strdup(file.File_Name());
 
@@ -236,7 +238,51 @@ MixFileClass::MixFileClass(char const *filename)
  *=============================================================================================*/
 void const * MixFileClass::Retrieve(char const *filename) {
 	void *ptr = 0;
-	Offset(filename, &ptr);
+	MixFileClass *mixfile = 0;
+	int32_t offset = 0;
+	int32_t size = 0;
+
+	Offset(filename, &ptr, &mixfile, &offset, &size);
+#if defined(__EMSCRIPTEN__) && TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
+	if (!ptr && mixfile && size > 0) {
+		char upper_filename[_MAX_PATH];
+		snprintf(upper_filename, sizeof(upper_filename), "%s", filename);
+		int32_t crc = static_cast<int32_t>(Calculate_CRC(strupr(upper_filename), strlen(upper_filename)));
+		for (ResidentBlock *resident = mixfile->Resident; resident; resident = resident->Next) {
+			if (resident->CRC == crc && resident->Size == size) {
+				return resident->Data;
+			}
+		}
+
+		ResidentBlock *resident = new ResidentBlock;
+		resident->CRC = crc;
+		resident->Size = size;
+		resident->Data = new char [size];
+		resident->Next = mixfile->Resident;
+
+		CCFileClass file(mixfile->Filename);
+		file.Open();
+		file.Seek(offset, SEEK_SET);
+		int32_t actual = file.Read(resident->Data, size);
+		file.Close();
+		if (actual != size) {
+			delete [] static_cast<char *>(resident->Data);
+			delete resident;
+#ifdef GERMAN
+			Fatal("Korrupte .MIX-Datei \"%s\". Beim Versuch, %d zu lesen, nur %d gefunden.", mixfile->Filename, size, actual);
+#else
+#ifdef FRENCH
+			Fatal("Fichier .MIX corrumpu \"%s\". Essai de lecture de %d, mais %d obtenu.", mixfile->Filename, size, actual);
+#else
+			Fatal("Corrupt .MIX file \"%s\". Tried to read %d, but got %d.", mixfile->Filename, size, actual);
+#endif
+#endif
+		}
+
+		mixfile->Resident = resident;
+		ptr = resident->Data;
+	}
+#endif
 //	if (!ptr) {
 //		errno = ENOENT;
 //		File_Fatal(filename);
@@ -321,6 +367,10 @@ bool MixFileClass::Cache(void)
 {
 	if (Data) return(true);
 
+#if defined(__EMSCRIPTEN__) && TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
+	return(Buffer != 0);
+#endif
+
 	Data = new char [DataSize];
 	if (Data) {
 		CCFileClass file(Filename);
@@ -374,9 +424,24 @@ bool MixFileClass::Cache(void)
  *=============================================================================================*/
 void MixFileClass::Free(void)
 {
+	Free_Resident_Blocks();
 	if (Data) {
 		delete [] static_cast<char *>(Data);
 		Data = 0;
+	}
+}
+
+
+/***********************************************************************************************
+ * MixFileClass::Free_Resident_Blocks -- Frees lazily loaded embedded files.                    *
+ *=============================================================================================*/
+void MixFileClass::Free_Resident_Blocks(void)
+{
+	while (Resident) {
+		ResidentBlock *next = Resident->Next;
+		delete [] static_cast<char *>(Resident->Data);
+		delete Resident;
+		Resident = next;
 	}
 }
 

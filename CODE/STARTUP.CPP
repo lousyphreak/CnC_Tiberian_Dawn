@@ -72,8 +72,13 @@ void copy_base_path(char* buffer, size_t buffer_size)
 		return;
 	}
 
+	std::string base_path_string;
+#if defined(__EMSCRIPTEN__) && TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
+	base_path_string = WWFS_GetBaseDirectoryPath();
+#else
 	const char* base_path = SDL_GetBasePath();
-	std::string base_path_string = (base_path != NULL) ? base_path : "./";
+	base_path_string = (base_path != NULL) ? base_path : "./";
+#endif
 	if (!base_path_string.empty() && base_path_string.back() != '/' && base_path_string.back() != '\\') {
 		base_path_string.push_back('/');
 	}
@@ -106,10 +111,17 @@ std::string current_working_directory_path()
 
 std::string startup_base_directory_path()
 {
+#if defined(__EMSCRIPTEN__) && TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
+	const std::string base_directory = WWFS_GetBaseDirectoryPath();
+	if (!base_directory.empty()) {
+		return normalize_directory_path(base_directory.c_str());
+	}
+#else
 	const char* base_path = SDL_GetBasePath();
 	if (base_path != NULL && base_path[0] != '\0') {
 		return normalize_directory_path(base_path);
 	}
+#endif
 
 	return std::string();
 }
@@ -142,7 +154,7 @@ std::string executable_directory_path(const char* executable_path)
 	return normalize_directory_path(working_directory);
 }
 
-bool directory_contains_game_data(const std::string& directory)
+bool directory_contains_local_game_data(const std::string& directory)
 {
 	SDL_PathInfo info;
 	if (!WWFS_GetPathInfo(directory.c_str(), &info) || info.type != SDL_PATHTYPE_DIRECTORY) {
@@ -157,6 +169,22 @@ bool directory_contains_game_data(const std::string& directory)
 	}
 
 	return true;
+}
+
+bool directory_contains_game_data(const std::string& directory)
+{
+	if (directory_contains_local_game_data(directory)) {
+		return true;
+	}
+
+#if defined(__EMSCRIPTEN__) && TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
+	const std::string emscripten_asset_root = normalize_directory_path(WWFS_GetBaseDirectoryPath().c_str());
+	if (SDL_strcasecmp(directory.c_str(), emscripten_asset_root.c_str()) == 0) {
+		return true;
+	}
+#endif
+
+	return false;
 }
 
 bool try_get_command_line_gamedata_directory(int argc, char* argv[], std::string* directory)
@@ -256,6 +284,14 @@ int main(int argc, char *argv[])
 //	malloc(1);
 
 	CCDebugString ("C&C95 - Starting up.\n");
+
+#if defined(__EMSCRIPTEN__) && TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
+	WWFS_SetBaseDirectory("/persistent");
+	if (!WWFS_InitializeEmscriptenAssetCache()) {
+		std::fprintf(stderr, "Failed to initialize Emscripten GameData cache: %s\n", SDL_GetError());
+		return(EXIT_FAILURE);
+	}
+#endif
 
 
 	//WindowsTimer = new WinTimerClass(60,FALSE);

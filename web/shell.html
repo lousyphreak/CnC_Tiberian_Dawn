@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#151a12">
+    <link rel="manifest" href="site.webmanifest">
+    <title>Command &amp; Conquer: Tiberian Dawn</title>
+    <style>
+      :root { color-scheme: dark; --td-green: #90c840; --td-amber: #d8b35f; --td-panel: rgba(7, 10, 6, 0.88); }
+      html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: radial-gradient(circle at 50% 40%, #17220f 0, #050705 58%, #000 100%);
+        color: #e8edda;
+        font-family: "Trebuchet MS", Verdana, sans-serif;
+        overscroll-behavior: none;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(rgba(144, 200, 64, 0.035) 50%, rgba(0, 0, 0, 0.08) 50%),
+          linear-gradient(90deg, rgba(255,255,255,0.018), rgba(0,0,0,0.025));
+        background-size: 100% 4px, 5px 100%;
+        mix-blend-mode: screen;
+        opacity: 0.65;
+      }
+      #td-stage {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+        touch-action: none;
+      }
+      #canvas {
+        display: block;
+        background: #000;
+        outline: none;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+        max-width: 100%;
+        max-height: 100%;
+        touch-action: none;
+      }
+      #td-ui {
+        position: fixed;
+        top: env(safe-area-inset-top, 0);
+        right: env(safe-area-inset-right, 0);
+        z-index: 10;
+        display: flex;
+        gap: 6px;
+        padding: 8px;
+        opacity: 0.38;
+        transition: opacity 0.2s ease;
+      }
+      #td-ui:hover, #td-ui.visible { opacity: 1; }
+      .td-btn {
+        appearance: none;
+        border: 1px solid rgba(144, 200, 64, 0.55);
+        background: linear-gradient(180deg, rgba(28, 39, 20, 0.9), rgba(8, 11, 7, 0.9));
+        color: #eef7da;
+        font: inherit;
+        font-size: 13px;
+        padding: 6px 10px;
+        border-radius: 2px;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .td-btn:disabled { opacity: 0.45; }
+      #td-status {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: env(safe-area-inset-bottom, 0);
+        z-index: 9;
+        padding: 7px 12px;
+        color: #dce9b8;
+        background: var(--td-panel);
+        border-top: 1px solid rgba(144, 200, 64, 0.22);
+        font-size: 13px;
+        text-align: center;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+      }
+      #td-status.hidden { opacity: 0; }
+      #td-error-panel {
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: env(safe-area-inset-top, 0);
+        z-index: 11;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 50vh;
+        padding: 10px 12px 12px;
+        box-sizing: border-box;
+        color: #fff0c8;
+        background: linear-gradient(180deg, rgba(34, 25, 8, 0.98), rgba(10, 8, 3, 0.95));
+        border-bottom: 1px solid rgba(216, 179, 95, 0.35);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+      }
+      #td-error-panel.hidden { display: none; }
+      #td-error-bar { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+      #td-error-title { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--td-amber); }
+      #td-error-copy-status { min-height: 1.2em; margin-top: 3px; font-size: 11px; color: #dbc694; }
+      #td-error-log {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+        margin: 0;
+        padding: 0 2px 0 0;
+        font: 12px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        white-space: pre-wrap;
+        word-break: break-word;
+        user-select: text;
+      }
+      #td-soft-keyboard-panel {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: env(safe-area-inset-bottom, 0);
+        z-index: 12;
+        padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0));
+        background: rgba(0, 0, 0, 0.9);
+        border-top: 1px solid rgba(144, 200, 64, 0.35);
+        transform: translateY(110%);
+        opacity: 0;
+        pointer-events: none;
+        transition: transform 0.18s ease, opacity 0.18s ease;
+      }
+      #td-soft-keyboard-panel.active { transform: translateY(0); opacity: 1; pointer-events: auto; }
+      #td-soft-keyboard-state { min-height: 1.2em; margin-bottom: 4px; font-size: 12px; color: var(--td-green); }
+      #td-soft-keyboard-debug { min-height: 1.2em; margin-bottom: 6px; font-size: 11px; color: #cfcfcf; }
+      #td-soft-keyboard {
+        display: block;
+        width: 100%;
+        min-height: 48px;
+        box-sizing: border-box;
+        padding: 10px 12px;
+        border: 1px solid rgba(144, 200, 64, 0.55);
+        border-radius: 2px;
+        background: rgba(10, 14, 8, 0.96);
+        color: #fff;
+        caret-color: var(--td-green);
+        font: inherit;
+        font-size: 18px;
+        line-height: 1.25;
+        outline: none;
+        resize: none;
+        touch-action: auto;
+        -webkit-user-select: text;
+        user-select: text;
+      }
+      html:fullscreen #td-stage, html:-webkit-full-screen #td-stage,
+      #canvas:fullscreen, #canvas:-webkit-full-screen {
+        inset: 0;
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: 100vw;
+        max-height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="td-stage"><canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas></div>
+    <div id="td-ui"><button id="td-fullscreen" class="td-btn" type="button" title="Toggle fullscreen (F11)">Fullscreen</button></div>
+    <div id="td-status">Downloading...</div>
+    <div id="td-error-panel" class="hidden" role="log" aria-live="assertive" aria-atomic="false">
+      <div id="td-error-bar">
+        <div><div id="td-error-title">Runtime error log</div><div id="td-error-copy-status"></div></div>
+        <button id="td-error-copy" class="td-btn" type="button" disabled>Copy</button>
+      </div>
+      <pre id="td-error-log"></pre>
+    </div>
+    <div id="td-soft-keyboard-panel" aria-live="polite" aria-atomic="true">
+      <div id="td-soft-keyboard-state">Mobile keyboard idle</div>
+      <div id="td-soft-keyboard-debug"></div>
+      <textarea id="td-soft-keyboard" inputmode="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" tabindex="0" rows="1" cols="1" placeholder="Tap here to type into the selected game field"></textarea>
+    </div>
+    <script type="text/javascript">
+      (function () {
+        var canvas = document.getElementById('canvas');
+        var stage = document.getElementById('td-stage');
+        var statusEl = document.getElementById('td-status');
+        var ui = document.getElementById('td-ui');
+        var fsBtn = document.getElementById('td-fullscreen');
+        var errorPanelEl = document.getElementById('td-error-panel');
+        var errorLogEl = document.getElementById('td-error-log');
+        var errorCopyBtn = document.getElementById('td-error-copy');
+        var errorCopyStatusEl = document.getElementById('td-error-copy-status');
+        var softKeyboardPanel = document.getElementById('td-soft-keyboard-panel');
+        var softKeyboardState = document.getElementById('td-soft-keyboard-state');
+        var softKeyboardDebug = document.getElementById('td-soft-keyboard-debug');
+        var softKeyboardInput = document.getElementById('td-soft-keyboard');
+        var fatalErrorActive = false;
+        var stderrBuffer = [];
+        var stderrSequence = 0;
+        var totalDeps = 0;
+
+        function getViewportSize() {
+          var w = window.innerWidth || document.documentElement.clientWidth || 1;
+          var h = window.innerHeight || document.documentElement.clientHeight || 1;
+          if (window.visualViewport) {
+            w = Math.min(w, Math.floor(window.visualViewport.width));
+            h = Math.min(h, Math.floor(window.visualViewport.height));
+          }
+          return { width: Math.max(1, w), height: Math.max(1, h) };
+        }
+        function applySize(width, height) {
+          canvas.style.width = width + 'px';
+          canvas.style.height = height + 'px';
+          if (canvas.width !== width) canvas.width = width;
+          if (canvas.height !== height) canvas.height = height;
+        }
+        function resizeToViewport(reason) {
+          var fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
+          if (fullscreenElement) {
+            var rect = (fullscreenElement === canvas ? canvas : stage).getBoundingClientRect();
+            applySize(Math.max(1, Math.floor(rect.width)), Math.max(1, Math.floor(rect.height)));
+          } else {
+            var size = getViewportSize();
+            applySize(size.width, size.height);
+          }
+          if (window.Module && window.Module.raSoftKeyboard && (window.Module.raSoftKeyboard.active || window.Module.raSoftKeyboard.focused)) {
+            scheduleSoftKeyboardRedraw(reason || 'viewport');
+          }
+        }
+        resizeToViewport();
+        window.addEventListener('resize', function () { resizeToViewport('resize'); }, { passive: true });
+        window.addEventListener('orientationchange', function () {
+          setTimeout(function () { resizeToViewport('orientation'); }, 50);
+          setTimeout(function () { resizeToViewport('orientation-settle'); }, 250);
+        }, { passive: true });
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', function () { resizeToViewport('visualViewport'); }, { passive: true });
+          window.visualViewport.addEventListener('scroll', function () { resizeToViewport('visualViewport-scroll'); }, { passive: true });
+        }
+        document.addEventListener('fullscreenchange', function () { resizeToViewport('fullscreen'); });
+        document.addEventListener('webkitfullscreenchange', function () { resizeToViewport('webkit-fullscreen'); });
+
+        function setStatus(text) {
+          if (!statusEl) return;
+          if (!text) {
+            statusEl.classList.add('hidden');
+            statusEl.textContent = '';
+          } else {
+            statusEl.classList.remove('hidden');
+            statusEl.textContent = text;
+          }
+        }
+        function stringify(value) {
+          if (value == null) return '';
+          if (typeof value === 'string') return value;
+          if (value instanceof Error) return value.stack || (value.name + ': ' + value.message);
+          try { return JSON.stringify(value, null, 2); } catch (e) {}
+          return String(value);
+        }
+        function pushStderrLine(text) {
+          var line = stringify(text);
+          if (!line) return;
+          stderrBuffer.push({ seq: ++stderrSequence, text: line });
+          if (stderrBuffer.length > 80) stderrBuffer.shift();
+        }
+        function appendErrorLog(text, block) {
+          if (!errorLogEl || !text) return;
+          errorPanelEl.classList.remove('hidden');
+          errorLogEl.textContent += (errorLogEl.textContent ? (block ? '\n\n' : '\n') : '') + text;
+          errorLogEl.scrollTop = errorLogEl.scrollHeight;
+          errorCopyBtn.disabled = !errorLogEl.textContent;
+          if (!errorCopyStatusEl.textContent) errorCopyStatusEl.textContent = 'Tap Copy to copy the full error log.';
+        }
+        function reportFatalError(summary, details) {
+          fatalErrorActive = true;
+          setStatus(summary);
+          var recent = stderrBuffer.map(function (entry) { return entry.text; }).join('\n');
+          appendErrorLog([summary, stringify(details), recent ? 'Recent stderr:\n' + recent : ''].filter(Boolean).join('\n\n'), true);
+        }
+        errorCopyBtn.addEventListener('click', function () {
+          var text = errorLogEl.textContent || '';
+          if (!text) return;
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () {
+              errorCopyStatusEl.textContent = 'Copied the full error log.';
+            }, function () {
+              errorCopyStatusEl.textContent = 'Copy failed; select the log manually.';
+            });
+          }
+        });
+
+        function toggleFullscreen() {
+          if (document.fullscreenElement || document.webkitFullscreenElement) {
+            (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+          } else {
+            var target = document.documentElement || stage || canvas;
+            var request = target.requestFullscreen || target.webkitRequestFullscreen;
+            if (request) request.call(target);
+          }
+          try { canvas.focus(); } catch (e) {}
+        }
+        fsBtn.addEventListener('click', function (event) { event.preventDefault(); toggleFullscreen(); });
+        window.addEventListener('keydown', function (event) {
+          if (event.key === 'F11') {
+            event.preventDefault();
+            toggleFullscreen();
+          }
+        });
+        function flashUi() {
+          ui.classList.add('visible');
+          clearTimeout(flashUi.timer);
+          flashUi.timer = setTimeout(function () { ui.classList.remove('visible'); }, 1500);
+        }
+        window.addEventListener('mousemove', flashUi, { passive: true });
+        window.addEventListener('touchstart', flashUi, { passive: true });
+
+        var isMobileTouchDevice = (function () {
+          var ua = navigator.userAgent || '';
+          if (/Android|iPhone|iPad|iPod|Mobile|Silk|Kindle|Opera Mini|IEMobile/i.test(ua)) return true;
+          return !!(navigator.maxTouchPoints && navigator.maxTouchPoints > 0 && window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+        })();
+        var query = typeof URLSearchParams !== 'undefined' ? new URLSearchParams(location.search) : null;
+        var forceSoftKeyboardDebug = !!(query && query.has('vkdebug'));
+        var softKeyboardRedrawTimer = 0;
+        function scheduleSoftKeyboardRedraw(reason) {
+          if (!window.Module || !window.Module.raSoftKeyboard) return;
+          window.Module.raSoftKeyboard.pendingRedraw = true;
+          if (window.requestAnimationFrame) window.requestAnimationFrame(function () { window.Module.raSoftKeyboard.pendingRedraw = true; });
+          clearTimeout(softKeyboardRedrawTimer);
+          softKeyboardRedrawTimer = setTimeout(function () {
+            softKeyboardRedrawTimer = 0;
+            if (window.Module && window.Module.raSoftKeyboard) window.Module.raSoftKeyboard.pendingRedraw = true;
+          }, 120);
+        }
+        function clearSoftKeyboardValue() { if (softKeyboardInput && softKeyboardInput.value) softKeyboardInput.value = ''; }
+        function commitSoftKeyboardText(text) {
+          if (!text || !window.Module || !window.Module.raSoftKeyboard) return false;
+          for (var i = 0; i < text.length; ++i) {
+            window.Module.raSoftKeyboard.pendingEvents.push(((1 << 24) | (text.charCodeAt(i) & 0x00ffffff)) | 0);
+          }
+          return true;
+        }
+        var raSoftKeyboard = {
+          active: false,
+          focused: false,
+          focusAttempts: 0,
+          pendingEvents: [],
+          pendingRedraw: false,
+          debug: forceSoftKeyboardDebug,
+          renderState: function () {
+            softKeyboardState.textContent = !isMobileTouchDevice ? 'Desktop keyboard path' : (!this.active ? 'Mobile keyboard idle' : (this.focused ? 'Mobile keyboard active' : 'Tap the input bar if the keyboard did not open'));
+            softKeyboardDebug.textContent = this.debug ? ('touch=' + (isMobileTouchDevice ? 'yes' : 'no') + ' active=' + (this.active ? 'yes' : 'no') + ' focused=' + (this.focused ? 'yes' : 'no') + ' attempts=' + this.focusAttempts) : '';
+            softKeyboardPanel.classList.toggle('active', isMobileTouchDevice && (this.active || this.debug));
+          },
+          focus: function () {
+            if (!this.active || !softKeyboardInput) return false;
+            this.focusAttempts += 1;
+            clearSoftKeyboardValue();
+            softKeyboardPanel.classList.add('active');
+            try { softKeyboardInput.focus({ preventScroll: true }); } catch (e) { try { softKeyboardInput.focus(); } catch (e2) {} }
+            try { if (navigator.virtualKeyboard && navigator.virtualKeyboard.show) navigator.virtualKeyboard.show(); } catch (e3) {}
+            this.focused = document.activeElement === softKeyboardInput;
+            this.renderState();
+            if (this.focused) scheduleSoftKeyboardRedraw('focus');
+            return this.focused;
+          },
+          setActive: function (active) {
+            if (!isMobileTouchDevice) {
+              this.active = false;
+              this.focused = false;
+              this.renderState();
+              return;
+            }
+            this.active = !!active;
+            clearSoftKeyboardValue();
+            if (this.active) {
+              this.focus();
+              setTimeout(function () { if (raSoftKeyboard.active && document.activeElement !== softKeyboardInput) raSoftKeyboard.focus(); }, 50);
+            } else {
+              this.focused = false;
+              try { softKeyboardInput.blur(); } catch (e) {}
+              try { canvas.focus(); } catch (e2) {}
+            }
+            this.renderState();
+            scheduleSoftKeyboardRedraw('active');
+          }
+        };
+        raSoftKeyboard.renderState();
+        ['keydown', 'keyup', 'keypress'].forEach(function (type) {
+          softKeyboardInput.addEventListener(type, function (event) { event.stopPropagation(); }, true);
+        });
+        softKeyboardInput.addEventListener('focus', function () { raSoftKeyboard.focused = true; clearSoftKeyboardValue(); raSoftKeyboard.renderState(); scheduleSoftKeyboardRedraw('dom-focus'); });
+        softKeyboardInput.addEventListener('blur', function () { raSoftKeyboard.focused = false; clearSoftKeyboardValue(); raSoftKeyboard.renderState(); scheduleSoftKeyboardRedraw('dom-blur'); });
+        softKeyboardInput.addEventListener('beforeinput', function (event) {
+          if (!raSoftKeyboard.active) return;
+          if (event.inputType === 'deleteContentBackward') {
+            window.Module.raSoftKeyboard.pendingEvents.push((2 << 24) | 0);
+            event.preventDefault();
+            clearSoftKeyboardValue();
+          } else if (event.inputType === 'insertLineBreak') {
+            window.Module.raSoftKeyboard.pendingEvents.push((3 << 24) | 0);
+            event.preventDefault();
+            clearSoftKeyboardValue();
+          } else if ((event.inputType === 'insertText' || event.inputType === 'insertCompositionText' || event.inputType === 'insertFromPaste') && event.data && commitSoftKeyboardText(event.data)) {
+            event.preventDefault();
+            clearSoftKeyboardValue();
+          }
+        });
+        softKeyboardInput.addEventListener('input', function () {
+          if (!raSoftKeyboard.active) {
+            clearSoftKeyboardValue();
+            return;
+          }
+          if (softKeyboardInput.value) {
+            var text = softKeyboardInput.value;
+            clearSoftKeyboardValue();
+            commitSoftKeyboardText(text);
+          }
+        });
+        ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'mousedown', 'mouseup', 'click'].forEach(function (type) {
+          window.addEventListener(type, function (event) {
+            if (raSoftKeyboard.active && event.target !== softKeyboardInput && document.activeElement !== softKeyboardInput) {
+              raSoftKeyboard.focus();
+            }
+          }, true);
+        });
+        if (navigator.virtualKeyboard && navigator.virtualKeyboard.addEventListener) {
+          navigator.virtualKeyboard.addEventListener('geometrychange', function () {
+            resizeToViewport('virtualKeyboard');
+            scheduleSoftKeyboardRedraw('virtualKeyboard');
+          });
+        }
+
+        var Module = {
+          preRun: [function () { resizeToViewport(); try { canvas.focus(); } catch (e) {} }],
+          postRun: [function () { setStatus(''); }],
+          arguments: [],
+          canvas: canvas,
+          print: function (text) {
+            if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+            console.log(text);
+          },
+          printErr: function (text) {
+            if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+            pushStderrLine(text);
+            console.warn(text);
+            if (fatalErrorActive) appendErrorLog(stringify(text), false);
+          },
+          setStatus: setStatus,
+          monitorRunDependencies: function (left) {
+            totalDeps = Math.max(totalDeps, left);
+            setStatus(left ? ('Preparing... (' + (totalDeps - left) + '/' + totalDeps + ')') : '');
+          },
+          onFullScreen: function () { resizeToViewport('emscripten-fullscreen'); }
+        };
+        Module.raSoftKeyboard = raSoftKeyboard;
+        canvas.addEventListener('webglcontextlost', function (event) {
+          event.preventDefault();
+          setStatus('WebGL context lost - please reload the page.');
+        }, false);
+        window.onerror = function (msg, source, lineno, colno, error) {
+          reportFatalError('JavaScript error: ' + (stringify(msg) || 'Unknown error'), [source ? source + ':' + lineno + ':' + colno : '', error && error.stack ? error.stack : stringify(error)].filter(Boolean).join('\n'));
+          return false;
+        };
+        window.addEventListener('unhandledrejection', function (event) {
+          var reason = event && 'reason' in event ? event.reason : event;
+          reportFatalError('Unhandled promise rejection: ' + (stringify(reason) || 'Unknown rejection'), reason && reason.stack ? reason.stack : '');
+        });
+        window.Module = Module;
+        Module.onAbort = function (reason) { reportFatalError('Runtime abort: ' + (stringify(reason) || 'Unknown abort'), stringify(reason)); };
+        setStatus('Downloading...');
+      })();
+    </script>
+    {{{ SCRIPT }}}
+  </body>
+</html>

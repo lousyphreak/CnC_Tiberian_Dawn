@@ -13,7 +13,7 @@
 #include <unordered_map>
 #include <vector>
 
-#if defined(__EMSCRIPTEN__) && RA_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
+#if defined(__EMSCRIPTEN__) && TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
 #include <emscripten.h>
 #endif
 
@@ -264,11 +264,14 @@ std::string WWFS_ResolveMainMixAlias(const std::string& normalized_path)
     return {};
 }
 
-#if defined(__EMSCRIPTEN__) && RA_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
+#if defined(__EMSCRIPTEN__) && TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
 constexpr char kWWFSEmscriptenAssetManifestPath[] = "/tiberian-dawn-assets-manifest.txt";
 constexpr char kWWFSEmscriptenDefaultAssetBaseUrl[] = "../GameData/";
 constexpr Sint64 kWWFSEmscriptenRangeChunkSize = 512 * 1024;
-constexpr char kWWFSEmscriptenSettingsFileName[] = "tiberian-dawn.ini";
+constexpr const char* kWWFSEmscriptenSettingsFileNames[] = {
+    "conquer.ini",
+    "tiberian-dawn.ini"
+};
 
 struct WWFS_EmscriptenRangeFileCache {
     std::string remote_relative_path;
@@ -413,8 +416,13 @@ bool WWFS_IsLocalUserDataRelativePath(const std::string& relative_path)
     }
 
     const std::string folded_relative_path = WWFS_FoldPath(relative_path);
-    if (folded_relative_path == kWWFSEmscriptenSettingsFileName
-        || folded_relative_path == "savegame.net"
+    for (const char* settings_file_name : kWWFSEmscriptenSettingsFileNames) {
+        if (folded_relative_path == settings_file_name) {
+            return true;
+        }
+    }
+
+    if (folded_relative_path == "savegame.net"
         || folded_relative_path == "record.bin"
         || folded_relative_path == "hallfame.dat"
         || folded_relative_path == "assert.txt") {
@@ -439,7 +447,13 @@ bool WWFS_IsLocalUserDataPath(const std::string& normalized_path)
 
 bool WWFS_ShouldSeedLocalUserDataRelativePath(const std::string& relative_path)
 {
-    return WWFS_FoldPath(relative_path) == kWWFSEmscriptenSettingsFileName;
+    const std::string folded_relative_path = WWFS_FoldPath(relative_path);
+    for (const char* settings_file_name : kWWFSEmscriptenSettingsFileNames) {
+        if (folded_relative_path == settings_file_name) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool WWFS_ShouldSeedLocalUserDataPath(const std::string& normalized_path)
@@ -1924,7 +1938,7 @@ std::string WWFS_GetBaseDirectoryPath()
 
 bool WWFS_InitializeEmscriptenAssetCache()
 {
-#if defined(__EMSCRIPTEN__) && RA_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
+#if defined(__EMSCRIPTEN__) && TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
     std::scoped_lock lock(WWFS_EmscriptenCacheMutex());
     bool& cache_initialized = WWFS_EmscriptenCacheInitialized();
     if (cache_initialized) {
@@ -2136,7 +2150,7 @@ bool WWFS_CreateDirectory(const char* path)
         return false;
     }
 
-#if defined(__EMSCRIPTEN__) && RA_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
+#if defined(__EMSCRIPTEN__) && TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
     if (WWFS_IsLocalUserDataPath(normalized) && !WWFS_SyncEmscriptenAssetCache()) {
         return false;
     }
@@ -2165,7 +2179,7 @@ bool WWFS_RemovePath(const char* path)
         return false;
     }
 
-#if defined(__EMSCRIPTEN__) && RA_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
+#if defined(__EMSCRIPTEN__) && TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
     if (WWFS_IsLocalUserDataPath(normalized) && !WWFS_SyncEmscriptenAssetCache()) {
         return false;
     }
@@ -2185,7 +2199,7 @@ bool WWFS_RenamePath(const char* old_path, const char* new_path)
         return false;
     }
 
-#if defined(__EMSCRIPTEN__) && RA_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
+#if defined(__EMSCRIPTEN__) && TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
     if ((WWFS_IsLocalUserDataPath(normalized_old_path) || WWFS_IsLocalUserDataPath(normalized_new_path))
         && !WWFS_SyncEmscriptenAssetCache()) {
         return false;
@@ -2216,7 +2230,7 @@ SDL_IOStream* WWFS_OpenFile(const char* path, const char* mode)
     }
 
     std::string normalized = WWFS_NormalizePath(path);
-#if defined(__EMSCRIPTEN__) && RA_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
+#if defined(__EMSCRIPTEN__) && TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
     const bool is_local_user_data = WWFS_IsLocalUserDataPath(normalized);
     const bool allow_seed_fetch = WWFS_ShouldSeedLocalUserDataPath(normalized);
     const bool allow_fetch = (std::strchr(mode, 'r') != nullptr) || (std::strchr(mode, '+') != nullptr);
@@ -2225,6 +2239,12 @@ SDL_IOStream* WWFS_OpenFile(const char* path, const char* mode)
             SDL_IOStream* range_stream = WWFS_OpenEmscriptenRangeStream(normalized);
             if (range_stream) {
                 return range_stream;
+            }
+            std::string remote_relative_path;
+            if (WWFS_ResolveEmscriptenAssetPath(normalized, nullptr, &remote_relative_path)
+                && WWFS_IsMixAssetPath(remote_relative_path)) {
+                SDL_SetError("HTTP range requests are required for lazy MIX asset '%s'", remote_relative_path.c_str());
+                return nullptr;
             }
             SDL_ClearError();
         }
@@ -2237,7 +2257,7 @@ SDL_IOStream* WWFS_OpenFile(const char* path, const char* mode)
     }
 #endif
     SDL_IOStream* stream = SDL_IOFromFile(normalized.c_str(), mode);
-#if defined(__EMSCRIPTEN__) && RA_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
+#if defined(__EMSCRIPTEN__) && TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
     if (stream && is_local_user_data && WWFS_IsMutableOpenMode(mode)) {
         return WWFS_OpenEmscriptenSyncedFileStream(stream, mode);
     }

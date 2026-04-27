@@ -123,10 +123,6 @@ DisplayClass::TacticalClass DisplayClass::TacButton;
 #define	_RETRIEVE
 
 
-static int const TEX_X = 0;
-static int const TEX_Y = 6;
-static int const TEX_W = 14;
-
 extern MixFileClass *TheaterIcons;
 
 /***********************************************************************************************

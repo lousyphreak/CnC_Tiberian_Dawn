@@ -16,6 +16,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(TD_ENABLE_ASAN "Enable AddressSanitizer" OFF)
 option(TD_ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
+option(TD_EMSCRIPTEN_PACKAGE_GAMEDATA "Package the GameData directory into the emscripten output" OFF)
+option(TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA "Load GameData over HTTP on demand in the emscripten build" ON)
+option(TD_EMSCRIPTEN_DIAGNOSTIC "Enable Emscripten diagnostic build (ASSERTIONS, SAFE_HEAP, stack checks, symbol names)" OFF)
 
 if(NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/SDL3/CMakeLists.txt")
   message(FATAL_ERROR "SDL3 submodule is missing. Run: git submodule update --init --recursive")
@@ -52,6 +55,16 @@ set(TD_COMMON_DEFINITIONS
   ENGLISH=1
   NOMINMAX
 )
+
+if(EMSCRIPTEN)
+  list(APPEND TD_COMMON_DEFINITIONS INTERNET_OFF)
+endif()
+
+if(EMSCRIPTEN AND TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA)
+  list(APPEND TD_COMMON_DEFINITIONS TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA=1)
+else()
+  list(APPEND TD_COMMON_DEFINITIONS TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA=0)
+endif()
 
 set(TD_COMMON_INCLUDE_DIRS
   ${CMAKE_SOURCE_DIR}/SDL3_COMPAT/wrappers
@@ -101,6 +114,41 @@ list(FILTER TD_WIN32LIB_SOURCES EXCLUDE REGEX "/RAWFILE/.*\\.CPP$")
 # implementation for this port. Excluding LOADPCX.CPP eliminates the ODR violation.
 list(FILTER TD_WIN32LIB_SOURCES EXCLUDE REGEX "/IFF/LOADPCX\\.CPP$")
 
+if(EMSCRIPTEN)
+  file(GLOB_RECURSE TD_FILTERED_GAMEDATA_ENTRIES
+    RELATIVE "${CMAKE_SOURCE_DIR}/GameData"
+    "${CMAKE_SOURCE_DIR}/GameData/*"
+  )
+  set(TD_FILTERED_GAMEDATA_FILES "")
+  foreach(td_gamedata_entry IN LISTS TD_FILTERED_GAMEDATA_ENTRIES)
+    if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/GameData/${td_gamedata_entry}")
+      continue()
+    endif()
+    if(td_gamedata_entry MATCHES "^(tiberian-dawn|tiberian-dawn-asan)(\\.exe)?$")
+      continue()
+    endif()
+    string(REPLACE "\\" "/" td_gamedata_entry_normalized "${td_gamedata_entry}")
+    list(APPEND TD_FILTERED_GAMEDATA_FILES "${td_gamedata_entry_normalized}")
+  endforeach()
+  list(SORT TD_FILTERED_GAMEDATA_FILES)
+
+  set(TD_EMSCRIPTEN_EFFECTIVE_PACKAGE_GAMEDATA ${TD_EMSCRIPTEN_PACKAGE_GAMEDATA})
+  if(TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA AND TD_EMSCRIPTEN_PACKAGE_GAMEDATA)
+    message(STATUS "TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA is ON; skipping monolithic GameData preloading")
+    set(TD_EMSCRIPTEN_EFFECTIVE_PACKAGE_GAMEDATA OFF)
+  endif()
+
+  if(TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA)
+    list(JOIN TD_FILTERED_GAMEDATA_FILES "\n" TD_EMSCRIPTEN_GAMEDATA_MANIFEST_CONTENT)
+    set(TD_EMSCRIPTEN_GAMEDATA_MANIFEST "${CMAKE_BINARY_DIR}/tiberian-dawn-assets-manifest.txt")
+    if(TD_EMSCRIPTEN_GAMEDATA_MANIFEST_CONTENT)
+      file(WRITE "${TD_EMSCRIPTEN_GAMEDATA_MANIFEST}" "${TD_EMSCRIPTEN_GAMEDATA_MANIFEST_CONTENT}\n")
+    else()
+      file(WRITE "${TD_EMSCRIPTEN_GAMEDATA_MANIFEST}" "")
+    endif()
+  endif()
+endif()
+
 add_library(sdl3_compat STATIC
   SDL3_COMPAT/wrappers/win32_compat.cpp
   SDL3_COMPAT/wrappers/sdl_config.cpp
@@ -125,7 +173,10 @@ foreach(target ${TD_BUILD_TARGETS})
     target_compile_definitions(${target} PRIVATE _CRT_SECURE_NO_WARNINGS)
     target_compile_options(${target} PRIVATE /w /MP)
   else()
-    target_compile_options(${target} PRIVATE -Wall -Werror -fpermissive)
+    target_compile_options(${target} PRIVATE -Wall -fpermissive)
+    if(NOT EMSCRIPTEN)
+      target_compile_options(${target} PRIVATE -Werror)
+    endif()
   endif()
 endforeach()
 
@@ -137,6 +188,66 @@ if(WIN32)
   target_link_libraries(tiberian-dawn PRIVATE ws2_32)
 else()
   target_link_libraries(tiberian-dawn PRIVATE m)
+endif()
+
+if(EMSCRIPTEN)
+  set_target_properties(tiberian-dawn PROPERTIES SUFFIX ".html")
+  set(TD_EMSCRIPTEN_SHELL_FILE "${CMAKE_SOURCE_DIR}/web/shell.html")
+  set(TD_WEB_MANIFEST_FILE "${CMAKE_SOURCE_DIR}/web/site.webmanifest")
+  target_link_options(tiberian-dawn PRIVATE
+    "-sASYNCIFY"
+    "-sASYNCIFY_IMPORTS=ra_set_web_soft_keyboard_active"
+    "-sASYNCIFY_STACK_SIZE=1048576"
+    "-Wl,--export=emscripten_stack_get_end"
+    "-sALLOW_MEMORY_GROWTH=1"
+    "-sINITIAL_MEMORY=268435456"
+    "-sSTACK_SIZE=8388608"
+    "-sMAX_WEBGL_VERSION=2"
+    "-sMIN_WEBGL_VERSION=1"
+    "-sENVIRONMENT=web"
+    "--shell-file" "${TD_EMSCRIPTEN_SHELL_FILE}"
+  )
+  if(TD_EMSCRIPTEN_DIAGNOSTIC)
+    message(STATUS "Emscripten diagnostic build enabled (ASSERTIONS=2, SAFE_HEAP=1, symbol names)")
+    target_compile_options(tiberian-dawn PRIVATE
+      "-gsource-map"
+      "-fno-omit-frame-pointer"
+    )
+    target_link_options(tiberian-dawn PRIVATE
+      "-gsource-map"
+      "--profiling-funcs"
+      "-sASSERTIONS=2"
+      "-sSAFE_HEAP=1"
+      "-sSTACK_OVERFLOW_CHECK=2"
+      "-sASYNCIFY_ADVISE=1"
+    )
+  endif()
+  if(TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA)
+    target_link_options(tiberian-dawn PRIVATE
+      "-sFORCE_FILESYSTEM"
+      "-lidbfs.js"
+      "--embed-file"
+      "${TD_EMSCRIPTEN_GAMEDATA_MANIFEST}@/tiberian-dawn-assets-manifest.txt"
+    )
+  endif()
+  if(TD_EMSCRIPTEN_EFFECTIVE_PACKAGE_GAMEDATA)
+    target_link_options(tiberian-dawn PRIVATE
+      "--preload-file"
+      "${CMAKE_SOURCE_DIR}/GameData@/"
+    )
+  else()
+    add_custom_command(TARGET tiberian-dawn POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E rm -f "$<TARGET_FILE_DIR:tiberian-dawn>/tiberian-dawn.data"
+      VERBATIM
+    )
+  endif()
+  set_property(TARGET tiberian-dawn APPEND PROPERTY LINK_DEPENDS "${TD_EMSCRIPTEN_SHELL_FILE}")
+  add_custom_command(TARGET tiberian-dawn POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      "${TD_WEB_MANIFEST_FILE}"
+      "$<TARGET_FILE_DIR:tiberian-dawn>"
+    VERBATIM
+  )
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")

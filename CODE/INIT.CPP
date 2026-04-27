@@ -50,7 +50,6 @@
 #include	"TCPIP.H"
 #include	"WSMGR.H"
 
-static HANDLE			hCCLibrary;
 static bool				BootstrapCoreMixfilesRegistered = false;
 
 static void Wait_For_Countdown_With_Callback(CountDownTimerClass& timer)
@@ -59,6 +58,15 @@ static void Wait_For_Countdown_With_Callback(CountDownTimerClass& timer)
 		Call_Back();
 		SDL_GameInput_Delay(1);
 	}
+}
+
+static bool Should_Cache_Full_GameData_Mixfiles(void)
+{
+#if defined(__EMSCRIPTEN__) && TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
+	return false;
+#else
+	return true;
+#endif
 }
 
 /****************************************
@@ -173,7 +181,6 @@ bool Init_Game(int , char *[])
 	void const *temp_mouse_shapes;
 
 	CCDebugString ("C&C95 - About to load reslib.dll\n");
-	hCCLibrary = LoadLibrary("reslib.dll");
 
 	/*
 	**	Initialize the game object heaps.
@@ -406,7 +413,9 @@ bool Init_Game(int , char *[])
 		for (int index = 0; index < scenario_mix_count; ++index) {
 			char* ptr = strdup(scenario_mix_files[index]);
 			new MixFileClass(ptr);
-			MixFileClass::Cache(ptr);
+			if (Should_Cache_Full_GameData_Mixfiles()) {
+				MixFileClass::Cache(ptr);
+			}
 			free(ptr);
 		}
 		SDL_free(scenario_mix_files);
@@ -527,8 +536,6 @@ bool Init_Game(int , char *[])
 		Show_Mouse();
 	}
 	Call_Back();
-//	Window_Dialog_Box(hCCLibrary, "DIALOG_1", MainWindow, MakeProcInstance((FARPROC)Start_Game_Proc, hInstance));
-//	if (hCCLibrary) FreeLibrary(hCCLibrary);
 
 #ifdef DEMO
 	MixFileClass::Cache("DEMO.MIX");
@@ -537,12 +544,14 @@ bool Init_Game(int , char *[])
 	/*
 	**	Cache the main game data. This operation can take a very long time.
 	*/
-	MixFileClass::Cache("CONQUER.MIX");
-	if (SampleType != 0 && !Debug_Quiet) {
-		MixFileClass::Cache("SOUNDS.MIX");
-		if (Special.IsJuvenile) {
-			new MixFileClass("ZOUNDS.MIX");		// Cached.
-			MixFileClass::Cache("ZOUNDS.MIX");
+	if (Should_Cache_Full_GameData_Mixfiles()) {
+		MixFileClass::Cache("CONQUER.MIX");
+		if (SampleType != 0 && !Debug_Quiet) {
+			MixFileClass::Cache("SOUNDS.MIX");
+			if (Special.IsJuvenile) {
+				new MixFileClass("ZOUNDS.MIX");		// Cached.
+				MixFileClass::Cache("ZOUNDS.MIX");
+			}
 		}
 	}
 	Call_Back();

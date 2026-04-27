@@ -70,7 +70,6 @@ void LogicClass::Debug_Dump(MonoClass *mono) const
 	static struct {
 		int Graphic;
 	} _record[RECORDCOUNT];
-	static int _framecounter = 0;
 
 	TotalFrames+= FramesPerSecond;
 	AverageFramesPerSecond = TotalFrames/FPSDivider++;
@@ -92,7 +91,6 @@ void LogicClass::Debug_Dump(MonoClass *mono) const
 		"�          �   �                                         �\r"
 		"����������������������������ĴSpare CPU Time��������������\r");
 
-	_framecounter++;
 	mono->Set_Cursor(70, 10);mono->Printf("%ld", Frame);
 	if (ScenarioInit) {
 		mono->Set_Cursor(21, 9);mono->Printf("%d", ScenarioInit);

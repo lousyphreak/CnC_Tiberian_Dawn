@@ -68,8 +68,16 @@ class MixFileClass : public LinkClass
 		};
 
 	private:
+		struct ResidentBlock {
+			int32_t CRC;
+			int32_t Size;
+			void *Data;
+			ResidentBlock *Next;
+		};
+
 		static MixFileClass * Finder(char const *filename);
 		int32_t Offset(int32_t crc, int32_t *size = 0);
+		void Free_Resident_Blocks(void);
 
 		#pragma pack(push, 1)
 		typedef struct {
@@ -85,6 +93,7 @@ class MixFileClass : public LinkClass
 		int32_t DataSize;					// Size of raw data.
 		SubBlock * Buffer;				// Array of sub blocks (could be in EMS).
 		void *Data;							// Pointer to raw data.
+		ResidentBlock *Resident;			// Lazily loaded embedded files.
 
 		static MixFileClass * First;
 };

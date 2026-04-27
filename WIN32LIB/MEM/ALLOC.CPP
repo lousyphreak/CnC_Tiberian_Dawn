@@ -59,7 +59,6 @@ uint32_t Largest_Mem_Block ( void ) ;
 uint32_t MinRam=0L;		// Record of least memory at worst case.
 uint32_t MaxRam=0L;		// Record of total allocated at worst case.
 static uint32_t TotalRam = 0L;
-static uint32_t Memory_Calls = 0L;
 
 void (*Memory_Error)(void) = NULL;
 void (*Memory_Error_Exit)(char *string)=NULL;
@@ -135,7 +134,6 @@ void *Alloc(uint32_t bytes_to_alloc, MemoryFlagType flags)
 	*magic_ptr 	 = (uint32_t)mem_ptr;
 #endif	//MEM_CHECK
 
-	Memory_Calls++;
 	return ( mem_ptr );
 }
 
@@ -182,7 +180,6 @@ void Free(void const *pointer)
 #endif	//MEM_CHECK
 
 		free ( (void*)pointer );
-		Memory_Calls--;
 	}
 }
 

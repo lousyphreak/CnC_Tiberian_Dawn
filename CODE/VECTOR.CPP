@@ -901,6 +901,7 @@ void BooleanVectorClass::Fixup(int index) const
 template class VectorClass<CellClass>;
 template class VectorClass<BaseNodeClass>;
 template class VectorClass<char>;
+template class VectorClass<unsigned char>;
 template class VectorClass<char *>;
 template class VectorClass<char const *>;
 template class VectorClass<int>;
