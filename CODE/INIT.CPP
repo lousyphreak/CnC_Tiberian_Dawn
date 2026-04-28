@@ -60,6 +60,7 @@ static bool Should_Cache_Full_GameData_Mixfiles(void);
 
 namespace {
 
+#if defined(__EMSCRIPTEN__) && TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
 bool Is_Numbered_Mixfile_Name(char const* filename, char const* prefix)
 {
 	if (filename == NULL || prefix == NULL) {
@@ -74,6 +75,7 @@ bool Is_Numbered_Mixfile_Name(char const* filename, char const* prefix)
 		&& std::isdigit(static_cast<unsigned char>(filename[5])) != 0
 		&& std::strcmp(&filename[6], ".MIX") == 0);
 }
+#endif
 
 void Register_Optional_Mixfile(char const* filename, bool cache_mixfile)
 {
@@ -87,6 +89,7 @@ void Register_Optional_Mixfile(char const* filename, bool cache_mixfile)
 	}
 }
 
+#if defined(__EMSCRIPTEN__) && TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
 void Register_Numbered_Mixfiles(char const* prefix, bool cache_mixfile)
 {
 	char filename[16];
@@ -95,6 +98,51 @@ void Register_Numbered_Mixfiles(char const* prefix, bool cache_mixfile)
 		std::snprintf(filename, sizeof(filename), "%s-%03d.MIX", prefix, index);
 		Register_Optional_Mixfile(filename, cache_mixfile);
 	}
+}
+
+void Register_Mixfiles_From_Directory(char const* pattern, char const* numbered_prefix, bool cache_mixfile)
+#else
+void Register_Mixfiles_From_Directory(char const* pattern, bool cache_mixfile)
+#endif
+{
+	if (pattern == NULL || pattern[0] == '\0') {
+		return;
+	}
+
+#if defined(__EMSCRIPTEN__) && TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
+	if (numbered_prefix != NULL && numbered_prefix[0] != '\0') {
+		Register_Numbered_Mixfiles(numbered_prefix, cache_mixfile);
+	}
+#endif
+
+	int mix_count = 0;
+	char** mix_files = WWFS_GlobDirectory(".", pattern, SDL_GLOB_CASEINSENSITIVE, &mix_count);
+	if (mix_files == NULL) {
+		return;
+	}
+
+	for (int index = 0; index < mix_count; ++index) {
+#if defined(__EMSCRIPTEN__) && TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
+		if (numbered_prefix != NULL && numbered_prefix[0] != '\0'
+			&& Is_Numbered_Mixfile_Name(mix_files[index], numbered_prefix)) {
+			continue;
+		}
+#endif
+		Register_Optional_Mixfile(mix_files[index], cache_mixfile);
+	}
+
+	SDL_free(mix_files);
+}
+
+void Register_Expansion_Mixfiles(void)
+{
+#if defined(__EMSCRIPTEN__) && TD_EMSCRIPTEN_LAZY_FETCH_GAMEDATA
+	Register_Mixfiles_From_Directory("SC*.MIX", "SC", true);
+	Register_Mixfiles_From_Directory("SS*.MIX", "SS", false);
+#else
+	Register_Mixfiles_From_Directory("SC*.MIX", true);
+	Register_Mixfiles_From_Directory("SS*.MIX", false);
+#endif
 }
 
 bool Network_Trace_Enabled(void)
@@ -547,35 +595,6 @@ bool Init_Game(int , char *[])
 		CCFileClass::Set_Search_Drives(local_search);
 	}
 #ifndef DEMO
-	CCDebugString ("C&C95 - About to register addon mixfiles\n");
-	/*
-	**	Before all else, cache any additional mixfiles.
-	*/
-	Register_Numbered_Mixfiles("SC", true);
-	int scenario_mix_count = 0;
-	char** scenario_mix_files = WWFS_GlobDirectory(".", "SC*.MIX", SDL_GLOB_CASEINSENSITIVE, &scenario_mix_count);
-	if (scenario_mix_files != NULL) {
-		for (int index = 0; index < scenario_mix_count; ++index) {
-			if (Is_Numbered_Mixfile_Name(scenario_mix_files[index], "SC")) {
-				continue;
-			}
-			Register_Optional_Mixfile(scenario_mix_files[index], true);
-		}
-		SDL_free(scenario_mix_files);
-	}
-
-	Register_Numbered_Mixfiles("SS", false);
-	int score_mix_count = 0;
-	char** score_mix_files = WWFS_GlobDirectory(".", "SS*.MIX", SDL_GLOB_CASEINSENSITIVE, &score_mix_count);
-	if (score_mix_files != NULL) {
-		for (int index = 0; index < score_mix_count; ++index) {
-			if (Is_Numbered_Mixfile_Name(score_mix_files[index], "SS")) {
-				continue;
-			}
-			Register_Optional_Mixfile(score_mix_files[index], false);
-		}
-		SDL_free(score_mix_files);
-	}
 #endif	//DEMO
 
 	CCDebugString ("C&C95 - About to register GENERAL.MIX\n");
@@ -699,6 +718,10 @@ bool Init_Game(int , char *[])
 			}
 		}
 	}
+#ifndef DEMO
+	CCDebugString ("C&C95 - About to register addon mixfiles\n");
+	Register_Expansion_Mixfiles();
+#endif
 	Call_Back();
 #endif
 
