@@ -50,13 +50,52 @@
 #include	"TCPIP.H"
 #include	"WSMGR.H"
 
+#include <cctype>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
 
 static bool				BootstrapCoreMixfilesRegistered = false;
+static bool Should_Cache_Full_GameData_Mixfiles(void);
 
 namespace {
+
+bool Is_Numbered_Mixfile_Name(char const* filename, char const* prefix)
+{
+	if (filename == NULL || prefix == NULL) {
+		return false;
+	}
+
+	return (std::strlen(filename) == 10
+		&& std::strncmp(filename, prefix, 2) == 0
+		&& filename[2] == '-'
+		&& std::isdigit(static_cast<unsigned char>(filename[3])) != 0
+		&& std::isdigit(static_cast<unsigned char>(filename[4])) != 0
+		&& std::isdigit(static_cast<unsigned char>(filename[5])) != 0
+		&& std::strcmp(&filename[6], ".MIX") == 0);
+}
+
+void Register_Optional_Mixfile(char const* filename, bool cache_mixfile)
+{
+	if (filename == NULL || filename[0] == '\0' || !CCFileClass(filename).Is_Available()) {
+		return;
+	}
+
+	new MixFileClass(filename);
+	if (cache_mixfile && Should_Cache_Full_GameData_Mixfiles()) {
+		MixFileClass::Cache(filename);
+	}
+}
+
+void Register_Numbered_Mixfiles(char const* prefix, bool cache_mixfile)
+{
+	char filename[16];
+
+	for (int index = 0; index <= 999; ++index) {
+		std::snprintf(filename, sizeof(filename), "%s-%03d.MIX", prefix, index);
+		Register_Optional_Mixfile(filename, cache_mixfile);
+	}
+}
 
 bool Network_Trace_Enabled(void)
 {
@@ -512,27 +551,28 @@ bool Init_Game(int , char *[])
 	/*
 	**	Before all else, cache any additional mixfiles.
 	*/
+	Register_Numbered_Mixfiles("SC", true);
 	int scenario_mix_count = 0;
 	char** scenario_mix_files = WWFS_GlobDirectory(".", "SC*.MIX", SDL_GLOB_CASEINSENSITIVE, &scenario_mix_count);
 	if (scenario_mix_files != NULL) {
 		for (int index = 0; index < scenario_mix_count; ++index) {
-			char* ptr = strdup(scenario_mix_files[index]);
-			new MixFileClass(ptr);
-			if (Should_Cache_Full_GameData_Mixfiles()) {
-				MixFileClass::Cache(ptr);
+			if (Is_Numbered_Mixfile_Name(scenario_mix_files[index], "SC")) {
+				continue;
 			}
-			free(ptr);
+			Register_Optional_Mixfile(scenario_mix_files[index], true);
 		}
 		SDL_free(scenario_mix_files);
 	}
 
+	Register_Numbered_Mixfiles("SS", false);
 	int score_mix_count = 0;
 	char** score_mix_files = WWFS_GlobDirectory(".", "SS*.MIX", SDL_GLOB_CASEINSENSITIVE, &score_mix_count);
 	if (score_mix_files != NULL) {
 		for (int index = 0; index < score_mix_count; ++index) {
-			char* ptr = strdup(score_mix_files[index]);
-			new MixFileClass(ptr);
-			free(ptr);
+			if (Is_Numbered_Mixfile_Name(score_mix_files[index], "SS")) {
+				continue;
+			}
+			Register_Optional_Mixfile(score_mix_files[index], false);
 		}
 		SDL_free(score_mix_files);
 	}

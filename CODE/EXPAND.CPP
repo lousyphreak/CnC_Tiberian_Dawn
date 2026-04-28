@@ -48,6 +48,35 @@ struct BonusMissionEntry {
 	int Text;
 };
 
+bool Expansion_Scenario_File_Is_Available(int scenario, ScenarioPlayerType player)
+{
+	char buffer[128];
+	CCFileClass file;
+
+	Set_Scenario_Name(buffer, scenario, player, SCEN_DIR_EAST, SCEN_VAR_A);
+	strcat(buffer, ".INI");
+	file.Set_Name(buffer);
+	return (file.Is_Available() != 0);
+}
+
+bool Any_Expansion_Scenario_Is_Available(void)
+{
+	for (int index = 20; index < 60; ++index) {
+		if (Expansion_Scenario_File_Is_Available(index, SCEN_PLAYER_GDI)
+			|| Expansion_Scenario_File_Is_Available(index, SCEN_PLAYER_NOD)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool Expansion_Mixfiles_Are_Available(void)
+{
+	return (CCFileClass("SC-000.MIX").Is_Available()
+		|| CCFileClass("SC-001.MIX").Is_Available());
+}
+
 void Build_Bonus_Scenario_Name(char* buffer, size_t buffer_size, int scenario)
 {
 	if (buffer == NULL || buffer_size == 0) {
@@ -62,7 +91,7 @@ bool Expansion_Present(void)
 {
 	CCFileClass file("EXPAND.DAT");
 
-	return(file.Is_Available());
+	return(file.Is_Available() || Expansion_Mixfiles_Are_Available() || Any_Expansion_Scenario_Is_Available());
 }
 
 
