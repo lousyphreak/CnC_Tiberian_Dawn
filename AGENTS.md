@@ -15,3 +15,5 @@
 
 - **DO NOT COMMIT** - the user will do that
 - **DO NOT CHANGE THE ORIGINAL GAME CODE** - unless needed to port to new functionality, like changing the file system to use SDL3, or changing the input handling to use SDL3, but do not change the original game logic or behavior unless absolutely necessary.
+
+`/home/lousy/git/EA/CnC_Red_Alert/` should be treated as reference implementation, it is a newer game (Red Alert) but the engine is **VERY** similar.

@@ -53,6 +53,8 @@ public:
     bool UsesPalette(const WWPalette* palette) const;
     RAWindow* Window() const;
     void Present();
+    void MarkDirty(const RECT* rect = nullptr);
+    bool ConsumeDirtyRect(RECT* rect);
 private:
     int width_;
     int height_;
@@ -61,6 +63,10 @@ private:
     int ref_count_;
     WWPalette* palette_;
     std::vector<uint8_t> pixels_;
+    bool has_dirty_rect_;
+    RECT dirty_rect_;
+    bool lock_rect_valid_;
+    RECT lock_rect_;
 };
 
 class WWDraw {

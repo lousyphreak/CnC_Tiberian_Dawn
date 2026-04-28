@@ -430,9 +430,9 @@ bool get_relative_mouse_scale(float& scale_x, float& scale_y)
 
 void handle_relative_mouse_motion(int, int, int xrel, int yrel, uint32_t button_state_mask)
 {
-	float scale_x = 1.0f;
-	float scale_y = 1.0f;
-	get_relative_mouse_scale(scale_x, scale_y);
+    float scale_x = 1.0f;
+    float scale_y = 1.0f;
+    get_relative_mouse_scale(scale_x, scale_y);
 
 	int translated_x = 0;
 	int translated_y = 0;
@@ -450,9 +450,20 @@ void handle_relative_mouse_motion(int, int, int xrel, int yrel, uint32_t button_
 		clamp_relative_mouse_position_locked(g_relative_mouse_x, g_relative_mouse_y);
 
 		translated_x = static_cast<int>(g_relative_mouse_x + 0.5f);
-		translated_y = static_cast<int>(g_relative_mouse_y + 0.5f);
-	}
-	handle_translated_mouse_motion(translated_x, translated_y, button_state_mask);
+        translated_y = static_cast<int>(g_relative_mouse_y + 0.5f);
+    }
+    handle_translated_mouse_motion(translated_x, translated_y, button_state_mask);
+
+#if defined(__EMSCRIPTEN__)
+    /*
+    ** In browser pointer-lock mode the game loop can keep redrawing the world
+    ** while the software cursor lags behind unless we refresh it from the new
+    ** logical position immediately on motion events.
+    */
+    if (WWMouse != NULL && GameActive && GameInFocus) {
+        WWMouse->Process_Mouse();
+    }
+#endif
 }
 
 void handle_translated_mouse_button(int button, int x, int y, bool release)

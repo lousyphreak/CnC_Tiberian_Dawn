@@ -490,11 +490,8 @@ void GScreenClass::Blit_Display(void)
 		Add_Current_Screen();
 #endif
 		WWMouse->Erase_Mouse(&HidPage, FALSE);
-		WWDraw_Flush_Present();
 	} else {
 		ModeX_Blit (&HiddenPage);
 	}
 }
-
-
 

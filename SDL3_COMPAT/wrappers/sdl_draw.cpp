@@ -4,6 +4,7 @@
 #include <SDL3/SDL_render.h>
 
 #include <algorithm>
+#include <array>
 #include <cstring>
 #include <vector>
 
@@ -11,13 +12,18 @@ namespace {
 
 SDL_Renderer* g_renderer = nullptr;
 SDL_Texture* g_texture = nullptr;
+SDL_Window* g_renderer_window = nullptr;
 int g_texture_width = 0;
 int g_texture_height = 0;
+bool g_texture_initialized = false;
+std::vector<uint32_t> g_rgba_pixels;
 WWSurface* g_primary_surface = nullptr;
 WWSurface* g_pending_surface = nullptr;
 RAWindow* g_pending_window = nullptr;
 int g_present_batch_depth = 0;
 bool g_present_pending = false;
+
+RECT normalize_rect(const RECT* rect, int width, int height);
 
 RAWindow* ensure_window(RAWindow* window, int width, int height)
 {
@@ -28,16 +34,39 @@ RAWindow* ensure_window(RAWindow* window, int width, int height)
     return RA_CreateWindow("Command & Conquer", width, height, SDL_WINDOW_RESIZABLE);
 }
 
+void destroy_renderer_resources()
+{
+    if (g_texture) {
+        SDL_DestroyTexture(g_texture);
+        g_texture = nullptr;
+    }
+    if (g_renderer) {
+        SDL_DestroyRenderer(g_renderer);
+        g_renderer = nullptr;
+    }
+
+    g_renderer_window = nullptr;
+    g_texture_width = 0;
+    g_texture_height = 0;
+    g_texture_initialized = false;
+    g_rgba_pixels.clear();
+}
+
 void ensure_renderer(RAWindow* window, int width, int height)
 {
     if (!window || !window->sdl_window) {
         return;
     }
 
+    if (g_renderer && g_renderer_window != window->sdl_window) {
+        destroy_renderer_resources();
+    }
+
     if (!g_renderer) {
         g_renderer = SDL_CreateRenderer(window->sdl_window, nullptr);
         if (g_renderer) {
             SDL_SetRenderVSync(g_renderer, 1);
+            g_renderer_window = window->sdl_window;
         }
     }
 
@@ -55,7 +84,39 @@ void ensure_renderer(RAWindow* window, int width, int height)
         }
         g_texture_width = width;
         g_texture_height = height;
+        g_texture_initialized = false;
     }
+
+    const size_t pixel_count = static_cast<size_t>(width) * static_cast<size_t>(height);
+    if (g_rgba_pixels.size() != pixel_count) {
+        g_rgba_pixels.assign(pixel_count, 0);
+        g_texture_initialized = false;
+    }
+}
+
+void build_palette_lookup(const PALETTEENTRY* palette, std::array<uint32_t, 256>& lookup)
+{
+    for (size_t index = 0; index < lookup.size(); ++index) {
+        const uint8_t palette_index = static_cast<uint8_t>(index);
+        const PALETTEENTRY entry = palette ? palette[palette_index] : PALETTEENTRY{palette_index, palette_index, palette_index, 0};
+        lookup[index] = (0xffu << 24) | (static_cast<uint32_t>(entry.peRed) << 16)
+            | (static_cast<uint32_t>(entry.peGreen) << 8) | static_cast<uint32_t>(entry.peBlue);
+    }
+}
+
+RECT merge_rects(const RECT& lhs, const RECT& rhs)
+{
+    RECT merged{};
+    merged.left = std::min(lhs.left, rhs.left);
+    merged.top = std::min(lhs.top, rhs.top);
+    merged.right = std::max(lhs.right, rhs.right);
+    merged.bottom = std::max(lhs.bottom, rhs.bottom);
+    return merged;
+}
+
+bool is_rect_empty(const RECT& rect)
+{
+    return rect.right <= rect.left || rect.bottom <= rect.top;
 }
 
 void present_surface(WWSurface* surface, RAWindow* window)
@@ -69,20 +130,39 @@ void present_surface(WWSurface* surface, RAWindow* window)
         return;
     }
 
-    std::vector<uint32_t> rgba(static_cast<size_t>(surface->Width()) * static_cast<size_t>(surface->Height()));
-    const PALETTEENTRY* palette = surface->PaletteEntries();
-    uint8_t* pixels = surface->Pixels();
+    RECT dirty{};
+    const bool has_dirty_rect = surface->ConsumeDirtyRect(&dirty);
+    if (has_dirty_rect || !g_texture_initialized) {
+        const RECT upload_rect = has_dirty_rect ? normalize_rect(&dirty, surface->Width(), surface->Height())
+                                                : normalize_rect(nullptr, surface->Width(), surface->Height());
+        if (!is_rect_empty(upload_rect)) {
+            std::array<uint32_t, 256> palette_lookup{};
+            build_palette_lookup(surface->PaletteEntries(), palette_lookup);
 
-    for (int y = 0; y < surface->Height(); ++y) {
-        for (int x = 0; x < surface->Width(); ++x) {
-            const uint8_t index = pixels[y * surface->Width() + x];
-            const PALETTEENTRY entry = palette ? palette[index] : PALETTEENTRY{index, index, index, 0};
-            rgba[y * surface->Width() + x] = (0xffu << 24) | (static_cast<uint32_t>(entry.peRed) << 16)
-                | (static_cast<uint32_t>(entry.peGreen) << 8) | static_cast<uint32_t>(entry.peBlue);
+            const int surface_width = surface->Width();
+            const uint8_t* pixels = surface->Pixels();
+            for (LONG y = upload_rect.top; y < upload_rect.bottom; ++y) {
+                const uint8_t* src = pixels + static_cast<size_t>(y) * static_cast<size_t>(surface_width) + upload_rect.left;
+                uint32_t* dst = g_rgba_pixels.data() + static_cast<size_t>(y) * static_cast<size_t>(surface_width) + upload_rect.left;
+                for (LONG x = 0; x < upload_rect.right - upload_rect.left; ++x) {
+                    dst[x] = palette_lookup[src[x]];
+                }
+            }
+
+            SDL_Rect texture_rect{
+                upload_rect.left,
+                upload_rect.top,
+                upload_rect.right - upload_rect.left,
+                upload_rect.bottom - upload_rect.top,
+            };
+            SDL_UpdateTexture(
+                g_texture,
+                &texture_rect,
+                g_rgba_pixels.data() + static_cast<size_t>(upload_rect.top) * static_cast<size_t>(surface_width) + upload_rect.left,
+                surface_width * static_cast<int>(sizeof(uint32_t)));
+            g_texture_initialized = true;
         }
     }
-
-    SDL_UpdateTexture(g_texture, nullptr, rgba.data(), surface->Width() * static_cast<int>(sizeof(uint32_t)));
     SDL_FRect source{0.0f, 0.0f, static_cast<float>(surface->Width()), static_cast<float>(surface->Height())};
     SDL_FRect destination{0.0f, 0.0f, static_cast<float>(surface->Width()), static_cast<float>(surface->Height())};
     RAWindow* present_window = window ? window : surface->Window();
@@ -173,6 +253,7 @@ HRESULT WWPalette::SetEntries(DWORD start, DWORD count, const PALETTEENTRY* entr
     }
     std::copy(entries, entries + count, entries_ + start);
     if (g_primary_surface && g_primary_surface->UsesPalette(this)) {
+        g_primary_surface->MarkDirty();
         queue_present(g_primary_surface, nullptr);
     }
     return WWDRAW_OK;
@@ -192,18 +273,31 @@ const PALETTEENTRY* WWPalette::Entries() const
 }
 
 WWSurface::WWSurface(int width, int height, bool primary, RAWindow* window)
-    : width_(width), height_(height), primary_(primary), window_(window), ref_count_(1), palette_(nullptr), pixels_(static_cast<size_t>(width) * static_cast<size_t>(height), 0)
+    : width_(width)
+    , height_(height)
+    , primary_(primary)
+    , window_(window)
+    , ref_count_(1)
+    , palette_(nullptr)
+    , pixels_(static_cast<size_t>(width) * static_cast<size_t>(height), 0)
+    , has_dirty_rect_(false)
+    , dirty_rect_{}
+    , lock_rect_valid_(false)
+    , lock_rect_{}
 {
     if (primary_) {
         g_primary_surface = this;
+        MarkDirty();
     }
 }
 
-HRESULT WWSurface::Lock(RECT*, WWLockData* lock_data)
+HRESULT WWSurface::Lock(RECT* rect, WWLockData* lock_data)
 {
     if (!lock_data) {
         return WWDRAW_ERROR_INVALIDPARAMS;
     }
+    lock_rect_valid_ = rect != nullptr;
+    lock_rect_ = normalize_rect(rect, width_, height_);
     lock_data->pitch = width_;
     lock_data->pixels = pixels_.data();
     return WWDRAW_OK;
@@ -212,8 +306,10 @@ HRESULT WWSurface::Lock(RECT*, WWLockData* lock_data)
 HRESULT WWSurface::Unlock(LPVOID)
 {
     if (primary_) {
+        MarkDirty(lock_rect_valid_ ? &lock_rect_ : nullptr);
         queue_present(this, window_);
     }
+    lock_rect_valid_ = false;
     return WWDRAW_OK;
 }
 
@@ -238,7 +334,7 @@ HRESULT WWSurface::Blit(RECT* dest_rect, WWSurface* src_surface, RECT* src_rect,
         && dest.top < src_bounds.top + copy_height
         && src_bounds.top < dest.top + copy_height;
     std::vector<uint8_t> scratch;
-    if (overlapping_self_blit) {
+    if (use_source_key && overlapping_self_blit) {
         scratch.resize(static_cast<size_t>(copy_width) * static_cast<size_t>(copy_height));
         for (int row = 0; row < copy_height; ++row) {
             const uint8_t* src = src_surface->Pixels() + (src_bounds.top + row) * src_surface->Width() + src_bounds.left;
@@ -246,9 +342,18 @@ HRESULT WWSurface::Blit(RECT* dest_rect, WWSurface* src_surface, RECT* src_rect,
         }
     }
 
-    for (int row = 0; row < copy_height; ++row) {
+    int row = 0;
+    int row_end = copy_height;
+    int row_step = 1;
+    if (!use_source_key && overlapping_self_blit && dest.top > src_bounds.top) {
+        row = copy_height - 1;
+        row_end = -1;
+        row_step = -1;
+    }
+
+    for (; row != row_end; row += row_step) {
         uint8_t* dst = pixels_.data() + (dest.top + row) * width_ + dest.left;
-        const uint8_t* src = overlapping_self_blit
+        const uint8_t* src = (use_source_key && overlapping_self_blit)
             ? scratch.data() + static_cast<size_t>(row) * static_cast<size_t>(copy_width)
             : src_surface->Pixels() + (src_bounds.top + row) * src_surface->Width() + src_bounds.left;
         if (use_source_key) {
@@ -258,10 +363,16 @@ HRESULT WWSurface::Blit(RECT* dest_rect, WWSurface* src_surface, RECT* src_rect,
                 }
             }
         } else {
-            std::memcpy(dst, src, static_cast<size_t>(copy_width));
+            if (overlapping_self_blit) {
+                std::memmove(dst, src, static_cast<size_t>(copy_width));
+            } else {
+                std::memcpy(dst, src, static_cast<size_t>(copy_width));
+            }
         }
     }
     if (primary_) {
+        RECT dirty{dest.left, dest.top, dest.left + copy_width, dest.top + copy_height};
+        MarkDirty(&dirty);
         queue_present(this, window_);
     }
     return WWDRAW_OK;
@@ -274,6 +385,7 @@ HRESULT WWSurface::FillRect(RECT* dest_rect, uint8_t color)
         std::fill_n(pixels_.data() + y * width_ + dest.left, dest.right - dest.left, color);
     }
     if (primary_) {
+        MarkDirty(&dest);
         queue_present(this, window_);
     }
     return WWDRAW_OK;
@@ -291,6 +403,9 @@ bool WWSurface::IsBlitDone() const
 
 HRESULT WWSurface::Restore()
 {
+    if (primary_) {
+        MarkDirty();
+    }
     return WWDRAW_OK;
 }
 
@@ -330,6 +445,7 @@ HRESULT WWSurface::SetPalette(WWPalette* palette)
 {
     palette_ = palette;
     if (primary_) {
+        MarkDirty();
         queue_present(this, window_);
     }
     return WWDRAW_OK;
@@ -346,6 +462,35 @@ const PALETTEENTRY* WWSurface::PaletteEntries() const { return palette_ ? palett
 bool WWSurface::IsPrimary() const { return primary_; }
 bool WWSurface::UsesPalette(const WWPalette* palette) const { return palette_ == palette; }
 RAWindow* WWSurface::Window() const { return window_; }
+void WWSurface::MarkDirty(const RECT* rect)
+{
+    const RECT dirty = normalize_rect(rect, width_, height_);
+    if (is_rect_empty(dirty)) {
+        return;
+    }
+
+    if (!has_dirty_rect_) {
+        dirty_rect_ = dirty;
+        has_dirty_rect_ = true;
+        return;
+    }
+
+    dirty_rect_ = merge_rects(dirty_rect_, dirty);
+}
+
+bool WWSurface::ConsumeDirtyRect(RECT* rect)
+{
+    if (!has_dirty_rect_) {
+        return false;
+    }
+
+    if (rect) {
+        *rect = dirty_rect_;
+    }
+    has_dirty_rect_ = false;
+    return true;
+}
+
 void WWSurface::Present()
 {
     queue_present(this, window_);
