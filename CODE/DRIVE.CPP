@@ -419,8 +419,7 @@ COORDINATE DriveClass::Smooth_Turn(COORDINATE adj, DirType *dir)
 	DirType	workdir = *dir;
 	int	x,y;
 	int   temp;
-	int const track_number = static_cast<unsigned char>(TrackNumber);
-	TrackControlType flags = TrackControl[track_number].Flag;
+	TrackControlType flags = TrackControl[TrackNumber].Flag;
 
 	x = Coord_X(adj);
 	y = Coord_Y(adj);
@@ -584,8 +583,7 @@ bool DriveClass::While_Moving(void)
 		FacingType		nextface;		// Next facing queued in path.
 		bool				adj;				// Is a turn coming up?
 
-		int const track_number = static_cast<unsigned char>(TrackNumber);
-		track = &TrackControl[track_number];
+		track = &TrackControl[TrackNumber];
 		if (IsOnShortTrack) {
 			tracknum = track->StartTrack;
 		} else {
@@ -615,10 +613,9 @@ bool DriveClass::While_Moving(void)
 
 			actual -= PIXEL_LEPTON_W;
 
-			int const track_index = static_cast<unsigned char>(TrackIndex);
-			offset = ptr[track_index].Offset;
+			offset = ptr[TrackIndex].Offset;
 			if (offset || !TrackIndex) {
-				dir = ptr[track_index].Facing;
+				dir = ptr[TrackIndex].Facing;
 				Coord = Smooth_Turn(offset, &dir);
 
 				PrimaryFacing.Set(dir);
@@ -703,7 +700,7 @@ bool DriveClass::While_Moving(void)
 				Coord = Head_To_Coord();
 				Stop_Driver();
 				TrackNumber = -1;
-				TrackIndex = NULL;
+				TrackIndex = 0;
 
 				/*
 				**	Perform "per cell" activities.
@@ -1449,8 +1446,7 @@ void DriveClass::Mark_Track(COORDINATE headto, MarkType type)
 			** If we have not passed the per cell process point we need
 			** to deal with it.
 			*/
-			int const track_number = static_cast<unsigned char>(TrackNumber);
-			int tracknum = TrackControl[track_number].Track;
+			int tracknum = TrackControl[TrackNumber].Track;
 			if (tracknum) {
 				TrackType const * ptr = RawTracks[tracknum - 1].Track;
 				int cellidx = RawTracks[tracknum - 1].Cell;

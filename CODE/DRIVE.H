@@ -170,7 +170,7 @@ class DriveClass : public FootClass
 		**	convert them into pixel "steps" that are then translated through
 		**	the currently running track so that the unit will move.
 		*/
-		unsigned char SpeedAccum;
+		int SpeedAccum;
 
 		/*
 		**	This the track control logic (used for ground vehicles only). The 'Track'
@@ -178,8 +178,8 @@ class DriveClass : public FootClass
 		**	'TrackIndex' variable holds the current index into the specified track
 		**	(starts at 0).
 		*/
-		char TrackNumber;
-		char TrackIndex;
+		int TrackNumber;
+		int TrackIndex;
 
 		/*---------------------------------------------------------------------
 		**	Member function prototypes.
